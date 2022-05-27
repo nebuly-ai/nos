@@ -77,6 +77,9 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Pycharm files
+.idea
+
 # IPython
 profile_default/
 ipython_config.py
