@@ -3,7 +3,7 @@ from typing import Dict
 
 import torch.nn
 
-from nebulgym.training_learners.model_engines import BaseEngine
+from nebulgym.training_learners.model_engines.base import BaseEngine
 
 try:
     from nnfusion.runner import PTRunner

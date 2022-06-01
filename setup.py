@@ -1,9 +1,7 @@
 from pathlib import Path
 from setuptools import setup, find_packages
 
-REQUIREMENTS = [
-    "torch>=1.10.0",
-]
+REQUIREMENTS = ["torch>=1.10.0", "psutil>=5.9.0"]
 
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()

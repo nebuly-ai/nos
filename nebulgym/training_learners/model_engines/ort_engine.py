@@ -1,6 +1,6 @@
 import torch.nn
 
-from nebulgym.training_learners.model_engines import TorchEngine
+from nebulgym.training_learners.model_engines.torch_engine import TorchEngine
 
 try:
     from torch_ort import ORTModule
