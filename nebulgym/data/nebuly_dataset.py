@@ -1,4 +1,5 @@
 import os.path
+import shutil
 from collections import OrderedDict
 from tempfile import mkdtemp
 from threading import Thread, Lock
@@ -137,6 +138,9 @@ class WindowLoader:
 
     def len_cached_inputs(self):
         return len(self._tensor_map)
+
+    def __del__(self):
+        shutil.rmtree(self._cache)
 
 
 class NebulDataset(BaseDataset):
