@@ -63,6 +63,8 @@ def _patch_module_init(
 
 def patch_torch_module(patch_backprop: bool = False, **nebulgym_kwargs):
     def _inner_patch(cls: Type[torch.nn.Module]):
+        if cls.__call__ is _new_module_call:  # class already patched
+            return cls
         cls = _patch_module_init(cls, patch_backprop, **nebulgym_kwargs)
         cls = _patch_module_call(cls)
         cls = _patch_module_train_and_eval(cls)

@@ -91,7 +91,7 @@ class TrainingLearner:
     def __getattr__(self, item):
         # All the backend objects point to the original pytorch model saved
         # into the _default_backend attribute.
-        if not self._extend:
+        if not self.__dict__.get("_extend", False):
             raise AttributeError(
                 "For avoiding infinite recursion the attributes of the inner "
                 "model are not directly accessible from the TrainingLearner. "

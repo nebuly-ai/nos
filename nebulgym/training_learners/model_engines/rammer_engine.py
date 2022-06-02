@@ -1,4 +1,5 @@
 import json
+import types
 from typing import Dict
 
 import torch.nn
@@ -16,11 +17,27 @@ except ImportError:
     )
 
 
+class CallMethodFixingEnvRunner:
+    def __init__(self, model: torch.nn.Module):
+        self._prev_call = None
+        self._model = model
+
+    def __enter__(self):
+        self._prev_call = self._model.__call__
+        self._model.__call__ = types.MethodType(
+            torch.nn.Module.__call__, self._model
+        )
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._model.__call__ = self._prev_call
+
+
 class RammerEngine(BaseEngine):
     def __init__(self, model: torch.nn.Module):
         super(RammerEngine, self).__init__(model)
         rammer_dict = self._get_default_rammer_params()
-        self._rammer_runner = PTRunner(model, rammer_dict)
+        with CallMethodFixingEnvRunner(self._model):
+            self._rammer_runner = PTRunner(model, rammer_dict)
 
     def run(self, *args, **kwargs):
         return self._rammer_runner.run_by_nnf(*args, **kwargs)
@@ -29,12 +46,14 @@ class RammerEngine(BaseEngine):
         rammer_dict = self._get_default_rammer_params()
         if update_torch_model:
             self._model.train()
-        self._rammer_runner = PTRunner(self._model, rammer_dict)
+        with CallMethodFixingEnvRunner(self._model):
+            self._rammer_runner = PTRunner(self._model, rammer_dict)
 
     def eval(self, update_torch_model: bool = True):
         if update_torch_model:
             self._model.eval()
-        self._rammer_runner = PTRunner(self._model)
+        with CallMethodFixingEnvRunner(self._model):
+            self._rammer_runner = PTRunner(self._model)
 
     @staticmethod
     def _get_default_rammer_params(use_default_trainer: bool = False) -> Dict:
