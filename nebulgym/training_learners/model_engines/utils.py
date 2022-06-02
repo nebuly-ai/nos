@@ -1,18 +1,18 @@
-import types
-
 import torch.nn
+
+ATTRIBUTE_NAME = "_nebulgym_backend"
 
 
 class CallMethodFixingEnvRunner:
     def __init__(self, model: torch.nn.Module):
-        self._prev_call = None
+        self._training_learner = None
         self._model = model
 
     def __enter__(self):
-        self._prev_call = self._model.__call__
-        self._model.__call__ = types.MethodType(
-            torch.nn.Module.__call__, self._model
-        )
+        self._training_learner = getattr(self._model, ATTRIBUTE_NAME, None)
+        if self._training_learner is not None:
+            setattr(self._model, ATTRIBUTE_NAME, None)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._model.__call__ = self._prev_call
+        if self._training_learner is not None:
+            setattr(self._model, ATTRIBUTE_NAME, self._training_learner)
