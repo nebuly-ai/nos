@@ -27,7 +27,8 @@ class RammerEngine(BaseEngine):
             self._rammer_runner = PTRunner(model, rammer_dict)
 
     def run(self, *args, **kwargs):
-        return self._rammer_runner.run_by_nnf(*args, **kwargs)
+        with CallMethodFixingEnvRunner(self._model):
+            return self._rammer_runner.run_by_nnf(*args, **kwargs)
 
     def train(self, update_torch_model: bool = True):
         rammer_dict = self._get_default_rammer_params()

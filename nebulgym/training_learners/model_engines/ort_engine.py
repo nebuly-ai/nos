@@ -19,5 +19,14 @@ except ImportError:
 class ORTEngine(TorchEngine):
     def __init__(self, model: torch.nn.Module):
         with CallMethodFixingEnvRunner(model):
-            model = ORTModule(model)
-        super().__init__(model)
+            ort_model = ORTModule(model)
+        super().__init__(ort_model)
+        self._original_model = model
+
+    def run(self, *args, **kwargs):
+        with CallMethodFixingEnvRunner(self._original_model):
+            return self._model.forward(*args, **kwargs)
+
+    @property
+    def original_model(self):
+        return self._original_model
