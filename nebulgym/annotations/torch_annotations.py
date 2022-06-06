@@ -61,7 +61,7 @@ def _patch_module_init(
     return cls
 
 
-def patch_torch_module(patch_backprop: bool = False, **nebulgym_kwargs):
+def nebulgym_model(patch_backprop: bool = False, **nebulgym_kwargs):
     """Functions that may be used as class annotation. The annotation patches
     the input class, modifying the __init__, __call__, train and eval methods.
     The modified version switches the backend of the calculations to the
@@ -92,7 +92,7 @@ def patch_torch_module(patch_backprop: bool = False, **nebulgym_kwargs):
     return _inner_patch
 
 
-def patch_dataset(**nebuldata_kwargs):
+def nebulgym_dataset(**nebuldata_kwargs):
     """Functions that may be used as class annotation. The annotation patches
     a pytorch's Dataset class defined by the user. It modifies the given
     Dataset into a NebulDataset. Note that the NebulDataset is transparent to
