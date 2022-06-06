@@ -52,16 +52,22 @@ class TrainingLearner:
     def __init__(
         self,
         model: Module,
-        backends: List[NebulgymBackend],
+        backends: List[NebulgymBackend] = None,
         logger: Logger = None,
         extend: bool = True,
     ):
-        backends = [NebulgymBackend(b) for b in backends]
-        self._backend_engines = {
-            b: engine
-            for b, engine, ok in _try_to_instantiate(model, backends, logger)
-            if ok
-        }
+        backends = [NebulgymBackend(b) for b in backends] if backends else []
+        self._backend_engines = (
+            {
+                b: engine
+                for b, engine, ok in _try_to_instantiate(
+                    model, backends, logger
+                )
+                if ok
+            }
+            if len(backends) > 0
+            else {}
+        )
         self._backend_priorities = backends
         self._default_backend = TorchEngine(model)
         self._running_backend: Optional[BaseEngine] = None

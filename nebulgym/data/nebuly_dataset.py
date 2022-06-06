@@ -202,7 +202,7 @@ class NebulDataset(BaseDataset):
     def __init__(
         self,
         input_data: Dataset,
-        preloaded_data: int = 1,
+        preloaded_data: int = 20,
         max_memory_size: int = None,
     ):
         super(NebulDataset, self).__init__(input_data)
