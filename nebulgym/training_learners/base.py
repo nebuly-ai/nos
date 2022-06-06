@@ -32,6 +32,23 @@ def _try_to_instantiate(
 
 
 class TrainingLearner:
+    """Core class used as model interface for all Nebulgym optimization
+    techniques. The choice and management of all the different backends that
+    can be used at RunTime is delegated to this class.
+
+    Attributes:
+        model (Module): The original pytorch model
+        backends: The list of backends that can be used for running the model.
+            Available backends are "ONNXRUNTIME", "RAMMER" and "PYTORCH".
+        logger (Logger, optional): Logger to be used for printing the generated
+            logs.
+        extend (bool, optional): Boolean flag to be used when the
+            TrainingLearner is instanciated in the annotations framework. It
+            prevents the annotated pytorch class to call recursively its
+            methods. It needs to be put to False when used inside an
+            annotation.
+    """
+
     def __init__(
         self,
         model: Module,

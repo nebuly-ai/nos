@@ -13,6 +13,18 @@ from nebulgym.data.base import BaseDataset
 
 
 class WindowLoader:
+    """Class used in the NebulDataset for managing the storing and the parallel
+    pre-loading.
+
+    Attributes:
+        window_size (int): Max number of data that can be pre-loaded (It is
+            like a "window" on the memory).
+        max_loaded_size (int, optional): Max total size of the loaded data in
+            bytes.
+        max_writing_jobs (int, optional): Number of workers writing to memory
+            in parallel.
+    """
+
     def __init__(
         self,
         window_size: int,
@@ -49,19 +61,44 @@ class WindowLoader:
         return torch_input
 
     def get(self, tensor_path: str):
+        """Get the input data if they are in the data-window.
+
+        Args:
+            tensor_path (str): Path to the stored input.
+
+        Returns:
+            the inputs if in the window, else either None or the worker loading
+            the data.
+        """
         tensor_hash = hash(tensor_path)
         return self._loaded_tensors.get(tensor_hash)
 
     def load_new_batch(self, tensor_paths: List[str]):
+        """Load an entire batch. It initialize the data-window around the first
+        input data and try to load as much new data as allowed.
+
+        Args:
+            tensor_paths (List[str]): List of the inputs to be loaded.
+
+        Returns:
+            list containing all the tensors the window was not able to load.
+        """
         self._total_loaded_size = 0
         new_loaded_tensors = {
             hash(p): self._load_input(p)
             for p in tensor_paths
             if self._total_loaded_size <= self._max_loaded_size
         }
+        self._loaded_tensors = new_loaded_tensors
         return tensor_paths[len(new_loaded_tensors) :]  # noqa E203
 
     def store(self, torch_input: Any, idx: int):
+        """Store the inputs using pytorch save method.
+
+        Args:
+            torch_input (Any): The inputs to be stored.
+            idx (int): Index to be associated with the data.
+        """
         self._store_in_a_thread(torch_input, idx)
         while len(self._writing_bus) >= self._max_writing_jobs:
             thread = self._writing_bus.pop(0)
@@ -81,6 +118,9 @@ class WindowLoader:
         self._writing_bus.append(new_thread)
 
     def join_all_writing_threads(self):
+        """Join all the threads used for storing the data. This method should
+        be used once the first run on the dataset has been completed.
+        """
         while len(self._writing_bus) > 0:
             thread = self._writing_bus.pop(0)
             thread.join()
@@ -144,6 +184,21 @@ class WindowLoader:
 
 
 class NebulDataset(BaseDataset):
+    """Dataset implemented by Nebuly for loading data in a smart and efficient
+    way. During the first iteration it returns the value from the internal
+    dataset and it stores the inputs in a temporary directory. In the following
+    iterations it loads the data in parallel, using Python's multi-threading
+    library.
+
+    Attributes:
+        input_data (Dataset): Inner dataset which will be used during the first
+            data iteration.
+        preloaded_data (int, optional): Number of workers that will pre-load
+            the data from the second iteration on.
+        max_memory_size (int, optional): Max number of Bytes that can be
+            occupied by the pre-loading process in the RAM.
+    """
+
     def __init__(
         self,
         input_data: Dataset,

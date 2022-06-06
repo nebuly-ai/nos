@@ -5,6 +5,12 @@ from torch.utils.data import Dataset
 
 
 class BaseDataset(Dataset, ABC):
+    """Base class for dataset.
+
+    Attributes:
+        input_data (Any): Input data to be loaded
+    """
+
     def __init__(self, input_data: Any):
         self._data = input_data
 

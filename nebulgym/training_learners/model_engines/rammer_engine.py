@@ -20,6 +20,15 @@ except ImportError:
 
 
 class RammerEngine(BaseEngine):
+    """DL engine based on RAMMER. The model is compiled for training both when
+    the class is instantiated and the `train` method is called. When the model
+    is set on evaluation model the model is statically compiled in "inference"
+    mode.
+
+    Arguments:
+        model (Module): The pytorch model.
+    """
+
     def __init__(self, model: torch.nn.Module):
         super(RammerEngine, self).__init__(model)
         rammer_dict = self._get_default_rammer_params()

@@ -62,6 +62,25 @@ def _patch_module_init(
 
 
 def patch_torch_module(patch_backprop: bool = False, **nebulgym_kwargs):
+    """Functions that may be used as class annotation. The annotation patches
+    the input class, modifying the __init__, __call__, train and eval methods.
+    The modified version switches the backend of the calculations to the
+    TrainingLearner defined in nebulgym.
+
+    Args:
+        patch_backprop (bool, optional): Boolean flag for adopting the backprop
+            optimization techniques. This kind of techniques can slightly
+            affect the model final performance. However, they usually lead to
+            a similar effect to dropout: the network regularization, i.e.
+            better performance.
+        **nebulgym_kwargs (Dict): Extra parameters that must be passed to the
+            TrainingLearner. See the TrainingLearner description for further
+            information.
+
+    Returns:
+        the class decorator to be applied to the torch.nn.Module.
+    """
+
     def _inner_patch(cls: Type[torch.nn.Module]):
         if cls.__call__ is _new_module_call:  # class already patched
             return cls
@@ -74,6 +93,22 @@ def patch_torch_module(patch_backprop: bool = False, **nebulgym_kwargs):
 
 
 def patch_dataset(**nebuldata_kwargs):
+    """Functions that may be used as class annotation. The annotation patches
+    a pytorch's Dataset class defined by the user. It modifies the given
+    Dataset into a NebulDataset. Note that the NebulDataset is transparent to
+    the Dataset custom methods. It just reimplement the __getitem__ method for
+    accelerating the data loading part.
+
+    Args:
+        **nebuldata_kwargs (Dict): Extra parameters that must be passed to the
+            NebulDataset. See the NebulDataset description for further
+            information.
+
+    Returns:
+        a patched Dataset class which will create a NebulDataset instead of a
+        base class instantiation.
+    """
+
     def _inner_patch(cls: Type[Dataset]):
         def _new_new(cls: Type[Dataset], *args, **kwargs):
             self = object.__new__(cls)

@@ -4,6 +4,11 @@ ATTRIBUTE_NAME = "_nebulgym_backend"
 
 
 class CallMethodFixingEnvRunner:
+    """Environment Runner aiming at solving the problems due to infinite
+    recursion when Annotations are used. It solved issues related to the Call
+    methods infinite recursion.
+    """
+
     def __init__(self, model: torch.nn.Module):
         self._training_learner = None
         self._model = model

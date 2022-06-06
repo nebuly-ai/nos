@@ -4,6 +4,12 @@ import torch.nn
 
 
 class BaseEngine(ABC):
+    """Base class for describing a DL Engine.
+
+    Attributes:
+        model (Module): Pytorch model.
+    """
+
     def __init__(self, model: torch.nn.Module):
         self._model = model
 

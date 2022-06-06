@@ -11,7 +11,9 @@ except ImportError:
 
 
 class BaguaDataset(BaseDataset):
-    """Wrapper around bagua's cached dataset."""
+    """Wrapper around bagua's cached dataset. All the Storage Optimization
+    techniques are delegated to Bagua's dataset.
+    """
 
     def __init__(self, input_data: Dataset):
         input_data = CachedDataset(input_data)

@@ -63,6 +63,9 @@ me_prop_linear = MePropLinearFunction.apply
 
 
 class MePropLinear(Linear):
+    """Re-implementation of Pytorch Linear layer using the sparse
+    backpropagation described in the MeProp paper."""
+
     _k_percentage = 0.04  # Derived from the paper
     _k: int = None
 
