@@ -43,10 +43,10 @@ class TrainingLearner:
         logger (Logger, optional): Logger to be used for printing the generated
             logs.
         extend (bool, optional): Boolean flag to be used when the
-            TrainingLearner is instantiated in the annotations framework. It
+            TrainingLearner is instantiated in the decorators framework. It
             prevents the annotated pytorch class to call recursively its
-            methods. It needs to be put to False when used inside an
-            annotation.
+            methods. It needs to be put to False when used inside a
+            class decorator.
     """
 
     def __init__(
