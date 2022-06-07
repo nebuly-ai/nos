@@ -52,7 +52,7 @@ Your code + @nebulgym_class_decorators = superfast training 🏃‍♀️
 
 🤖 Hardware agnostic. The library aims to support any artificial intelligence hardware on the market, from general-purpose GPUs and CPUs to hardware accelerators such as FPGAs and ASICs. Currently, nebulgym has been tested on many CPUs and GPUs.
 
-Do you like the library? Leave a ⭐ on GitHub if you enjoy the project and join the community where we chat about `nebulgym` and AI acceleration.
+Do you like the library? Leave a ⭐ if you enjoy the project and join [the community](https://discord.gg/RbeQMu886J) where we chat about `nebulgym` and AI acceleration.
 
 And happy training 🏋️
 
@@ -104,7 +104,7 @@ pip install nebulgym
 Clone nebulgym repository to your local machine.
 
 ```
-git clone https://github.com/nebuly-ai/nebulgym
+git clone https://github.com/nebuly-ai/nebulgym.git
 ```
 
 Go into the repo and run the setup.py file.
@@ -114,7 +114,7 @@ cd nebulgym && python setup.py install
 
 ## Get started
 
-`nebulgym` accelerates training by means of class decorators. Class decorators are a very elegant and non-intrusive method that allows nebulgym to tag your model (`@nebulgym_model`) and your dataset (`@nebulgym_dataset`) and add functionalities to their classes. When you run a training session, `nebulgym` will greatly reduce the training time of your decorated model. As simple as that!
+`nebulgym` accelerates training by means of class decorators. A class decorator is a very elegant and non-intrusive method that allows nebulgym to tag your model (`@nebulgym_model`) and your dataset (`@nebulgym_dataset`) and add functionalities to their classes. When you run a training session, `nebulgym` will greatly reduce the training time of your decorated model. As simple as that!
 
 You can find more information about `nebulgym` class decorators, the parameters they can take as input, and other `nebulgym` classes that can be used as an alternative to decorators in the [documentation](https://nebuly.gitbook.io/nebuly/nebulgym/get-started/advanced-options).
 
@@ -132,14 +132,14 @@ Put nebulgym class decorators right before defining your dataset and model class
 
 ## nebulgym use case
 
-Here we show an example of how you can easily use `nebulgym` annotations. To achieve awesome training speed, you can simply add `nebulgym` annotations (`@accelerate_model` and `@accelerate_dataset`) before defining your AI model and dataset.
+Here we show an example of how you can easily use `nebulgym` class decorators. To achieve awesome training speed, you can simply add `nebulgym` decorators (`@accelerate_model` and `@accelerate_dataset`) before defining your AI model and dataset.
 
 ```
 from typing import List, Callable
 import torch
 from torch.utils.data import Dataset
 
-from nebulgym.annotations.torch_annotations import accelerate_model, accelerate_dataset
+from nebulgym.decorators.torch_decorators import accelerate_model, accelerate_dataset
 
 # Add nebulgym annotation before defining your model. 
 #  This model takes as input an image of resolution 224x224
@@ -214,8 +214,8 @@ Any ideas about what could be implemented next? Would you like to contribute to 
 - **Cached datasets**. Data loading is for some use cases slow and could become a major bottleneck of the whole training process. nebulgym provides cached dataset to speedup this process by caching data samples in memory, so that reading these samples after the first time becomes much faster.
 
 ### Model Optimization techniques
-- **Selective-Backprop**. Acceleration is achieved by prioritizing examples with high loss at each iteration. This means using the output of a training example’s forward pass to decide whether to use that example to compute gradients and update parameters, or to skip immediately to the next example. By reducing the number of computationally-expensive back-propagation steps performed, nebulgym accelerates training. Acceleration is be achieved by using stale forward pass results for selection, thus also skipping forward passes of low priority examples.
 - **Sparsified Back Propagation**. As traditional neural network consumes a significant amount of computing resources during back propagation, leveraging a simple yet effective technique to alleviate this problem. In this technique, only a small subset of the full gradients are computed to update the model parameters and the model still achieves the same effect as the traditional CNN, or even better.
+- **Selective-Backprop**. ([open issue](https://github.com/nebuly-ai/nebulgym/issues/11))
 - **Layer Replacement** ([open issue](https://github.com/nebuly-ai/nebulgym/issues/10))
 - **ModelReshaper** ([open issue](https://github.com/nebuly-ai/nebulgym/issues/9))
 - **Distributed training** ([open issue](https://github.com/nebuly-ai/nebulgym/issues/4))
