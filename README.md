@@ -1,48 +1,148 @@
+<img  src="https://user-images.githubusercontent.com/83510798/172371780-484c7efc-ca9d-4881-b4d4-dfee2ae77289.png">
+
+<p align="center">
+  <a href="https://discord.gg/RbeQMu886J">Join the community</a> |
+  <a href="https://nebuly.gitbook.io/nebuly/welcome/questions-and-contributions">Contribute to the library</a>
+</p>
+
+<p align="center">
+<a href="#how-nebulgym-works">How nebulgym works</a> •
+<a href="#benchmarks">Benchmarks</a> •
+<a href="#installation">Installation</a> •
+<a href="#get-started">Get started</a> •
+<a href="#nebulgym-use-case">Tutorials and examples</a> •
+<a href="https://nebuly.gitbook.io/nebuly/nebulgym/how-nebulgym-works">Documentation</a>
+</p>
+
+<p align="center">
+<a href="https://nebuly.ai/">Website</a> |
+<a href="https://www.linkedin.com/company/72460022/">LinkedIn</a> |
+<a href="https://twitter.com/nebuly_ai">Twitter</a>
+</p>
+
 # Nebulgym
 
-Nebulgym is the library for speeding up the training of your AI models up to 10x without changing a single line of code in your training setup.
+Easy-to-use library to accelerate AI training leveraging state-of-the-art optimization techniques 🤸‍♀️
+
+-  [How nebulgym works](#how-nebulgym-works)
+-  [Benchmarks](#benchmarks)
+-  [Tutorials and examples](#nebulgym-use-case)
+-  [Installation and Get Started](#installation)
+-  <a href="https://discord.gg/jyjtZTPyHS">Join the Community for AI Acceleration</a>
+
+## How nebulgym works
+
+> `nebulgym` greatly reduces the training time of AI models without requiring any modification to the training setup. `nebulgym` optimizes the full training computing stack, from efficient data loading, to faster forward and backward passes, to earlier convergence.
+
+No matter what model, framework, or training recipe you use, with `nebulgym` you speed up training by simply adding nebulgym class decorators to your code. Decorators will make sure that you use your hardware's computing power to the fullest and achieve the shortest possible training time.
+Your code + @nebulgym_class_decorators = superfast training 🏃‍♀️
+
+
+### So why nebulgym?
+
+🚀 Superfast. The library speeds up training and thus the time it takes you to test your model, reduces computing costs and energy consumption.
+
+☘️ Easy-to-use. Just add `nebulgym` class decorators to your code and continue programming on your favorite training framework. nebulgym will let you achieve awesome training times.
+
+💥 Training setup agnostic. `nebulgym` can be coupled with any model, trainer, or other training technique to achieve a compound effect on training performance.
+
+🦾 Framework agnostic. The library aims to support all frameworks (PyTorch, TensorFlow, Hugging Face, Jax, etc.) to allow any developer to continue working with the configuration they are used to. Currently, nebulgym supports PyTorch and we are working on expanding nebulgym capabilities.
+
+💻 Deep learning model agnostic. `nebulgym` supports all the most popular architectures such as transformers, LSTMs, CNNs and FCNs.
+
+🤖 Hardware agnostic. The library aims to support any artificial intelligence hardware on the market, from general-purpose GPUs and CPUs to hardware accelerators such as FPGAs and ASICs. Currently, nebulgym has been tested on many CPUs and GPUs.
+
+Do you like the library? Leave a ⭐ on GitHub if you enjoy the project and join the community where we chat about `nebulgym` and AI acceleration.
+And happy training 🏋️
+
+<img src="https://user-images.githubusercontent.com/83510798/172376401-88930367-5d1d-41c8-a617-57c628d09fdc.png">
+
+
+## Benchmarks
+`nebulgym` has just been launched and has been tested on limited use cases. Early results are remarkably good, and it is expected that nebulgym will further reduce training time even more in future releases. At the same time, it is expected that nebulgym may fail in untested cases and provide different results, perhaps greater or worse than those shown below.
+
+We tested test has been run on the custom model presented in over 10 epochs and with a batch size of 8.
+
+Below are the training times in seconds before nebulgym optimization and after its acceleration, and the speedup, which is calculated as the response time of the unoptimized model divided by the response time of the accelerated model.
+
+### Training time in seconds
+| **Hardware** | **Not-optimized** | **Accelerated** | **Speedup** |
+|---|:---:|:---:|:---:|
+| **M1 Pro** | 632.05 | 347.52 | 1.8x |
+| **Intel Xeon** | 788.05 | 381.01 | 2.1x |
+| **AMD EPYC** | 1547.35 | 1034.37 | 1.5x |
+| **NVIDIA T4** | 258.88 | 127.32 | 2.0x |
+| ______________________ | __________________ | __________________ | __________________ |
+
+Hardware Legenda
+- M1 Pro: Apple M1 Pro 16GB of RAM
+- Intel Xeon: EC2 Instance on AWS - t2.large
+- AMD EPYC: EC2 Instance on AWS - t4a.large
+- NVIDIA T4: EC2 instance on AWS - g4dn.xlarge
+
+How does `nebulgym` perform in your training setup? What do you think about nebulgym and what are ways to make it even better? Share your ideas and results with us in the [community chat](https://discord.gg/RbeQMu886J).
+
 
 ## Installation
-Installing nebulgym is super easy! You can either
-* Install from source
-* Install from pypi (pip).
+
+Installing and using nebulgym is super easy! You can either
+- install nebulgym from PyPI (with pip) or
+- install nebulgym from source code.
+
+We strongly recommend that you install nebulgym in a new environment. You can create and manage your environment using Conda or another virtual environment management application. We tested our installation with venv by conda.
 
 
-We highly suggest to install nebugym on a fresh environment. You can create and manage your environment using conda or another virtual environment managing application. We tested our installation with `venv` produced with `conda`.
+### Installation from PyPI
 
-### Install from source code
-1. Clone nebulgym repository on your local machine
-```bash
+```
+pip install nebulgym
+```
+
+### Source code installation
+
+Clone nebulgym repository to your local machine.
+
+```
 git clone https://github.com/nebuly-ai/nebulgym
 ```
-2. enter the repo and run the setup.py file
-```bash
-cd nebulgym && python setup.py install
-```
 
-### Install with Pip
-Run
-```bash
-pip install nebulgym
+Go into the repo and run the setup.py file.
+```
+cd nebulgym && python setup.py install
 ```
 
 ## Get started
 
-Nebulgym aims at accelerating your AI training speeding up the way your AI model is mapped to the hardware. In other words, nebulgym accelerates the computation of your forward and backward passes, and the way your data are loaded and stored in order to get a final run time much faster than before.
+`nebulgym` accelerates training by means of class decorators. Class decorators are a very elegant and non-intrusive method that allows nebulgym to tag your model (`@nebulgym_model`) and your dataset (`@nebulgym_dataset`) and add functionalities to their classes. When you run a training session, `nebulgym` will greatly reduce the training time of your decorated model. As simple as that!
 
-For getting an astonishing speed up you can simply use the nebugym annotations while defining your AI model. In the snippet below we show an example of how the nebugym annotations can be used for speeding up both the model computing and the data-loading process.
+You can find more information about `nebulgym` class decorators, the parameters they can take as input, and other `nebulgym` classes that can be used as an alternative to decorators in the [documentation](https://nebuly.gitbook.io/nebuly/nebulgym/get-started/advanced-options).
 
-```python
+### Class decorators for training acceleration
+
+Put nebulgym class decorators right before defining your dataset and model classes.
+
+- `@nebulgym_dataset` must be entered before the dataset definition. nebulgym will cache dataset samples in memory, so that reading these samples after the first time becomes much faster. Caching the dataset makes data loading faster and more efficient, solving what could become the main bottleneck of the whole training process.
+- `@nebulgym_model` must be entered before the model definition. nebulgym will accelerate both forward and backward propagations by reducing the number of computationally expensive propagation steps and making computations more efficient.
+
+<p align="center">
+<img width="500" src="https://user-images.githubusercontent.com/83510798/172379283-b18f75cb-1b85-4f70-91a6-d3973c593cff.gif">
+</p>
+
+
+## nebulgym use case
+
+Here we show an example of how you can easily use `nebulgym` annotations. To achieve awesome training speed, you can simply add nebulgym annotations (`@accelerate_model` and `@accelerate_dataset`) before defining your AI model and dataset.
+
+```
 from typing import List, Callable
-
 import torch
 from torch.utils.data import Dataset
 
-from nebulgym.annotations.torch_annotations import nebulgym_model, nebulgym_dataset
+from nebulgym.annotations.torch_annotations import accelerate_model, accelerate_dataset
 
-
-# The model takes as input an image of resolution 224x224
-@nebulgym_model(patch_backprop=True, backends=["PYTORCH"])
+# Add nebulgym annotation before defining your model. 
+#  This model takes as input an image of resolution 224x224
+@accelerate_model()
 class CustomModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
@@ -71,7 +171,8 @@ class CustomModel(torch.nn.Module):
         return self._linears(x)
 
 
-@nebulgym_dataset(preloaded_data=20, max_memory_size=None)
+# Add nebulgym annotation before defining your dataset.
+@accelerate_dataset()
 class CustomDataset(Dataset):
     def __init__(self, img_paths: List[str], labelling_func: Callable, reading_func: Callable):
         self._images = img_paths
@@ -85,23 +186,7 @@ class CustomDataset(Dataset):
         return input_tensor, label
 
     def __len__(self):
-        return len(self._images)
+        return len(self._images)    
 ```
 
-In the example above we just defined a model and a dataset in the usual `pytorch` syntax and we have annotated the two classes using the nebulgym annotations: `nebulgym_model` and `nebulgym_dataset`. The two classes can then be used exactly as before, without caring about all the optimization techniques that nebulgym is running on the backend.
-
-## Annotations: The future of AI optimization
-With nebulgym we didn't want to create the umpteenth framework for AI training. On the contrary we wanted to leverage on the amazing libraries already on the market and produce an easy to use "plugin" for accelerating the model computation without forcing the user to adopt one training strategy or the other. So, we decided to use the less invasive API we were able to think about: annotations. The idea is that annotating the model or/and the dataset the user selects the object that nebulgym will accelerate without impacting the user code. 
-
-At the current stage, nebulgym supports two different type of annotations: dataset and model annotations.
-
-* `@nebulgym_dataset`: it is the annotation for accelerating the data loading phase. It can take as extra arguments the maximum memory that the data-loading phase can access and the number of "parallel" workers allowed to pre-load the data while training the model.
-* `nebulgym_model`: the annotation can be used for accelerating the model computation. It accepts as extra argument the desired backend (see backend section in the following) and the boolean parameter `patch_backprop`. The latest can be used for further accelerating the model modifying the way backprop is computed as well. The backprop optimization can lead to amazing speed-ups without negatively affecting the training itself. However, since it slightly changes the backprop computation we prefer to leave to the final user the decision either adopting or not the technique.
-
-### Supported Backends
-At the current stage Nebulgym supports three different backends:
-* RAMMER: Compiler developed in [this paper](https://www.usenix.org/system/files/osdi20-ma.pdf) and which can be used on Nvidia GPUs.
-* ONNXRUNTIME: training API leveraging on some techniques developed for inference optimization. It currently supports only Nvidia GPUs.
-* PYTORCH: Default backend running on pure pytorch.
-
-Note that if the backends selected by the user fails when instantiated the running backend will be switch automatically to pytorch as default. 
+And that's it. Now, as soon as you perform a training run, `nebulgym` will optimize the full training computing stack, from efficient data loading, to faster forward and backward passes, to earlier convergence. 
