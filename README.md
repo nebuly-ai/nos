@@ -227,3 +227,7 @@ Any ideas about what could be implemented next? Would you like to contribute to 
 ### Backend installation methods
 - From the backend source code
 - Automatic installation with an auto-installer ([open issue](https://github.com/nebuly-ai/nebulgym/issues/8))
+
+
+### Licence
+This project is released under the [Apache 2.0 licence](https://github.com/nebuly-ai/nebulgym/blob/main/LICENSE).
