@@ -61,7 +61,7 @@ def _patch_module_init(
     return cls
 
 
-def nebulgym_model(patch_backprop: bool = False, **nebulgym_kwargs):
+def accelerate_model(patch_backprop: bool = False, **nebulgym_kwargs):
     """Function that may be used as class decorator. The decorator patches
     the input class, modifying the __init__, __call__, train and eval methods.
     The modified version switches the backend of the calculations to the
@@ -92,7 +92,7 @@ def nebulgym_model(patch_backprop: bool = False, **nebulgym_kwargs):
     return _inner_patch
 
 
-def nebulgym_dataset(**nebuldata_kwargs):
+def accelerate_dataset(**nebuldata_kwargs):
     """Function that may be used as class decorator. The class decorator
     patches a pytorch's Dataset class defined by the user. It modifies the
     given Dataset into a NebulDataset. Note that the NebulDataset is
