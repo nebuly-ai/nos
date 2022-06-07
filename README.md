@@ -190,3 +190,40 @@ class CustomDataset(Dataset):
 ```
 
 And that's it. Now, as soon as you perform a training run, `nebulgym` will optimize the full training computing stack, from efficient data loading, to faster forward and backward passes, to earlier convergence. 
+
+## Supported tech & roadmap
+`nebulgym` has just been launched, and it is already capable of cutting training time in half. At the same time, it is expected that `nebulgym` may crash or fail in untested use cases. Moreover, the project is in its early stages and there is a lot of room for improvement for `nebulgym` to become a new paradigm for artificial intelligence training.
+
+`nebulgym` aims to support every framework, every model, every hardware, and make the most of your hardware and software capabilities to train your model in a fraction of the time required now. In addition, `nebulgym` will always be extremely easy to use to empower any developer to build powerful AI applications.
+
+`nebulgym` already embeds many great technologies, and below you can find a list of the features already implemented and those that will be implemented soon. More specific tasks can be found in the [issue page](https://github.com/nebuly-ai/nebulgym). 
+
+Any ideas about what could be implemented next? Would you like to contribute to this fantastic library? We welcome any ideas, questions, issues and pull requests! For more info go to the [Documentation](https://nebuly.gitbook.io/nebuly/welcome/questions-and-contributions).
+
+### Supported frameworks
+- PyTorch
+- TensorFlow ([open issue](https://github.com/nebuly-ai/nebulgym/issues/5))
+
+### Supported backends
+- **PyTorch**. Default compiler for models trained in PyTorch.
+- **Rammer**. Compiler that can be used on Nvidia GPUs.
+- ONNX Runtime. Training API leveraging on some techniques developed for inference optimization. It currently supports only Nvidia GPUs.
+
+### Optimization techniques for data loading
+- **Cached datasets**. Data loading is for some use cases slow and could become a major bottleneck of the whole training process. nebulgym provides cached dataset to speedup this process by caching data samples in memory, so that reading these samples after the first time becomes much faster.
+
+### Model Optimization techniques
+- **Selective-Backprop**. Acceleration is achieved by prioritizing examples with high loss at each iteration. This means using the output of a training example’s forward pass to decide whether to use that example to compute gradients and update parameters, or to skip immediately to the next example. By reducing the number of computationally-expensive back-propagation steps performed, nebulgym accelerates training. Acceleration is be achieved by using stale forward pass results for selection, thus also skipping forward passes of low priority examples.
+- **Sparsified Back Propagation**. As traditional neural network consumes a significant amount of computing resources during back propagation, leveraging a simple yet effective technique to alleviate this problem. In this technique, only a small subset of the full gradients are computed to update the model parameters and the model still achieves the same effect as the traditional CNN, or even better.
+- **Layer Replacement** ([open issue](https://github.com/nebuly-ai/nebulgym/issues/10))
+- **ModelReshaper** ([open issue](https://github.com/nebuly-ai/nebulgym/issues/9))
+- **Distributed training** ([open issue](https://github.com/nebuly-ai/nebulgym/issues/4))
+- **Forward gradients** ([open issue](https://github.com/nebuly-ai/nebulgym/issues/3))
+
+### Library installation methods
+- From PyPI
+- Source code
+
+### Backend installation methods
+- From the backend source code
+- Automatic installation with an auto-installer ([open issue](https://github.com/nebuly-ai/nebulgym/issues/8))
