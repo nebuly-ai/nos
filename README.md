@@ -59,7 +59,7 @@ And happy training 🏋️
 
 
 ## Benchmarks
-`nebulgym` has just been launched and has been tested on limited use cases. Early results are remarkably good, and it is expected that nebulgym will further reduce training time even more in future releases. At the same time, it is expected that nebulgym may fail in untested cases and provide different results, perhaps greater or worse than those shown below.
+`nebulgym` has just been launched and has been tested on limited use cases. Early results are remarkably good, and it is expected that `nebulgym` will further reduce training time even more in future releases. At the same time, it is expected that nebulgym may fail in untested cases and provide different results, perhaps greater or worse than those shown below.
 
 We tested test has been run on the custom model presented in over 10 epochs and with a batch size of 8.
 
@@ -89,7 +89,7 @@ Installing and using nebulgym is super easy! You can either
 - install nebulgym from PyPI (with pip) or
 - install nebulgym from source code.
 
-We strongly recommend that you install nebulgym in a new environment. You can create and manage your environment using Conda or another virtual environment management application. We tested our installation with venv by conda.
+We strongly recommend that you install `nebulgym` in a new environment. You can create and manage your environment using Conda or another virtual environment management application. We tested our installation with `venv` by `conda`.
 
 
 ### Installation from PyPI
@@ -131,7 +131,7 @@ Put nebulgym class decorators right before defining your dataset and model class
 
 ## nebulgym use case
 
-Here we show an example of how you can easily use `nebulgym` annotations. To achieve awesome training speed, you can simply add nebulgym annotations (`@accelerate_model` and `@accelerate_dataset`) before defining your AI model and dataset.
+Here we show an example of how you can easily use `nebulgym` annotations. To achieve awesome training speed, you can simply add `nebulgym` annotations (`@accelerate_model` and `@accelerate_dataset`) before defining your AI model and dataset.
 
 ```
 from typing import List, Callable
@@ -229,5 +229,5 @@ Any ideas about what could be implemented next? Would you like to contribute to 
 - Automatic installation with an auto-installer ([open issue](https://github.com/nebuly-ai/nebulgym/issues/8))
 
 
-### Licence
+## Licence
 This project is released under the [Apache 2.0 licence](https://github.com/nebuly-ai/nebulgym/blob/main/LICENSE).
