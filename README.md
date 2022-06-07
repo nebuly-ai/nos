@@ -53,6 +53,7 @@ Your code + @nebulgym_class_decorators = superfast training 🏃‍♀️
 🤖 Hardware agnostic. The library aims to support any artificial intelligence hardware on the market, from general-purpose GPUs and CPUs to hardware accelerators such as FPGAs and ASICs. Currently, nebulgym has been tested on many CPUs and GPUs.
 
 Do you like the library? Leave a ⭐ on GitHub if you enjoy the project and join the community where we chat about `nebulgym` and AI acceleration.
+
 And happy training 🏋️
 
 <img src="https://user-images.githubusercontent.com/83510798/172376401-88930367-5d1d-41c8-a617-57c628d09fdc.png">
@@ -63,7 +64,7 @@ And happy training 🏋️
 
 We tested test has been run on the custom model presented in over 10 epochs and with a batch size of 8.
 
-Below are the training times in seconds before nebulgym optimization and after its acceleration, and the speedup, which is calculated as the response time of the unoptimized model divided by the response time of the accelerated model.
+Below are the training times in seconds before `nebulgym` optimization and after its acceleration, and the speedup, which is calculated as the response time of the unoptimized model divided by the response time of the accelerated model.
 
 ### Training time in seconds
 | **Hardware** | **Not-optimized** | **Accelerated** | **Speedup** |
@@ -80,14 +81,14 @@ Hardware Legenda
 - AMD EPYC: EC2 Instance on AWS - t4a.large
 - NVIDIA T4: EC2 instance on AWS - g4dn.xlarge
 
-How does `nebulgym` perform in your training setup? What do you think about nebulgym and what are ways to make it even better? Share your ideas and results with us in the [community chat](https://discord.gg/RbeQMu886J).
+How does `nebulgym` perform in your training setup? What do you think about `nebulgym` and what are ways to make it even better? Share your ideas and results with us in the [community chat](https://discord.gg/RbeQMu886J).
 
 
 ## Installation
 
 Installing and using nebulgym is super easy! You can either
-- install nebulgym from PyPI (with pip) or
-- install nebulgym from source code.
+- install `nebulgym` from PyPI (with `pip`) or
+- install `nebulgym` from source code.
 
 We strongly recommend that you install `nebulgym` in a new environment. You can create and manage your environment using Conda or another virtual environment management application. We tested our installation with `venv` by `conda`.
 
