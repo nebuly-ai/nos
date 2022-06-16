@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
+  - statictrainingjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
+  - statictrainingjobs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
+  - statictrainingjobs/status
+  verbs:
+  - get
+  - patch
+  - update

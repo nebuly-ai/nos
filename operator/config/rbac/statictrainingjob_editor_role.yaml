@@ -1,0 +1,24 @@
+# permissions for end users to edit statictrainingjobs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: statictrainingjob-editor-role
+rules:
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
+  - statictrainingjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
+  - statictrainingjobs/status
+  verbs:
+  - get

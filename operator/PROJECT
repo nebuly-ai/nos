@@ -6,4 +6,14 @@ plugins:
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: operator
 repo: github.com/nebuly-ai/nebulnetes
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: nebuly.ai
+  group: n8s
+  kind: StaticTrainingJob
+  path: github.com/nebuly-ai/nebulnetes/api/v1alpha1
+  version: v1alpha1
 version: "3"
