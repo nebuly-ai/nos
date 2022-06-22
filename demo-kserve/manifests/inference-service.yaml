@@ -1,0 +1,13 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: torchscript-cifar10
+spec:
+  predictor:
+    minReplicas: 0
+    triton:
+      storageUri: gs://kfserving-examples/models/torchscript
+      runtimeVersion: 22.05-py3
+      env:
+        - name: OMP_NUM_THREADS
+          value: "1"

@@ -8,6 +8,9 @@
 # JetBrains
 .idea/
 
+# Binaries
+bin/
+
 # Test binary, built with `go test -c`
 *.test
 
