@@ -14,12 +14,6 @@ bin/
 # Test binary, built with `go test -c`
 *.test
 
-# Jet Brains
-.idea/
-
-# Binaries
-bin/
-
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
