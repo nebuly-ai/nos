@@ -15,17 +15,15 @@ $(LOCALBIN)/.setup: $(LOCALBIN)
 	kind create cluster --name $(KIND_CLUSTER) --config kind.yaml
 	touch $(LOCALBIN)/.setup
 
-$(LOCALBIN)/local-path-storage.yaml:
+$(LOCALBIN)/local-path-storage.yaml: $(LOCALBIN)
 	curl -L "https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml" -o $@
 	kubectl apply -f $@
-	kubectl annotate storageclass local-path storageclass.kubernetes.io/is-default-class=true
-	kubectl delete storageclass standard || true
 
-$(LOCALBIN)/cluster-operator.yml:
+$(LOCALBIN)/cluster-operator.yml: $(LOCALBIN)
 	curl -L "https://github.com/rabbitmq/cluster-operator/releases/download/v$(CLUSTER_OPERATOR_VERSION)/cluster-operator.yml" -o $@
 	kubectl apply -f $@
 
-$(LOCALBIN)/cert-manager.yml:
+$(LOCALBIN)/cert-manager.yml: $(LOCALBIN)
 	curl -L https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml -o $@
 	kubectl apply -f $@
 

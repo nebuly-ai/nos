@@ -2,3 +2,7 @@ apiVersion: rabbitmq.com/v1beta1
 kind: RabbitmqCluster
 metadata:
   name: my-cluster
+spec:
+  replicas: 3
+  persistence:
+    storageClassName: local-path
