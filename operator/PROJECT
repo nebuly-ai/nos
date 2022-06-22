@@ -13,7 +13,7 @@ resources:
   controller: true
   domain: nebuly.ai
   group: n8s
-  kind: StaticTrainingJob
+  kind: ModelDeployment
   path: github.com/nebuly-ai/nebulnetes/api/v1alpha1
   version: v1alpha1
 version: "3"

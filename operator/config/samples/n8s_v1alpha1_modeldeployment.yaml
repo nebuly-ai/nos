@@ -1,0 +1,6 @@
+apiVersion: n8s.nebuly.ai/v1alpha1
+kind: ModelDeployment
+metadata:
+  name: modeldeployment-sample
+spec:
+  # TODO(user): Add fields here

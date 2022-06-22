@@ -1,14 +1,13 @@
----
+# permissions for end users to edit modeldeployments.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
-  name: manager-role
+  name: modeldeployment-editor-role
 rules:
 - apiGroups:
   - n8s.nebuly.ai
   resources:
-  - statictrainingjobs
+  - modeldeployments
   verbs:
   - create
   - delete
@@ -20,14 +19,6 @@ rules:
 - apiGroups:
   - n8s.nebuly.ai
   resources:
-  - statictrainingjobs/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - n8s.nebuly.ai
-  resources:
-  - statictrainingjobs/status
+  - modeldeployments/status
   verbs:
   - get
-  - patch
-  - update

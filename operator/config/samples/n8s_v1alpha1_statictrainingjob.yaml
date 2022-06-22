@@ -1,7 +1,0 @@
-apiVersion: n8s.nebuly.ai/v1alpha1
-kind: StaticTrainingJob
-metadata:
-  name: statictrainingjob-sample
-spec:
-  # TODO(user): Add fields here
-  requiredHardware: ["foo", "bar"]
