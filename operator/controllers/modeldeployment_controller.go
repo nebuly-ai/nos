@@ -36,7 +36,7 @@ const (
 	// Format used for generating the names of the optimization jobs
 	optimizationJobNameFormat = "%s-optimization"
 	// Number of retries before declaring an optimization job failed
-	optimizationJobBackoffLimit int32 = 1
+	optimizationJobBackoffLimit int32 = 0
 	// Name of the Docker image used for optimizing models for inference
 	modelOptimizerImageName = "nebuly.ai/model-optimizer"
 )
