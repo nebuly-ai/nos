@@ -20,22 +20,39 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// OptimizationTarget foo
+//+kubebuilder:validation:Enum=Latency;Cost;Emissions
+type OptimizationTarget string
+
+const (
+	Latency   OptimizationTarget = "latency"
+	Cost                         = "cost"
+	Emissions                    = "emissions"
+)
+
+type OptimizationSpec struct {
+	// OptimizationTarget specifies the target for which the model that has to be deployed will be optimized for
+	Target OptimizationTarget `json:"target"`
+	// OptimizerVersion is the version of the Docker image of the inference optimization service that will be used for
+	// optimizing the model
+	//+kubebuilder:default="0.0.1"
+	//+optional
+	OptimizerVersion string `json:"optimizerVersion,omitempty"`
+}
 
 // ModelDeploymentSpec defines the desired state of ModelDeployment
 type ModelDeploymentSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of ModelDeployment. Edit modeldeployment_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// ModelUri is a URI pointing to the model that has to be deployed
+	ModelUri string `json:"modelUri"`
+	// ModelLibraryUri is a URI pointing to a cloud storage that will be used as model library for saving optimized
+	// models
+	ModelLibraryUri string `json:"modelLibraryUri"`
+	// Optimization defines the configuration of the model optimization
+	Optimization OptimizationSpec `json:"optimization"`
 }
 
 // ModelDeploymentStatus defines the observed state of ModelDeployment
 type ModelDeploymentStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true

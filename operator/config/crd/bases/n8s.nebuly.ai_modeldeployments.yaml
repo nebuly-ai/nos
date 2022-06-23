@@ -1,0 +1,78 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.9.0
+  creationTimestamp: null
+  name: modeldeployments.n8s.nebuly.ai
+spec:
+  group: n8s.nebuly.ai
+  names:
+    kind: ModelDeployment
+    listKind: ModelDeploymentList
+    plural: modeldeployments
+    singular: modeldeployment
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: ModelDeployment is the Schema for the modeldeployments API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ModelDeploymentSpec defines the desired state of ModelDeployment
+            properties:
+              modelLibraryUri:
+                description: ModelLibraryUri is a URI pointing to a cloud storage
+                  that will be used as model library for saving optimized models
+                type: string
+              modelUri:
+                description: ModelUri is a URI pointing to the model that has to be
+                  deployed
+                type: string
+              optimization:
+                description: Optimization defines the configuration of the model optimization
+                properties:
+                  optimizerVersion:
+                    default: 0.0.1
+                    description: OptimizerVersion is the version of the Docker image
+                      of the inference optimization service that will be used for
+                      optimizing the model
+                    type: string
+                  target:
+                    description: OptimizationTarget specifies the target for which
+                      the model that has to be deployed will be optimized for
+                    enum:
+                    - Latency
+                    - Cost
+                    - Emissions
+                    type: string
+                required:
+                - target
+                type: object
+            required:
+            - modelLibraryUri
+            - modelUri
+            - optimization
+            type: object
+          status:
+            description: ModelDeploymentStatus defines the observed state of ModelDeployment
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
