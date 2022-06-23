@@ -79,6 +79,7 @@ func constructInferenceOptimizationService(modelDeployment *n8sv1alpha1.ModelDep
 		Args: []string{
 			modelDeployment.Spec.ModelUri,
 			modelDeployment.Spec.ModelLibraryUri,
+			string(modelDeployment.Spec.Optimization.Target),
 		},
 	}
 }
