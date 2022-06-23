@@ -33,11 +33,11 @@ const (
 type OptimizationSpec struct {
 	// OptimizationTarget specifies the target for which the model that has to be deployed will be optimized for
 	Target OptimizationTarget `json:"target"`
-	// OptimizerVersion is the version of the Docker image of the inference optimization service that will be used for
+	// ModelOptimizerVersion is the version of the Docker image of the inference optimization service that will be used for
 	// optimizing the model
 	//+kubebuilder:default="0.0.1"
 	//+optional
-	OptimizerVersion string `json:"optimizerVersion,omitempty"`
+	ModelOptimizerVersion string `json:"modelOptimizerVersion,omitempty"`
 }
 
 // ModelDeploymentSpec defines the desired state of ModelDeployment

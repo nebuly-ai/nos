@@ -38,7 +38,7 @@ const (
 	// Number of retries before declaring an optimization job failed
 	optimizationJobBackoffLimit int32 = 1
 	// Name of the Docker image used for optimizing models for inference
-	inferenceOptimizationServiceImage = "nebuly.ai/ios"
+	modelOptimizerImageName = "nebuly.ai/model-optimizer"
 )
 
 // ModelDeploymentReconciler reconciles a ModelDeployment object
@@ -58,14 +58,14 @@ func isJobFinished(job *batchv1.Job) (bool, batchv1.JobConditionType) {
 }
 
 func constructInferenceOptimizationService(modelDeployment *n8sv1alpha1.ModelDeployment) *v1.Container {
-	optimizationServiceImage := fmt.Sprintf(
+	modelOptimizerImage := fmt.Sprintf(
 		"%s:%s",
-		inferenceOptimizationServiceImage,
-		modelDeployment.Spec.Optimization.OptimizerVersion,
+		modelOptimizerImageName,
+		modelDeployment.Spec.Optimization.ModelOptimizerVersion,
 	)
 	return &v1.Container{
 		Name:                     "optimizer",
-		Image:                    optimizationServiceImage,
+		Image:                    modelOptimizerImage,
 		TerminationMessagePolicy: v1.TerminationMessageFallbackToLogsOnError,
 		Env: []v1.EnvVar{
 			{

@@ -46,11 +46,11 @@ spec:
               optimization:
                 description: Optimization defines the configuration of the model optimization
                 properties:
-                  optimizerVersion:
+                  modelOptimizerVersion:
                     default: 0.0.1
-                    description: OptimizerVersion is the version of the Docker image
-                      of the inference optimization service that will be used for
-                      optimizing the model
+                    description: ModelOptimizerVersion is the version of the Docker
+                      image of the inference optimization service that will be used
+                      for optimizing the model
                     type: string
                   target:
                     description: OptimizationTarget specifies the target for which
