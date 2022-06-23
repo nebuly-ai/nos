@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,6 +29,15 @@ const (
 	Latency   OptimizationTarget = "latency"
 	Cost                         = "cost"
 	Emissions                    = "emissions"
+)
+
+type StatusState string
+
+const (
+	StatusStateOptimizingModel StatusState = "OptimizingModel"
+	StatusStateDeployingModel              = "DeployingModel"
+	StatusStateAvailable                   = "Available"
+	StatusStateFailed                      = "Failed"
 )
 
 type OptimizationSpec struct {
@@ -53,12 +63,16 @@ type ModelDeploymentSpec struct {
 
 // ModelDeploymentStatus defines the observed state of ModelDeployment
 type ModelDeploymentStatus struct {
+	ModelOptimizationJob v1.ObjectReference `json:"modelOptimizationJob"`
+	State                StatusState        `json:"state"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
 // ModelDeployment is the Schema for the modeldeployments API
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.state"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type ModelDeployment struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
