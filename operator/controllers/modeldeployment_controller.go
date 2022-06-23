@@ -52,7 +52,7 @@ type ModelDeploymentReconciler struct {
 	EventRecorder record.EventRecorder
 }
 
-type desiredComponents struct {
+type components struct {
 	optimizationJob *batchv1.Job
 }
 
@@ -116,8 +116,8 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 	return job, nil
 }
 
-func (r *ModelDeploymentReconciler) buildDesiredComponents(ctx context.Context, modelDeployment n8sv1alpha1.ModelDeployment, logger logr.Logger) (*desiredComponents, error) {
-	result := &desiredComponents{}
+func (r *ModelDeploymentReconciler) buildDesiredComponents(ctx context.Context, modelDeployment n8sv1alpha1.ModelDeployment, logger logr.Logger) (*components, error) {
+	result := &components{}
 	job, err := r.buildOptimizationJob(&modelDeployment)
 	if err != nil {
 		logger.Error(err, "unable to construct optimization job")
@@ -151,7 +151,7 @@ func (r *ModelDeploymentReconciler) updateStatus(ctx context.Context, desiredMod
 }
 
 // reconcileOptimizationJob Reconcile the model optimization job
-func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context, modelDeployment n8sv1alpha1.ModelDeployment, c *desiredComponents, logger logr.Logger) (n8sv1alpha1.StatusState, error) {
+func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context, modelDeployment n8sv1alpha1.ModelDeployment, c *components, logger logr.Logger) (n8sv1alpha1.StatusState, error) {
 	var state = n8sv1alpha1.StatusStateOptimizingModel
 
 	// Fetch optimization job
