@@ -26,9 +26,9 @@ import (
 type OptimizationTarget string
 
 const (
-	Latency   OptimizationTarget = "latency"
-	Cost                         = "cost"
-	Emissions                    = "emissions"
+	OptimizationTargetLatency   OptimizationTarget = "Latency"
+	OptimizationTargetCost                         = "Cost"
+	OptimizationTargetEmissions                    = "Emissions"
 )
 
 type StatusState string
