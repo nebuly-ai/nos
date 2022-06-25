@@ -40,8 +40,8 @@ const (
 	optimizationJobNameFormat = "%s-optimization"
 	// Number of retries before declaring an optimization job failed
 	optimizationJobBackoffLimit int32 = 0
-	// Name of the Docker image used for optimizing models for inference
-	modelOptimizerImageName = "nebuly.ai/model-optimizer"
+	// Name of the controller of ModelDeployment kind
+	modelDeploymentControllerName = "modeldeployment-controller"
 )
 
 // ModelDeploymentReconciler reconciles a ModelDeployment object
@@ -65,11 +65,11 @@ func isJobFinished(job *batchv1.Job) (bool, batchv1.JobConditionType) {
 	return false, ""
 }
 
-func constructInferenceOptimizationService(modelDeployment *n8sv1alpha1.ModelDeployment) *v1.Container {
+func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployment) *v1.Container {
 	modelOptimizerImage := fmt.Sprintf(
 		"%s:%s",
-		modelOptimizerImageName,
-		modelDeployment.Spec.Optimization.ModelOptimizerVersion,
+		modelDeployment.Spec.Optimization.ModelOptimizerImageName,
+		modelDeployment.Spec.Optimization.ModelOptimizerImageVersion,
 	)
 	return &v1.Container{
 		Name:                     "optimizer",
@@ -102,13 +102,14 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 			BackoffLimit: &optimizationJobBackoffLimitVar,
 			Template: v1.PodTemplateSpec{
 				Spec: v1.PodSpec{
-					Containers:         []v1.Container{*constructInferenceOptimizationService(modelDeployment)},
+					Containers:         []v1.Container{*constructModelOptimizerContainer(modelDeployment)},
 					ServiceAccountName: "default", // todo
 					RestartPolicy:      v1.RestartPolicyNever,
 				},
 			},
 		},
 	}
+	job.Labels[LabelCreatedBy] = modelDeploymentControllerName
 	if err := ctrl.SetControllerReference(modelDeployment, job, r.Scheme); err != nil {
 		return nil, err
 	}

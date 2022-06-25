@@ -53,11 +53,17 @@ spec:
               optimization:
                 description: Optimization defines the configuration of the model optimization
                 properties:
-                  modelOptimizerVersion:
-                    default: 0.0.1
-                    description: ModelOptimizerVersion is the version of the Docker
+                  modelOptimizerImageName:
+                    default: nebuly.ai/model-optimizer
+                    description: ModelOptimizerImageName is the name of the Docker
                       image of the inference optimization service that will be used
                       for optimizing the model
+                    type: string
+                  modelOptimizerImageVersion:
+                    default: 0.0.1
+                    description: ModelOptimizerImageVersion is the version of the
+                      Docker image of the inference optimization service that will
+                      be used for optimizing the model
                     type: string
                   target:
                     description: OptimizationTarget specifies the target for which

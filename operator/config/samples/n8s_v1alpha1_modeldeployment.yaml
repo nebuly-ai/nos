@@ -3,8 +3,9 @@ kind: ModelDeployment
 metadata:
   name: sample
 spec:
-  # TODO(user): Add fields here
   modelLibraryUri: https://foo.bar
   modelUri: https://foo.bar.libar
   optimization:
     target: Latency
+    modelOptimizerImageName: hello-world
+    modelOptimizerImageVersion: latest

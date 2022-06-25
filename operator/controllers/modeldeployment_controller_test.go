@@ -4,8 +4,10 @@ import (
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
@@ -24,17 +26,18 @@ var _ = Describe("ModelDeployment controller", func() {
 	})
 
 	Context("When creating ModelDeployment", func() {
-		It("Should launch a new model optimization job", func() {
-			var (
-				modelDeploymentName      = "model-deployment-test"
-				modelDeploymentNamespace = "default"
-				modelUri                 = "https://foo.bar/model.pkl"
-				modelLibraryUri          = "https://foo.bar/model-library"
-				optimizationTarget       = n8sv1alpha1.OptimizationTargetLatency
-				modelOptimizerVersion    = "9.9.9"
+		It("Should optimize the model through a model optimization job", func() {
+			const (
+				modelDeploymentName        = "model-deployment-test"
+				modelDeploymentNamespace   = "default"
+				modelUri                   = "https://foo.bar/model.pkl"
+				modelLibraryUri            = "https://foo.bar/model-library"
+				optimizationTarget         = n8sv1alpha1.OptimizationTargetLatency
+				modelOptimizerImageVersion = "5.2-rc"
+				modelOptimizerImageName    = "bash"
 			)
 
-			By("Creating a new ModelDeployment")
+			By("Creating a new ModelDeployment successfully")
 			modelDeployment := &n8sv1alpha1.ModelDeployment{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: n8sv1alpha1.GroupVersion.String(),
@@ -48,15 +51,15 @@ var _ = Describe("ModelDeployment controller", func() {
 					ModelUri:        modelUri,
 					ModelLibraryUri: modelLibraryUri,
 					Optimization: n8sv1alpha1.OptimizationSpec{
-						Target:                optimizationTarget,
-						ModelOptimizerVersion: modelOptimizerVersion,
+						Target:                     optimizationTarget,
+						ModelOptimizerImageName:    modelOptimizerImageName,
+						ModelOptimizerImageVersion: modelOptimizerImageVersion,
 					},
 				},
 			}
 			Expect(k8sClient.Create(ctx, modelDeployment)).Should(Succeed())
 
 			By("Checking the created ModelDeployment matches the specs")
-			// fetch the newly created model deployment
 			var createdModelDeployment n8sv1alpha1.ModelDeployment
 			Eventually(func() bool {
 				lookupKey := types.NamespacedName{Name: modelDeploymentName, Namespace: modelDeploymentNamespace}
@@ -65,8 +68,17 @@ var _ = Describe("ModelDeployment controller", func() {
 				}
 				return true
 			}, timeout, interval).Should(BeTrue())
-			// check if the actual object matches the specs
 			Expect(createdModelDeployment.Spec).Should(Equal(modelDeployment.Spec))
+
+			By("Creating a new Job")
+			Eventually(func() int {
+				var jobList v1.JobList
+				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{LabelCreatedBy: modelDeploymentControllerName})
+				if err != nil {
+					return 0
+				}
+				return len(jobList.Items)
+			}, timeout, interval).Should(Equal(1))
 		})
 	})
 })

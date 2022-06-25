@@ -43,11 +43,16 @@ const (
 type OptimizationSpec struct {
 	// OptimizationTarget specifies the target for which the model that has to be deployed will be optimized for
 	Target OptimizationTarget `json:"target"`
-	// ModelOptimizerVersion is the version of the Docker image of the inference optimization service that will be used for
-	// optimizing the model
+	// ModelOptimizerImageName is the name of the Docker image of the inference optimization service that will be
+	// used for optimizing the model
+	//+kubebuilder:default="nebuly.ai/model-optimizer"
+	//+optional
+	ModelOptimizerImageName string `json:"modelOptimizerImageName,omitempty"`
+	// ModelOptimizerImageVersion is the version of the Docker image of the inference optimization service that
+	// will be used for optimizing the model
 	//+kubebuilder:default="0.0.1"
 	//+optional
-	ModelOptimizerVersion string `json:"modelOptimizerVersion,omitempty"`
+	ModelOptimizerImageVersion string `json:"modelOptimizerImageVersion,omitempty"`
 }
 
 // ModelDeploymentSpec defines the desired state of ModelDeployment
