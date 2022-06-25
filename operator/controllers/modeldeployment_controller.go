@@ -91,6 +91,7 @@ func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployme
 
 func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.Job, error) {
 	optimizationJobBackoffLimitVar := optimizationJobBackoffLimit
+	var runAsNonRoot = true
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      make(map[string]string),
@@ -102,6 +103,7 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 			BackoffLimit: &optimizationJobBackoffLimitVar,
 			Template: v1.PodTemplateSpec{
 				Spec: v1.PodSpec{
+					SecurityContext:    &v1.PodSecurityContext{RunAsNonRoot: &runAsNonRoot},
 					Containers:         []v1.Container{*constructModelOptimizerContainer(modelDeployment)},
 					ServiceAccountName: "default", // todo
 					RestartPolicy:      v1.RestartPolicyNever,

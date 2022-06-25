@@ -26,17 +26,17 @@ var _ = Describe("ModelDeployment controller", func() {
 	})
 
 	Context("When creating ModelDeployment", func() {
-		It("Should optimize the model through a model optimization job", func() {
-			const (
-				modelDeploymentName        = "model-deployment-test"
-				modelDeploymentNamespace   = "default"
-				modelUri                   = "https://foo.bar/model.pkl"
-				modelLibraryUri            = "https://foo.bar/model-library"
-				optimizationTarget         = n8sv1alpha1.OptimizationTargetLatency
-				modelOptimizerImageVersion = "5.2-rc"
-				modelOptimizerImageName    = "bash"
-			)
+		const (
+			modelDeploymentName        = "model-deployment-test"
+			modelDeploymentNamespace   = "default"
+			modelUri                   = "https://foo.bar/model.pkl"
+			modelLibraryUri            = "https://foo.bar/model-library"
+			optimizationTarget         = n8sv1alpha1.OptimizationTargetLatency
+			modelOptimizerImageVersion = "5.2-rc"
+			modelOptimizerImageName    = "bash"
+		)
 
+		It("Should optimize the model through a model optimization job", func() {
 			By("Creating a new ModelDeployment successfully")
 			modelDeployment := &n8sv1alpha1.ModelDeployment{
 				TypeMeta: metav1.TypeMeta{
