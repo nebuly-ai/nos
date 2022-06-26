@@ -1,5 +1,5 @@
 # Adds namespace to all resources.
-namespace: operator-system
+namespace: n8s-system
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
@@ -9,8 +9,10 @@ namespace: operator-system
 namePrefix: operator-
 
 # Labels to add to all resources and selectors.
-#commonLabels:
-#  someName: someValue
+commonLabels:
+  app: n8s
+  app.kubernetes.io/name: n8s
+  app.kubernetes.io/version: v0.0.1
 
 bases:
 - ../crd
