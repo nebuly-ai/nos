@@ -1,10 +1,11 @@
 package controllers
 
 import (
+	"fmt"
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -13,7 +14,7 @@ import (
 
 var _ = Describe("ModelDeployment controller", func() {
 	const (
-		timeout  = time.Second * 30
+		timeout  = time.Second * 20
 		interval = time.Second * 1
 	)
 
@@ -33,11 +34,11 @@ var _ = Describe("ModelDeployment controller", func() {
 			modelLibraryUri                   = "https://foo.bar/model-library"
 			modelLibraryCredentialsSecretName = "azure-credentials"
 			optimizationTarget                = n8sv1alpha1.OptimizationTargetLatency
-			modelOptimizerImageVersion        = "5.2-rc"
-			modelOptimizerImageName           = "bash"
+			modelOptimizerImageVersion        = "0.0.1"
+			modelOptimizerImageName           = "nebuly.ai/model-optimizer-mock"
 		)
 
-		It("Should optimize the model through a model optimization job", func() {
+		It("Should start a model optimization job", func() {
 			By("Creating a new ModelDeployment successfully")
 			modelDeployment := &n8sv1alpha1.ModelDeployment{
 				TypeMeta: metav1.TypeMeta{
@@ -62,7 +63,7 @@ var _ = Describe("ModelDeployment controller", func() {
 					},
 				},
 			}
-			Expect(k8sClient.Create(ctx, modelDeployment)).Should(Succeed())
+			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
 
 			By("Checking the created ModelDeployment matches the specs")
 			var createdModelDeployment n8sv1alpha1.ModelDeployment
@@ -73,17 +74,29 @@ var _ = Describe("ModelDeployment controller", func() {
 				}
 				return true
 			}, timeout, interval).Should(BeTrue())
-			Expect(createdModelDeployment.Spec).Should(Equal(modelDeployment.Spec))
+			Expect(createdModelDeployment.Spec).To(Equal(modelDeployment.Spec))
 
 			By("Creating a new Job")
 			Eventually(func() int {
-				var jobList v1.JobList
+				var jobList batchv1.JobList
 				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{LabelCreatedBy: modelDeploymentControllerName})
 				if err != nil {
 					return 0
 				}
 				return len(jobList.Items)
 			}, timeout, interval).Should(Equal(1))
+
+			By("Checking that the Job launched Pods using the specified Docker image")
+			expectedImageName := fmt.Sprintf("%s:%s", modelOptimizerImageName, modelOptimizerImageVersion)
+			var jobList batchv1.JobList
+			Expect(k8sClient.List(ctx, &jobList, client.MatchingLabels{LabelCreatedBy: modelDeploymentControllerName})).To(Succeed())
+			Expect(jobList.Items).To(HaveLen(1))
+			job := jobList.Items[0]
+			Expect(job.Spec.Template.Spec.Containers).To(HaveLen(1))
+			Expect(job.Spec.Template.Spec.Containers[0].Image).To(Equal(expectedImageName))
+
+			By("Checking that the Pods launched by the Job do not run as root")
+			Expect(job.Spec.Template.Spec.SecurityContext.RunAsNonRoot).To(HaveValue(BeTrue()))
 		})
 	})
 })
