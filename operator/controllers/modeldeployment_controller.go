@@ -22,7 +22,7 @@ import (
 	"github.com/go-logr/logr"
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,7 +55,7 @@ type components struct {
 
 func isJobFinished(job *batchv1.Job) (bool, batchv1.JobConditionType) {
 	for _, c := range job.Status.Conditions {
-		if (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == v1.ConditionTrue {
+		if (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue {
 			return true, c.Type
 		}
 	}
@@ -63,19 +63,19 @@ func isJobFinished(job *batchv1.Job) (bool, batchv1.JobConditionType) {
 	return false, ""
 }
 
-func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployment) *v1.Container {
+func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployment) *corev1.Container {
 	modelOptimizerImage := fmt.Sprintf(
 		"%s:%s",
 		modelDeployment.Spec.Optimization.ModelOptimizerImageName,
 		modelDeployment.Spec.Optimization.ModelOptimizerImageVersion,
 	)
-	return &v1.Container{
+	return &corev1.Container{
 		Name:                     "optimizer",
 		Image:                    modelOptimizerImage,
-		TerminationMessagePolicy: v1.TerminationMessageFallbackToLogsOnError,
-		EnvFrom: []v1.EnvFromSource{{
-			SecretRef: &v1.SecretEnvSource{
-				LocalObjectReference: v1.LocalObjectReference{Name: modelDeployment.Spec.ModelLibrary.SecretName},
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		EnvFrom: []corev1.EnvFromSource{{
+			SecretRef: &corev1.SecretEnvSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: modelDeployment.Spec.ModelLibrary.SecretName},
 				Optional:             BoolAddr(false),
 			},
 		}},
@@ -99,11 +99,11 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit: &optimizationJobBackoffLimit,
-			Template: v1.PodTemplateSpec{
-				Spec: v1.PodSpec{
-					SecurityContext: &v1.PodSecurityContext{RunAsNonRoot: &runAsNonRoot},
-					Containers:      []v1.Container{*constructModelOptimizerContainer(modelDeployment)},
-					RestartPolicy:   v1.RestartPolicyNever,
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					SecurityContext: &corev1.PodSecurityContext{RunAsNonRoot: &runAsNonRoot},
+					Containers:      []corev1.Container{*constructModelOptimizerContainer(modelDeployment)},
+					RestartPolicy:   corev1.RestartPolicyNever,
 				},
 			},
 		},
@@ -142,7 +142,7 @@ func (r *ModelDeploymentReconciler) updateStatus(ctx context.Context, desiredMod
 		logger.Error(err, "unable to update ModelDeployment status")
 		r.EventRecorder.Eventf(
 			&desiredModelDeployment,
-			v1.EventTypeWarning,
+			corev1.EventTypeWarning,
 			"StatusUpdateFailed",
 			"Failed to update status of ModelDeployment %q: %s", desiredModelDeployment.Name, err.Error(),
 		)
@@ -162,7 +162,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 	err := r.Get(ctx, jobNamespacedName, &optimizationJob)
 	if client.IgnoreNotFound(err) != nil {
 		logger.Error(err, "unable to fetch optimization job")
-		r.EventRecorder.Event(&modelDeployment, v1.EventTypeWarning, EventInternalError, err.Error())
+		r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
 		return n8sv1alpha1.StatusStateFailed, err
 	}
 
@@ -170,13 +170,13 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 	if apierrors.IsNotFound(err) == true {
 		if err := r.Client.Create(ctx, c.optimizationJob); err != nil {
 			logger.Error(err, "unable to create optimization job", "Job", c.optimizationJob)
-			r.EventRecorder.Event(&modelDeployment, v1.EventTypeWarning, EventInternalError, err.Error())
+			r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
 			return n8sv1alpha1.StatusStateFailed, err
 		}
 		logger.Info("created new optimization job", "Job", c.optimizationJob)
 		r.EventRecorder.Event(
 			&modelDeployment,
-			v1.EventTypeNormal,
+			corev1.EventTypeNormal,
 			"ModelOptimizationStarted",
 			"Started job for optimizing the deployed model",
 		)
@@ -190,7 +190,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 				"job",
 				optimizationJob,
 			)
-			r.EventRecorder.Event(&modelDeployment, v1.EventTypeWarning, EventInternalError, err.Error())
+			r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
 			return n8sv1alpha1.StatusStateFailed, err
 		}
 		modelDeployment.Status.ModelOptimizationJob = *ref
@@ -205,7 +205,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 			logger.Error(fmt.Errorf(errMsg), "unable to perform model optimization")
 			r.EventRecorder.Eventf(
 				&modelDeployment,
-				v1.EventTypeWarning,
+				corev1.EventTypeWarning,
 				EventModelOptimizationFailed,
 				"Error optimizing model, for more information run: kubectl logs job/%s",
 				optimizationJob.Name,
@@ -216,7 +216,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 			state = n8sv1alpha1.StatusStateDeployingModel
 			r.EventRecorder.Event(
 				&modelDeployment,
-				v1.EventTypeWarning,
+				corev1.EventTypeWarning,
 				EventModelOptimizationCompleted,
 				"Model optimized successfully",
 			)
@@ -244,7 +244,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// Build desired components
 	desiredComponents, err := r.buildDesiredComponents(ctx, modelDeployment, logger)
 	if err != nil {
-		r.EventRecorder.Event(&modelDeployment, v1.EventTypeWarning, EventInternalError, err.Error())
+		r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
 		modelDeployment.Status.State = n8sv1alpha1.StatusStateFailed
 		r.updateStatus(ctx, modelDeployment, logger)
 		return ctrl.Result{}, err
