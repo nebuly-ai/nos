@@ -73,16 +73,22 @@ func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployme
 		Name:                     "optimizer",
 		Image:                    modelOptimizerImage,
 		TerminationMessagePolicy: v1.TerminationMessageFallbackToLogsOnError,
+		EnvFrom: []v1.EnvFromSource{{
+			SecretRef: &v1.SecretEnvSource{
+				LocalObjectReference: v1.LocalObjectReference{Name: modelDeployment.Spec.ModelLibrary.SecretName},
+				Optional:             BoolAddr(false),
+			},
+		}},
 		Args: []string{
-			modelDeployment.Spec.ModelUri,
-			modelDeployment.Spec.ModelLibraryUri,
+			modelDeployment.Spec.SourceModel.Uri,
+			modelDeployment.Spec.ModelLibrary.Uri,
 			string(modelDeployment.Spec.Optimization.Target),
 		},
 	}
 }
 
 func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.Job, error) {
-	optimizationJobBackoffLimitVar := int32(modelDeployment.Spec.Optimization.OptimizationJobBackoffLimit)
+	optimizationJobBackoffLimit := int32(modelDeployment.Spec.Optimization.OptimizationJobBackoffLimit)
 	var runAsNonRoot = true
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -92,13 +98,12 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 			Namespace:   modelDeployment.Namespace,
 		},
 		Spec: batchv1.JobSpec{
-			BackoffLimit: &optimizationJobBackoffLimitVar,
+			BackoffLimit: &optimizationJobBackoffLimit,
 			Template: v1.PodTemplateSpec{
 				Spec: v1.PodSpec{
-					SecurityContext:    &v1.PodSecurityContext{RunAsNonRoot: &runAsNonRoot},
-					Containers:         []v1.Container{*constructModelOptimizerContainer(modelDeployment)},
-					ServiceAccountName: "default", // todo
-					RestartPolicy:      v1.RestartPolicyNever,
+					SecurityContext: &v1.PodSecurityContext{RunAsNonRoot: &runAsNonRoot},
+					Containers:      []v1.Container{*constructModelOptimizerContainer(modelDeployment)},
+					RestartPolicy:   v1.RestartPolicyNever,
 				},
 			},
 		},
@@ -206,7 +211,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 				optimizationJob.Name,
 			)
 		}
-		// If the job finished successfully then deploy the optimized model
+		// If the job finished successfully and the optimized model is available then deploy the optimized model
 		if finished == true && status == batchv1.JobComplete {
 			state = n8sv1alpha1.StatusStateDeployingModel
 			r.EventRecorder.Event(

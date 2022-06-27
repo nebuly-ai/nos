@@ -27,13 +27,14 @@ var _ = Describe("ModelDeployment controller", func() {
 
 	Context("When creating ModelDeployment", func() {
 		const (
-			modelDeploymentName        = "model-deployment-test"
-			modelDeploymentNamespace   = "default"
-			modelUri                   = "https://foo.bar/model.pkl"
-			modelLibraryUri            = "https://foo.bar/model-library"
-			optimizationTarget         = n8sv1alpha1.OptimizationTargetLatency
-			modelOptimizerImageVersion = "5.2-rc"
-			modelOptimizerImageName    = "bash"
+			modelDeploymentName               = "model-deployment-test"
+			modelDeploymentNamespace          = "default"
+			modelUri                          = "https://foo.bar/model.pkl"
+			modelLibraryUri                   = "https://foo.bar/model-library"
+			modelLibraryCredentialsSecretName = "azure-credentials"
+			optimizationTarget                = n8sv1alpha1.OptimizationTargetLatency
+			modelOptimizerImageVersion        = "5.2-rc"
+			modelOptimizerImageName           = "bash"
 		)
 
 		It("Should optimize the model through a model optimization job", func() {
@@ -48,8 +49,12 @@ var _ = Describe("ModelDeployment controller", func() {
 					Namespace: modelDeploymentNamespace,
 				},
 				Spec: n8sv1alpha1.ModelDeploymentSpec{
-					ModelUri:        modelUri,
-					ModelLibraryUri: modelLibraryUri,
+					SourceModel: n8sv1alpha1.SourceModel{Uri: modelUri},
+					ModelLibrary: n8sv1alpha1.ModelLibrary{
+						Uri:        modelLibraryUri,
+						Kind:       n8sv1alpha1.ModelLibraryKindAzure,
+						SecretName: modelLibraryCredentialsSecretName,
+					},
 					Optimization: n8sv1alpha1.OptimizationSpec{
 						Target:                     optimizationTarget,
 						ModelOptimizerImageName:    modelOptimizerImageName,

@@ -42,14 +42,32 @@ spec:
           spec:
             description: ModelDeploymentSpec defines the desired state of ModelDeployment
             properties:
-              modelLibraryUri:
-                description: ModelLibraryUri is a URI pointing to a cloud storage
-                  that will be used as model library for saving optimized models
-                type: string
-              modelUri:
-                description: ModelUri is a URI pointing to the model that has to be
-                  deployed
-                type: string
+              modelLibrary:
+                description: ModelLibrary
+                properties:
+                  kind:
+                    description: Kind is the kind of cloud storage hosting the model
+                      library
+                    enum:
+                    - azure
+                    - s3
+                    type: string
+                  secretName:
+                    description: SecretName is the name of the secret containing the
+                      credentials required for authenticating to the model library
+                      storage. The identity associated with these credentials shall
+                      have write permissions in order to be able to upload the optimized
+                      models.
+                    type: string
+                  uri:
+                    description: Uri is a URI pointing to a cloud storage that will
+                      be used as model library for saving optimized models
+                    type: string
+                required:
+                - kind
+                - secretName
+                - uri
+                type: object
               optimization:
                 description: Optimization defines the configuration of the model optimization
                 properties:
@@ -79,13 +97,22 @@ spec:
                     - Emissions
                     type: string
                 required:
-                - optimizationJobBackoffLimit
                 - target
                 type: object
+              sourceModel:
+                description: SourceModel
+                properties:
+                  uri:
+                    description: Uri is a URI pointing to the model that has to be
+                      deployed
+                    type: string
+                required:
+                - uri
+                type: object
             required:
-            - modelLibraryUri
-            - modelUri
+            - modelLibrary
             - optimization
+            - sourceModel
             type: object
           status:
             description: ModelDeploymentStatus defines the observed state of ModelDeployment

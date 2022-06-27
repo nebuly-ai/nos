@@ -40,6 +40,15 @@ const (
 	StatusStateFailed                      = "Failed"
 )
 
+// ModelLibraryKind
+//+kubebuilder:validation:Enum=azure;s3
+type ModelLibraryKind string
+
+const (
+	ModelLibraryKindAzure ModelLibraryKind = "azure"
+	ModelLibraryKindS3    ModelLibraryKind = "s3"
+)
+
 type OptimizationSpec struct {
 	// OptimizationTarget specifies the target for which the model that has to be deployed will be optimized for
 	Target OptimizationTarget `json:"target"`
@@ -55,18 +64,35 @@ type OptimizationSpec struct {
 	ModelOptimizerImageVersion string `json:"modelOptimizerImageVersion,omitempty"`
 	// OptimizationJobBackoffLimit is the number of retries before declaring an optimization job failed
 	//+kubebuilder:default=1
+	//+optional
 	OptimizationJobBackoffLimit int8 `json:"optimizationJobBackoffLimit"`
+}
+
+type SourceModel struct {
+	// Uri is a URI pointing to the model that has to be deployed
+	Uri string `json:"uri"`
+}
+
+type ModelLibrary struct {
+	// Uri is a URI pointing to a cloud storage that will be used as model library for saving optimized
+	// models
+	Uri string `json:"uri"`
+	// Kind is the kind of cloud storage hosting the model library
+	Kind ModelLibraryKind `json:"kind"`
+	// SecretName is the name of the secret containing the credentials required for authenticating to the model library
+	// storage. The identity associated with these credentials shall have write permissions in order to be able to
+	// upload the optimized models.
+	SecretName string `json:"secretName"`
 }
 
 // ModelDeploymentSpec defines the desired state of ModelDeployment
 type ModelDeploymentSpec struct {
-	// ModelUri is a URI pointing to the model that has to be deployed
-	ModelUri string `json:"modelUri"`
-	// ModelLibraryUri is a URI pointing to a cloud storage that will be used as model library for saving optimized
-	// models
-	ModelLibraryUri string `json:"modelLibraryUri"`
 	// Optimization defines the configuration of the model optimization
 	Optimization OptimizationSpec `json:"optimization"`
+	// ModelLibrary
+	ModelLibrary ModelLibrary `json:"modelLibrary"`
+	// SourceModel
+	SourceModel SourceModel `json:"sourceModel"`
 }
 
 // ModelDeploymentStatus defines the observed state of ModelDeployment

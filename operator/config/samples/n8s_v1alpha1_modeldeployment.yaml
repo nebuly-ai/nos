@@ -3,8 +3,12 @@ kind: ModelDeployment
 metadata:
   name: sample
 spec:
-  modelLibraryUri: https://foo.bar
-  modelUri: https://foo.bar.libar
+  modelLibrary:
+    uri: https://foo.bar
+    kind: azure
+    secretName: azure-credentials
+  sourceModel:
+    uri: https://foo.bar.libar
   optimization:
     target: Latency
     modelOptimizerImageName: hello-world
