@@ -37,7 +37,7 @@ class OptimizationTarget(str, enum.Enum):
 def cli(
         source_model_uri: str = typer.Argument(..., help=ARG_SOURCE_MODEL_URI_HELP),
         optimized_model_destination_uri: str = typer.Argument(..., help=ARG_OPTIMIZED_MODEL_DESTINATION_URI_HELP),
-        target: OptimizationTarget = typer.Argument(..., help=ARG_TARGET_HELP),
+        target: OptimizationTarget = typer.Argument(..., case_sensitive=False, help=ARG_TARGET_HELP),
         debug: bool = False
 ):
     setup_logging(debug)
