@@ -65,6 +65,11 @@ spec:
                       Docker image of the inference optimization service that will
                       be used for optimizing the model
                     type: string
+                  optimizationJobBackoffLimit:
+                    default: 1
+                    description: OptimizationJobBackoffLimit is the number of retries
+                      before declaring an optimization job failed
+                    type: integer
                   target:
                     description: OptimizationTarget specifies the target for which
                       the model that has to be deployed will be optimized for
@@ -74,6 +79,7 @@ spec:
                     - Emissions
                     type: string
                 required:
+                - optimizationJobBackoffLimit
                 - target
                 type: object
             required:

@@ -54,7 +54,7 @@ def cli(
     logger.info(f'Selecting best hardware for optimized model - target is "{target}"')
     time.sleep(1)
 
-    logger.info("Updating n8s model deployment")
+    logger.info(f"Uploading model-info.json to {optimized_model_destination_uri}")
     time.sleep(1)
 
 

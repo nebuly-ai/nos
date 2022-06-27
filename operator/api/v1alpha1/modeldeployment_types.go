@@ -53,6 +53,9 @@ type OptimizationSpec struct {
 	//+kubebuilder:default="0.0.1"
 	//+optional
 	ModelOptimizerImageVersion string `json:"modelOptimizerImageVersion,omitempty"`
+	// OptimizationJobBackoffLimit is the number of retries before declaring an optimization job failed
+	//+kubebuilder:default=1
+	OptimizationJobBackoffLimit int8 `json:"optimizationJobBackoffLimit"`
 }
 
 // ModelDeploymentSpec defines the desired state of ModelDeployment

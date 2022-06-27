@@ -38,8 +38,6 @@ import (
 const (
 	// Format used for generating the names of the optimization jobs
 	optimizationJobNameFormat = "%s-optimization"
-	// Number of retries before declaring an optimization job failed
-	optimizationJobBackoffLimit int32 = 0
 	// Name of the controller of ModelDeployment kind
 	modelDeploymentControllerName = "modeldeployment-controller"
 )
@@ -90,7 +88,7 @@ func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployme
 }
 
 func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.Job, error) {
-	optimizationJobBackoffLimitVar := optimizationJobBackoffLimit
+	optimizationJobBackoffLimitVar := int32(modelDeployment.Spec.Optimization.OptimizationJobBackoffLimit)
 	var runAsNonRoot = true
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
