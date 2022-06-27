@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -113,6 +114,11 @@ type ModelDeployment struct {
 
 	Spec   ModelDeploymentSpec   `json:"spec,omitempty"`
 	Status ModelDeploymentStatus `json:"status,omitempty"`
+}
+
+// GetModelLibraryPath returns a URI pointing to the path within the model library dedicated to the current model deployment
+func (m *ModelDeployment) GetModelLibraryPath() string {
+	return fmt.Sprintf("%s/%s/%s", m.Spec.ModelLibrary.Uri, m.Namespace, m.Name)
 }
 
 //+kubebuilder:object:root=true

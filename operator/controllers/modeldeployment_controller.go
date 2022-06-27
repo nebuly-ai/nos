@@ -81,7 +81,7 @@ func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployme
 		}},
 		Args: []string{
 			modelDeployment.Spec.SourceModel.Uri,
-			modelDeployment.Spec.ModelLibrary.Uri,
+			modelDeployment.GetModelLibraryPath(),
 			string(modelDeployment.Spec.Optimization.Target),
 		},
 	}
@@ -112,6 +112,7 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 	if err := ctrl.SetControllerReference(modelDeployment, job, r.Scheme); err != nil {
 		return nil, err
 	}
+
 	return job, nil
 }
 
