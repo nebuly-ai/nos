@@ -73,12 +73,6 @@ func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployme
 		Name:                     "optimizer",
 		Image:                    modelOptimizerImage,
 		TerminationMessagePolicy: v1.TerminationMessageFallbackToLogsOnError,
-		Env: []v1.EnvVar{
-			{
-				Name:  "MODEL_DEPLOYMENT_NAME",
-				Value: modelDeployment.Name,
-			},
-		},
 		Args: []string{
 			modelDeployment.Spec.ModelUri,
 			modelDeployment.Spec.ModelLibraryUri,
