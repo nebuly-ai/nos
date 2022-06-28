@@ -30,19 +30,19 @@ var _ = Describe("New model library from json config", func() {
 
 	When("JSON config is empty", func() {
 		It("Should return an error", func() {
-			Expect(NewModelLibraryFromConfig("")).Error().To(HaveOccurred())
+			Expect(NewModelLibraryFromJson("")).Error().To(HaveOccurred())
 		})
 	})
 
 	When("JSON config is malformed", func() {
 		It("Should return an error", func() {
-			Expect(NewModelLibraryFromConfig("malformed")).Error().To(HaveOccurred())
+			Expect(NewModelLibraryFromJson("malformed")).Error().To(HaveOccurred())
 		})
 	})
 
 	When("JSON has missing field", func() {
 		It("Should return an error", func() {
-			Expect(NewModelLibraryFromConfig("{\"foo\": \"bar\"")).Error().To(HaveOccurred())
+			Expect(NewModelLibraryFromJson("{\"foo\": \"bar\"")).Error().To(HaveOccurred())
 		})
 	})
 
@@ -55,7 +55,7 @@ var _ = Describe("New model library from json config", func() {
 			kind,
 		)
 		It("Should ignore extra fields", func() {
-			modelLibrary, err := NewModelLibraryFromConfig(json)
+			modelLibrary, err := NewModelLibraryFromJson(json)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(modelLibrary).ToNot(BeNil())
 			var azureModelLibraryVar *azureModelLibrary
@@ -66,7 +66,7 @@ var _ = Describe("New model library from json config", func() {
 	When("Model library kind is invalid", func() {
 		json := newModelLibraryJson("https://foo.bar", "invalid")
 		It("Should return an error", func() {
-			Expect(NewModelLibraryFromConfig(json)).Error().To(HaveOccurred())
+			Expect(NewModelLibraryFromJson(json)).Error().To(HaveOccurred())
 		})
 	})
 
@@ -74,7 +74,7 @@ var _ = Describe("New model library from json config", func() {
 		json := newModelLibraryJson("https://foo.bar", string(ModelLibraryKindAzure))
 		It("Should return an error", func() {
 			Expect(os.Unsetenv(EnvModelLibraryAzureTenantId)).To(Succeed())
-			Expect(NewModelLibraryFromConfig(json)).Error().To(HaveOccurred())
+			Expect(NewModelLibraryFromJson(json)).Error().To(HaveOccurred())
 		})
 	})
 

@@ -15,9 +15,9 @@ const (
 	ModelLibraryKindAzure ModelLibraryKind = "azure"
 	ModelLibraryKindS3    ModelLibraryKind = "s3"
 
-	EnvModelLibraryAzureClientId     = "AZ_CLIENT_ID"
-	EnvModelLibraryAzureClientSecret = "AZ_CLIENT_SECRET"
-	EnvModelLibraryAzureTenantId     = "AZ_TENANT_ID"
+	EnvModelLibraryAzureClientId     string = "AZ_CLIENT_ID"
+	EnvModelLibraryAzureClientSecret string = "AZ_CLIENT_SECRET"
+	EnvModelLibraryAzureTenantId     string = "AZ_TENANT_ID"
 )
 
 type ModelInfo struct {
@@ -35,7 +35,7 @@ type baseModelLibrary struct {
 	Kind ModelLibraryKind `json:"kind"`
 }
 
-func NewModelLibraryFromConfig(jsonConfig string) (ModelLibrary, error) {
+func NewModelLibraryFromJson(jsonConfig string) (ModelLibrary, error) {
 	var baseModelLibrary baseModelLibrary
 	if err := json.Unmarshal([]byte(jsonConfig), &baseModelLibrary); err != nil {
 		return nil, err

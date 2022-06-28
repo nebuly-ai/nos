@@ -85,7 +85,7 @@ func getModelLibrary(namespace string) (controllers.ModelLibrary, error) {
 		)
 	}
 	if modelLibraryConfig, ok := configmap.Data[controllers.ModelLibraryConfigKeyName]; ok {
-		return controllers.NewModelLibraryFromConfig(modelLibraryConfig)
+		return controllers.NewModelLibraryFromJson(modelLibraryConfig)
 	}
 	return nil, fmt.Errorf(
 		"could not find key %s in model library configmap %s",
