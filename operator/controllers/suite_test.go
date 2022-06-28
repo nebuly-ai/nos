@@ -80,10 +80,18 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
+	ml := newMockModelLibrary(
+		baseModelLibrary{
+			Uri:  "https://foo.bar",
+			Kind: modelLibraryKindMock,
+		},
+	)
+
 	err = (&ModelDeploymentReconciler{
 		Client:        k8sManager.GetClient(),
 		Scheme:        k8sManager.GetScheme(),
 		EventRecorder: k8sManager.GetEventRecorderFor("ModelDeployment"),
+		ModelLibrary:  ml,
 	}).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 

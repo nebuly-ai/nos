@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	batchv1 "k8s.io/api/batch/v1"
@@ -20,6 +21,9 @@ var _ = Describe("ModelDeployment controller", func() {
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
+		if utils.GetEnvBool(EnvSkipControllerTests, false) {
+			Skip(fmt.Sprintf("%s is true, skipping controller tests", EnvSkipControllerTests))
+		}
 	})
 
 	AfterEach(func() {

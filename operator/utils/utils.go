@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func BoolAddr(b bool) *bool {
@@ -16,6 +17,15 @@ func GetEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func GetEnvBool(key string, fallback bool) bool {
+	value := GetEnv(key, strconv.FormatBool(fallback))
+	if v, err := strconv.ParseBool(value); err != nil {
+		return fallback
+	} else {
+		return v
+	}
 }
 
 func GetEnvOrError(key string) (string, error) {

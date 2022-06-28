@@ -23,9 +23,9 @@ var _ = Describe("New model library from json config", func() {
 	)
 
 	BeforeEach(func() {
-		Expect(os.Setenv(EnvModelLibraryAzureClientSecret, azureClientSecret)).To(Succeed())
-		Expect(os.Setenv(EnvModelLibraryAzureClientId, azureClientId)).To(Succeed())
-		Expect(os.Setenv(EnvModelLibraryAzureTenantId, azureTenantId)).To(Succeed())
+		Expect(os.Setenv(envModelLibraryAzureClientSecret, azureClientSecret)).To(Succeed())
+		Expect(os.Setenv(envModelLibraryAzureClientId, azureClientId)).To(Succeed())
+		Expect(os.Setenv(envModelLibraryAzureTenantId, azureTenantId)).To(Succeed())
 	})
 
 	When("JSON config is empty", func() {
@@ -48,7 +48,7 @@ var _ = Describe("New model library from json config", func() {
 
 	When("JSON has extra fields", func() {
 		uri := "https://foo.bar"
-		kind := ModelLibraryKindAzure
+		kind := modelLibraryKindAzure
 		json := fmt.Sprintf(
 			"{\"uri\": \"%s\", \"kind\": \"%s\", \"foo\": \"bar\"}",
 			uri,
@@ -71,21 +71,64 @@ var _ = Describe("New model library from json config", func() {
 	})
 
 	When("Any required env variable is missing ", func() {
-		json := newModelLibraryJson("https://foo.bar", string(ModelLibraryKindAzure))
+		json := newModelLibraryJson("https://foo.bar", string(modelLibraryKindAzure))
 		It("Should return an error", func() {
-			Expect(os.Unsetenv(EnvModelLibraryAzureTenantId)).To(Succeed())
+			Expect(os.Unsetenv(envModelLibraryAzureTenantId)).To(Succeed())
 			Expect(NewModelLibraryFromJson(json)).Error().To(HaveOccurred())
 		})
 	})
 
 	DescribeTable("Model library kinds from JSON",
-		func(kind ModelLibraryKind, expectedModelLibraryType interface{}) {
+		func(kind ModelLibraryStorageKind, expectedModelLibraryType interface{}) {
 			json := newModelLibraryJson("https://foo.bar", string(kind))
 			modelLibary, err := NewModelLibraryFromJson(json)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(modelLibary).To(BeAssignableToTypeOf(expectedModelLibraryType))
 		},
-		Entry("Kind Azure", ModelLibraryKindAzure, &azureModelLibrary{}),
-		Entry("Kind S3", ModelLibraryKindS3, &s3ModelLibrary{}),
+		Entry("Kind Azure", modelLibraryKindAzure, &azureModelLibrary{}),
+		Entry("Kind S3", modelLibraryKindS3, &s3ModelLibrary{}),
 	)
+})
+
+var _ = Describe("GetCredentials", func() {
+	When("Model Library kind is Azure", func() {
+		const (
+			azureClientSecret = "client-secret"
+			azureClientId     = "client-id"
+			azureTenantId     = "tenant-id"
+		)
+		var (
+			modelLibrary ModelLibrary
+		)
+		BeforeEach(func() {
+			Expect(os.Setenv(envModelLibraryAzureClientSecret, azureClientSecret)).To(Succeed())
+			Expect(os.Setenv(envModelLibraryAzureClientId, azureClientId)).To(Succeed())
+			Expect(os.Setenv(envModelLibraryAzureTenantId, azureTenantId)).To(Succeed())
+			modelLibrary = &azureModelLibrary{
+				baseModelLibrary: baseModelLibrary{Uri: "uri"},
+				blobClient:       nil,
+			}
+		})
+
+		When("Required env variable is not set", func() {
+			It("Should return error", func() {
+				Expect(os.Unsetenv(envModelLibraryAzureTenantId)).To(Succeed())
+				Expect(modelLibrary.GetCredentials()).Error().To(HaveOccurred())
+			})
+		})
+
+		When("All required env variables are set", func() {
+			It("Should return a map containing the credentials", func() {
+				credentials, err := modelLibrary.GetCredentials()
+				Expect(err).ToNot(HaveOccurred())
+
+				By("Containing as values the credentials provided as env variable")
+				Expect(credentials).To(HaveKeyWithValue(envModelLibraryAzureClientSecret, azureClientSecret))
+				Expect(credentials).To(HaveKeyWithValue(envModelLibraryAzureClientId, azureClientId))
+				Expect(credentials).To(HaveKeyWithValue(envModelLibraryAzureTenantId, azureTenantId))
+				By("Containing only the credentials provided as env variable")
+				Expect(credentials).To(HaveLen(3))
+			})
+		})
+	})
 })

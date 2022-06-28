@@ -9,30 +9,49 @@ import (
 	"github.com/nebuly-ai/nebulnetes/utils"
 )
 
-type ModelLibraryKind string
+const (
+	// ModelLibraryConfigMapName is the name of the ConfigMap containing the configuration of the model library
+	ModelLibraryConfigMapName string = "n8s-model-library-config"
+	// ModelLibraryConfigKeyName is the name of the key containing to the config of the model library
+	ModelLibraryConfigKeyName string = "config"
+
+	modelInfoFileName string = "model-info.json"
+
+	envModelLibraryAzureClientId     string = "AZ_CLIENT_ID"
+	envModelLibraryAzureClientSecret string = "AZ_CLIENT_SECRET"
+	envModelLibraryAzureTenantId     string = "AZ_TENANT_ID"
+)
+
+type ModelLibraryStorageKind string
 
 const (
-	ModelLibraryKindAzure ModelLibraryKind = "azure"
-	ModelLibraryKindS3    ModelLibraryKind = "s3"
-
-	EnvModelLibraryAzureClientId     string = "AZ_CLIENT_ID"
-	EnvModelLibraryAzureClientSecret string = "AZ_CLIENT_SECRET"
-	EnvModelLibraryAzureTenantId     string = "AZ_TENANT_ID"
+	modelLibraryKindAzure ModelLibraryStorageKind = "azure"
+	modelLibraryKindS3    ModelLibraryStorageKind = "s3"
+	modelLibraryKindMock  ModelLibraryStorageKind = "mock"
 )
 
 type ModelInfo struct {
 }
 
 type ModelLibrary interface {
-	GetBaseUri() string
+	// GetCredentials returns a map containing the credentials required for authenticating with the model library, where
+	// the keys are the names of the env variables corresponding to each credential
 	GetCredentials() (map[string]string, error)
-	GetModelInfoUri(modelDeployment *v1alpha1.ModelDeployment) string
+	// GetBaseUri returns the URI pointing to a space within the model library dedicated to the ModelDeployment
+	// provided as input argument
+	GetBaseUri(modelDeployment *v1alpha1.ModelDeployment) string
+	// GetOptimizedModelDescriptorUri return a URI pointing to the file containing the information of the optimized
+	// model of the  ModelDeployment provided as input argument
+	GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string
+	// FetchModelInfo returns the ModelInfo, if present, for the ModelDeployment provided as argument
 	FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error)
+	// GetStorageKind returns the kind of storage used by the model library
+	GetStorageKind() ModelLibraryStorageKind
 }
 
 type baseModelLibrary struct {
-	Uri  string           `json:"uri"`
-	Kind ModelLibraryKind `json:"kind"`
+	Uri  string                  `json:"uri"`
+	Kind ModelLibraryStorageKind `json:"kind"`
 }
 
 func NewModelLibraryFromJson(jsonConfig string) (ModelLibrary, error) {
@@ -41,13 +60,25 @@ func NewModelLibraryFromJson(jsonConfig string) (ModelLibrary, error) {
 		return nil, err
 	}
 	switch baseModelLibrary.Kind {
-	case ModelLibraryKindAzure:
+	case modelLibraryKindAzure:
 		return newAzureModelLibrary(baseModelLibrary)
-	case ModelLibraryKindS3:
+	case modelLibraryKindS3:
 		return newS3ModelLibrary(baseModelLibrary)
 	default:
 		return nil, fmt.Errorf("invalid kind %s", baseModelLibrary.Kind)
 	}
+}
+
+func (b *baseModelLibrary) GetBaseUri(modelDeployment *v1alpha1.ModelDeployment) string {
+	return fmt.Sprintf("%s/%s/%s", b.Uri, modelDeployment.Namespace, modelDeployment.Name)
+}
+
+func (b *baseModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
+	return fmt.Sprintf("%s/%s", b.GetBaseUri(modelDeployment), modelInfoFileName)
+}
+
+func (b *baseModelLibrary) GetStorageKind() ModelLibraryStorageKind {
+	return b.Kind
 }
 
 // ----------- Azure model library -----------
@@ -61,13 +92,13 @@ func newAzureModelLibrary(base baseModelLibrary) (*azureModelLibrary, error) {
 	var tenantId, clientId, clientSecret string
 	var err error
 
-	if clientId, err = utils.GetEnvOrError(EnvModelLibraryAzureClientId); err != nil {
+	if clientId, err = utils.GetEnvOrError(envModelLibraryAzureClientId); err != nil {
 		return nil, err
 	}
-	if tenantId, err = utils.GetEnvOrError(EnvModelLibraryAzureTenantId); err != nil {
+	if tenantId, err = utils.GetEnvOrError(envModelLibraryAzureTenantId); err != nil {
 		return nil, err
 	}
-	if clientSecret, err = utils.GetEnvOrError(EnvModelLibraryAzureClientSecret); err != nil {
+	if clientSecret, err = utils.GetEnvOrError(envModelLibraryAzureClientSecret); err != nil {
 		return nil, err
 	}
 
@@ -89,19 +120,25 @@ func newAzureModelLibrary(base baseModelLibrary) (*azureModelLibrary, error) {
 	return &azureModelLibrary{baseModelLibrary: base, blobClient: client}, nil
 }
 
-func (a azureModelLibrary) GetBaseUri() string {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (a azureModelLibrary) GetCredentials() (map[string]string, error) {
-	//TODO implement me
-	panic("implement me")
-}
+	var tenantId, clientId, clientSecret string
+	var err error
 
-func (a azureModelLibrary) GetModelInfoUri(modelDeployment *v1alpha1.ModelDeployment) string {
-	//TODO implement me
-	panic("implement me")
+	if clientId, err = utils.GetEnvOrError(envModelLibraryAzureClientId); err != nil {
+		return nil, err
+	}
+	if tenantId, err = utils.GetEnvOrError(envModelLibraryAzureTenantId); err != nil {
+		return nil, err
+	}
+	if clientSecret, err = utils.GetEnvOrError(envModelLibraryAzureClientSecret); err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		envModelLibraryAzureTenantId:     tenantId,
+		envModelLibraryAzureClientId:     clientId,
+		envModelLibraryAzureClientSecret: clientSecret,
+	}, nil
 }
 
 func (a azureModelLibrary) FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error) {
@@ -119,17 +156,7 @@ func newS3ModelLibrary(base baseModelLibrary) (*s3ModelLibrary, error) {
 	return &s3ModelLibrary{baseModelLibrary: base}, nil
 }
 
-func (s s3ModelLibrary) GetBaseUri() string {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (s s3ModelLibrary) GetCredentials() (map[string]string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s s3ModelLibrary) GetModelInfoUri(modelDeployment *v1alpha1.ModelDeployment) string {
 	//TODO implement me
 	panic("implement me")
 }
@@ -137,4 +164,37 @@ func (s s3ModelLibrary) GetModelInfoUri(modelDeployment *v1alpha1.ModelDeploymen
 func (s s3ModelLibrary) FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+// ----------- Mock model library -----------
+
+type mockModelLibrary struct {
+	baseModelLibrary
+	returnedCredentials  map[string]string
+	returnedModelInfoUri string
+	returnedModelInfo    *ModelInfo
+	returnedBaseUri      string
+}
+
+func newMockModelLibrary(base baseModelLibrary) *mockModelLibrary {
+	return &mockModelLibrary{
+		baseModelLibrary:    base,
+		returnedCredentials: make(map[string]string, 0),
+	}
+}
+
+func (m mockModelLibrary) GetCredentials() (map[string]string, error) {
+	return m.returnedCredentials, nil
+}
+
+func (m mockModelLibrary) GetBaseUri(modelDeployment *v1alpha1.ModelDeployment) string {
+	return m.returnedBaseUri
+}
+
+func (m mockModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
+	return m.returnedModelInfoUri
+}
+
+func (m mockModelLibrary) FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error) {
+	return m.returnedModelInfo, nil
 }

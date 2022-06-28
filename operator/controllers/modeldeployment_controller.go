@@ -63,30 +63,46 @@ func isJobFinished(job *batchv1.Job) (bool, batchv1.JobConditionType) {
 	return false, ""
 }
 
-func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployment) *corev1.Container {
+func constructModelOptimizerContainer(ml ModelLibrary, md *n8sv1alpha1.ModelDeployment) (*corev1.Container, error) {
+	mlCredentials, err := ml.GetCredentials()
+	if err != nil {
+		return nil, err
+	}
+
+	envVars := make([]corev1.EnvVar, 0)
+	for key, value := range mlCredentials {
+		envVars = append(envVars, corev1.EnvVar{Name: key, Value: value})
+	}
 	modelOptimizerImage := fmt.Sprintf(
 		"%s:%s",
-		modelDeployment.Spec.Optimization.ModelOptimizerImageName,
-		modelDeployment.Spec.Optimization.ModelOptimizerImageVersion,
+		md.Spec.Optimization.ModelOptimizerImageName,
+		md.Spec.Optimization.ModelOptimizerImageVersion,
 	)
+
 	return &corev1.Container{
 		Name:                     "optimizer",
 		Image:                    modelOptimizerImage,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-		//Env: []corev1.EnvVar{ TODO
-		//	{},
-		//},
+		Env:                      envVars,
 		Args: []string{
-			modelDeployment.Spec.SourceModel.Uri,
-			"foo", //modelDeployment.GetModelLibraryPath(),
-			string(modelDeployment.Spec.Optimization.Target),
+			md.Spec.SourceModel.Uri,
+			ml.GetBaseUri(md),
+			ml.GetOptimizedModelDescriptorUri(md),
+			string(ml.GetStorageKind()),
+			string(md.Spec.Optimization.Target),
 		},
-	}
+	}, nil
 }
 
 func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.Job, error) {
+	container, err := constructModelOptimizerContainer(r.ModelLibrary, modelDeployment)
+	if err != nil {
+		return nil, err
+	}
+
 	optimizationJobBackoffLimit := int32(modelDeployment.Spec.Optimization.OptimizationJobBackoffLimit)
 	var runAsNonRoot = true
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      make(map[string]string),
@@ -99,7 +115,7 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					SecurityContext: &corev1.PodSecurityContext{RunAsNonRoot: &runAsNonRoot},
-					Containers:      []corev1.Container{*constructModelOptimizerContainer(modelDeployment)},
+					Containers:      []corev1.Container{*container},
 					RestartPolicy:   corev1.RestartPolicyNever,
 				},
 			},

@@ -6,7 +6,10 @@ from loguru import logger
 import sys
 
 ARG_SOURCE_MODEL_URI_HELP = "URI pointing to the model to optimize"
-ARG_OPTIMIZED_MODEL_DESTINATION_URI_HELP = "URI pointing to the destination to which upload the optimized model"
+ARG_DESTINATION_BASE_URI_HELP = "URI pointing to the destination to which upload the optimized model and any other " \
+                                "artifact "
+ARG_OPTIMIZED_MODEL_DESCRIPTOR_URI_HELP = "URI pointing to the path where to upload the json file describing the " \
+                                          "optimized model "
 ARG_TARGET_HELP = "The target for which the model will be optimized"
 
 
@@ -34,9 +37,16 @@ class OptimizationTarget(str, enum.Enum):
     emissions = "emissions"
 
 
+class StorageKind(str, enum.Enum):
+    azure = "azure"
+    s3 = "s3"
+
+
 def cli(
         source_model_uri: str = typer.Argument(..., help=ARG_SOURCE_MODEL_URI_HELP),
-        optimized_model_destination_uri: str = typer.Argument(..., help=ARG_OPTIMIZED_MODEL_DESTINATION_URI_HELP),
+        destination_base_uri: str = typer.Argument(..., help=ARG_DESTINATION_BASE_URI_HELP),
+        optimized_model_descriptor_uri: str = typer.Argument(..., help=ARG_OPTIMIZED_MODEL_DESCRIPTOR_URI_HELP),
+        destination_storage_kind: StorageKind = typer.Argument(..., case_sensitive=False),
         target: OptimizationTarget = typer.Argument(..., case_sensitive=False, help=ARG_TARGET_HELP),
         debug: bool = False
 ):
@@ -48,13 +58,11 @@ def cli(
     logger.info(f"Optimizing model with nebullvm 🚀")
     time.sleep(5)
 
-    logger.info(f"Uploading optimized model to {optimized_model_destination_uri}")
+    logger.info(f"Uploading optimized model to {destination_base_uri}")
     time.sleep(10)
 
     logger.info(f'Selecting best hardware for optimized model - target is "{target}"')
     time.sleep(1)
 
-    logger.info(f"Uploading model-info.json to {optimized_model_destination_uri}")
+    logger.info(f"Uploading optimized model descriptor to {optimized_model_descriptor_uri}")
     time.sleep(1)
-
-
