@@ -69,7 +69,7 @@ func getWatchNamespace() (string, error) {
 	return ns, nil
 }
 
-func getModelLibrary(namespace string) (*controllers.ModelLibrary, error) {
+func getModelLibrary(namespace string) (controllers.ModelLibrary, error) {
 	setupLog.Info("loading model library config", "ConfigMap", controllers.ModelLibraryConfigMapName)
 	clientset := kubernetes.NewForConfigOrDie(ctrl.GetConfigOrDie())
 	configmap, err := clientset.CoreV1().ConfigMaps(namespace).Get(
@@ -144,7 +144,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var modelLibrary *controllers.ModelLibrary
+	var modelLibrary controllers.ModelLibrary
 	if modelLibrary, err = getModelLibrary(controllerNamespace); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ModelDeployment")
 		os.Exit(1)

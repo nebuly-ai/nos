@@ -47,7 +47,7 @@ type ModelDeploymentReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
 	EventRecorder record.EventRecorder
-	ModelLibrary  *ModelLibrary
+	ModelLibrary  ModelLibrary
 }
 
 type components struct {

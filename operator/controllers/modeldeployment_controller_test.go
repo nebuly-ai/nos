@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

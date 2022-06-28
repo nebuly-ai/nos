@@ -1,6 +1,9 @@
 package utils
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 func BoolAddr(b bool) *bool {
 	var boolVar bool
@@ -13,4 +16,11 @@ func GetEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func GetEnvOrError(key string) (string, error) {
+	if value, ok := os.LookupEnv(key); ok {
+		return value, nil
+	}
+	return "", fmt.Errorf("missing env variable %s", key)
 }
