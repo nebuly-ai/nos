@@ -78,4 +78,14 @@ var _ = Describe("New model library from json config", func() {
 		})
 	})
 
+	DescribeTable("Model library kinds from JSON",
+		func(kind ModelLibraryKind, expectedModelLibraryType interface{}) {
+			json := newModelLibraryJson("https://foo.bar", string(kind))
+			modelLibary, err := NewModelLibraryFromJson(json)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(modelLibary).To(BeAssignableToTypeOf(expectedModelLibraryType))
+		},
+		Entry("Kind Azure", ModelLibraryKindAzure, &azureModelLibrary{}),
+		Entry("Kind S3", ModelLibraryKindS3, &s3ModelLibrary{}),
+	)
 })
