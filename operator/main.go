@@ -17,8 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -34,12 +37,15 @@ import (
 
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/controllers"
+	"github.com/nebuly-ai/nebulnetes/utils"
 	//+kubebuilder:scaffold:imports
 )
 
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	controllerNamespace = utils.GetEnv("CONTROLLER_NAMESPACE", "n8s-system")
 )
 
 func init() {
@@ -61,6 +67,31 @@ func getWatchNamespace() (string, error) {
 		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
 	}
 	return ns, nil
+}
+
+func getModelLibrary(namespace string) (*controllers.ModelLibrary, error) {
+	setupLog.Info("loading model library config", "ConfigMap", controllers.ModelLibraryConfigMapName)
+	clientset := kubernetes.NewForConfigOrDie(ctrl.GetConfigOrDie())
+	configmap, err := clientset.CoreV1().ConfigMaps(namespace).Get(
+		context.Background(),
+		controllers.ModelLibraryConfigMapName,
+		metav1.GetOptions{},
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error getting model library configmap %s: %s",
+			controllers.ModelLibraryConfigMapName,
+			err,
+		)
+	}
+	if modelLibraryConfig, ok := configmap.Data[controllers.ModelLibraryConfigKeyName]; ok {
+		return controllers.NewModelLibraryFromConfig(modelLibraryConfig)
+	}
+	return nil, fmt.Errorf(
+		"could not find key %s in model library configmap %s",
+		controllers.ModelLibraryConfigKeyName,
+		controllers.ModelLibraryConfigMapName,
+	)
 }
 
 func main() {
@@ -113,10 +144,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	var modelLibrary *controllers.ModelLibrary
+	if modelLibrary, err = getModelLibrary(controllerNamespace); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ModelDeployment")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.ModelDeploymentReconciler{
 		Client:        mgr.GetClient(),
 		Scheme:        mgr.GetScheme(),
 		EventRecorder: mgr.GetEventRecorderFor("n8s"),
+		ModelLibrary:  modelLibrary,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ModelDeployment")
 		os.Exit(1)

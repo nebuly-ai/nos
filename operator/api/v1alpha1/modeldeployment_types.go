@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"fmt"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,15 +38,6 @@ const (
 	StatusStateDeployingModel              = "DeployingModel"
 	StatusStateAvailable                   = "Available"
 	StatusStateFailed                      = "Failed"
-)
-
-// ModelLibraryKind
-//+kubebuilder:validation:Enum=azure;s3
-type ModelLibraryKind string
-
-const (
-	ModelLibraryKindAzure ModelLibraryKind = "azure"
-	ModelLibraryKindS3    ModelLibraryKind = "s3"
 )
 
 type OptimizationSpec struct {
@@ -74,24 +64,10 @@ type SourceModel struct {
 	Uri string `json:"uri"`
 }
 
-type ModelLibrary struct {
-	// Uri is a URI pointing to a cloud storage that will be used as model library for saving optimized
-	// models
-	Uri string `json:"uri"`
-	// Kind is the kind of cloud storage hosting the model library
-	Kind ModelLibraryKind `json:"kind"`
-	// SecretName is the name of the secret containing the credentials required for authenticating to the model library
-	// storage. The identity associated with these credentials shall have write permissions in order to be able to
-	// upload the optimized models.
-	SecretName string `json:"secretName"`
-}
-
 // ModelDeploymentSpec defines the desired state of ModelDeployment
 type ModelDeploymentSpec struct {
 	// Optimization defines the configuration of the model optimization
 	Optimization OptimizationSpec `json:"optimization"`
-	// ModelLibrary
-	ModelLibrary ModelLibrary `json:"modelLibrary"`
 	// SourceModel
 	SourceModel SourceModel `json:"sourceModel"`
 }
@@ -114,11 +90,6 @@ type ModelDeployment struct {
 
 	Spec   ModelDeploymentSpec   `json:"spec,omitempty"`
 	Status ModelDeploymentStatus `json:"status,omitempty"`
-}
-
-// GetModelLibraryPath returns a URI pointing to the path within the model library dedicated to the current model deployment
-func (m *ModelDeployment) GetModelLibraryPath() string {
-	return fmt.Sprintf("%s/%s/%s", m.Spec.ModelLibrary.Uri, m.Namespace, m.Name)
 }
 
 //+kubebuilder:object:root=true

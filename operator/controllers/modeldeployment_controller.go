@@ -47,6 +47,7 @@ type ModelDeploymentReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
 	EventRecorder record.EventRecorder
+	ModelLibrary  *ModelLibrary
 }
 
 type components struct {
@@ -59,7 +60,6 @@ func isJobFinished(job *batchv1.Job) (bool, batchv1.JobConditionType) {
 			return true, c.Type
 		}
 	}
-
 	return false, ""
 }
 
@@ -73,15 +73,12 @@ func constructModelOptimizerContainer(modelDeployment *n8sv1alpha1.ModelDeployme
 		Name:                     "optimizer",
 		Image:                    modelOptimizerImage,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
-		EnvFrom: []corev1.EnvFromSource{{
-			SecretRef: &corev1.SecretEnvSource{
-				LocalObjectReference: corev1.LocalObjectReference{Name: modelDeployment.Spec.ModelLibrary.SecretName},
-				Optional:             BoolAddr(false),
-			},
-		}},
+		//Env: []corev1.EnvVar{ TODO
+		//	{},
+		//},
 		Args: []string{
 			modelDeployment.Spec.SourceModel.Uri,
-			modelDeployment.GetModelLibraryPath(),
+			"foo", //modelDeployment.GetModelLibraryPath(),
 			string(modelDeployment.Spec.Optimization.Target),
 		},
 	}

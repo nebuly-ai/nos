@@ -51,11 +51,6 @@ var _ = Describe("ModelDeployment controller", func() {
 				},
 				Spec: n8sv1alpha1.ModelDeploymentSpec{
 					SourceModel: n8sv1alpha1.SourceModel{Uri: modelUri},
-					ModelLibrary: n8sv1alpha1.ModelLibrary{
-						Uri:        modelLibraryUri,
-						Kind:       n8sv1alpha1.ModelLibraryKindAzure,
-						SecretName: modelLibraryCredentialsSecretName,
-					},
 					Optimization: n8sv1alpha1.OptimizationSpec{
 						Target:                     optimizationTarget,
 						ModelOptimizerImageName:    modelOptimizerImageName,

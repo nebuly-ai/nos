@@ -1,25 +1,8 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: azure-credentials
-type: Opaque
-stringData:
-  AZ_CLIENT_ID: xxxxx
-  AZ_CLIENT_SECRET: xxxxx
-  AZ_SUBSCRIPTION_ID: xxxxx
-  AZ_TENANT_ID: xxxxx
-
----
-
 apiVersion: n8s.nebuly.ai/v1alpha1
 kind: ModelDeployment
 metadata:
   name: sample
 spec:
-  modelLibrary:
-    uri: https://foo.bar
-    kind: azure
-    secretName: azure-credentials
   sourceModel:
     uri: https://foo.bar.libar
   optimization:
