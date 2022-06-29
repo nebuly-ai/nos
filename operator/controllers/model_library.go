@@ -30,7 +30,7 @@ const (
 	modelLibraryKindMock  ModelLibraryStorageKind = "mock"
 )
 
-type ModelInfo struct {
+type ModelDescriptor struct {
 }
 
 type ModelLibrary interface {
@@ -43,8 +43,9 @@ type ModelLibrary interface {
 	// GetOptimizedModelDescriptorUri return a URI pointing to the file containing the information of the optimized
 	// model of the  ModelDeployment provided as input argument
 	GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string
-	// FetchModelInfo returns the ModelInfo, if present, for the ModelDeployment provided as argument
-	FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error)
+	// FetchOptimizedModelDescriptor returns the ModelDescriptor, if present, of the optimized model produced by
+	// the ModelDeployment provided as argument
+	FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error)
 	// GetStorageKind returns the kind of storage used by the model library
 	GetStorageKind() ModelLibraryStorageKind
 }
@@ -141,7 +142,7 @@ func (a azureModelLibrary) GetCredentials() (map[string]string, error) {
 	}, nil
 }
 
-func (a azureModelLibrary) FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error) {
+func (a azureModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -161,7 +162,7 @@ func (s s3ModelLibrary) GetCredentials() (map[string]string, error) {
 	panic("implement me")
 }
 
-func (s s3ModelLibrary) FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error) {
+func (s s3ModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -172,7 +173,7 @@ type mockModelLibrary struct {
 	baseModelLibrary
 	returnedCredentials  map[string]string
 	returnedModelInfoUri string
-	returnedModelInfo    *ModelInfo
+	returnedModelInfo    *ModelDescriptor
 	returnedBaseUri      string
 }
 
@@ -195,6 +196,6 @@ func (m mockModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alph
 	return m.returnedModelInfoUri
 }
 
-func (m mockModelLibrary) FetchModelInfo(modelDeployment *v1alpha1.ModelDeployment) (*ModelInfo, error) {
+func (m mockModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	return m.returnedModelInfo, nil
 }

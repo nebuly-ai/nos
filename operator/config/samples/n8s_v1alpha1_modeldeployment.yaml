@@ -4,6 +4,6 @@ metadata:
   name: sample
 spec:
   sourceModel:
-    uri: https://foo.bar.libar
+    uri: https://nbllabsharedsa.blob.core.windows.net/public/sample.zip
   optimization:
     target: Latency

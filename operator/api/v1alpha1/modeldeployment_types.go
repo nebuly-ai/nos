@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,9 +34,9 @@ type StatusState string
 
 const (
 	StatusStateOptimizingModel StatusState = "OptimizingModel"
-	StatusStateDeployingModel              = "DeployingModel"
-	StatusStateAvailable                   = "Available"
-	StatusStateFailed                      = "Failed"
+	StatusStateDeployingModel  StatusState = "DeployingModel"
+	StatusStateAvailable       StatusState = "Available"
+	StatusStateFailed          StatusState = "Failed"
 )
 
 type OptimizationSpec struct {
@@ -74,8 +73,7 @@ type ModelDeploymentSpec struct {
 
 // ModelDeploymentStatus defines the observed state of ModelDeployment
 type ModelDeploymentStatus struct {
-	ModelOptimizationJob v1.ObjectReference `json:"modelOptimizationJob"`
-	State                StatusState        `json:"state"`
+	State StatusState `json:"state"`
 }
 
 //+kubebuilder:object:root=true

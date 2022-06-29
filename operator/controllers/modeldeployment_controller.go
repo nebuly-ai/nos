@@ -30,10 +30,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -121,7 +121,14 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(instance *n8sv1alpha1.M
 			},
 		},
 	}
+
+	// Set labels
 	job.Labels[constants.LabelCreatedBy] = modelDeploymentControllerName
+	job.Labels[constants.LabelOptimizationTarget] = string(instance.Spec.Optimization.Target)
+
+	// Set annotations
+	job.Annotations[constants.AnnotationSourceModelUri] = instance.Spec.SourceModel.Uri
+
 	if err := ctrl.SetControllerReference(instance, job, r.Scheme); err != nil {
 		return nil, err
 	}
@@ -129,9 +136,9 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(instance *n8sv1alpha1.M
 	return job, nil
 }
 
-func (r *ModelDeploymentReconciler) buildDesiredComponents(ctx context.Context, instance n8sv1alpha1.ModelDeployment, logger logr.Logger) (*components, error) {
+func (r *ModelDeploymentReconciler) buildDesiredComponents(ctx context.Context, instance *n8sv1alpha1.ModelDeployment, logger logr.Logger) (*components, error) {
 	result := &components{}
-	job, err := r.buildOptimizationJob(&instance)
+	job, err := r.buildOptimizationJob(instance)
 	if err != nil {
 		logger.Error(err, "unable to construct optimization job")
 		return result, err
@@ -140,9 +147,10 @@ func (r *ModelDeploymentReconciler) buildDesiredComponents(ctx context.Context, 
 	return result, nil
 }
 
-func (r *ModelDeploymentReconciler) updateStatus(ctx context.Context, instance n8sv1alpha1.ModelDeployment, logger logr.Logger) {
+func (r *ModelDeploymentReconciler) updateStatus(ctx context.Context, instance *n8sv1alpha1.ModelDeployment, logger logr.Logger) {
 	var currentModelDeployment n8sv1alpha1.ModelDeployment
 	namespacedName := types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}
+
 	if err := r.Get(ctx, namespacedName, &currentModelDeployment); err != nil {
 		logger.Error(err, "unable to fetch ModelDeployment")
 		return
@@ -151,22 +159,14 @@ func (r *ModelDeploymentReconciler) updateStatus(ctx context.Context, instance n
 		logger.V(1).Info("current status and desired status of ModelDeployment are equal, skipping update")
 		return
 	}
-	logger.Info("Updating ModelDeployment status", "ModelDeployment", instance.Name)
-	if err := r.Status().Update(ctx, &instance); err != nil {
+	logger.Info("updating ModelDeployment status", "Status", instance.Status)
+	if err := r.Status().Update(ctx, instance); err != nil {
 		logger.Error(err, "unable to update ModelDeployment status")
-		r.EventRecorder.Eventf(
-			&instance,
-			corev1.EventTypeWarning,
-			"StatusUpdateFailed",
-			"Failed to update status of ModelDeployment %q: %s", instance.Name, err.Error(),
-		)
 	}
 }
 
 // reconcileOptimizationJob Reconcile the model optimization job
-func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context, instance n8sv1alpha1.ModelDeployment, c *components, logger logr.Logger) (n8sv1alpha1.StatusState, error) {
-	var state = n8sv1alpha1.StatusStateOptimizingModel
-
+func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context, instance *n8sv1alpha1.ModelDeployment, c *components, logger logr.Logger) (n8sv1alpha1.StatusState, error) {
 	// Fetch optimization job
 	var optimizationJob batchv1.Job
 	jobNamespacedName := types.NamespacedName{
@@ -176,7 +176,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 	err := r.Get(ctx, jobNamespacedName, &optimizationJob)
 	if client.IgnoreNotFound(err) != nil {
 		logger.Error(err, "unable to fetch optimization job")
-		r.EventRecorder.Event(&instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
+		r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 		return n8sv1alpha1.StatusStateFailed, err
 	}
 
@@ -184,58 +184,76 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 	if apierrors.IsNotFound(err) == true {
 		if err := r.Client.Create(ctx, c.optimizationJob); err != nil {
 			logger.Error(err, "unable to create optimization job", "Job", c.optimizationJob)
-			r.EventRecorder.Event(&instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
+			r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 			return n8sv1alpha1.StatusStateFailed, err
 		}
 		logger.Info("created new optimization job", "Job", c.optimizationJob)
 		r.EventRecorder.Event(
-			&instance,
+			instance,
 			corev1.EventTypeNormal,
 			"ModelOptimizationStarted",
-			"Started job for optimizing the deployed model",
+			"Started model optimization job",
 		)
-	} else {
-		// Update the referenced job object in the status
-		ref, err := reference.GetReference(r.Scheme, &optimizationJob)
-		if err != nil {
-			logger.Error(
-				err,
-				"unable to make reference to model optimization job",
-				"job",
-				optimizationJob,
-			)
-			r.EventRecorder.Event(&instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
-			return n8sv1alpha1.StatusStateFailed, err
-		}
-		instance.Status.ModelOptimizationJob = *ref
+		return n8sv1alpha1.StatusStateDeployingModel, nil
+	}
 
-		// Check if job finished
-		finished, status := isJobFinished(&optimizationJob)
-
-		// If the job failed just record the event and do nothing
-		if finished == true && status == batchv1.JobFailed {
-			state = n8sv1alpha1.StatusStateFailed
-			errMsg := optimizationJob.Status.Conditions[len(optimizationJob.Status.Conditions)-1].Message
-			logger.Error(fmt.Errorf(errMsg), "unable to perform model optimization")
-			r.EventRecorder.Eventf(
-				&instance,
-				corev1.EventTypeWarning,
-				constants.EventModelOptimizationFailed,
-				"Error optimizing model, for more info: kubectl logs job/%s",
-				optimizationJob.Name,
-			)
-		}
-		// If the job finished successfully and the optimized model is available then deploy the optimized model
-		if finished == true && status == batchv1.JobComplete {
-			state = n8sv1alpha1.StatusStateDeployingModel
-			r.EventRecorder.Event(
-				&instance,
-				corev1.EventTypeWarning,
-				constants.EventModelOptimizationCompleted,
-				"Model optimized successfully",
-			)
+	// If current source model URI != URI in spec then delete the job so that it gets re-created with the right URI
+	if val, ok := optimizationJob.Annotations[constants.AnnotationSourceModelUri]; ok {
+		if val != instance.Spec.SourceModel.Uri {
+			logger.Info("source model URI changed, recreating optimization job")
+			r.EventRecorder.Event(instance, corev1.EventTypeNormal, constants.EventModelDeploymentUpdated, "Source model URI updated")
+			if err := r.Client.Delete(ctx, &optimizationJob); err != nil {
+				logger.Error(err, "unable to delete optimization job", "Job", c.optimizationJob)
+				r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
+				return n8sv1alpha1.StatusStateFailed, err
+			}
+			logger.Info("optimization job deleted", "Job", optimizationJob.Name)
+			return n8sv1alpha1.StatusStateOptimizingModel, nil
 		}
 	}
+
+	// If current optimization target != target in spec then delete the job so that it gets re-created
+	if val, ok := optimizationJob.Labels[constants.LabelOptimizationTarget]; ok {
+		if val != string(instance.Spec.Optimization.Target) {
+			logger.Info("optimization target changed, recreating optimization job")
+			r.EventRecorder.Event(instance, corev1.EventTypeNormal, constants.EventModelDeploymentUpdated, "Optimization target updated")
+			if err := r.Client.Delete(ctx, &optimizationJob); err != nil {
+				logger.Error(err, "unable to delete optimization job", "Job", c.optimizationJob)
+				r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
+				return n8sv1alpha1.StatusStateFailed, err
+			}
+			logger.Info("optimization job deleted", "Job", optimizationJob.Name)
+			return n8sv1alpha1.StatusStateOptimizingModel, nil
+		}
+	}
+
+	// Check if job finished
+	finished, status := isJobFinished(&optimizationJob)
+
+	// If the job failed just record the event and do nothing
+	if finished == true && status == batchv1.JobFailed {
+		errMsg := optimizationJob.Status.Conditions[len(optimizationJob.Status.Conditions)-1].Message
+		logger.Error(fmt.Errorf(errMsg), "optimization job failed")
+		r.EventRecorder.Eventf(
+			instance,
+			corev1.EventTypeWarning,
+			constants.EventModelOptimizationFailed,
+			"Error optimizing model, for more info: kubectl logs job/%s",
+			optimizationJob.Name,
+		)
+		return n8sv1alpha1.StatusStateFailed, nil
+	}
+	// If the job finished successfully and the optimized model is available then deploy the optimized model
+	if finished == true && status == batchv1.JobComplete {
+		return n8sv1alpha1.StatusStateDeployingModel, nil
+	}
+
+	return n8sv1alpha1.StatusStateOptimizingModel, nil
+}
+
+func (r *ModelDeploymentReconciler) reconcileModelDeployment(ctx context.Context, instance *n8sv1alpha1.ModelDeployment, c *components, logger logr.Logger) (n8sv1alpha1.StatusState, error) {
+	var state = n8sv1alpha1.StatusStateDeployingModel
+
 	return state, nil
 }
 
@@ -250,8 +268,11 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	logger := log.FromContext(ctx)
 
 	// Fetch ModelDeployment
-	var instance n8sv1alpha1.ModelDeployment
-	if err := r.Get(ctx, req.NamespacedName, &instance); err != nil {
+	var instance = new(n8sv1alpha1.ModelDeployment)
+	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
 		logger.Error(err, "unable to fetch ModelDeployment")
 		return ctrl.Result{}, err
 	}
@@ -259,7 +280,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// Build desired components
 	desiredComponents, err := r.buildDesiredComponents(ctx, instance, logger)
 	if err != nil {
-		r.EventRecorder.Event(&instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
+		r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 		instance.Status.State = n8sv1alpha1.StatusStateFailed
 		r.updateStatus(ctx, instance, logger)
 		return ctrl.Result{}, err
@@ -272,8 +293,18 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		r.updateStatus(ctx, instance, logger)
 		return ctrl.Result{}, err
 	}
-	instance.Status.State = state
 
+	// If optimization job completed successfully then reconcile model deployment
+	if state == n8sv1alpha1.StatusStateDeployingModel {
+		state, err = r.reconcileModelDeployment(ctx, instance, desiredComponents, logger)
+		if err != nil {
+			instance.Status.State = n8sv1alpha1.StatusStateFailed
+			r.updateStatus(ctx, instance, logger)
+			return ctrl.Result{}, err
+		}
+	}
+
+	instance.Status.State = state
 	r.updateStatus(ctx, instance, logger)
 	return ctrl.Result{}, nil
 }
