@@ -46,7 +46,7 @@ class AzureModelLibrary(ModelLibrary):
 
     def upload_model(self, model_path: pathlib.Path) -> str:
         with open(model_path, "rb") as data:
-            logger.info(f"Uploading model {model_path} to {self._base_uri}")
+            logger.info(f"Uploading model {model_path.name} to {self._base_uri}")
             self._new_blob_client(self._base_uri).upload_blob(data)
         return self._base_uri  # todo
 

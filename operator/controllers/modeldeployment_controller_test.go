@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/constants"
 	"github.com/nebuly-ai/nebulnetes/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -21,8 +22,8 @@ var _ = Describe("ModelDeployment controller", func() {
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
-		if utils.GetEnvBool(EnvSkipControllerTests, false) {
-			Skip(fmt.Sprintf("%s is true, skipping controller tests", EnvSkipControllerTests))
+		if utils.GetEnvBool(constants.EnvSkipControllerTests, false) {
+			Skip(fmt.Sprintf("%s is true, skipping controller tests", constants.EnvSkipControllerTests))
 		}
 	})
 
@@ -78,7 +79,7 @@ var _ = Describe("ModelDeployment controller", func() {
 			By("Creating a new Job")
 			Eventually(func() int {
 				var jobList batchv1.JobList
-				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{LabelCreatedBy: modelDeploymentControllerName})
+				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: modelDeploymentControllerName})
 				if err != nil {
 					return 0
 				}
@@ -88,7 +89,7 @@ var _ = Describe("ModelDeployment controller", func() {
 			By("Checking that the Job launched Pods using the specified Docker image")
 			expectedImageName := fmt.Sprintf("%s:%s", modelOptimizerImageName, modelOptimizerImageVersion)
 			var jobList batchv1.JobList
-			Expect(k8sClient.List(ctx, &jobList, client.MatchingLabels{LabelCreatedBy: modelDeploymentControllerName})).To(Succeed())
+			Expect(k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: modelDeploymentControllerName})).To(Succeed())
 			Expect(jobList.Items).To(HaveLen(1))
 			job := jobList.Items[0]
 			Expect(job.Spec.Template.Spec.Containers).To(HaveLen(1))

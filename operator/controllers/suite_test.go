@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/constants"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -92,7 +93,7 @@ var _ = BeforeSuite(func() {
 		Scheme:        k8sManager.GetScheme(),
 		EventRecorder: k8sManager.GetEventRecorderFor("ModelDeployment"),
 		ModelLibrary:  ml,
-	}).SetupWithManager(k8sManager)
+	}).SetupWithManager(k8sManager, constants.ControllerManagerName)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {

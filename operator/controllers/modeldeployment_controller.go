@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/constants"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -121,7 +122,7 @@ func (r *ModelDeploymentReconciler) buildOptimizationJob(modelDeployment *n8sv1a
 			},
 		},
 	}
-	job.Labels[LabelCreatedBy] = modelDeploymentControllerName
+	job.Labels[constants.LabelCreatedBy] = modelDeploymentControllerName
 	if err := ctrl.SetControllerReference(modelDeployment, job, r.Scheme); err != nil {
 		return nil, err
 	}
@@ -176,7 +177,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 	err := r.Get(ctx, jobNamespacedName, &optimizationJob)
 	if client.IgnoreNotFound(err) != nil {
 		logger.Error(err, "unable to fetch optimization job")
-		r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
+		r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 		return n8sv1alpha1.StatusStateFailed, err
 	}
 
@@ -184,7 +185,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 	if apierrors.IsNotFound(err) == true {
 		if err := r.Client.Create(ctx, c.optimizationJob); err != nil {
 			logger.Error(err, "unable to create optimization job", "Job", c.optimizationJob)
-			r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
+			r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 			return n8sv1alpha1.StatusStateFailed, err
 		}
 		logger.Info("created new optimization job", "Job", c.optimizationJob)
@@ -204,7 +205,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 				"job",
 				optimizationJob,
 			)
-			r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
+			r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 			return n8sv1alpha1.StatusStateFailed, err
 		}
 		modelDeployment.Status.ModelOptimizationJob = *ref
@@ -220,7 +221,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 			r.EventRecorder.Eventf(
 				&modelDeployment,
 				corev1.EventTypeWarning,
-				EventModelOptimizationFailed,
+				constants.EventModelOptimizationFailed,
 				"Error optimizing model, for more information run: kubectl logs job/%s",
 				optimizationJob.Name,
 			)
@@ -231,7 +232,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 			r.EventRecorder.Event(
 				&modelDeployment,
 				corev1.EventTypeWarning,
-				EventModelOptimizationCompleted,
+				constants.EventModelOptimizationCompleted,
 				"Model optimized successfully",
 			)
 		}
@@ -244,6 +245,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=modeldeployments/finalizers,verbs=update
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -258,7 +260,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// Build desired components
 	desiredComponents, err := r.buildDesiredComponents(ctx, modelDeployment, logger)
 	if err != nil {
-		r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, EventInternalError, err.Error())
+		r.EventRecorder.Event(&modelDeployment, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 		modelDeployment.Status.State = n8sv1alpha1.StatusStateFailed
 		r.updateStatus(ctx, modelDeployment, logger)
 		return ctrl.Result{}, err
@@ -278,8 +280,9 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ModelDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ModelDeploymentReconciler) SetupWithManager(mgr ctrl.Manager, name string) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		Named(name).
 		For(&n8sv1alpha1.ModelDeployment{}).
 		Owns(&batchv1.Job{}).
 		Complete(r)
