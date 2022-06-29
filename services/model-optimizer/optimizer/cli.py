@@ -40,15 +40,17 @@ class Runner:
             optimizer: services.ModelOptimizer,
             model_library: services.ModelLibrary,
             hardware_selector: services.HardwareSelector,
+            source_model_uri: str
     ):
         self.optimizer = optimizer
         self.model_library = model_library
         self.hardware_selector = hardware_selector
+        self.source_model_uri = source_model_uri
 
-    def run(self, source_model_uri):
+    def run(self):
         try:
             # Run optimization
-            optimized_model_path = self.optimizer.optimize_model(source_model_uri)
+            optimized_model_path = self.optimizer.optimize_model(self.source_model_uri)
             # Upload optimized model to model library
             optimized_model_uri = self.model_library.upload_model(optimized_model_path)
             # Select hardware for optimized model
@@ -81,6 +83,6 @@ def cli(
             optimized_model_descriptor_uri
         )
         hardware_selector = services.HardwareSelector(target)
-        runner = Runner(optimizer, model_library, hardware_selector)
+        runner = Runner(optimizer, model_library, hardware_selector, source_model_uri)
         # Run optimization
-        runner.run(source_model_uri)
+        runner.run()
