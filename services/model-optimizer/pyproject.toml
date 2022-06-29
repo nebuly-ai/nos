@@ -1,11 +1,14 @@
 [tool.poetry]
-name = "model-optimizer"
+name = "optimizer"
 version = "0.0.1"
 description = ""
 authors = ["Michele Zanotti <m.zanotti019@gmail.com>"]
 
+[tool.poetry.scripts]
+optimizer = "optimizer:main"
+
 [tool.poetry.dependencies]
-python = "3.8"
+python = "^3.7"
 typer = "^0.4.1"
 loguru = "^0.6.0"
 azure-storage-blob = "^12.12.0"

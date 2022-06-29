@@ -16,5 +16,7 @@ USER 1000
 COPY --from=builder requirements.txt .
 RUN pip3 install --user -r requirements.txt
 COPY optimizer optimizer
+COPY pyproject.toml .
+RUN pip3 install --user .
 
 ENTRYPOINT [ "python3", "optimizer"]

@@ -8,7 +8,7 @@ from azure.identity import ClientSecretCredential
 from azure.storage.blob import BlobClient
 from loguru import logger
 
-import models
+from optimizer import models
 
 
 class ModelLibrary(abc.ABC):
@@ -56,7 +56,9 @@ class ModelLibraryFactory(abc.ABC):
 
     @staticmethod
     def new_model_library(storage_kind: models.StorageKind, base_uri: str, model_descriptor_uri: str):
-        cls = ModelLibraryFactory.storage_kind_to_model_library[storage_kind]
+        cls = ModelLibraryFactory.storage_kind_to_model_library.get(storage_kind, None)
+        if cls is None:
+            raise RuntimeError(f"Storage kind {storage_kind} is not supported")
         return cls(base_uri, model_descriptor_uri)
 
 

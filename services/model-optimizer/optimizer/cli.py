@@ -5,8 +5,8 @@ import tempfile
 import typer
 from loguru import logger
 
-import services
-from models import StorageKind, OptimizationTarget
+from optimizer import services
+from optimizer.models import StorageKind, OptimizationTarget
 
 ARG_SOURCE_MODEL_URI_HELP = "URI pointing to the model to optimize"
 ARG_MODEL_LIBRARY_BASE_URI_HELP = "URI pointing to the space of the model library dedicated to the current model " \
