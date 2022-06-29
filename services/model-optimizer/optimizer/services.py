@@ -1,6 +1,9 @@
 import abc
+import dataclasses
+import json
 import os
 import pathlib
+import time
 from typing import List
 
 import requests
@@ -17,7 +20,7 @@ class ModelLibrary(abc.ABC):
         self._model_descriptor_uri = model_descriptor_uri
 
     @abc.abstractmethod
-    def upload_model(self, model_path: pathlib.Path) -> pathlib.Path:
+    def upload_model(self, model_path: pathlib.Path) -> str:
         pass
 
     @abc.abstractmethod
@@ -32,21 +35,25 @@ class AzureModelLibrary(ModelLibrary):
 
     def __init__(self, base_uri: str, model_descriptor_uri: str):
         super().__int__(base_uri, model_descriptor_uri)
-        self.__blob_client = self._new_blob_client()
-
-    def _new_blob_client(self):
-        credential = ClientSecretCredential(
+        self.__credential = ClientSecretCredential(
             tenant_id=os.environ[self.ENV_VAR_TENANT_ID],
             client_id=os.environ[self.ENV_VAR_CLIENT_ID],
             client_secret=os.environ[self.ENV_VAR_CLIENT_SECRET],
         )
-        return BlobClient.from_blob_url(self._base_uri, credential)
 
-    def upload_model(self, model_path: pathlib.Path):
-        pass
+    def _new_blob_client(self, uri: str):
+        return BlobClient.from_blob_url(uri, self.__credential, retry_total=0)
+
+    def upload_model(self, model_path: pathlib.Path) -> str:
+        with open(model_path, "rb") as data:
+            logger.info(f"Uploading model {model_path} to {self._base_uri}")
+            self._new_blob_client(self._base_uri).upload_blob(data)
+        return self._base_uri  # todo
 
     def upload_model_descriptor(self, model_descriptor: models.ModelDescriptor):
-        pass
+        logger.info(f"Uploading model descriptor to {self._model_descriptor_uri}")
+        model_descriptor_json = json.dumps(dataclasses.asdict(model_descriptor))
+        self._new_blob_client(self._model_descriptor_uri).upload_blob(model_descriptor_json)
 
 
 class ModelLibraryFactory(abc.ABC):
@@ -58,7 +65,7 @@ class ModelLibraryFactory(abc.ABC):
     def new_model_library(storage_kind: models.StorageKind, base_uri: str, model_descriptor_uri: str):
         cls = ModelLibraryFactory.storage_kind_to_model_library.get(storage_kind, None)
         if cls is None:
-            raise RuntimeError(f"Storage kind {storage_kind} is not supported")
+            raise Exception(f"Storage kind {storage_kind} is not supported")
         return cls(base_uri, model_descriptor_uri)
 
 
@@ -75,6 +82,19 @@ class ModelOptimizer:
             raise Exception(f"Invalid working dir: {working_dir} is not a directory")
         self.__working_dir = working_dir
 
+    def _download_model(self, uri: str) -> pathlib.Path:
+        logger.info(f"Downloading model from {uri}")
+        try:
+            resp = requests.get(uri)
+            resp.raise_for_status()
+            # Todo
+            model_path = self.__working_dir / pathlib.Path("model")
+            model_path.write_bytes(resp.content)
+            logger.debug(f"Model downloaded at {model_path}")
+            return model_path
+        except requests.HTTPError as e:
+            raise Exception(f"Could not download model from {uri} - {e}")
+
     def optimize_model(self, model_uri: str) -> pathlib.Path:
         """Download the model from the provided uri and optimize it
 
@@ -88,14 +108,9 @@ class ModelOptimizer:
         pathlib.Path
             A path pointing to the optimized model
         """
-
-        logger.info(f"Downloading model from {model_uri}")
-        resp = requests.get(model_uri)
-        resp.raise_for_status()
-        # Todo
-        model_path = self.__working_dir / pathlib.Path("model")
-        model_path.write_bytes(resp.content)
-        logger.info(f"Model downloaded at {model_path}")
+        model_path = self._download_model(model_uri)
+        logger.info("Optimizing model with nebullvm 🚀")
+        time.sleep(5)
         return model_path
 
 
@@ -106,11 +121,3 @@ class HardwareSelector:
     def select_hardware_for_model(self, model_path: pathlib.Path) -> List[models.SelectedHardware]:
         # Todo
         return []
-
-
-class ModelDescriptorBuilder:
-    def __init__(self, model_path: pathlib.Path, selected_hardware: List[models.SelectedHardware]):
-        pass
-
-    def build_model_descriptor(self) -> models.ModelDescriptor:
-        return models.ModelDescriptor()

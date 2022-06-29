@@ -6,7 +6,7 @@ import typer
 from loguru import logger
 
 from optimizer import services
-from optimizer.models import StorageKind, OptimizationTarget
+from optimizer.models import StorageKind, OptimizationTarget, ModelDescriptor
 
 ARG_SOURCE_MODEL_URI_HELP = "URI pointing to the model to optimize"
 ARG_MODEL_LIBRARY_BASE_URI_HELP = "URI pointing to the space of the model library dedicated to the current model " \
@@ -49,12 +49,11 @@ class Runner:
         # Run optimization
         optimized_model_path = self.optimizer.optimize_model(source_model_uri)
         # Upload optimized model to model library
-        self.model_library.upload_model(optimized_model_path)
+        optimized_model_uri = self.model_library.upload_model(optimized_model_path)
         # Select hardware for optimized model
         selected_hardware = self.hardware_selector.select_hardware_for_model(optimized_model_path)
         # Build and upload optimized model descriptor
-        builder = services.ModelDescriptorBuilder(optimized_model_path, selected_hardware)
-        optimized_model_descriptor = builder.build_model_descriptor()
+        optimized_model_descriptor = ModelDescriptor(optimized_model_uri, selected_hardware)
         self.model_library.upload_model_descriptor(optimized_model_descriptor)
 
 

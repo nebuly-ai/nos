@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 import enum
+from dataclasses import dataclass
+from typing import List
 
 
 class OptimizationTarget(str, enum.Enum):
@@ -21,4 +22,5 @@ class SelectedHardware:
 
 @dataclass
 class ModelDescriptor:
-    pass
+    model_uri: str
+    selected_hardware: List[SelectedHardware]
