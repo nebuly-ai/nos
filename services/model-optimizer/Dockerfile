@@ -17,4 +17,4 @@ USER 1000
 COPY --from=builder dist/optimizer-*.whl .
 RUN pip3 install --user optimizer-*.whl
 
-ENTRYPOINT ["optimizer"]
+ENTRYPOINT ["python3", "-m", "optimizer"]
