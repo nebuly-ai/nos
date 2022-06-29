@@ -55,7 +55,7 @@ type components struct {
 	optimizationJob *batchv1.Job
 }
 
-func constructModelOptimizerContainer(ml ModelLibrary, md *n8sv1alpha1.ModelDeployment) (*corev1.Container, error) {
+func buildModelOptimizerContainer(ml ModelLibrary, md *n8sv1alpha1.ModelDeployment) (*corev1.Container, error) {
 	mlCredentials, err := ml.GetCredentials()
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func constructModelOptimizerContainer(ml ModelLibrary, md *n8sv1alpha1.ModelDepl
 }
 
 func (r *ModelDeploymentReconciler) buildOptimizationJob(instance *n8sv1alpha1.ModelDeployment) (*batchv1.Job, error) {
-	container, err := constructModelOptimizerContainer(r.ModelLibrary, instance)
+	container, err := buildModelOptimizerContainer(r.ModelLibrary, instance)
 	if err != nil {
 		return nil, err
 	}
