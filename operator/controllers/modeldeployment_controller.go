@@ -222,7 +222,7 @@ func (r *ModelDeploymentReconciler) reconcileOptimizationJob(ctx context.Context
 				&modelDeployment,
 				corev1.EventTypeWarning,
 				constants.EventModelOptimizationFailed,
-				"Error optimizing model, for more information run: kubectl logs job/%s",
+				"Error optimizing model, for more info: kubectl logs job/%s",
 				optimizationJob.Name,
 			)
 		}

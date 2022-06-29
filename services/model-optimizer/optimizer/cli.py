@@ -46,15 +46,19 @@ class Runner:
         self.hardware_selector = hardware_selector
 
     def run(self, source_model_uri):
-        # Run optimization
-        optimized_model_path = self.optimizer.optimize_model(source_model_uri)
-        # Upload optimized model to model library
-        optimized_model_uri = self.model_library.upload_model(optimized_model_path)
-        # Select hardware for optimized model
-        selected_hardware = self.hardware_selector.select_hardware_for_model(optimized_model_path)
-        # Build and upload optimized model descriptor
-        optimized_model_descriptor = ModelDescriptor(optimized_model_uri, selected_hardware)
-        self.model_library.upload_model_descriptor(optimized_model_descriptor)
+        try:
+            # Run optimization
+            optimized_model_path = self.optimizer.optimize_model(source_model_uri)
+            # Upload optimized model to model library
+            optimized_model_uri = self.model_library.upload_model(optimized_model_path)
+            # Select hardware for optimized model
+            selected_hardware = self.hardware_selector.select_hardware_for_model(optimized_model_path)
+            # Build and upload optimized model descriptor
+            optimized_model_descriptor = ModelDescriptor(optimized_model_uri, selected_hardware)
+            self.model_library.upload_model_descriptor(optimized_model_descriptor)
+        except Exception as e:
+            logger.error(e)
+            sys.exit(1)
 
 
 def cli(
