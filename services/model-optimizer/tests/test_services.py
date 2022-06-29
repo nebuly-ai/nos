@@ -25,5 +25,8 @@ class TestModelOptimizer(unittest.TestCase):
         self.assertIsNotNone(optimized_model_path)
         self.assertTrue(optimized_model_path.exists())
         self.assertTrue(optimized_model_path.is_file())
-        self.assertTrue(self.working_dir.is_symlink())
         self.assertTrue(self.working_dir in optimized_model_path.parents)
+
+    def test_init__path_is_not_a_dir(self):
+        with self.assertRaises(Exception):
+            services.ModelOptimizer(pathlib.Path("foo"))

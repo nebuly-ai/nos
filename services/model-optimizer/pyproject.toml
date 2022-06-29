@@ -5,7 +5,7 @@ description = ""
 authors = ["Michele Zanotti <m.zanotti019@gmail.com>"]
 
 [tool.poetry.scripts]
-optimizer = "optimizer:main"
+optimizer = "optimizer.__main__:main"
 
 [tool.poetry.dependencies]
 python = "^3.7"

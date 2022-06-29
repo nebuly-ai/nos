@@ -1,6 +1,11 @@
 import typer
 
-from cli import cli
+from optimizer.cli import cli
+
+
+def main():
+    typer.run(cli)
+
 
 if __name__ == "__main__":
-    typer.run(cli)
+    main()

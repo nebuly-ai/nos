@@ -93,9 +93,10 @@ class ModelOptimizer:
         resp = requests.get(model_uri)
         resp.raise_for_status()
         # Todo
-        model_path = pathlib.Path("model")
+        model_path = self.__working_dir / pathlib.Path("model")
         model_path.write_bytes(resp.content)
         logger.info(f"Model downloaded at {model_path}")
+        return model_path
 
 
 class HardwareSelector:
