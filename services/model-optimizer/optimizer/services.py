@@ -47,13 +47,13 @@ class AzureModelLibrary(ModelLibrary):
     def upload_model(self, model_path: pathlib.Path) -> str:
         with open(model_path, "rb") as data:
             logger.info(f"Uploading model {model_path.name} to {self._base_uri}")
-            self._new_blob_client(self._base_uri).upload_blob(data)
+            self._new_blob_client(self._base_uri).upload_blob(data, overwrite=True)
         return self._base_uri  # todo
 
     def upload_model_descriptor(self, model_descriptor: models.ModelDescriptor):
         logger.info(f"Uploading model descriptor to {self._model_descriptor_uri}")
         model_descriptor_json = json.dumps(dataclasses.asdict(model_descriptor))
-        self._new_blob_client(self._model_descriptor_uri).upload_blob(model_descriptor_json)
+        self._new_blob_client(self._model_descriptor_uri).upload_blob(model_descriptor_json, overwrite=True)
 
 
 class ModelLibraryFactory(abc.ABC):
