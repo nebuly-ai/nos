@@ -21,6 +21,7 @@ const (
 
 	LabelCreatedBy          = "app.kubernetes.io/created-by"
 	LabelOptimizationTarget = "n8s.nebuly.ai/optimization-target"
+	LabelModelDeployment    = "n8s.nebuly.ai/model-deployment"
 
 	AnnotationSourceModelUri = "n8s.nebuly.ai/source-model-uri"
 

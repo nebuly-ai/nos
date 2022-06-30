@@ -44,6 +44,19 @@ func newMockedModelDeployment() *n8sv1alpha1.ModelDeployment {
 	}
 }
 
+func getOptimizationJobList(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.JobList, error) {
+	var jobList = new(batchv1.JobList)
+	labels := client.MatchingLabels{
+		constants.LabelCreatedBy:       constants.ModelDeploymentControllerName,
+		constants.LabelModelDeployment: modelDeployment.GetName(),
+	}
+	err := k8sClient.List(ctx, jobList, labels)
+	if err != nil {
+		return nil, err
+	}
+	return jobList, nil
+}
+
 var _ = Describe("ModelDeployment controller", func() {
 	const (
 		timeout  = time.Second * 20
@@ -84,8 +97,7 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Creating a new Job")
 			Eventually(func() int {
-				var jobList batchv1.JobList
-				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				jobList, err := getOptimizationJobList(modelDeployment)
 				if err != nil {
 					return 0
 				}
@@ -94,8 +106,8 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Checking that the Job launched Pods using the specified Docker image")
 			expectedImageName := fmt.Sprintf("%s:%s", modelOptimizerImageName, modelOptimizerImageVersion)
-			var jobList batchv1.JobList
-			Expect(k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})).To(Succeed())
+			jobList, err := getOptimizationJobList(modelDeployment)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(jobList.Items).To(HaveLen(1))
 			job := jobList.Items[0]
 			Expect(job.Spec.Template.Spec.Containers).To(HaveLen(1))
@@ -114,8 +126,7 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Getting the optimization Job created with the first optimization target")
 			Eventually(func() int {
-				var jobList batchv1.JobList
-				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				jobList, err := getOptimizationJobList(modelDeployment)
 				if err != nil {
 					return 0
 				}
@@ -130,8 +141,7 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
 			Eventually(func() bool {
-				var jobList batchv1.JobList
-				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				jobList, err := getOptimizationJobList(modelDeployment)
 				if err != nil {
 					return false
 				}
@@ -151,8 +161,7 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Getting the optimization Job created with the first optimization target")
 			Eventually(func() int {
-				var jobList batchv1.JobList
-				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				jobList, err := getOptimizationJobList(modelDeployment)
 				if err != nil {
 					return 0
 				}
@@ -167,8 +176,7 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
 			Eventually(func() bool {
-				var jobList batchv1.JobList
-				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				jobList, err := getOptimizationJobList(modelDeployment)
 				if err != nil {
 					return false
 				}

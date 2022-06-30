@@ -9,19 +9,12 @@ import (
 	"github.com/nebuly-ai/nebulnetes/controllers/utils"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-)
-
-const (
-	// Format used for generating the names of the optimization jobs
-	optimizationJobNameFormat = "%s-optimization"
 )
 
 type OptimizationJobReconciler struct {
@@ -60,10 +53,10 @@ func buildOptimizationJob(ml components.ModelLibrary, instance *n8sv1alpha1.Mode
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels:      make(map[string]string),
-			Annotations: make(map[string]string),
-			Name:        fmt.Sprintf(optimizationJobNameFormat, instance.Name),
-			Namespace:   instance.Namespace,
+			Labels:       make(map[string]string),
+			Annotations:  make(map[string]string),
+			GenerateName: "optimization-job-",
+			Namespace:    instance.Namespace,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit: &optimizationJobBackoffLimit,
@@ -80,6 +73,7 @@ func buildOptimizationJob(ml components.ModelLibrary, instance *n8sv1alpha1.Mode
 	// Set labels
 	job.Labels[constants.LabelCreatedBy] = constants.ModelDeploymentControllerName
 	job.Labels[constants.LabelOptimizationTarget] = string(instance.Spec.Optimization.Target)
+	job.Labels[constants.LabelModelDeployment] = instance.GetName()
 
 	// Set annotations
 	job.Annotations[constants.AnnotationSourceModelUri] = instance.Spec.SourceModel.Uri
@@ -121,20 +115,23 @@ func buildModelOptimizerContainer(ml components.ModelLibrary, md *n8sv1alpha1.Mo
 func (r *OptimizationJobReconciler) checkOptimizationJobExists(ctx context.Context) (constants.ExistenceCheckResult, *batchv1.Job, error) {
 	logger := log.FromContext(ctx)
 
-	var job = new(batchv1.Job)
-	jobNamespacedName := types.NamespacedName{
-		Namespace: r.optimizationJob.Namespace,
-		Name:      r.optimizationJob.Name,
-	}
-	err := r.GetClient().Get(ctx, jobNamespacedName, job)
-	if client.IgnoreNotFound(err) != nil {
+	var jobList = new(batchv1.JobList)
+	err := r.GetClient().List(ctx, jobList, client.MatchingLabels{constants.LabelModelDeployment: r.instance.GetName()})
+	if err != nil {
 		logger.Error(err, "unable to fetch optimization job")
 		return constants.ExistenceCheckError, nil, err
 	}
-	if apierrors.IsNotFound(err) {
+	if len(jobList.Items) == 0 {
 		return constants.ExistenceCheckCreate, nil, nil
 	}
-	return constants.ExistenceCheckExists, job, nil
+	if len(jobList.Items) == 1 {
+		return constants.ExistenceCheckExists, &jobList.Items[0], nil
+	}
+	err = fmt.Errorf(
+		"model deployment should have only one optimization job, but %d were found",
+		len(jobList.Items),
+	)
+	return constants.ExistenceCheckError, nil, err
 }
 
 func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
