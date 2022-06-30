@@ -22,6 +22,7 @@ const (
 	LabelCreatedBy          = "app.kubernetes.io/created-by"
 	LabelOptimizationTarget = "n8s.nebuly.ai/optimization-target"
 	LabelModelDeployment    = "n8s.nebuly.ai/model-deployment"
+	LabelOptimizationJob    = "n8s.nebuly.ai/optimization-job"
 
 	AnnotationSourceModelUri = "n8s.nebuly.ai/source-model-uri"
 
@@ -31,4 +32,9 @@ const (
 
 	// ModelDeploymentControllerName is the name of the controller of ModelDeployment kind
 	ModelDeploymentControllerName = "modeldeployment-controller"
+
+	// OptimizationJobNamePrefix is the prefix used for the auto-generated names of the model optimization jobs
+	OptimizationJobNamePrefix = "optimization-"
+	// ModelDescriptorNamePrefix is the prefix used for the auto-generated names of the model descriptor config maps
+	ModelDescriptorNamePrefix = "model-descriptor-"
 )

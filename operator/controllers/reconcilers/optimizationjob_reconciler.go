@@ -6,7 +6,7 @@ import (
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/constants"
 	"github.com/nebuly-ai/nebulnetes/controllers/components"
-	"github.com/nebuly-ai/nebulnetes/controllers/utils"
+	utils "github.com/nebuly-ai/nebulnetes/utils"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,6 +42,13 @@ func NewOptimizationJobReconciler(client client.Client,
 	}, nil
 }
 
+func GetModelDescriptorConfigMapLabels(m *n8sv1alpha1.ModelDeployment, optimizationJob *batchv1.Job) map[string]string {
+	return map[string]string{
+		constants.LabelModelDeployment: m.Name,
+		constants.LabelOptimizationJob: optimizationJob.Name,
+	}
+}
+
 func buildOptimizationJob(ml components.ModelLibrary, instance *n8sv1alpha1.ModelDeployment) (*batchv1.Job, error) {
 	container, err := buildModelOptimizerContainer(ml, instance)
 	if err != nil {
@@ -55,7 +62,7 @@ func buildOptimizationJob(ml components.ModelLibrary, instance *n8sv1alpha1.Mode
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:       make(map[string]string),
 			Annotations:  make(map[string]string),
-			GenerateName: "optimization-job-",
+			GenerateName: constants.OptimizationJobNamePrefix,
 			Namespace:    instance.Namespace,
 		},
 		Spec: batchv1.JobSpec{
@@ -128,35 +135,113 @@ func (r *OptimizationJobReconciler) checkOptimizationJobExists(ctx context.Conte
 		return constants.ExistenceCheckExists, &jobList.Items[0], nil
 	}
 	err = fmt.Errorf(
-		"model deployment should have only one optimization job, but %d were found",
+		"model deployments should have only one optimization job, but %d were found",
 		len(jobList.Items),
 	)
 	return constants.ExistenceCheckError, nil, err
 }
 
+func (r *OptimizationJobReconciler) checkModelDescriptorConfigMapExists(ctx context.Context) (constants.ExistenceCheckResult, *corev1.ConfigMap, error) {
+	logger := log.FromContext(ctx)
+
+	var configMapList = new(corev1.ConfigMapList)
+	labels := client.MatchingLabels{}
+	for k, v := range GetModelDescriptorConfigMapLabels(r.instance, r.optimizationJob) {
+		labels[k] = v
+	}
+
+	err := r.GetClient().List(ctx, configMapList, labels)
+	if err != nil {
+		logger.Error(err, "unable to fetch optimization job")
+		return constants.ExistenceCheckError, nil, err
+	}
+	if len(configMapList.Items) == 0 {
+		return constants.ExistenceCheckCreate, nil, nil
+	}
+	if len(configMapList.Items) == 1 {
+		return constants.ExistenceCheckExists, &configMapList.Items[0], nil
+	}
+	err = fmt.Errorf(
+		"model optimization jobs should have only one model descriptor config map, but %d were found",
+		len(configMapList.Items),
+	)
+	return constants.ExistenceCheckError, nil, err
+}
+
+func (r *OptimizationJobReconciler) buildModelDescriptorConfigMap(modelDescriptor *components.ModelDescriptor) *corev1.ConfigMap {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:    r.instance.Namespace,
+			GenerateName: constants.ModelDescriptorNamePrefix,
+			Labels:       GetModelDescriptorConfigMapLabels(r.instance, r.optimizationJob),
+		},
+		Immutable: utils.BoolAddr(true),
+		Data:      modelDescriptor.AsMap(),
+	}
+}
+
+func (r *OptimizationJobReconciler) createOptimizationJob(ctx context.Context) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	if err := r.CreateResourceIfNotExists(ctx, r.instance, r.optimizationJob); err != nil {
+		logger.Error(err, "unable to create optimization job", "Job", r.optimizationJob)
+		return r.HandleError(r.instance, err)
+	}
+	logger.Info("created new optimization job", "Job", r.optimizationJob)
+	r.GetRecorder().Event(
+		r.instance,
+		corev1.EventTypeNormal,
+		"ModelOptimizationStarted",
+		"Started model optimization job",
+	)
+	r.instance.Status.State = n8sv1alpha1.StatusStateDeployingModel
+	return ctrl.Result{}, nil
+}
+
+func (r *OptimizationJobReconciler) createModelDescriptorConfigMap(ctx context.Context) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	modelDescriptor, err := r.modelLibrary.FetchOptimizedModelDescriptor(r.instance) // TODO: make it asynchronous
+	if err != nil {
+		logger.Error(err, "unable to fetch model descriptor", "uri", r.modelLibrary.GetOptimizedModelDescriptorUri(r.instance))
+		return ctrl.Result{}, err
+	}
+
+	modelDescriptorConfigMap := r.buildModelDescriptorConfigMap(modelDescriptor)
+	if err = r.CreateResourceIfNotExists(ctx, r.instance, modelDescriptorConfigMap); err != nil {
+		logger.Error(
+			err,
+			"unable to create optimized model descriptor configmap",
+			"ConfigMap",
+			modelDescriptorConfigMap,
+		)
+		return ctrl.Result{}, err
+	}
+	logger.Info("created model descriptor configmap", "ConfigMap", modelDescriptorConfigMap)
+	r.GetRecorder().Event(
+		r.instance,
+		corev1.EventTypeNormal,
+		"ModelOptimizationCompleted",
+		"Created model descriptor ConfigMap",
+	)
+
+	return ctrl.Result{}, nil
+}
+
 func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	checkResult, job, err := r.checkOptimizationJobExists(ctx)
+	jobCheckResult, job, err := r.checkOptimizationJobExists(ctx)
+	if err != nil {
+		return r.HandleError(r.instance, err)
+	}
+	cmCheckResult, _, err := r.checkModelDescriptorConfigMapExists(ctx)
 	if err != nil {
 		return r.HandleError(r.instance, err)
 	}
 
 	// If job does not exist then create it
-	if checkResult == constants.ExistenceCheckCreate {
-		if err := r.CreateResourceIfNotExists(ctx, r.instance, r.optimizationJob); err != nil {
-			logger.Error(err, "unable to create optimization job", "Job", r.optimizationJob)
-			return r.HandleError(r.instance, err)
-		}
-		logger.Info("created new optimization job", "Job", r.optimizationJob)
-		r.GetRecorder().Event(
-			r.instance,
-			corev1.EventTypeNormal,
-			"ModelOptimizationStarted",
-			"Started model optimization job",
-		)
-		r.instance.Status.State = n8sv1alpha1.StatusStateDeployingModel
-		return ctrl.Result{}, nil
+	if jobCheckResult == constants.ExistenceCheckCreate {
+		return r.createOptimizationJob(ctx)
 	}
 
 	// If current source model URI != URI in spec then delete the job so that it gets re-created with the right URI
@@ -215,10 +300,11 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 		return ctrl.Result{}, nil
 	}
 
-	// If the job finished successfully and the optimized model is available then deploy the optimized model
+	// If the job completed then create the optimized model descriptor configmap, if not already created
 	if finished == true && status == batchv1.JobComplete {
-		r.instance.Status.State = n8sv1alpha1.StatusStateDeployingModel
-		return ctrl.Result{}, nil
+		if cmCheckResult == constants.ExistenceCheckCreate {
+			return r.createModelDescriptorConfigMap(ctx)
+		}
 	}
 
 	return ctrl.Result{}, nil

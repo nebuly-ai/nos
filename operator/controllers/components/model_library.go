@@ -33,6 +33,14 @@ const (
 type ModelDescriptor struct {
 }
 
+func (m *ModelDescriptor) AsMap() map[string]string {
+	// TODO: more efficient implementation of Struct -> Map conversion, handle errors
+	var configMapData = new(map[string]string)
+	j, _ := json.Marshal(m)
+	_ = json.Unmarshal(j, configMapData)
+	return *configMapData
+}
+
 type ModelLibrary interface {
 	// GetCredentials returns a map containing the credentials required for authenticating with the model library, where
 	// the keys are the names of the env variables corresponding to each credential
@@ -144,7 +152,7 @@ func (a azureModelLibrary) GetCredentials() (map[string]string, error) {
 
 func (a azureModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	//TODO implement me
-	panic("implement me")
+	return &ModelDescriptor{}, nil
 }
 
 // ----------- S3 model library -----------
