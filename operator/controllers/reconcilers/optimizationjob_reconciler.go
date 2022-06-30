@@ -118,10 +118,9 @@ func buildModelOptimizerContainer(ml components.ModelLibrary, md *n8sv1alpha1.Mo
 	}, nil
 }
 
-func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
+func (r *OptimizationJobReconciler) checkOptimizationJobExists(ctx context.Context) (constants.ExistenceCheckResult, *batchv1.Job, error) {
 	logger := log.FromContext(ctx)
 
-	// Fetch optimization job
 	var job = new(batchv1.Job)
 	jobNamespacedName := types.NamespacedName{
 		Namespace: r.optimizationJob.Namespace,
@@ -130,11 +129,24 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 	err := r.GetClient().Get(ctx, jobNamespacedName, job)
 	if client.IgnoreNotFound(err) != nil {
 		logger.Error(err, "unable to fetch optimization job")
+		return constants.ExistenceCheckError, nil, err
+	}
+	if apierrors.IsNotFound(err) {
+		return constants.ExistenceCheckCreate, nil, nil
+	}
+	return constants.ExistenceCheckExists, job, nil
+}
+
+func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	checkResult, job, err := r.checkOptimizationJobExists(ctx)
+	if err != nil {
 		return r.HandleError(r.instance, err)
 	}
 
 	// If job does not exist then create it
-	if apierrors.IsNotFound(err) == true {
+	if checkResult == constants.ExistenceCheckCreate {
 		if err := r.CreateResourceIfNotExists(ctx, r.instance, r.optimizationJob); err != nil {
 			logger.Error(err, "unable to create optimization job", "Job", r.optimizationJob)
 			return r.HandleError(r.instance, err)

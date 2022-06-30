@@ -1,5 +1,19 @@
 package constants
 
+// ExistenceCheckResult represents the result of an existence check on a certain resource
+type ExistenceCheckResult string
+
+const (
+	// ExistenceCheckExists indicates that the resource exists, and it is up-to-date with the spec
+	ExistenceCheckExists ExistenceCheckResult = "exists"
+	// ExistenceCheckUpdate indicates that the resource exists, but needs to be updated
+	ExistenceCheckUpdate ExistenceCheckResult = "update"
+	// ExistenceCheckCreate indicates that the resource does not exist yet and needs to be created
+	ExistenceCheckCreate ExistenceCheckResult = "create"
+	// ExistenceCheckError indicates that an error occurred when checking the existence of the resource
+	ExistenceCheckError ExistenceCheckResult = "error"
+)
+
 const (
 	EventInternalError           = "InternalError"
 	EventModelOptimizationFailed = "ModelOptimizationFailed"
