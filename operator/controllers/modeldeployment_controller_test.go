@@ -14,6 +14,36 @@ import (
 	"time"
 )
 
+const (
+	modelDeploymentName        = "model-deployment-test"
+	modelDeploymentNamespace   = "default"
+	modelUri                   = "https://foo.bar/model.pkl"
+	optimizationTarget         = n8sv1alpha1.OptimizationTargetLatency
+	modelOptimizerImageVersion = "0.0.1"
+	modelOptimizerImageName    = "nebuly.ai/model-optimizer-mock"
+)
+
+func newMockedModelDeployment() *n8sv1alpha1.ModelDeployment {
+	return &n8sv1alpha1.ModelDeployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: n8sv1alpha1.GroupVersion.String(),
+			Kind:       "ModelDeployment",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      modelDeploymentName,
+			Namespace: modelDeploymentNamespace,
+		},
+		Spec: n8sv1alpha1.ModelDeploymentSpec{
+			SourceModel: n8sv1alpha1.SourceModel{Uri: modelUri},
+			Optimization: n8sv1alpha1.OptimizationSpec{
+				Target:                     optimizationTarget,
+				ModelOptimizerImageName:    modelOptimizerImageName,
+				ModelOptimizerImageVersion: modelOptimizerImageVersion,
+			},
+		},
+	}
+}
+
 var _ = Describe("ModelDeployment controller", func() {
 	const (
 		timeout  = time.Second * 20
@@ -28,41 +58,17 @@ var _ = Describe("ModelDeployment controller", func() {
 	})
 
 	AfterEach(func() {
-		// Add any teardown steps that needs to be executed after each test
+		// Delete mocked model deployment, if present
+		Expect(client.IgnoreNotFound(k8sClient.Delete(ctx, &n8sv1alpha1.ModelDeployment{ObjectMeta: metav1.ObjectMeta{
+			Name:      modelDeploymentName,
+			Namespace: modelDeploymentNamespace,
+		}}))).To(Succeed())
 	})
 
 	Context("When creating ModelDeployment", func() {
-		const (
-			modelDeploymentName               = "model-deployment-test"
-			modelDeploymentNamespace          = "default"
-			modelUri                          = "https://foo.bar/model.pkl"
-			modelLibraryUri                   = "https://foo.bar/model-library"
-			modelLibraryCredentialsSecretName = "azure-credentials"
-			optimizationTarget                = n8sv1alpha1.OptimizationTargetLatency
-			modelOptimizerImageVersion        = "0.0.1"
-			modelOptimizerImageName           = "nebuly.ai/model-optimizer-mock"
-		)
-
 		It("Should start a model optimization job", func() {
 			By("Creating a new ModelDeployment successfully")
-			modelDeployment := &n8sv1alpha1.ModelDeployment{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: n8sv1alpha1.GroupVersion.String(),
-					Kind:       "ModelDeployment",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      modelDeploymentName,
-					Namespace: modelDeploymentNamespace,
-				},
-				Spec: n8sv1alpha1.ModelDeploymentSpec{
-					SourceModel: n8sv1alpha1.SourceModel{Uri: modelUri},
-					Optimization: n8sv1alpha1.OptimizationSpec{
-						Target:                     optimizationTarget,
-						ModelOptimizerImageName:    modelOptimizerImageName,
-						ModelOptimizerImageVersion: modelOptimizerImageVersion,
-					},
-				},
-			}
+			modelDeployment := newMockedModelDeployment()
 			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
 
 			By("Checking the created ModelDeployment matches the specs")
@@ -97,6 +103,80 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Checking that the Pods launched by the Job do not run as root")
 			Expect(job.Spec.Template.Spec.SecurityContext.RunAsNonRoot).To(HaveValue(BeTrue()))
+		})
+	})
+
+	Context("When updating the optimization target of a ModelDeployment", func() {
+		It("Should delete and recreate the model optimization job", func() {
+			By("Creating a new ModelDeployment successfully")
+			modelDeployment := newMockedModelDeployment()
+			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
+
+			By("Getting the optimization Job created with the first optimization target")
+			Eventually(func() int {
+				var jobList batchv1.JobList
+				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				if err != nil {
+					return 0
+				}
+				return len(jobList.Items)
+			}, timeout, interval).Should(Equal(1))
+
+			By("Updating the optimization target of the ModelDeployment")
+			var updated = new(n8sv1alpha1.ModelDeployment)
+			modelDeployment.DeepCopyInto(updated)
+			modelDeployment.Spec.Optimization.Target = n8sv1alpha1.OptimizationTargetEmissions
+			Expect(k8sClient.Update(ctx, modelDeployment)).To(Succeed())
+
+			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
+			Eventually(func() bool {
+				var jobList batchv1.JobList
+				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				if err != nil {
+					return false
+				}
+				if len(jobList.Items) == 1 {
+					return !jobList.Items[0].GetDeletionTimestamp().IsZero()
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
+		})
+	})
+
+	Context("When updating the source model URI of a ModelDeployment", func() {
+		It("Should delete and recreate the model optimization job", func() {
+			By("Creating a new ModelDeployment successfully")
+			modelDeployment := newMockedModelDeployment()
+			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
+
+			By("Getting the optimization Job created with the first optimization target")
+			Eventually(func() int {
+				var jobList batchv1.JobList
+				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				if err != nil {
+					return 0
+				}
+				return len(jobList.Items)
+			}, timeout, interval).Should(Equal(1))
+
+			By("Updating the optimization target of the ModelDeployment")
+			var updated = new(n8sv1alpha1.ModelDeployment)
+			modelDeployment.DeepCopyInto(updated)
+			modelDeployment.Spec.Optimization.Target = n8sv1alpha1.OptimizationTargetEmissions
+			Expect(k8sClient.Update(ctx, modelDeployment)).To(Succeed())
+
+			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
+			Eventually(func() bool {
+				var jobList batchv1.JobList
+				err := k8sClient.List(ctx, &jobList, client.MatchingLabels{constants.LabelCreatedBy: constants.ModelDeploymentControllerName})
+				if err != nil {
+					return false
+				}
+				if len(jobList.Items) == 1 {
+					return !jobList.Items[0].GetDeletionTimestamp().IsZero()
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 })

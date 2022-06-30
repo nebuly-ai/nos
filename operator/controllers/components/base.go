@@ -14,6 +14,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// ComponentReconcilerBase is a base struct from inherited from all the component reconcilers. It has common fields
+// and defines utility methods shared among all the reconcilers.
 type ComponentReconcilerBase struct {
 	client   client.Client
 	scheme   *runtime.Scheme
@@ -45,6 +47,8 @@ func (r *ComponentReconcilerBase) HandleError(instance client.Object, err error)
 	return ctrl.Result{}, err
 }
 
+// DeleteResourceIfExists deletes the resource corresponding to the object provided as argument.
+// If the resource does not exist the func does not return any error.
 func (r *ComponentReconcilerBase) DeleteResourceIfExists(context context.Context, obj client.Object) error {
 	logger := log.FromContext(context)
 
@@ -59,6 +63,8 @@ func (r *ComponentReconcilerBase) DeleteResourceIfExists(context context.Context
 	return nil
 }
 
+// CreateResourceIfNotExists creates the resource if it does not exist yet, setting as owner the object provided
+// as the "owner" param. If the resource already exist, no error is returned.
 func (r *ComponentReconcilerBase) CreateResourceIfNotExists(context context.Context, owner client.Object, obj client.Object) error {
 	logger := log.FromContext(context)
 
