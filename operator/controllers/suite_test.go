@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/constants"
+	"github.com/nebuly-ai/nebulnetes/controllers/components"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -81,10 +82,10 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	ml := newMockModelLibrary(
-		baseModelLibrary{
+	ml := components.NewMockModelLibrary(
+		components.BaseModelLibrary{
 			Uri:  "https://foo.bar",
-			Kind: modelLibraryKindMock,
+			Kind: components.ModelLibraryKindMock,
 		},
 	)
 

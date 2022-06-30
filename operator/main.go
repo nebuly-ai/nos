@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/constants"
+	"github.com/nebuly-ai/nebulnetes/controllers/components"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"os"
@@ -70,28 +71,28 @@ func getWatchNamespace() (string, error) {
 	return ns, nil
 }
 
-func getModelLibrary(ctx context.Context, namespace string) (controllers.ModelLibrary, error) {
-	setupLog.Info("loading model library config", "ConfigMap", controllers.ModelLibraryConfigMapName)
+func getModelLibrary(ctx context.Context, namespace string) (components.ModelLibrary, error) {
+	setupLog.Info("loading model library config", "ConfigMap", components.ModelLibraryConfigMapName)
 	clientset := kubernetes.NewForConfigOrDie(ctrl.GetConfigOrDie())
 	configmap, err := clientset.CoreV1().ConfigMaps(namespace).Get(
 		ctx,
-		controllers.ModelLibraryConfigMapName,
+		components.ModelLibraryConfigMapName,
 		metav1.GetOptions{},
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error getting model library configmap %s: %s",
-			controllers.ModelLibraryConfigMapName,
+			components.ModelLibraryConfigMapName,
 			err,
 		)
 	}
-	if modelLibraryConfig, ok := configmap.Data[controllers.ModelLibraryConfigKeyName]; ok {
-		return controllers.NewModelLibraryFromJson(modelLibraryConfig)
+	if modelLibraryConfig, ok := configmap.Data[components.ModelLibraryConfigKeyName]; ok {
+		return components.NewModelLibraryFromJson(modelLibraryConfig)
 	}
 	return nil, fmt.Errorf(
 		"could not find key %s in model library configmap %s",
-		controllers.ModelLibraryConfigKeyName,
-		controllers.ModelLibraryConfigMapName,
+		components.ModelLibraryConfigKeyName,
+		components.ModelLibraryConfigMapName,
 	)
 }
 
@@ -147,7 +148,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var modelLibrary controllers.ModelLibrary
+	var modelLibrary components.ModelLibrary
 	if modelLibrary, err = getModelLibrary(ctx, controllerNamespace); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ModelDeployment")
 		os.Exit(1)

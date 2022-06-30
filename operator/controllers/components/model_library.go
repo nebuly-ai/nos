@@ -1,4 +1,4 @@
-package controllers
+package components
 
 import (
 	"encoding/json"
@@ -25,9 +25,9 @@ const (
 type ModelLibraryStorageKind string
 
 const (
-	modelLibraryKindAzure ModelLibraryStorageKind = "azure"
-	modelLibraryKindS3    ModelLibraryStorageKind = "s3"
-	modelLibraryKindMock  ModelLibraryStorageKind = "mock"
+	ModelLibraryKindAzure ModelLibraryStorageKind = "azure"
+	ModelLibraryKindS3    ModelLibraryStorageKind = "s3"
+	ModelLibraryKindMock  ModelLibraryStorageKind = "mock"
 )
 
 type ModelDescriptor struct {
@@ -50,46 +50,46 @@ type ModelLibrary interface {
 	GetStorageKind() ModelLibraryStorageKind
 }
 
-type baseModelLibrary struct {
+type BaseModelLibrary struct {
 	Uri  string                  `json:"uri"`
 	Kind ModelLibraryStorageKind `json:"kind"`
 }
 
 func NewModelLibraryFromJson(jsonConfig string) (ModelLibrary, error) {
-	var baseModelLibrary baseModelLibrary
+	var baseModelLibrary BaseModelLibrary
 	if err := json.Unmarshal([]byte(jsonConfig), &baseModelLibrary); err != nil {
 		return nil, err
 	}
 	switch baseModelLibrary.Kind {
-	case modelLibraryKindAzure:
+	case ModelLibraryKindAzure:
 		return newAzureModelLibrary(baseModelLibrary)
-	case modelLibraryKindS3:
+	case ModelLibraryKindS3:
 		return newS3ModelLibrary(baseModelLibrary)
 	default:
 		return nil, fmt.Errorf("invalid kind %s", baseModelLibrary.Kind)
 	}
 }
 
-func (b *baseModelLibrary) GetBaseUri(modelDeployment *v1alpha1.ModelDeployment) string {
+func (b *BaseModelLibrary) GetBaseUri(modelDeployment *v1alpha1.ModelDeployment) string {
 	return fmt.Sprintf("%s/%s/%s", b.Uri, modelDeployment.Namespace, modelDeployment.Name)
 }
 
-func (b *baseModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
+func (b *BaseModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
 	return fmt.Sprintf("%s/%s", b.GetBaseUri(modelDeployment), modelInfoFileName)
 }
 
-func (b *baseModelLibrary) GetStorageKind() ModelLibraryStorageKind {
+func (b *BaseModelLibrary) GetStorageKind() ModelLibraryStorageKind {
 	return b.Kind
 }
 
 // ----------- Azure model library -----------
 
 type azureModelLibrary struct {
-	baseModelLibrary
+	BaseModelLibrary
 	blobClient *azblob.BlobClient
 }
 
-func newAzureModelLibrary(base baseModelLibrary) (*azureModelLibrary, error) {
+func newAzureModelLibrary(base BaseModelLibrary) (*azureModelLibrary, error) {
 	var tenantId, clientId, clientSecret string
 	var err error
 
@@ -118,7 +118,7 @@ func newAzureModelLibrary(base baseModelLibrary) (*azureModelLibrary, error) {
 		return nil, err
 	}
 
-	return &azureModelLibrary{baseModelLibrary: base, blobClient: client}, nil
+	return &azureModelLibrary{BaseModelLibrary: base, blobClient: client}, nil
 }
 
 func (a azureModelLibrary) GetCredentials() (map[string]string, error) {
@@ -150,11 +150,11 @@ func (a azureModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alph
 // ----------- S3 model library -----------
 
 type s3ModelLibrary struct {
-	baseModelLibrary
+	BaseModelLibrary
 }
 
-func newS3ModelLibrary(base baseModelLibrary) (*s3ModelLibrary, error) {
-	return &s3ModelLibrary{baseModelLibrary: base}, nil
+func newS3ModelLibrary(base BaseModelLibrary) (*s3ModelLibrary, error) {
+	return &s3ModelLibrary{BaseModelLibrary: base}, nil
 }
 
 func (s s3ModelLibrary) GetCredentials() (map[string]string, error) {
@@ -170,16 +170,16 @@ func (s s3ModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.
 // ----------- Mock model library -----------
 
 type mockModelLibrary struct {
-	baseModelLibrary
+	BaseModelLibrary
 	returnedCredentials  map[string]string
 	returnedModelInfoUri string
 	returnedModelInfo    *ModelDescriptor
 	returnedBaseUri      string
 }
 
-func newMockModelLibrary(base baseModelLibrary) *mockModelLibrary {
+func NewMockModelLibrary(base BaseModelLibrary) *mockModelLibrary {
 	return &mockModelLibrary{
-		baseModelLibrary:    base,
+		BaseModelLibrary:    base,
 		returnedCredentials: make(map[string]string, 0),
 	}
 }

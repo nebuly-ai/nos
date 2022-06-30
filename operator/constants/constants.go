@@ -13,4 +13,7 @@ const (
 	EnvSkipControllerTests = "SKIP_CONTROLLER_TESTS"
 
 	ControllerManagerName = "n8s-controller-manager"
+
+	// ModelDeploymentControllerName is the name of the controller of ModelDeployment kind
+	ModelDeploymentControllerName = "modeldeployment-controller"
 )

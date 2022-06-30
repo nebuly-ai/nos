@@ -1,4 +1,4 @@
-package controllers
+package components
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ var _ = Describe("New model library from json config", func() {
 
 	When("JSON has extra fields", func() {
 		uri := "https://foo.bar"
-		kind := modelLibraryKindAzure
+		kind := ModelLibraryKindAzure
 		json := fmt.Sprintf(
 			"{\"uri\": \"%s\", \"kind\": \"%s\", \"foo\": \"bar\"}",
 			uri,
@@ -71,7 +71,7 @@ var _ = Describe("New model library from json config", func() {
 	})
 
 	When("Any required env variable is missing ", func() {
-		json := newModelLibraryJson("https://foo.bar", string(modelLibraryKindAzure))
+		json := newModelLibraryJson("https://foo.bar", string(ModelLibraryKindAzure))
 		It("Should return an error", func() {
 			Expect(os.Unsetenv(envModelLibraryAzureTenantId)).To(Succeed())
 			Expect(NewModelLibraryFromJson(json)).Error().To(HaveOccurred())
@@ -85,8 +85,8 @@ var _ = Describe("New model library from json config", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(modelLibary).To(BeAssignableToTypeOf(expectedModelLibraryType))
 		},
-		Entry("Kind Azure", modelLibraryKindAzure, &azureModelLibrary{}),
-		Entry("Kind S3", modelLibraryKindS3, &s3ModelLibrary{}),
+		Entry("Kind Azure", ModelLibraryKindAzure, &azureModelLibrary{}),
+		Entry("Kind S3", ModelLibraryKindS3, &s3ModelLibrary{}),
 	)
 })
 
@@ -105,7 +105,7 @@ var _ = Describe("GetCredentials", func() {
 			Expect(os.Setenv(envModelLibraryAzureClientId, azureClientId)).To(Succeed())
 			Expect(os.Setenv(envModelLibraryAzureTenantId, azureTenantId)).To(Succeed())
 			modelLibrary = &azureModelLibrary{
-				baseModelLibrary: baseModelLibrary{Uri: "uri"},
+				BaseModelLibrary: BaseModelLibrary{Uri: "uri"},
 				blobClient:       nil,
 			}
 		})
