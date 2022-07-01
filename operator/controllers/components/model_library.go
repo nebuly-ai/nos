@@ -31,6 +31,7 @@ const (
 )
 
 type ModelDescriptor struct {
+	ModelUri string `json:"modelUri"`
 }
 
 func (m *ModelDescriptor) AsMap() map[string]string {
@@ -179,16 +180,17 @@ func (s s3ModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.
 
 type mockModelLibrary struct {
 	BaseModelLibrary
-	returnedCredentials  map[string]string
-	returnedModelInfoUri string
-	returnedModelInfo    *ModelDescriptor
-	returnedBaseUri      string
+	returnedCredentials     map[string]string
+	returnedModelInfoUri    string
+	returnedModelDescriptor *ModelDescriptor
+	returnedBaseUri         string
 }
 
-func NewMockModelLibrary(base BaseModelLibrary) *mockModelLibrary {
+func NewMockModelLibrary(base BaseModelLibrary, modelDescriptor *ModelDescriptor) *mockModelLibrary {
 	return &mockModelLibrary{
-		BaseModelLibrary:    base,
-		returnedCredentials: make(map[string]string, 0),
+		BaseModelLibrary:        base,
+		returnedCredentials:     make(map[string]string, 0),
+		returnedModelDescriptor: modelDescriptor,
 	}
 }
 
@@ -205,5 +207,5 @@ func (m mockModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alph
 }
 
 func (m mockModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
-	return m.returnedModelInfo, nil
+	return m.returnedModelDescriptor, nil
 }

@@ -43,8 +43,9 @@ var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
 var (
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx                context.Context
+	cancel             context.CancelFunc
+	mockedModelLibrary components.ModelLibrary
 )
 
 func TestAPIs(t *testing.T) {
@@ -82,18 +83,19 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	ml := components.NewMockModelLibrary(
+	mockedModelLibrary = components.NewMockModelLibrary(
 		components.BaseModelLibrary{
 			Uri:  "https://foo.bar",
 			Kind: components.ModelLibraryKindMock,
 		},
+		&components.ModelDescriptor{ModelUri: modelUri},
 	)
 
 	err = (&ModelDeploymentReconciler{
 		Client:        k8sManager.GetClient(),
 		Scheme:        k8sManager.GetScheme(),
 		EventRecorder: k8sManager.GetEventRecorderFor("ModelDeployment"),
-		ModelLibrary:  ml,
+		ModelLibrary:  mockedModelLibrary,
 	}).SetupWithManager(k8sManager, constants.ControllerManagerName)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -102,7 +104,6 @@ var _ = BeforeSuite(func() {
 		err = k8sManager.Start(ctx)
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
-
 })
 
 var _ = AfterSuite(func() {
