@@ -2,8 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
+)
+
+const (
+	lowercaseLetters = "abcdefghijklmnopqrstuvwxyz"
 )
 
 func BoolAddr(b bool) *bool {
@@ -33,4 +38,12 @@ func GetEnvOrError(key string) (string, error) {
 		return value, nil
 	}
 	return "", fmt.Errorf("missing env variable %s", key)
+}
+
+func RandomStringLowercase(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = lowercaseLetters[rand.Int63()%int64(len(lowercaseLetters))]
+	}
+	return string(b)
 }

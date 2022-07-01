@@ -234,14 +234,13 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 	if err != nil {
 		return r.HandleError(r.instance, err)
 	}
-	cmCheckResult, _, err := r.checkModelDescriptorConfigMapExists(ctx)
-	if err != nil {
-		return r.HandleError(r.instance, err)
-	}
-
 	// If job does not exist then create it
 	if jobCheckResult == constants.ExistenceCheckCreate {
 		return r.createOptimizationJob(ctx)
+	}
+	// If the job exists, then get the auto-generated name
+	if jobCheckResult == constants.ExistenceCheckExists {
+		r.optimizationJob.Name = job.Name
 	}
 
 	// If current source model URI != URI in spec then delete the job so that it gets re-created with the right URI
@@ -302,6 +301,10 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 
 	// If the job completed then create the optimized model descriptor configmap, if not already created
 	if finished == true && status == batchv1.JobComplete {
+		cmCheckResult, _, err := r.checkModelDescriptorConfigMapExists(ctx)
+		if err != nil {
+			return r.HandleError(r.instance, err)
+		}
 		if cmCheckResult == constants.ExistenceCheckCreate {
 			return r.createModelDescriptorConfigMap(ctx)
 		}
