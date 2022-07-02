@@ -1,12 +1,19 @@
 package components
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
 	"github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/utils"
+	"github.com/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
 
 const (
@@ -30,8 +37,20 @@ const (
 	ModelLibraryKindMock  ModelLibraryStorageKind = "mock"
 )
 
+const (
+	modelLibraryRequestsTimeout = 1 * time.Second
+)
+
 type ModelDescriptor struct {
-	ModelUri string `json:"modelUri"`
+	ModelUri string `json:"model_uri"`
+}
+
+func NewModelDescriptorFromJson(jsonBytes []byte) (*ModelDescriptor, error) {
+	var modelDescriptor = new(ModelDescriptor)
+	if err := json.Unmarshal(jsonBytes, modelDescriptor); err != nil {
+		return nil, err
+	}
+	return modelDescriptor, nil
 }
 
 func (m *ModelDescriptor) AsMap() map[string]string {
@@ -54,7 +73,7 @@ type ModelLibrary interface {
 	GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string
 	// FetchOptimizedModelDescriptor returns the ModelDescriptor, if present, of the optimized model produced by
 	// the ModelDeployment provided as argument
-	FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error)
+	FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error)
 	// GetStorageKind returns the kind of storage used by the model library
 	GetStorageKind() ModelLibraryStorageKind
 }
@@ -95,7 +114,7 @@ func (b *BaseModelLibrary) GetStorageKind() ModelLibraryStorageKind {
 
 type azureModelLibrary struct {
 	BaseModelLibrary
-	blobClient *azblob.BlobClient
+	credential azcore.TokenCredential
 }
 
 func newAzureModelLibrary(base BaseModelLibrary) (*azureModelLibrary, error) {
@@ -122,15 +141,19 @@ func newAzureModelLibrary(base BaseModelLibrary) (*azureModelLibrary, error) {
 		return nil, err
 	}
 
-	client, err := azblob.NewBlobClient(base.Uri, credential, &azblob.ClientOptions{})
-	if err != nil {
-		return nil, err
+	return &azureModelLibrary{BaseModelLibrary: base, credential: credential}, nil
+}
+func (a *azureModelLibrary) newBlobClient(uri string) (*azblob.BlobClient, error) {
+	blobOptions := &azblob.ClientOptions{
+		Retry: policy.RetryOptions{
+			MaxRetries: 0,
+			TryTimeout: modelLibraryRequestsTimeout,
+		},
 	}
-
-	return &azureModelLibrary{BaseModelLibrary: base, blobClient: client}, nil
+	return azblob.NewBlobClient(uri, a.credential, blobOptions)
 }
 
-func (a azureModelLibrary) GetCredentials() (map[string]string, error) {
+func (a *azureModelLibrary) GetCredentials() (map[string]string, error) {
 	var tenantId, clientId, clientSecret string
 	var err error
 
@@ -151,9 +174,31 @@ func (a azureModelLibrary) GetCredentials() (map[string]string, error) {
 	}, nil
 }
 
-func (a azureModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
-	//TODO implement me
-	return &ModelDescriptor{}, nil
+func (a *azureModelLibrary) FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
+	logger := log.FromContext(ctx)
+
+	uri := a.GetOptimizedModelDescriptorUri(modelDeployment)
+	logger.V(1).Info("downloading optimized model descriptor", "uri", uri)
+
+	client, err := a.newBlobClient(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to initialize azure blob client")
+	}
+	resp, err := client.Download(ctx, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "error downloading model optimizer descriptor from Azure Blob")
+	}
+
+	reader := resp.Body(&azblob.RetryReaderOptions{})
+	defer reader.Close()
+
+	modelDescriptorBytes := new(bytes.Buffer)
+	_, err = modelDescriptorBytes.ReadFrom(reader)
+	if err != nil {
+		return nil, errors.Wrap(err, "error reading model optimizer descriptor from Azure Blob")
+	}
+
+	return NewModelDescriptorFromJson(modelDescriptorBytes.Bytes())
 }
 
 // ----------- S3 model library -----------
@@ -166,12 +211,12 @@ func newS3ModelLibrary(base BaseModelLibrary) (*s3ModelLibrary, error) {
 	return &s3ModelLibrary{BaseModelLibrary: base}, nil
 }
 
-func (s s3ModelLibrary) GetCredentials() (map[string]string, error) {
+func (s *s3ModelLibrary) GetCredentials() (map[string]string, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s s3ModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
+func (s *s3ModelLibrary) FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -206,6 +251,6 @@ func (m mockModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alph
 	return m.returnedModelInfoUri
 }
 
-func (m mockModelLibrary) FetchOptimizedModelDescriptor(modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
+func (m mockModelLibrary) FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	return m.returnedModelDescriptor, nil
 }

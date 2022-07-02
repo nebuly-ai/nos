@@ -106,7 +106,6 @@ var _ = Describe("GetCredentials", func() {
 			Expect(os.Setenv(envModelLibraryAzureTenantId, azureTenantId)).To(Succeed())
 			modelLibrary = &azureModelLibrary{
 				BaseModelLibrary: BaseModelLibrary{Uri: "uri"},
-				blobClient:       nil,
 			}
 		})
 

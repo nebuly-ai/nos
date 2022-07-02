@@ -200,7 +200,7 @@ func (r *OptimizationJobReconciler) createOptimizationJob(ctx context.Context) (
 func (r *OptimizationJobReconciler) createModelDescriptorConfigMap(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	modelDescriptor, err := r.modelLibrary.FetchOptimizedModelDescriptor(r.instance) // TODO: make it asynchronous
+	modelDescriptor, err := r.modelLibrary.FetchOptimizedModelDescriptor(ctx, r.instance) // TODO: make it asynchronous
 	if err != nil {
 		logger.Error(err, "unable to fetch model descriptor", "uri", r.modelLibrary.GetOptimizedModelDescriptorUri(r.instance))
 		return ctrl.Result{}, err

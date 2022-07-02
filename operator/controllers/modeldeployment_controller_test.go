@@ -266,7 +266,7 @@ var _ = Describe("ModelDeployment controller", func() {
 				return false
 			}, timeout, interval).Should(BeTrue())
 			Expect(configMap.Name).ToNot(BeEmpty())
-			Expect(configMap.Data).To(HaveKeyWithValue("modelUri", modelUri))
+			Expect(configMap.Data).To(HaveKeyWithValue("model_uri", modelUri))
 		})
 	})
 })
