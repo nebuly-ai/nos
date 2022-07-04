@@ -233,3 +233,79 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+
+
+
+
+
+########################################################################################################################
+### KIND Setup ####
+# Setup a KIND cluster for dev purposes with all the required components already installed
+########################################################################################################################
+
+KNATIVE_VERSION ?= 1.5.0
+KSERVE_VERSION ?= 0.8.0
+ISTIO_VERSION ?= 1.14.1
+
+# Create KIND cluster
+$(LOCALBIN)/.setup: $(LOCALBIN)
+	kind create cluster --config kind.yaml
+	touch $@
+
+# Install istioctl
+$(LOCALBIN)/istioctl: $(LOCALBIN)/.setup
+	curl -L https://istio.io/downloadIstio | ISTIO_VERSION=$(ISTIO_VERSION) sh -
+	mv istio-$(ISTIO_VERSION)/bin/istioctl $@
+	export PATH=$(LOCALBIN):${PATH}
+	rm -r istio-$(ISTIO_VERSION)
+
+# Install istio
+.PHONY: istio
+istio: $(LOCALBIN)/istioctl
+	istioctl install -y
+
+$(LOCALBIN)/knative-serving-crd.yml: $(LOCALBIN)
+	curl -L https://github.com/knative/serving/releases/download/knative-v$(KNATIVE_VERSION)/serving-crds.yaml -o $@
+	kubectl apply -f $@
+
+$(LOCALBIN)/knative-serving-core.yml: $(LOCALBIN)
+	curl -L https://github.com/knative/serving/releases/download/knative-v$(KNATIVE_VERSION)/serving-core.yaml -o $@
+	kubectl apply -f $@
+
+$(LOCALBIN)/knative-isito.yml: $(LOCALBIN)
+	curl -L https://github.com/knative/net-istio/releases/download/knative-v$(KNATIVE_VERSION)/istio.yaml -o $@
+	kubectl apply -f $@
+
+$(LOCALBIN)/knative-isito-controller.yml: $(LOCALBIN)
+	curl -L https://github.com/knative/net-istio/releases/download/knative-v$(KNATIVE_VERSION)/net-istio.yaml -o $@
+	kubectl apply -f $@
+
+$(LOCALBIN)/cert-manager.yml: $(LOCALBIN)
+	curl -L https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml -o $@
+	kubectl apply -f $@
+
+$(LOCALBIN)/kserve.yml: $(LOCALBIN)
+	echo "Waiting for cert-manager to become available..."
+	sleep 15
+	curl -L https://github.com/kserve/kserve/releases/download/v$(KSERVE_VERSION)/kserve.yaml -o $@
+	kubectl apply -f $@
+
+$(LOCALBIN)/kserve-runtimes.yml: $(LOCALBIN)
+	curl -L https://github.com/kserve/kserve/releases/download/v$(KSERVE_VERSION)/kserve-runtimes.yaml -o $@
+	kubectl apply -f $@
+
+INSTALL_TARGETS := istio \
+	$(LOCALBIN)/knative-serving-crd.yml \
+	$(LOCALBIN)/knative-serving-core.yml \
+	$(LOCALBIN)/knative-isito.yml \
+	$(LOCALBIN)/knative-isito-controller.yml \
+	$(LOCALBIN)/cert-manager.yml \
+	$(LOCALBIN)/kserve.yml \
+	$(LOCALBIN)/kserve-runtimes.yml
+.PHONY: setup-kind
+setup-kind: $(INSTALL_TARGETS)
+
+uninstall-kind:
+	kind delete cluster
+########################################################################################################################
