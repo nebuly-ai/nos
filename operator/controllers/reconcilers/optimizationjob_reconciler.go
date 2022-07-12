@@ -6,7 +6,7 @@ import (
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/constants"
 	"github.com/nebuly-ai/nebulnetes/controllers/components"
-	utils "github.com/nebuly-ai/nebulnetes/utils"
+	"github.com/nebuly-ai/nebulnetes/utils"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,13 +40,6 @@ func NewOptimizationJobReconciler(client client.Client,
 		optimizationJob:         job,
 		instance:                instance,
 	}, nil
-}
-
-func GetModelDescriptorConfigMapLabels(m *n8sv1alpha1.ModelDeployment, optimizationJob *batchv1.Job) map[string]string {
-	return map[string]string{
-		constants.LabelModelDeployment: m.Name,
-		constants.LabelOptimizationJob: optimizationJob.Name,
-	}
 }
 
 func buildOptimizationJob(ml components.ModelLibrary, instance *n8sv1alpha1.ModelDeployment) (*batchv1.Job, error) {
@@ -238,9 +231,10 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 	if jobCheckResult == constants.ExistenceCheckCreate {
 		return r.createOptimizationJob(ctx)
 	}
-	// If the job exists, then get the auto-generated name
+	// If the job exists, then get the auto-generated name and update instance status
 	if jobCheckResult == constants.ExistenceCheckExists {
 		r.optimizationJob.Name = job.Name
+		r.instance.Status.OptimizationJob = job.Name
 	}
 
 	// If current source model URI != URI in spec then delete the job so that it gets re-created with the right URI
@@ -301,14 +295,25 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 
 	// If the job completed then create the optimized model descriptor configmap, if not already created
 	if finished == true && status == batchv1.JobComplete {
-		cmCheckResult, _, err := r.checkModelDescriptorConfigMapExists(ctx)
+		cmCheckResult, modelDescriptorCm, err := r.checkModelDescriptorConfigMapExists(ctx)
 		if err != nil {
 			return r.HandleError(r.instance, err)
 		}
 		if cmCheckResult == constants.ExistenceCheckCreate {
 			return r.createModelDescriptorConfigMap(ctx)
 		}
+		// If cm exists, then update the instance status
+		if cmCheckResult == constants.ExistenceCheckExists {
+			r.instance.Status.OptimizedModelDescriptor = modelDescriptorCm.Name
+		}
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func GetModelDescriptorConfigMapLabels(m *n8sv1alpha1.ModelDeployment, optimizationJob *batchv1.Job) map[string]string {
+	return map[string]string{
+		constants.LabelModelDeployment: m.Name,
+		constants.LabelOptimizationJob: optimizationJob.Name,
+	}
 }

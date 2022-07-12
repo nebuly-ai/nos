@@ -17,6 +17,12 @@ func BoolAddr(b bool) *bool {
 	return &boolVar
 }
 
+func StringAddr(s string) *string {
+	var stringVar string
+	stringVar = s
+	return &stringVar
+}
+
 func GetEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value

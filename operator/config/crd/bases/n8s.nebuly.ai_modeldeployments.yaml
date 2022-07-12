@@ -90,6 +90,10 @@ spec:
           status:
             description: ModelDeploymentStatus defines the observed state of ModelDeployment
             properties:
+              optimizationJob:
+                type: string
+              optimizedModelDescriptor:
+                type: string
               state:
                 type: string
             required:

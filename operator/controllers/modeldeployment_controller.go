@@ -84,6 +84,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, err
 	}
 
+	// Setup reconcilers
 	optimizationJobReconciler, err := reconcilers.NewOptimizationJobReconciler(
 		r.Client,
 		r.Scheme,
@@ -98,9 +99,23 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		r.updateStatus(ctx, instance, logger)
 		return ctrl.Result{}, err
 	}
+	inferenceServiceReconciler := reconcilers.NewInferenceServiceReconciler(
+		r.Client,
+		r.Scheme,
+		r.EventRecorder,
+		r.ModelLibrary,
+		instance,
+	)
 
 	// Reconcile optimization job
 	res, err = optimizationJobReconciler.Reconcile(ctx)
+	if err != nil {
+		instance.Status.State = n8sv1alpha1.StatusStateFailed
+		r.updateStatus(ctx, instance, logger)
+		return ctrl.Result{}, err
+	}
+	// Reconcile inference service
+	res, err = inferenceServiceReconciler.Reconcile(ctx)
 	if err != nil {
 		instance.Status.State = n8sv1alpha1.StatusStateFailed
 		r.updateStatus(ctx, instance, logger)
