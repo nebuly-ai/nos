@@ -26,8 +26,13 @@ deploy: $(LOCALBIN)/.setup
 
 
 .PHONY: port-forward
-port-forward:
+port-forward-ui:
 	kubectl port-forward -n kubeflow svc/ml-pipeline-ui 8080:80
+
+port-forward:
+	kubectl port-forward -n kubeflow service/ml-pipeline 8081:8888
+
+
 
 
 clean:
