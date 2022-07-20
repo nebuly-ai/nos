@@ -14,12 +14,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+type ComponentReconciler interface {
+	Reconcile(ctx context.Context) (ctrl.Result, error)
+	Next(ctx context.Context) (ctrl.Result, error)
+	setNext(reconciler ComponentReconciler)
+}
+
 // ComponentReconcilerBase is a base struct from inherited from all the component reconcilers. It has common fields
 // and defines utility methods shared among all the reconcilers.
 type ComponentReconcilerBase struct {
 	client   client.Client
 	scheme   *runtime.Scheme
 	recorder record.EventRecorder
+	next     ComponentReconciler
 }
 
 func NewComponentReconcilerBase(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder) ComponentReconcilerBase {
@@ -28,6 +35,24 @@ func NewComponentReconcilerBase(client client.Client, scheme *runtime.Scheme, re
 		scheme:   scheme,
 		recorder: recorder,
 	}
+}
+
+func NewComponentReconcilerChain(reconcilers ...ComponentReconciler) ComponentReconciler {
+	for i := 0; i < len(reconcilers)-1; i++ {
+		reconcilers[i].setNext(reconcilers[i+1])
+	}
+	return reconcilers[0]
+}
+
+func (r *ComponentReconcilerBase) Next(ctx context.Context) (ctrl.Result, error) {
+	if r.next != nil {
+		return r.next.Reconcile(ctx)
+	}
+	return ctrl.Result{}, nil
+}
+
+func (r *ComponentReconcilerBase) setNext(reconciler ComponentReconciler) {
+	r.next = reconciler
 }
 
 func (r *ComponentReconcilerBase) GetClient() client.Client {

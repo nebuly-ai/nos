@@ -33,6 +33,7 @@ const (
 type StatusState string
 
 const (
+	StatusStateAnalyzingModel  StatusState = "AnalyzingModel"
 	StatusStateOptimizingModel StatusState = "OptimizingModel"
 	StatusStateDeployingModel  StatusState = "DeployingModel"
 	StatusStateAvailable       StatusState = "Available"
@@ -56,6 +57,21 @@ type OptimizationSpec struct {
 	//+kubebuilder:default=1
 	//+optional
 	OptimizationJobBackoffLimit int8 `json:"optimizationJobBackoffLimit"`
+
+	// ModelAnalyzerImageName is the name of the Docker image of the model analyzer that will be used for
+	// analyzing the model for determining the most suitable hardware and optimization techniques
+	//+kubebuilder:default="nebuly.ai/model-analyzer"
+	//+optional
+	ModelAnalyzerImageName string `json:"modelAnalyzerImageName,omitempty"`
+	// ModelAnalyzerImageVersion is the version of the Docker image of the model analyzer that will be used for
+	// analyzing the model for determining the most suitable hardware and optimization techniques
+	//+kubebuilder:default="0.0.1"
+	//+optional
+	ModelAnalyzerImageVersion string `json:"modelAnalyzerImageVersion,omitempty"`
+	// AnalysisJobBackoffLimit is the number of retries before declaring a model analysis job failed
+	//+kubebuilder:default=1
+	//+optional
+	AnalysisJobBackoffLimit int8 `json:"analysisJobBackoffLimit"`
 }
 
 type SourceModel struct {
@@ -73,9 +89,10 @@ type ModelDeploymentSpec struct {
 
 // ModelDeploymentStatus defines the observed state of ModelDeployment
 type ModelDeploymentStatus struct {
-	State                    StatusState `json:"state"`
-	OptimizationJob          string      `json:"optimizationJob,omitempty"`
-	OptimizedModelDescriptor string      `json:"optimizedModelDescriptor,omitempty"`
+	State           StatusState `json:"state"`
+	AnalysisJob     string      `json:"analysisJob,omitempty"`
+	OptimizationJob string      `json:"optimizationJob,omitempty"`
+	ModelDescriptor string      `json:"modelDescriptor,omitempty"`
 }
 
 //+kubebuilder:object:root=true

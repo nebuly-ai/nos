@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 )
 
@@ -22,6 +21,8 @@ const (
 	optimizationTarget         = n8sv1alpha1.OptimizationTargetLatency
 	modelOptimizerImageVersion = "0.0.1"
 	modelOptimizerImageName    = "nebuly.ai/model-optimizer-mock"
+	modelAnalyzerImageVersion  = "0.0.2"
+	modelAnalyzerImageName     = "nebuly.ai/model-analyzer-mock"
 )
 
 func newMockedModelDeployment() *n8sv1alpha1.ModelDeployment {
@@ -31,7 +32,7 @@ func newMockedModelDeployment() *n8sv1alpha1.ModelDeployment {
 			Kind:       "ModelDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      utils.RandomStringLowercase(10),
+			Name:      utils.RandomStringLowercase(20),
 			Namespace: modelDeploymentNamespace,
 		},
 		Spec: n8sv1alpha1.ModelDeploymentSpec{
@@ -40,6 +41,8 @@ func newMockedModelDeployment() *n8sv1alpha1.ModelDeployment {
 				Target:                     optimizationTarget,
 				ModelOptimizerImageName:    modelOptimizerImageName,
 				ModelOptimizerImageVersion: modelOptimizerImageVersion,
+				ModelAnalyzerImageName:     modelAnalyzerImageName,
+				ModelAnalyzerImageVersion:  modelAnalyzerImageVersion,
 			},
 		},
 	}
@@ -47,11 +50,18 @@ func newMockedModelDeployment() *n8sv1alpha1.ModelDeployment {
 
 func getOptimizationJobList(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.JobList, error) {
 	var jobList = new(batchv1.JobList)
-	labels := client.MatchingLabels{
-		constants.LabelCreatedBy:       constants.ModelDeploymentControllerName,
-		constants.LabelModelDeployment: modelDeployment.GetName(),
+	listOption := reconcilers.GetOptimizationJobListFilter(modelDeployment)
+	err := k8sClient.List(ctx, jobList, listOption)
+	if err != nil {
+		return nil, err
 	}
-	err := k8sClient.List(ctx, jobList, labels)
+	return jobList, nil
+}
+
+func getAnalysisJobList(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.JobList, error) {
+	var jobList = new(batchv1.JobList)
+	listOption := reconcilers.GetAnalysisJobListFilter(modelDeployment)
+	err := k8sClient.List(ctx, jobList, listOption)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +86,7 @@ var _ = Describe("ModelDeployment controller", func() {
 	})
 
 	Context("When creating ModelDeployment", func() {
-		It("Should start a model optimization job", func() {
+		It("Should start a model analysis job", func() {
 			By("Creating a new ModelDeployment successfully")
 			modelDeployment := newMockedModelDeployment()
 			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
@@ -92,7 +102,150 @@ var _ = Describe("ModelDeployment controller", func() {
 			}, timeout, interval).Should(BeTrue())
 			Expect(createdModelDeployment.Spec).To(Equal(modelDeployment.Spec))
 
-			By("Creating a new Job")
+			By("Creating a new model analysis Job")
+			Eventually(func() int {
+				jobList, err := getAnalysisJobList(modelDeployment)
+				if err != nil {
+					return 0
+				}
+				return len(jobList.Items)
+			}, timeout, interval).Should(Equal(1))
+
+			By("Checking that the Job launched Pods using the specified Docker image")
+			expectedImageName := fmt.Sprintf("%s:%s", modelAnalyzerImageName, modelAnalyzerImageVersion)
+			jobList, err := getAnalysisJobList(modelDeployment)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(jobList.Items).To(HaveLen(1))
+			job := jobList.Items[0]
+			Expect(job.Spec.Template.Spec.Containers).To(HaveLen(1))
+			Expect(job.Spec.Template.Spec.Containers[0].Image).To(Equal(expectedImageName))
+
+			By("Checking that the Pods launched by the Job do not run as root")
+			Expect(job.Spec.Template.Spec.SecurityContext.RunAsNonRoot).To(HaveValue(BeTrue()))
+		})
+	})
+
+	Context("When updating the optimization target of a ModelDeployment", func() {
+		It("Should delete and recreate the model analysis job", func() {
+			By("Creating a new ModelDeployment successfully")
+			modelDeployment := newMockedModelDeployment()
+			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
+
+			By("Getting the analysis Job created with the first optimization target")
+			Eventually(func() int {
+				jobList, err := getAnalysisJobList(modelDeployment)
+				if err != nil {
+					return 0
+				}
+				return len(jobList.Items)
+			}, timeout, interval).Should(Equal(1))
+
+			By("Checking the created ModelDeployment matches the specs")
+			var createdModelDeployment = new(n8sv1alpha1.ModelDeployment)
+			Eventually(func() bool {
+				lookupKey := types.NamespacedName{Name: modelDeployment.Name, Namespace: modelDeployment.Namespace}
+				if err := k8sClient.Get(ctx, lookupKey, createdModelDeployment); err != nil {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
+			Expect(createdModelDeployment.Spec).To(Equal(modelDeployment.Spec))
+
+			By("Updating the optimization target of the ModelDeployment")
+			createdModelDeployment.Spec.Optimization.Target = n8sv1alpha1.OptimizationTargetEmissions
+			Expect(k8sClient.Update(ctx, createdModelDeployment)).To(Succeed())
+
+			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
+			Eventually(func() bool {
+				jobList, err := getAnalysisJobList(modelDeployment)
+				if err != nil {
+					return false
+				}
+				if len(jobList.Items) == 1 {
+					return !jobList.Items[0].GetDeletionTimestamp().IsZero()
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
+		})
+	})
+
+	Context("When updating the source model URI of a ModelDeployment", func() {
+		It("Should delete and recreate the model analysis job", func() {
+			By("Creating a new ModelDeployment successfully")
+			modelDeployment := newMockedModelDeployment()
+			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
+
+			By("Getting the analysis Job created with the first optimization target")
+			Eventually(func() int {
+				jobList, err := getAnalysisJobList(modelDeployment)
+				if err != nil {
+					return 0
+				}
+				return len(jobList.Items)
+			}, timeout, interval).Should(Equal(1))
+
+			By("Checking the created ModelDeployment matches the specs")
+			var createdModelDeployment = new(n8sv1alpha1.ModelDeployment)
+			Eventually(func() bool {
+				lookupKey := types.NamespacedName{Name: modelDeployment.Name, Namespace: modelDeployment.Namespace}
+				if err := k8sClient.Get(ctx, lookupKey, createdModelDeployment); err != nil {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
+			Expect(createdModelDeployment.Spec).To(Equal(modelDeployment.Spec))
+
+			By("Updating the source model uri of the ModelDeployment")
+			createdModelDeployment.Spec.SourceModel.Uri = "https://new-uri.foo.bar"
+			Expect(k8sClient.Update(ctx, createdModelDeployment)).To(Succeed())
+
+			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
+			Eventually(func() bool {
+				jobList, err := getAnalysisJobList(modelDeployment)
+				if err != nil {
+					return false
+				}
+				if len(jobList.Items) == 1 {
+					return !jobList.Items[0].GetDeletionTimestamp().IsZero()
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
+		})
+	})
+
+	Context("When the model analysis Job of a ModelDeployment completes successfully", func() {
+		It("Should create a model optimization job", func() {
+			By("Creating a new ModelDeployment successfully")
+			modelDeployment := newMockedModelDeployment()
+			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
+
+			By("Getting the analysis Job")
+			var analysisJob = new(batchv1.Job)
+			Eventually(func() int {
+				jobList, err := getAnalysisJobList(modelDeployment)
+				if err != nil {
+					return 0
+				}
+				length := len(jobList.Items)
+				if length == 1 {
+					analysisJob = &jobList.Items[0]
+				}
+				return length
+			}, timeout, interval).Should(Equal(1))
+			Expect(analysisJob.Name).ToNot(BeEmpty())
+
+			By("Updating the Job status to completed")
+			analysisJob.Status.Conditions = append(analysisJob.Status.Conditions, batchv1.JobCondition{
+				Type:               batchv1.JobComplete,
+				Status:             corev1.ConditionTrue,
+				LastProbeTime:      metav1.Time{},
+				LastTransitionTime: metav1.Time{},
+				Reason:             "",
+				Message:            "",
+			})
+			Expect(k8sClient.Status().Update(ctx, analysisJob)).To(Succeed())
+
+			By("Creating a model optimization job")
 			Eventually(func() int {
 				jobList, err := getOptimizationJobList(modelDeployment)
 				if err != nil {
@@ -112,161 +265,6 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Checking that the Pods launched by the Job do not run as root")
 			Expect(job.Spec.Template.Spec.SecurityContext.RunAsNonRoot).To(HaveValue(BeTrue()))
-		})
-	})
-
-	Context("When updating the optimization target of a ModelDeployment", func() {
-		It("Should delete and recreate the model optimization job", func() {
-			By("Creating a new ModelDeployment successfully")
-			modelDeployment := newMockedModelDeployment()
-			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
-
-			By("Getting the optimization Job created with the first optimization target")
-			Eventually(func() int {
-				jobList, err := getOptimizationJobList(modelDeployment)
-				if err != nil {
-					return 0
-				}
-				return len(jobList.Items)
-			}, timeout, interval).Should(Equal(1))
-
-			By("Checking the created ModelDeployment matches the specs")
-			var createdModelDeployment = new(n8sv1alpha1.ModelDeployment)
-			Eventually(func() bool {
-				lookupKey := types.NamespacedName{Name: modelDeployment.Name, Namespace: modelDeployment.Namespace}
-				if err := k8sClient.Get(ctx, lookupKey, createdModelDeployment); err != nil {
-					return false
-				}
-				return true
-			}, timeout, interval).Should(BeTrue())
-			Expect(createdModelDeployment.Spec).To(Equal(modelDeployment.Spec))
-
-			By("Updating the optimization target of the ModelDeployment")
-			createdModelDeployment.Spec.Optimization.Target = n8sv1alpha1.OptimizationTargetEmissions
-			Expect(k8sClient.Update(ctx, createdModelDeployment)).To(Succeed())
-
-			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
-			Eventually(func() bool {
-				jobList, err := getOptimizationJobList(modelDeployment)
-				if err != nil {
-					return false
-				}
-				if len(jobList.Items) == 1 {
-					return !jobList.Items[0].GetDeletionTimestamp().IsZero()
-				}
-				return false
-			}, timeout, interval).Should(BeTrue())
-		})
-	})
-
-	Context("When updating the source model URI of a ModelDeployment", func() {
-		It("Should delete and recreate the model optimization job", func() {
-			By("Creating a new ModelDeployment successfully")
-			modelDeployment := newMockedModelDeployment()
-			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
-
-			By("Getting the optimization Job created with the first optimization target")
-			Eventually(func() int {
-				jobList, err := getOptimizationJobList(modelDeployment)
-				if err != nil {
-					return 0
-				}
-				return len(jobList.Items)
-			}, timeout, interval).Should(Equal(1))
-
-			By("Checking the created ModelDeployment matches the specs")
-			var createdModelDeployment = new(n8sv1alpha1.ModelDeployment)
-			Eventually(func() bool {
-				lookupKey := types.NamespacedName{Name: modelDeployment.Name, Namespace: modelDeployment.Namespace}
-				if err := k8sClient.Get(ctx, lookupKey, createdModelDeployment); err != nil {
-					return false
-				}
-				return true
-			}, timeout, interval).Should(BeTrue())
-			Expect(createdModelDeployment.Spec).To(Equal(modelDeployment.Spec))
-			By("Updating the optimization target of the ModelDeployment")
-
-			createdModelDeployment.Spec.Optimization.Target = n8sv1alpha1.OptimizationTargetEmissions
-			Expect(k8sClient.Update(ctx, createdModelDeployment)).To(Succeed())
-
-			By("Checking that the old job gets marked for deletion (e.g. deletion timestamp != 0)")
-			Eventually(func() bool {
-				jobList, err := getOptimizationJobList(modelDeployment)
-				if err != nil {
-					return false
-				}
-				if len(jobList.Items) == 1 {
-					return !jobList.Items[0].GetDeletionTimestamp().IsZero()
-				}
-				return false
-			}, timeout, interval).Should(BeTrue())
-		})
-	})
-
-	Context("When the optimization Job of a ModelDeployment completes successfully", func() {
-		It("Should create a ConfigMap containing the model descriptor of the optimized model", func() {
-			By("Creating a new ModelDeployment successfully")
-			modelDeployment := newMockedModelDeployment()
-			Expect(k8sClient.Create(ctx, modelDeployment)).To(Succeed())
-
-			By("Getting the optimization Job created with the first optimization target")
-			var optimizationJob = new(batchv1.Job)
-			Eventually(func() int {
-				jobList, err := getOptimizationJobList(modelDeployment)
-				if err != nil {
-					return 0
-				}
-				length := len(jobList.Items)
-				if length == 1 {
-					optimizationJob = &jobList.Items[0]
-				}
-				return length
-			}, timeout, interval).Should(Equal(1))
-			Expect(optimizationJob.Name).ToNot(BeEmpty())
-
-			By("Updating the Job status to completed")
-			optimizationJob.Status.Conditions = append(optimizationJob.Status.Conditions, batchv1.JobCondition{
-				Type:               batchv1.JobComplete,
-				Status:             corev1.ConditionTrue,
-				LastProbeTime:      metav1.Time{},
-				LastTransitionTime: metav1.Time{},
-				Reason:             "",
-				Message:            "",
-			})
-			Expect(k8sClient.Status().Update(ctx, optimizationJob)).To(Succeed())
-
-			Eventually(func() int {
-				jobList, err := getOptimizationJobList(modelDeployment)
-				if err != nil {
-					return 0
-				}
-				length := len(jobList.Items)
-				if length == 1 {
-					optimizationJob = &jobList.Items[0]
-				}
-				return length
-			}, timeout, interval).Should(Equal(1))
-
-			By("Creating a ConfigMap containing the optimized model descriptor")
-			var configMap corev1.ConfigMap
-			Eventually(func() bool {
-				var configMapList = new(corev1.ConfigMapList)
-				labels := client.MatchingLabels{}
-				for k, v := range reconcilers.GetModelDescriptorConfigMapLabels(modelDeployment, optimizationJob) {
-					labels[k] = v
-				}
-				err := k8sClient.List(ctx, configMapList, labels)
-				if err != nil {
-					return false
-				}
-				if len(configMapList.Items) == 1 {
-					configMap = configMapList.Items[0]
-					return true
-				}
-				return false
-			}, timeout, interval).Should(BeTrue())
-			Expect(configMap.Name).ToNot(BeEmpty())
-			Expect(configMap.Data).To(HaveKeyWithValue("model_uri", modelUri))
 		})
 	})
 })

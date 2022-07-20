@@ -86,6 +86,20 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	}
 
 	// Setup reconcilers
+	analysisJobReconciler, err := reconcilers.NewAnalysisJobReconciler(
+		r.Client,
+		r.Scheme,
+		r.EventRecorder,
+		r.ModelLibrary,
+		instance,
+	)
+	if err != nil {
+		logger.Error(err, "unable to create analysis job reconciler")
+		r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
+		instance.Status.State = n8sv1alpha1.StatusStateFailed
+		r.updateStatus(ctx, instance, logger)
+		return ctrl.Result{}, err
+	}
 	optimizationJobReconciler, err := reconcilers.NewOptimizationJobReconciler(
 		r.Client,
 		r.Scheme,
@@ -108,15 +122,13 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		instance,
 	)
 
-	// Reconcile optimization job
-	res, err = optimizationJobReconciler.Reconcile(ctx)
-	if err != nil {
-		instance.Status.State = n8sv1alpha1.StatusStateFailed
-		r.updateStatus(ctx, instance, logger)
-		return ctrl.Result{}, err
-	}
-	// Reconcile inference service
-	res, err = inferenceServiceReconciler.Reconcile(ctx)
+	// Reconcile
+	chain := components.NewComponentReconcilerChain(
+		analysisJobReconciler,
+		optimizationJobReconciler,
+		inferenceServiceReconciler,
+	)
+	res, err = chain.Reconcile(ctx)
 	if err != nil {
 		instance.Status.State = n8sv1alpha1.StatusStateFailed
 		r.updateStatus(ctx, instance, logger)

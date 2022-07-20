@@ -74,6 +74,7 @@ func buildOptimizationJob(ml components.ModelLibrary, instance *n8sv1alpha1.Mode
 	job.Labels[constants.LabelCreatedBy] = constants.ModelDeploymentControllerName
 	job.Labels[constants.LabelOptimizationTarget] = string(instance.Spec.Optimization.Target)
 	job.Labels[constants.LabelModelDeployment] = instance.GetName()
+	job.Labels[constants.LabelJobKind] = constants.JobKindModelOptimization
 
 	// Set annotations
 	job.Annotations[constants.AnnotationSourceModelUri] = instance.Spec.SourceModel.Uri
@@ -105,7 +106,7 @@ func buildModelOptimizerContainer(ml components.ModelLibrary, md *n8sv1alpha1.Mo
 		Args: []string{
 			md.Spec.SourceModel.Uri,
 			ml.GetBaseUri(md),
-			ml.GetOptimizedModelDescriptorUri(md),
+			ml.GetModelDescriptorUri(md),
 			string(ml.GetStorageKind()),
 			string(md.Spec.Optimization.Target),
 		},
@@ -116,7 +117,8 @@ func (r *OptimizationJobReconciler) checkOptimizationJobExists(ctx context.Conte
 	logger := log.FromContext(ctx)
 
 	var jobList = new(batchv1.JobList)
-	err := r.GetClient().List(ctx, jobList, client.MatchingLabels{constants.LabelModelDeployment: r.instance.GetName()})
+	listOption := GetOptimizationJobListFilter(r.instance)
+	err := r.GetClient().List(ctx, jobList, listOption)
 	if err != nil {
 		logger.Error(err, "unable to fetch optimization job")
 		return constants.ExistenceCheckError, nil, err
@@ -186,16 +188,16 @@ func (r *OptimizationJobReconciler) createOptimizationJob(ctx context.Context) (
 		"ModelOptimizationStarted",
 		"Started model optimization job",
 	)
-	r.instance.Status.State = n8sv1alpha1.StatusStateDeployingModel
+	r.instance.Status.State = n8sv1alpha1.StatusStateOptimizingModel
 	return ctrl.Result{}, nil
 }
 
 func (r *OptimizationJobReconciler) createModelDescriptorConfigMap(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	modelDescriptor, err := r.modelLibrary.FetchOptimizedModelDescriptor(ctx, r.instance)
+	modelDescriptor, err := r.modelLibrary.FetchModelDescriptor(ctx, r.instance)
 	if err != nil {
-		logger.Error(err, "unable to fetch model descriptor", "uri", r.modelLibrary.GetOptimizedModelDescriptorUri(r.instance))
+		logger.Error(err, "unable to fetch model descriptor", "uri", r.modelLibrary.GetModelDescriptorUri(r.instance))
 		return ctrl.Result{}, err
 	}
 
@@ -231,9 +233,9 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 	if jobCheckResult == constants.ExistenceCheckCreate {
 		return r.createOptimizationJob(ctx)
 	}
-	// If the job exists, then get the auto-generated name and update instance status
+	// If the job exists, then update the reconciler field and the instance status
 	if jobCheckResult == constants.ExistenceCheckExists {
-		r.optimizationJob.Name = job.Name
+		r.optimizationJob = job
 		r.instance.Status.OptimizationJob = job.Name
 	}
 
@@ -251,7 +253,6 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 				return r.HandleError(r.instance, err)
 			}
 			logger.Info("optimization job deleted", "Job", job.Name)
-			r.instance.Status.State = n8sv1alpha1.StatusStateOptimizingModel
 			return ctrl.Result{}, nil
 		}
 	}
@@ -270,7 +271,6 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 				return r.HandleError(r.instance, err)
 			}
 			logger.Info("optimization job deleted", "Job", job.Name)
-			r.instance.Status.State = n8sv1alpha1.StatusStateOptimizingModel
 			return ctrl.Result{}, nil
 		}
 	}
@@ -304,7 +304,7 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 		}
 		// If cm exists, then update the instance status
 		if cmCheckResult == constants.ExistenceCheckExists {
-			r.instance.Status.OptimizedModelDescriptor = modelDescriptorCm.Name
+			r.instance.Status.ModelDescriptor = modelDescriptorCm.Name
 		}
 	}
 
@@ -315,5 +315,13 @@ func GetModelDescriptorConfigMapLabels(m *n8sv1alpha1.ModelDeployment, optimizat
 	return map[string]string{
 		constants.LabelModelDeployment: m.Name,
 		constants.LabelOptimizationJob: optimizationJob.Name,
+	}
+}
+
+func GetOptimizationJobListFilter(modelDeployment *n8sv1alpha1.ModelDeployment) client.ListOption {
+	return client.MatchingLabels{
+		constants.LabelCreatedBy:       constants.ModelDeploymentControllerName,
+		constants.LabelModelDeployment: modelDeployment.GetName(),
+		constants.LabelJobKind:         constants.JobKindModelOptimization,
 	}
 }

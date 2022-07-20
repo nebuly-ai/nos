@@ -68,12 +68,12 @@ type ModelLibrary interface {
 	// GetBaseUri returns the URI pointing to a space within the model library dedicated to the ModelDeployment
 	// provided as input argument
 	GetBaseUri(modelDeployment *v1alpha1.ModelDeployment) string
-	// GetOptimizedModelDescriptorUri return a URI pointing to the file containing the information of the optimized
-	// model of the  ModelDeployment provided as input argument
-	GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string
-	// FetchOptimizedModelDescriptor returns the ModelDescriptor, if present, of the optimized model produced by
-	// the ModelDeployment provided as argument
-	FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error)
+	// GetModelDescriptorUri return a URI pointing to the file containing the information of the model
+	// specified by the ModelDeployment provided as input argument
+	GetModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string
+	// FetchModelDescriptor returns the ModelDescriptor, if present, of the model specified by the ModelDeployment
+	// provided as argument
+	FetchModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error)
 	// GetStorageKind returns the kind of storage used by the model library
 	GetStorageKind() ModelLibraryStorageKind
 }
@@ -102,7 +102,7 @@ func (b *BaseModelLibrary) GetBaseUri(modelDeployment *v1alpha1.ModelDeployment)
 	return fmt.Sprintf("%s/%s/%s", b.Uri, modelDeployment.Namespace, modelDeployment.Name)
 }
 
-func (b *BaseModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
+func (b *BaseModelLibrary) GetModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
 	return fmt.Sprintf("%s/%s", b.GetBaseUri(modelDeployment), modelInfoFileName)
 }
 
@@ -174,10 +174,10 @@ func (a *azureModelLibrary) GetCredentials() (map[string]string, error) {
 	}, nil
 }
 
-func (a *azureModelLibrary) FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
+func (a *azureModelLibrary) FetchModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	logger := log.FromContext(ctx)
 
-	uri := a.GetOptimizedModelDescriptorUri(modelDeployment)
+	uri := a.GetModelDescriptorUri(modelDeployment)
 	logger.V(1).Info("downloading optimized model descriptor", "uri", uri)
 
 	client, err := a.newBlobClient(uri)
@@ -216,7 +216,7 @@ func (s *s3ModelLibrary) GetCredentials() (map[string]string, error) {
 	panic("implement me")
 }
 
-func (s *s3ModelLibrary) FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
+func (s *s3ModelLibrary) FetchModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -247,10 +247,10 @@ func (m mockModelLibrary) GetBaseUri(modelDeployment *v1alpha1.ModelDeployment) 
 	return m.returnedBaseUri
 }
 
-func (m mockModelLibrary) GetOptimizedModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
+func (m mockModelLibrary) GetModelDescriptorUri(modelDeployment *v1alpha1.ModelDeployment) string {
 	return m.returnedModelInfoUri
 }
 
-func (m mockModelLibrary) FetchOptimizedModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
+func (m mockModelLibrary) FetchModelDescriptor(ctx context.Context, modelDeployment *v1alpha1.ModelDeployment) (*ModelDescriptor, error) {
 	return m.returnedModelDescriptor, nil
 }

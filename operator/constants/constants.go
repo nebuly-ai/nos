@@ -14,6 +14,14 @@ const (
 	ExistenceCheckError ExistenceCheckResult = "error"
 )
 
+// JobKind represents the kinds of Job required for optimizing and deploying a model
+type JobKind string
+
+const (
+	JobKindModelAnalysis     = "model-analysis"
+	JobKindModelOptimization = "model-optimization"
+)
+
 const (
 	EventInternalError           = "InternalError"
 	EventModelOptimizationFailed = "ModelOptimizationFailed"
@@ -21,6 +29,7 @@ const (
 
 	LabelCreatedBy          = "app.kubernetes.io/created-by"
 	LabelOptimizationTarget = "n8s.nebuly.ai/optimization-target"
+	LabelJobKind            = "n8s.nebuly.ai/job-kind"
 	LabelModelDeployment    = "n8s.nebuly.ai/model-deployment"
 	LabelOptimizationJob    = "n8s.nebuly.ai/optimization-job"
 
@@ -35,6 +44,8 @@ const (
 
 	// OptimizationJobNamePrefix is the prefix used for the auto-generated names of the model optimization jobs
 	OptimizationJobNamePrefix = "optimization-"
+	// AnalysisJobNamePrefix is the prefix used for the auto-generated names of the model analysis jobs
+	AnalysisJobNamePrefix = "analysis-"
 	// ModelDescriptorNamePrefix is the prefix used for the auto-generated names of the model descriptor config maps
 	ModelDescriptorNamePrefix = "model-descriptor-"
 )
