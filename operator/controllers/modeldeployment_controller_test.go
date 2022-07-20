@@ -122,6 +122,11 @@ var _ = Describe("ModelDeployment controller", func() {
 
 			By("Checking that the Pods launched by the Job do not run as root")
 			Expect(job.Spec.Template.Spec.SecurityContext.RunAsNonRoot).To(HaveValue(BeTrue()))
+
+			By("Checking that no model optimization jobs are started until the analysis job finished")
+			optimizationJobs, err := getOptimizationJobList(modelDeployment)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(optimizationJobs.Items).To(BeEmpty())
 		})
 	})
 
