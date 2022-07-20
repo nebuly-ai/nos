@@ -73,7 +73,9 @@ type ModelDeploymentSpec struct {
 
 // ModelDeploymentStatus defines the observed state of ModelDeployment
 type ModelDeploymentStatus struct {
-	State StatusState `json:"state"`
+	State                    StatusState `json:"state"`
+	OptimizationJob          string      `json:"optimizationJob,omitempty"`
+	OptimizedModelDescriptor string      `json:"optimizedModelDescriptor,omitempty"`
 }
 
 //+kubebuilder:object:root=true
