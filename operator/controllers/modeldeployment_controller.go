@@ -23,6 +23,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/constants"
 	"github.com/nebuly-ai/nebulnetes/controllers/components"
 	"github.com/nebuly-ai/nebulnetes/controllers/reconcilers"
+	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -63,6 +64,52 @@ func (r *ModelDeploymentReconciler) updateStatus(ctx context.Context, instance *
 	}
 }
 
+func (r *ModelDeploymentReconciler) initComponentReconcilers(ctx context.Context, instance *n8sv1alpha1.ModelDeployment) ([]components.ComponentReconciler, error) {
+	loader := components.NewModelDeploymentComponentLoader(r.Client, instance)
+	result := make([]components.ComponentReconciler, 0)
+
+	// Init model analysis job reconciler
+	analysisJobReconciler, err := reconcilers.NewAnalysisJobReconciler(
+		r.Client,
+		r.Scheme,
+		r.EventRecorder,
+		r.ModelLibrary,
+		loader,
+		instance,
+	)
+	if err != nil {
+		return result, errors.Wrap(err, "unable to create analysis job reconciler")
+	}
+	result = append(result, analysisJobReconciler)
+
+	// Init optimization job reconciler
+	optimizationJobReconciler, err := reconcilers.NewOptimizationJobReconciler(
+		r.Client,
+		r.Scheme,
+		r.EventRecorder,
+		r.ModelLibrary,
+		loader,
+		instance,
+	)
+	if err != nil {
+		return result, errors.Wrap(err, "unable to create optimization job reconciler")
+	}
+	result = append(result, optimizationJobReconciler)
+
+	// Init inference service reconciler
+	inferenceServiceReconciler := reconcilers.NewInferenceServiceReconciler(
+		r.Client,
+		r.Scheme,
+		r.EventRecorder,
+		r.ModelLibrary,
+		loader,
+		instance,
+	)
+	result = append(result, inferenceServiceReconciler)
+
+	return result, nil
+}
+
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=modeldeployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=modeldeployments/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=modeldeployments/finalizers,verbs=update
@@ -84,54 +131,18 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		logger.Error(err, "unable to fetch ModelDeployment")
 		return ctrl.Result{}, err
 	}
-	loader := components.NewModelDeploymentComponentLoader(r.Client, instance)
 
-	// Setup reconcilers
-	analysisJobReconciler, err := reconcilers.NewAnalysisJobReconciler(
-		r.Client,
-		r.Scheme,
-		r.EventRecorder,
-		r.ModelLibrary,
-		loader,
-		instance,
-	)
+	// Init component reconcilers
+	reconcilerChain, err := r.initComponentReconcilers(ctx, instance)
 	if err != nil {
-		logger.Error(err, "unable to create analysis job reconciler")
+		logger.Error(err, "error initializing component reconcilers")
 		r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
 		instance.Status.State = n8sv1alpha1.StatusStateFailed
 		r.updateStatus(ctx, instance, logger)
 		return ctrl.Result{}, err
 	}
-	optimizationJobReconciler, err := reconcilers.NewOptimizationJobReconciler(
-		r.Client,
-		r.Scheme,
-		r.EventRecorder,
-		r.ModelLibrary,
-		loader,
-		instance,
-	)
-	if err != nil {
-		logger.Error(err, "unable to create optimization job reconciler")
-		r.EventRecorder.Event(instance, corev1.EventTypeWarning, constants.EventInternalError, err.Error())
-		instance.Status.State = n8sv1alpha1.StatusStateFailed
-		r.updateStatus(ctx, instance, logger)
-		return ctrl.Result{}, err
-	}
-	inferenceServiceReconciler := reconcilers.NewInferenceServiceReconciler(
-		r.Client,
-		r.Scheme,
-		r.EventRecorder,
-		r.ModelLibrary,
-		loader,
-		instance,
-	)
 
 	// Reconcile
-	reconcilerChain := []components.ComponentReconciler{
-		analysisJobReconciler,
-		optimizationJobReconciler,
-		inferenceServiceReconciler,
-	}
 	for _, reconciler := range reconcilerChain {
 		res, err = reconciler.Reconcile(ctx)
 		if err != nil {
