@@ -84,6 +84,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		logger.Error(err, "unable to fetch ModelDeployment")
 		return ctrl.Result{}, err
 	}
+	loader := components.NewModelDeploymentComponentLoader(r.Client, instance)
 
 	// Setup reconcilers
 	analysisJobReconciler, err := reconcilers.NewAnalysisJobReconciler(
@@ -91,6 +92,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		r.Scheme,
 		r.EventRecorder,
 		r.ModelLibrary,
+		loader,
 		instance,
 	)
 	if err != nil {
@@ -105,6 +107,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		r.Scheme,
 		r.EventRecorder,
 		r.ModelLibrary,
+		loader,
 		instance,
 	)
 	if err != nil {
@@ -119,6 +122,7 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		r.Scheme,
 		r.EventRecorder,
 		r.ModelLibrary,
+		loader,
 		instance,
 	)
 

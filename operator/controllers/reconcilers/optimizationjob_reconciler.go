@@ -21,6 +21,7 @@ type OptimizationJobReconciler struct {
 	components.ComponentReconcilerBase
 	modelLibrary    components.ModelLibrary
 	optimizationJob *batchv1.Job
+	loader          *components.ModelDeploymentComponentLoader
 	instance        *n8sv1alpha1.ModelDeployment
 }
 
@@ -28,6 +29,7 @@ func NewOptimizationJobReconciler(client client.Client,
 	scheme *runtime.Scheme,
 	eventRecorder record.EventRecorder,
 	modelLibrary components.ModelLibrary,
+	loader *components.ModelDeploymentComponentLoader,
 	instance *n8sv1alpha1.ModelDeployment) (*OptimizationJobReconciler, error) {
 
 	job, err := buildOptimizationJob(modelLibrary, instance)
@@ -38,6 +40,7 @@ func NewOptimizationJobReconciler(client client.Client,
 		ComponentReconcilerBase: components.NewComponentReconcilerBase(client, scheme, eventRecorder),
 		modelLibrary:            modelLibrary,
 		optimizationJob:         job,
+		loader:                  loader,
 		instance:                instance,
 	}, nil
 }
@@ -113,29 +116,6 @@ func buildModelOptimizerContainer(ml components.ModelLibrary, md *n8sv1alpha1.Mo
 	}, nil
 }
 
-func (r *OptimizationJobReconciler) checkOptimizationJobExists(ctx context.Context) (constants.ExistenceCheckResult, *batchv1.Job, error) {
-	logger := log.FromContext(ctx)
-
-	var jobList = new(batchv1.JobList)
-	listOption := GetOptimizationJobListFilter(r.instance)
-	err := r.GetClient().List(ctx, jobList, listOption)
-	if err != nil {
-		logger.Error(err, "unable to fetch optimization job")
-		return constants.ExistenceCheckError, nil, err
-	}
-	if len(jobList.Items) == 0 {
-		return constants.ExistenceCheckCreate, nil, nil
-	}
-	if len(jobList.Items) == 1 {
-		return constants.ExistenceCheckExists, &jobList.Items[0], nil
-	}
-	err = fmt.Errorf(
-		"model deployments should have only one optimization job, but %d were found",
-		len(jobList.Items),
-	)
-	return constants.ExistenceCheckError, nil, err
-}
-
 func (r *OptimizationJobReconciler) checkModelDescriptorConfigMapExists(ctx context.Context) (constants.ExistenceCheckResult, *corev1.ConfigMap, error) {
 	logger := log.FromContext(ctx)
 
@@ -175,8 +155,20 @@ func (r *OptimizationJobReconciler) buildModelDescriptorConfigMap(modelDescripto
 	}
 }
 
+// Fetch the model descriptor containing the selected hardware for the model and set the node affinity of the
+// optimization job accordingly
+func (r *OptimizationJobReconciler) updateOptimizationJobNodeAffinity(ctx context.Context) error {
+	// TODO
+	_, err := r.modelLibrary.FetchModelDescriptor(ctx, r.instance)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *OptimizationJobReconciler) createOptimizationJob(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+
 	if err := r.CreateResourceIfNotExists(ctx, r.instance, r.optimizationJob); err != nil {
 		logger.Error(err, "unable to create optimization job", "Job", r.optimizationJob)
 		return r.HandleError(r.instance, err)
@@ -225,7 +217,7 @@ func (r *OptimizationJobReconciler) createModelDescriptorConfigMap(ctx context.C
 func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	jobCheckResult, job, err := r.checkOptimizationJobExists(ctx)
+	jobCheckResult, job, err := r.loader.CheckOptimizationJobExists(ctx)
 	if err != nil {
 		return r.HandleError(r.instance, err)
 	}
@@ -315,13 +307,5 @@ func GetModelDescriptorConfigMapLabels(m *n8sv1alpha1.ModelDeployment, optimizat
 	return map[string]string{
 		constants.LabelModelDeployment: m.Name,
 		constants.LabelOptimizationJob: optimizationJob.Name,
-	}
-}
-
-func GetOptimizationJobListFilter(modelDeployment *n8sv1alpha1.ModelDeployment) client.ListOption {
-	return client.MatchingLabels{
-		constants.LabelCreatedBy:       constants.ModelDeploymentControllerName,
-		constants.LabelModelDeployment: modelDeployment.GetName(),
-		constants.LabelJobKind:         constants.JobKindModelOptimization,
 	}
 }

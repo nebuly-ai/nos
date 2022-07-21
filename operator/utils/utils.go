@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 )
 
@@ -52,4 +53,8 @@ func RandomStringLowercase(n int) string {
 		b[i] = lowercaseLetters[rand.Int63()%int64(len(lowercaseLetters))]
 	}
 	return string(b)
+}
+
+func GetNamespacedName(object client.Object) string {
+	return fmt.Sprintf("%s/%s", object.GetNamespace(), object.GetName())
 }

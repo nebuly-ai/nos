@@ -42,7 +42,10 @@ const (
 )
 
 type ModelDescriptor struct {
-	ModelUri string `json:"model_uri"`
+	ModelUri            string         `json:"model_uri"`
+	RecommendedHardware []string       `json:"recommended_hardware"`
+	SelectedHardware    []string       `json:"selected_hardware"`
+	OptimizationConfig  map[string]any `json:"optimization_config"`
 }
 
 func NewModelDescriptorFromJson(jsonBytes []byte) (*ModelDescriptor, error) {

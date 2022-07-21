@@ -14,6 +14,7 @@ type InferenceServiceReconciler struct {
 	components.ComponentReconcilerBase
 	modelLibrary components.ModelLibrary
 	//inferenceService *n8sv1alpha1.InferenceService
+	loader   *components.ModelDeploymentComponentLoader
 	instance *n8sv1alpha1.ModelDeployment
 }
 
@@ -21,11 +22,13 @@ func NewInferenceServiceReconciler(client client.Client,
 	scheme *runtime.Scheme,
 	eventRecorder record.EventRecorder,
 	modelLibrary components.ModelLibrary,
+	loader *components.ModelDeploymentComponentLoader,
 	instance *n8sv1alpha1.ModelDeployment) *InferenceServiceReconciler {
 	return &InferenceServiceReconciler{
 		ComponentReconcilerBase: components.NewComponentReconcilerBase(client, scheme, eventRecorder),
 		modelLibrary:            modelLibrary,
 		//inferenceService:        buildInferenceService(),
+		loader:   loader,
 		instance: instance,
 	}
 }

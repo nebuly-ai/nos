@@ -21,6 +21,7 @@ type AnalysisJobReconciler struct {
 	components.ComponentReconcilerBase
 	modelLibrary components.ModelLibrary
 	analysisJob  *batchv1.Job
+	loader       *components.ModelDeploymentComponentLoader
 	instance     *n8sv1alpha1.ModelDeployment
 }
 
@@ -28,6 +29,7 @@ func NewAnalysisJobReconciler(client client.Client,
 	scheme *runtime.Scheme,
 	eventRecorder record.EventRecorder,
 	modelLibrary components.ModelLibrary,
+	loader *components.ModelDeploymentComponentLoader,
 	instance *n8sv1alpha1.ModelDeployment) (*AnalysisJobReconciler, error) {
 
 	job, err := buildAnalysisJob(modelLibrary, instance)
@@ -38,6 +40,7 @@ func NewAnalysisJobReconciler(client client.Client,
 		ComponentReconcilerBase: components.NewComponentReconcilerBase(client, scheme, eventRecorder),
 		modelLibrary:            modelLibrary,
 		analysisJob:             job,
+		loader:                  loader,
 		instance:                instance,
 	}, nil
 }
@@ -113,29 +116,6 @@ func buildModelAnalyzerContainer(ml components.ModelLibrary, md *n8sv1alpha1.Mod
 	}, nil
 }
 
-func (r *AnalysisJobReconciler) checkAnalysisJobExists(ctx context.Context) (constants.ExistenceCheckResult, *batchv1.Job, error) {
-	logger := log.FromContext(ctx)
-
-	var jobList = new(batchv1.JobList)
-	listOption := GetAnalysisJobListFilter(r.instance)
-	err := r.GetClient().List(ctx, jobList, listOption)
-	if err != nil {
-		logger.Error(err, "unable to fetch optimization job")
-		return constants.ExistenceCheckError, nil, err
-	}
-	if len(jobList.Items) == 0 {
-		return constants.ExistenceCheckCreate, nil, nil
-	}
-	if len(jobList.Items) == 1 {
-		return constants.ExistenceCheckExists, &jobList.Items[0], nil
-	}
-	err = fmt.Errorf(
-		"model deployments should have only one optimization job, but %d were found",
-		len(jobList.Items),
-	)
-	return constants.ExistenceCheckError, nil, err
-}
-
 func (r *AnalysisJobReconciler) createAnalysisJob(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	if err := r.CreateResourceIfNotExists(ctx, r.instance, r.analysisJob); err != nil {
@@ -156,7 +136,7 @@ func (r *AnalysisJobReconciler) createAnalysisJob(ctx context.Context) (ctrl.Res
 func (r *AnalysisJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	jobCheckResult, job, err := r.checkAnalysisJobExists(ctx)
+	jobCheckResult, job, err := r.loader.CheckAnalysisJobExists(ctx)
 	if err != nil {
 		return r.HandleError(r.instance, err)
 	}
@@ -230,12 +210,4 @@ func (r *AnalysisJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, err
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func GetAnalysisJobListFilter(modelDeployment *n8sv1alpha1.ModelDeployment) client.ListOption {
-	return client.MatchingLabels{
-		constants.LabelCreatedBy:       constants.ModelDeploymentControllerName,
-		constants.LabelModelDeployment: modelDeployment.GetName(),
-		constants.LabelJobKind:         constants.JobKindModelAnalysis,
-	}
 }

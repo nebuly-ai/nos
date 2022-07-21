@@ -4,7 +4,7 @@ import (
 	"fmt"
 	n8sv1alpha1 "github.com/nebuly-ai/nebulnetes/api/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/constants"
-	"github.com/nebuly-ai/nebulnetes/controllers/reconcilers"
+	"github.com/nebuly-ai/nebulnetes/controllers/components"
 	"github.com/nebuly-ai/nebulnetes/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -50,7 +50,7 @@ func newMockedModelDeployment() *n8sv1alpha1.ModelDeployment {
 
 func getOptimizationJobList(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.JobList, error) {
 	var jobList = new(batchv1.JobList)
-	listOption := reconcilers.GetOptimizationJobListFilter(modelDeployment)
+	listOption := components.GetOptimizationJobListFilter(modelDeployment)
 	err := k8sClient.List(ctx, jobList, listOption)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func getOptimizationJobList(modelDeployment *n8sv1alpha1.ModelDeployment) (*batc
 
 func getAnalysisJobList(modelDeployment *n8sv1alpha1.ModelDeployment) (*batchv1.JobList, error) {
 	var jobList = new(batchv1.JobList)
-	listOption := reconcilers.GetAnalysisJobListFilter(modelDeployment)
+	listOption := components.GetAnalysisJobListFilter(modelDeployment)
 	err := k8sClient.List(ctx, jobList, listOption)
 	if err != nil {
 		return nil, err
