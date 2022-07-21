@@ -184,36 +184,6 @@ func (r *OptimizationJobReconciler) createOptimizationJob(ctx context.Context) (
 	return ctrl.Result{}, nil
 }
 
-func (r *OptimizationJobReconciler) createModelDescriptorConfigMap(ctx context.Context) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-
-	modelDescriptor, err := r.modelLibrary.FetchModelDescriptor(ctx, r.instance)
-	if err != nil {
-		logger.Error(err, "unable to fetch model descriptor", "uri", r.modelLibrary.GetModelDescriptorUri(r.instance))
-		return ctrl.Result{}, err
-	}
-
-	modelDescriptorConfigMap := r.buildModelDescriptorConfigMap(modelDescriptor)
-	if err = r.CreateResourceIfNotExists(ctx, r.instance, modelDescriptorConfigMap); err != nil {
-		logger.Error(
-			err,
-			"unable to create optimized model descriptor configmap",
-			"ConfigMap",
-			modelDescriptorConfigMap,
-		)
-		return ctrl.Result{}, err
-	}
-	logger.Info("created model descriptor configmap", "ConfigMap", modelDescriptorConfigMap)
-	r.GetRecorder().Event(
-		r.instance,
-		corev1.EventTypeNormal,
-		"ModelOptimizationCompleted",
-		"Created model descriptor ConfigMap",
-	)
-
-	return ctrl.Result{}, nil
-}
-
 func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -294,21 +264,6 @@ func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result,
 		)
 		r.instance.Status.State = n8sv1alpha1.StatusStateFailed
 		return ctrl.Result{}, nil
-	}
-
-	// If the job completed then create the optimized model descriptor configmap, if not already created
-	if finished == true && status == batchv1.JobComplete {
-		cmCheckResult, modelDescriptorCm, err := r.checkModelDescriptorConfigMapExists(ctx)
-		if err != nil {
-			return r.HandleError(r.instance, err)
-		}
-		if cmCheckResult == constants.ExistenceCheckCreate {
-			return r.createModelDescriptorConfigMap(ctx)
-		}
-		// If cm exists, then update the instance status
-		if cmCheckResult == constants.ExistenceCheckExists {
-			r.instance.Status.ModelDescriptor = modelDescriptorCm.Name
-		}
 	}
 
 	return ctrl.Result{}, nil

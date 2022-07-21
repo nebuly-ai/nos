@@ -111,8 +111,6 @@ spec:
             properties:
               analysisJob:
                 type: string
-              modelDescriptor:
-                type: string
               optimizationJob:
                 type: string
               state:

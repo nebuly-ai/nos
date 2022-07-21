@@ -92,7 +92,6 @@ type ModelDeploymentStatus struct {
 	State           StatusState `json:"state"`
 	AnalysisJob     string      `json:"analysisJob,omitempty"`
 	OptimizationJob string      `json:"optimizationJob,omitempty"`
-	ModelDescriptor string      `json:"modelDescriptor,omitempty"`
 }
 
 //+kubebuilder:object:root=true
