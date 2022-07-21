@@ -204,10 +204,5 @@ func (r *AnalysisJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, err
 		return ctrl.Result{}, nil
 	}
 
-	// If the job completed then go on with the reconciliation chain
-	if finished == true && status == batchv1.JobComplete {
-		return r.Next(ctx)
-	}
-
 	return ctrl.Result{}, nil
 }

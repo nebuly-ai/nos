@@ -127,16 +127,21 @@ func (r *ModelDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	)
 
 	// Reconcile
-	chain := components.NewComponentReconcilerChain(
+	reconcilerChain := []components.ComponentReconciler{
 		analysisJobReconciler,
 		optimizationJobReconciler,
 		inferenceServiceReconciler,
-	)
-	res, err = chain.Reconcile(ctx)
-	if err != nil {
-		instance.Status.State = n8sv1alpha1.StatusStateFailed
-		r.updateStatus(ctx, instance, logger)
-		return ctrl.Result{}, err
+	}
+	for _, reconciler := range reconcilerChain {
+		res, err = reconciler.Reconcile(ctx)
+		if err != nil {
+			instance.Status.State = n8sv1alpha1.StatusStateFailed
+			r.updateStatus(ctx, instance, logger)
+			return ctrl.Result{}, err
+		}
+		if res.Requeue || res.RequeueAfter > 0 {
+			return res, nil
+		}
 	}
 
 	r.updateStatus(ctx, instance, logger)

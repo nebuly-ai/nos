@@ -217,6 +217,17 @@ func (r *OptimizationJobReconciler) createModelDescriptorConfigMap(ctx context.C
 func (r *OptimizationJobReconciler) Reconcile(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	// Reconcile only if model analysis job exists
+	analysisCheckResult, analysisJob, err := r.loader.CheckAnalysisJobExists(ctx)
+	if analysisCheckResult != constants.ExistenceCheckExists {
+		return ctrl.Result{}, nil
+	}
+	// Reconcile only if model analysis job completed successfully
+	analysisFinished, status := utils.IsJobFinished(analysisJob)
+	if analysisFinished == false || status != batchv1.JobComplete {
+		return ctrl.Result{}, nil
+	}
+
 	jobCheckResult, job, err := r.loader.CheckOptimizationJobExists(ctx)
 	if err != nil {
 		return r.HandleError(r.instance, err)
