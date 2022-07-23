@@ -3,10 +3,11 @@ import pathlib
 import kfp.compiler
 from kfp import components
 from kfp import dsl
+from torch import nn
 
 from nebulnetes.kubeflow import (
     optimize_training,
-    optimize_deployment,
+    optimize_inference,
     optimize_test,
     optimized_pipeline,
     KfpPipelinePublisher
@@ -14,6 +15,24 @@ from nebulnetes.kubeflow import (
 
 KUBEFLOW_BASE_DIR = pathlib.Path("kubeflow")
 PIPELINE_NAME = "dummy-pipeline"
+
+
+class MyModel(nn.Module):
+    def __init__(self):
+        super(MyModel, self).__init__()
+        self.flatten = nn.Flatten()
+        self.linear_relu_stack = nn.Sequential(
+            nn.Linear(28 * 28, 512),
+            nn.ReLU(),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, 10)
+        )
+
+    def forward(self, x):
+        x = self.flatten(x)
+        logits = self.linear_relu_stack(x)
+        return logits
 
 
 def sleep(seconds: int):
@@ -41,13 +60,13 @@ sleep_random_op = components.create_component_from_func(sleep_random)
 )
 def dummy_pipeline(seconds: int):
     random_sleep_1_task = sleep_random_op()
-    optimize_training(random_sleep_1_task, model=None, optimization_target=None)
+    optimize_training(random_sleep_1_task, model_class=MyModel, optimization_target=None)
 
     sleep_task = sleep_op(seconds).after(random_sleep_1_task)
-    optimize_test(sleep_task, model=None, optimization_target=None)
+    optimize_test(sleep_task, model_class=MyModel, optimization_target=None)
 
     random_sleep_2_task = sleep_random_op().after(sleep_task)
-    optimize_deployment(random_sleep_2_task, model=None, optimization_target=None)
+    optimize_inference(random_sleep_2_task, model_class=MyModel, optimization_target=None)
 
     return True
 

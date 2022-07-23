@@ -1,87 +1,107 @@
 import contextlib
-import enum
 import functools
 from typing import Optional, Callable, List, Any
 
 import kfp.compiler
 import kfp.dsl as dsl
+from kfp.dsl import Sidecar
+from kubernetes.client import (
+    V1Affinity,
+    V1NodeAffinity,
+    V1PreferredSchedulingTerm,
+    V1NodeSelectorTerm,
+    V1NodeSelectorRequirement, V1EnvVar,
+)
 
-from .core import PipelineStep
+from . import core
 
 
-class OperationKind(str, enum.Enum):
-    TRAINING = "training"
-    TEST = "test"
-    DEPLOYMENT = "deployment"
+class _KubeFlowTask(core.Task):
+    def __init__(
+            self,
+            kind: core.TaskKind,
+            target: core.OptimizationTarget,
+            op: dsl.ContainerOp,
+            model_class=None
+    ):
+        super().__init__(kind, target, model_class)
+        self._op = op
+        self._op.add_pod_label("n8s.nebuly.ai/optimization-target", target)
+        self._op.add_pod_label("n8s.nebuly.ai/sdk-version", "0.0.1")
+        self._op.add_pod_label("n8s.nebuly.ai/nebulex-version", "v1")
+
+    def set_hardware_kinds(self, kinds: List[str]):
+        affinity = V1Affinity(
+            node_affinity=V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
+                V1PreferredSchedulingTerm(
+                    preference=V1NodeSelectorTerm(
+                        match_expressions=[
+                            V1NodeSelectorRequirement(
+                                key="foo",
+                                operator="in",
+                                values=["bar_1", "bar_2"],
+                            ),
+                        ]
+                    ),
+                    weight=10,
+                )
+            ])
+        )
+        self._op.add_affinity(affinity)
+
+    def set_optimization_strategy(self, strategy: str):
+        if self.kind == core.TaskKind.TRAINING:
+            self._op.container.add_env_variable(V1EnvVar(name="NEBULGYM_CONFIG", value=strategy))
+            self._op.add_sidecar(Sidecar(
+                name="Nebulgym injector",
+                image="nebuly.ai/nebulgym-injector",
+                command="somehow inject nebulgym :)",
+            ))
+        if self.kind == core.TaskKind.INFERENCE:
+            self._op.container.add_env_variable(V1EnvVar(name="NEBULLVM_CONFIG", value=strategy))
+            self._op.add_sidecar(Sidecar(
+                name="Nebullvm injector",
+                image="nebuly.ai/nebullvm-injector",
+                command="somehow inject nebullvm :)",
+            ))
+        self._op.add_pod_label("n8s.nebuly.ai/optimized-for", self.kind.value)
 
 
 class _PipelineOptimizer:
     def __init__(self):
-        self.steps: List[PipelineStep] = []
-        self._ops: List[dsl.ContainerOp] = []
+        self._tasks: List[core.Task] = []
+        self._optimizer = core.TaskOptimizer()
 
     def register_op(
             self,
             operation: dsl.ContainerOp,
-            operation_kind: OperationKind,
+            kind: core.TaskKind,
             model=None,
             optimization_target=None
     ):
-        self._ops.append(operation)
+        task = _KubeFlowTask(kind, optimization_target, operation, model)
+        self._tasks.append(task)
 
     def optimize(self):
-        for op in self._ops:
-            print(op.human_name)
+        self._optimizer.optimize(self._tasks)
 
 
 _optimizer: Optional[_PipelineOptimizer] = None
 
 
-def optimize_test(operation: dsl.ContainerOp, model: Optional = None, optimization_target: Optional = None):
+def optimize_test(operation: dsl.ContainerOp, model_class: Optional = None, optimization_target: Optional = None):
     if _optimizer is not None:
-        _optimizer.register_op(operation, OperationKind.TEST, model, optimization_target)
+        _optimizer.register_op(operation, core.TaskKind.TEST, model_class, optimization_target)
 
 
-def optimize_deployment(operation: dsl.ContainerOp, model: Optional = None, optimization_target: Optional = None):
+def optimize_inference(operation: dsl.ContainerOp, model_class: Optional = None, optimization_target: Optional = None):
     if _optimizer is not None:
-        _optimizer.register_op(operation, OperationKind.DEPLOYMENT, model, optimization_target)
+        _optimizer.register_op(operation, core.TaskKind.INFERENCE, model_class, optimization_target)
 
 
-def optimize_training(operation: dsl.ContainerOp, model: Optional = None, optimization_target: Optional = None):
+def optimize_training(operation: dsl.ContainerOp, model_class: Optional = None, optimization_target: Optional = None):
     if _optimizer is not None:
-        _optimizer.register_op(operation, OperationKind.TRAINING, model, optimization_target)
-
-    # # TODO: infer affinity from Nebulex response
-    # affinity = V1Affinity(
-    #     node_affinity=V1NodeAffinity(preferred_during_scheduling_ignored_during_execution=[
-    #         V1PreferredSchedulingTerm(
-    #             preference=V1NodeSelectorTerm(
-    #                 match_expressions=[
-    #                     V1NodeSelectorRequirement(
-    #                         key="foo",
-    #                         operator="in",
-    #                         values=["bar_1", "bar_2"],
-    #                     ),
-    #                 ]
-    #             ),
-    #             weight=10,
-    #         )
-    #     ])
-    # )
-    # # TODO: get nebulgym config from Nebulex
-    # operation.container.add_env_variable(V1EnvVar(name="NEBULGYM_CONFIG", value=""))
-    # # TODO: develop sidecar able to inject Nebulgym inside the training script of the operation
-    # # operation.add_sidecar(Sidecar(
-    # #     name="Nebulgym injector",
-    # #     image="nebuly.ai/nebulgym-injector",
-    # #     command="fooo",
-    # # ))
-    #
-    # operation.add_affinity(affinity)
-    # operation.add_pod_label("n8s.nebuly.ai/optimization-target", optimization_target)
-    # operation.add_pod_label("n8s.nebuly.ai/optimized-for", "training")
-    # operation.add_pod_label("n8s.nebuly.ai/sdk-version", "0.0.1")
-    # operation.add_pod_label("n8s.nebuly.ai/nebulex-version", "v1")
+        _optimizer.register_op(operation, core.TaskKind.TRAINING, model_class, optimization_target)
 
 
 def optimized_pipeline(pipeline_func: Callable):

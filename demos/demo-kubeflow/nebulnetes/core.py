@@ -1,9 +1,10 @@
+import abc
 import enum
 from typing import List
 
 
 class OptimizationConfig:
-    def __int__(self, optimization_strategy: str, hardware_kinds: List[str]):
+    def __init__(self, optimization_strategy: str, hardware_kinds: List[str]):
         """
         Defines how to perform an optimization in terms of optimization strategies and kinds of hardware required for
         applying those strategies.
@@ -23,25 +24,38 @@ class OptimizationConfig:
 
 class NebulexClient:
     def get_training_config(self, model, target) -> OptimizationConfig:
-        pass
+        return OptimizationConfig("", [])
 
-    def get_deployment_config(self, model, target) -> OptimizationConfig:
-        pass
+    def get_inference_config(self, model, target) -> OptimizationConfig:
+        return OptimizationConfig("", [])
+
+    def get_test_config(self, model, target) -> OptimizationConfig:
+        return OptimizationConfig("", [])
 
 
-class StepKind(str, enum.Enum):
+class TaskKind(str, enum.Enum):
     TRAINING = "training"
     TEST = "test"
-    DEPLOYMENT = "deployment"
+    INFERENCE = "deployment"
 
 
-class PipelineStep:
-    def __int__(self, kind: StepKind):
+class OptimizationTarget(str, enum.Enum):
+    COST = "cost"
+    TIME = "time"
+    EMISSIONS = "emissions"
+
+
+class Task(abc.ABC):
+    def __init__(self, kind: TaskKind, model_class, target: OptimizationTarget):
         self.kind = kind
+        self.model_class = model_class
+        self.target = target
 
+    @abc.abstractmethod
     def set_hardware_kinds(self, kinds: List[str]):
         pass
 
+    @abc.abstractmethod
     def set_optimization_strategy(self, strategy: str):
         pass
 
@@ -54,20 +68,20 @@ class PipelinePublisher:
         pass
 
 
-class PipelineOptimizer:
-    def __int__(self, target: str, publisher: PipelinePublisher):
-        self.publisher = publisher
-        self.target = target
-        self.nebulex = NebulexClient()
+class TaskOptimizer:
+    def __init__(self):
+        self._nebulex = NebulexClient()
 
-    def optimize(self, steps: List[PipelineStep], model):
-        for step in steps:
-            if step.kind == StepKind.TRAINING:
-                strategy, hw_kinds = self.nebulex.get_training_config(model, self.target)
-                step.set_hardware_kinds(hw_kinds)
-                step.inject_nebulgym(strategy)
-                step.set_optimization_strategy(strategy)
-            if step.kind == StepKind.DEPLOYMENT:
-                strategy, hw_kinds = self.nebulex.get_deployment_config(model, self.target)
-                step.set_hardware_kinds(hw_kinds)
-                step.set_optimization_strategy(strategy)
+    def optimize(self, tasks: List[Task]):
+        for task in tasks:
+            config = None
+            if task.kind == TaskKind.TRAINING:
+                config = self._nebulex.get_training_config(task.model_class, task.target)
+            if task.kind == TaskKind.INFERENCE:
+                config = self._nebulex.get_inference_config(task.model_class, task.target)
+            if task.kind == TaskKind.TEST:
+                config = self._nebulex.get_test_config(task.model_class, task.target)
+            if config is None:
+                raise Exception(f"Task kind {task.kind} is not valid")
+            task.set_optimization_strategy(config.optimization_strategy)
+            task.set_hardware_kinds(config.hardware_kinds)
