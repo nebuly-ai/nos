@@ -36,7 +36,7 @@ class NebulexClient:
 class TaskKind(str, enum.Enum):
     TRAINING = "training"
     TEST = "test"
-    INFERENCE = "deployment"
+    INFERENCE = "inference"
 
 
 class OptimizationTarget(str, enum.Enum):
@@ -57,14 +57,6 @@ class Task(abc.ABC):
 
     @abc.abstractmethod
     def set_optimization_strategy(self, strategy: str):
-        pass
-
-
-class PipelinePublisher:
-    def publish_pipeline(self):
-        """
-        Publish a new version of the pipeline to the target framework/platform
-        """
         pass
 
 

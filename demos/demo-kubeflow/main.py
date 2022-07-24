@@ -10,7 +10,6 @@ from nebulnetes.kubeflow import (
     optimize_inference,
     optimize_test,
     optimized_pipeline,
-    KfpPipelinePublisher
 )
 
 KUBEFLOW_BASE_DIR = pathlib.Path("kubeflow")
@@ -74,10 +73,10 @@ def dummy_pipeline(seconds: int):
 if __name__ == "__main__":
     # client = kfp.Client(host="http://localhost:8081")
 
-    pipeline_output_path = KUBEFLOW_BASE_DIR / pathlib.Path("dummy-pipeline.yaml")
     compiler = kfp.compiler.Compiler()
-    publisher = KfpPipelinePublisher(compiler)
-    publisher.register_pipeline(dummy_pipeline)
+    package_path = f"{dummy_pipeline._component_human_name}.yaml"  # noqa
+    compiler.compile(dummy_pipeline, package_path)
+
 
     #
     # try:

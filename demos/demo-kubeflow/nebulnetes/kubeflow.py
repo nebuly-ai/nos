@@ -2,7 +2,6 @@ import contextlib
 import functools
 from typing import Optional, Callable, List, Any
 
-import kfp.compiler
 import kfp.dsl as dsl
 from kfp.dsl import Sidecar
 from kubernetes.client import (
@@ -104,16 +103,6 @@ def optimize_training(operation: dsl.ContainerOp, model_class: Optional = None, 
         _optimizer.register_op(operation, core.TaskKind.TRAINING, model_class, optimization_target)
 
 
-def optimized_pipeline(pipeline_func: Callable):
-    @functools.wraps(pipeline_func)
-    def _wrap(*args, **kwargs) -> Any:
-        res = pipeline_func(*args, **kwargs)
-        _optimizer.optimize()
-        return res
-
-    return _wrap
-
-
 @contextlib.contextmanager
 def _use_optimizer(optimizer: _PipelineOptimizer):
     global _optimizer
@@ -123,19 +112,12 @@ def _use_optimizer(optimizer: _PipelineOptimizer):
     _optimizer = __previous_optimizer
 
 
-class KfpPipelinePublisher:
-    def __init__(
-            self,
-            compiler: kfp.compiler.Compiler = None,
-    ):
-        self._compiler = compiler
-        self._optimizer = _PipelineOptimizer()
-        if compiler is None:
-            self._compiler = kfp.compiler.Compiler()
+def optimized_pipeline(pipeline_func: Callable):
+    @functools.wraps(pipeline_func)
+    def _wrap(*args, **kwargs) -> Any:
+        with _use_optimizer(_PipelineOptimizer()):
+            res = pipeline_func(*args, **kwargs)
+            _optimizer.optimize()
+            return res
 
-    def register_pipeline(self, pipeline_func: Callable, **kwargs):
-        package_path = kwargs.get("package_path", None)
-        if package_path is None:
-            package_path = f"{pipeline_func._component_human_name}.yaml"  # noqa
-        with _use_optimizer(self._optimizer):
-            self._compiler.compile(pipeline_func, package_path, **kwargs)
+    return _wrap
