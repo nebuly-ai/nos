@@ -10,6 +10,7 @@ from nebulnetes.kubeflow import (
     optimize_inference,
     optimize_test,
     optimized_pipeline,
+    KubeflowWorkflow,
 )
 
 KUBEFLOW_BASE_DIR = pathlib.Path("kubeflow")
@@ -77,16 +78,29 @@ if __name__ == "__main__":
     package_path = f"{dummy_pipeline._component_human_name}.yaml"  # noqa
     compiler.compile(dummy_pipeline, package_path)
 
+# Hook for registering the workflow to Nebuly
+workflow = KubeflowWorkflow(None, dummy_pipeline)
 
-    #
-    # try:
-    #     res = client.upload_pipeline(
-    #         pipeline_name=PIPELINE_NAME,
-    #         pipeline_package_path=str(pipeline_output_path),
-    #     )
-    # except Exception:
-    #     client.upload_pipeline_version(
-    #         pipeline_name=PIPELINE_NAME,
-    #         pipeline_package_path=str(pipeline_output_path),
-    #         pipeline_version_name=str(uuid.uuid4()),
-    #     )
+
+### Nebuly portal ###
+# # Case 1: user updates optimization target of a task from Nebuly's portal
+# updated_workflow = manager.publish_optimized_workflow(
+#     {
+#         "task_1": {"target": "cost"}
+#     }
+# )
+# update_workflow(updated_workflow)
+#
+# # Case 2: user wants to run a workflow
+# manager.run_workflow(workflow)
+#
+# # Case 3: Nebuly's portal notices that a workflow can further be optimized. It notices that from:
+# # 1) workflow metadata stored in DB
+# # 2) run metrics from the manager (manager.get_run_metrics() -> Metrics)
+#
+#
+# # Idea: before publishing a new version of a workflow, we run the new version and compare it with the previous one, so
+# # that we can know if it's actually better. The comparison depends on the specific framework. For instance, in
+# # a KubeFlow pipeline the comparison could check whether a certain step produces better metrics.
+#
+# # Note: workflow can potentially run for an undefined amount of time (think for instance to Lightning works)

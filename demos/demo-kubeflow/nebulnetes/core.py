@@ -1,6 +1,6 @@
 import abc
 import enum
-from typing import List
+from typing import List, Optional
 
 
 class OptimizationConfig:
@@ -77,3 +77,39 @@ class TaskOptimizer:
                 raise Exception(f"Task kind {task.kind} is not valid")
             task.set_optimization_strategy(config.optimization_strategy)
             task.set_hardware_kinds(config.hardware_kinds)
+
+
+class WorkflowRunMetrics:
+    pass
+
+
+class OptimizationOptions:
+    pass
+
+
+class Workflow(abc.ABC):
+    def __init__(self, name: str, tasks: List[Task], kind):
+        self.name = name
+        self.tasks = tasks
+        self.kind = kind
+
+    @abc.abstractmethod
+    def publish(self):
+        """Publish the managed workflow on the target platform (e.g. KubeFlow, Lightning, etc.)
+        """
+        pass
+
+    @abc.abstractmethod
+    def run(self):
+        """Run the workflow on the target framework/platform"""
+        pass
+
+    @abc.abstractmethod
+    def optimize(self, optimization_options: OptimizationOptions = None):
+        """Optimize the workflow and update its tasks with the optimized configuration."""
+        pass
+
+    @abc.abstractmethod
+    def get_run_metrics(self) -> WorkflowRunMetrics:
+        """Return the aggregated metrics of all the runs of the workflow on the target framework/platform"""
+        pass
