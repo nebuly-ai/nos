@@ -46,10 +46,19 @@ class OptimizationTarget(str, enum.Enum):
 
 
 class Task(abc.ABC):
-    def __init__(self, kind: TaskKind, model_class, target: OptimizationTarget):
+    def __init__(
+            self,
+            kind: TaskKind,
+            model_class,
+            target: OptimizationTarget,
+            name: str,
+            display_name: str
+    ):
         self.kind = kind
         self.model_class = model_class
         self.target = target
+        self.name = name
+        self.display_name = display_name
 
     @abc.abstractmethod
     def set_hardware_kinds(self, kinds: List[str]):

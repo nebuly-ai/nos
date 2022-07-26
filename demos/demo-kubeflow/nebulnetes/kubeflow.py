@@ -28,7 +28,7 @@ class _KubeFlowTask(core.Task):
             op: dsl.ContainerOp,
             model_class=None
     ):
-        super().__init__(kind, target, model_class)
+        super().__init__(kind, target, model_class, op.name, op.human_name)
         self._op = op
         self._op.add_pod_label("n8s.nebuly.ai/optimization-target", target)
         self._op.add_pod_label("n8s.nebuly.ai/sdk-version", "0.0.1")
