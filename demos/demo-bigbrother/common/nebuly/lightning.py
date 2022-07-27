@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import lightning
 import lightning as L
+from lightning_cloud.openapi.api import lightningapp_v2_service_api as app_apis
 from lightning_app.core import LightningWork, LightningApp
 
 from . import core
@@ -85,13 +86,15 @@ class LightningWorkflow(core.Workflow):
         super().__init__(app.root.name, tasks, self.KIND)
         self.app = app
         self._optimizer = core.TaskOptimizer()
+        self.lightning_cloud_service = app_apis.LightningappV2ServiceApi()
 
     def publish(self):
-        # Somehow publish the app to Lightning cloud (do they have an SDK/client?)
+        # self.lightning_cloud_service.do_something()
         pass
 
     def run(self):
         # WFT do we do?
+        # self.lightning_cloud_service.do_something()
         pass
 
     def optimize(self, optimization_options: OptimizationOptions = None):
