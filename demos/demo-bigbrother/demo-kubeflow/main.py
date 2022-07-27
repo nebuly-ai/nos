@@ -5,7 +5,7 @@ from kfp import components
 from kfp import dsl
 from torch import nn
 
-from nebulnetes.kubeflow import (
+from nebuly.kubeflow import (
     optimize_training,
     optimize_inference,
     optimize_test,
