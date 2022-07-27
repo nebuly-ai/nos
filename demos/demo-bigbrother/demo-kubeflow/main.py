@@ -4,7 +4,6 @@ import kfp.compiler
 from kfp import components
 from kfp import dsl
 from torch import nn
-
 from nebuly.kubeflow import (
     optimize_training,
     optimize_inference,
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     package_path = f"{dummy_pipeline._component_human_name}.yaml"  # noqa
     compiler.compile(dummy_pipeline, package_path)
 
-# Hook for registering the workflow to Nebuly
+# Optional hook for registering the workflow to Nebuly
 workflow = KubeflowWorkflow(None, dummy_pipeline)
 
 

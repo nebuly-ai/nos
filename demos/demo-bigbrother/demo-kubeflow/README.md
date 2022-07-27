@@ -22,6 +22,12 @@ resp = client.get_pipeline_version_template("672dd99e-3423-456c-98e4-67fe718993a
 template = yaml.load(resp.template)
 ```
 
+## Prerequisites
+1. Install [KIND](https://kind.sigs.k8s.io/)
+2. Install the Python requirements:
+    * pip install -r requirements.txt
+3. Install the common nebuly "big brother" library:
+   * pip install -e ../common
 
 ## How to run
 1. Deploy a KIND cluster and install KubeFlow on it
