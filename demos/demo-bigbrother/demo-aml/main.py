@@ -1,34 +1,37 @@
 import os
 
-from azureml.core import Workspace
+from azureml.core import Workspace, RunConfiguration
 from azureml.pipeline.core import Pipeline, StepSequence
-from azureml.pipeline.steps import PythonScriptStep
+
+from nebuly.azure_ml import TrainingPythonScriptStep, TestPythonScriptStep, OptimizedPipeline
 
 
 class PipelineBuilder:
-    def __init__(self, workspace: Workspace):
-        self.workspace = workspace
+    def __init__(self, ws: Workspace):
+        self.workspace = ws
 
     def build_pipeline(self) -> Pipeline:
-        training_step = PythonScriptStep(
+        training_step = TrainingPythonScriptStep(
             name="Training",
+            model_class=None,
             script_name="__main__.py",
-            source_directory=os.path.join("pipeline", "steps", "step-1", "src"),
+            source_directory=os.path.join("steps", "step-1", "src"),
             arguments=[
                 "foo",
             ],
             allow_reuse=False,
         )
-        test_step = PythonScriptStep(
+        test_step = TestPythonScriptStep(
             name="Test model",
+            model_class=None,
             script_name="__main__.py",
-            source_directory=os.path.join("pipeline", "steps", "step-2", "src"),
+            source_directory=os.path.join("steps", "step-2", "src"),
             arguments=[
                 "bar",
             ],
             allow_reuse=False,
         )
-        return Pipeline(workspace=self.workspace, steps=StepSequence([training_step, test_step]))
+        return OptimizedPipeline(workspace=self.workspace, steps=StepSequence([training_step, test_step]))
 
 
 if __name__ == "__main__":
