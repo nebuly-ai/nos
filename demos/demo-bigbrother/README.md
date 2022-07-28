@@ -13,6 +13,7 @@ analyzing and optimizing workflows, as well as the plugins for integrating with
 the common MLOps frameworks and platforms.
 * [demo-kubeflow](demo-kubeflow): demo of an integration with KubeFlow pipelines
 * [demo-lightning](demo-lightning): demo of an integration with Lightning Apps
+* [demo-aml](demo-aml): demo of an integration with Azure Machine Learning pipelines
 
 Before running each demo, besides installing the respective requirements.txt, it is
 also necessary to install the Nebuly "Bib Brother" library. You can do that as follows:

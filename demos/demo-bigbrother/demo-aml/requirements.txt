@@ -1,0 +1,2 @@
+azureml-core==1.43.0
+azureml-pipeline
