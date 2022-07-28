@@ -72,6 +72,10 @@ class Task(abc.ABC):
 class HardwareProvider(abc.ABC):
     @abc.abstractmethod
     def get_available_hardware(self) -> List[str]:
+        """Return the hardware kinds available in the current environment.
+        When optimizing tasks, the hardware selected for each task will be chosen according to the hardware kinds
+        returned by this method.
+        """
         pass
 
 
