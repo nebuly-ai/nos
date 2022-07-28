@@ -26,6 +26,22 @@ class _AzureMachineLearningHardwareProvider(HardwareProvider):
         return []
 
 
+class _AzureMachineLearningOptimizer(TaskOptimizer):
+    def __init__(
+            self,
+            workspace: Workspace,
+            pipeline_steps: List[PipelineStep],
+            hardware_provider: HardwareProvider = None
+    ):
+        if hardware_provider is None:
+            hardware_provider = _AzureMachineLearningHardwareProvider(workspace)
+        self.tasks = _extract_tasks(workspace, pipeline_steps)
+        super().__init__(hardware_provider)
+
+    def get_tasks(self) -> List[Task]:
+        return self.tasks
+
+
 class _AzureMachineLearningTask(Task):
     def __init__(
             self,
@@ -98,11 +114,10 @@ def _extract_tasks(workspace: Workspace, steps: List[PipelineStep]) -> List[Task
 class OptimizedPipeline(Pipeline):
     def __init__(self, workspace, steps, **kwargs):
         super().__init__(workspace, steps, **kwargs)
-        self.tasks = _extract_tasks(workspace, steps)
-        self.optimizer = TaskOptimizer(_AzureMachineLearningHardwareProvider(workspace))
+        self.optimizer = _AzureMachineLearningOptimizer(workspace, steps)
 
     def publish(self, *args, **kwargs):
-        self.optimizer.optimize(self.tasks)
+        self.optimizer.optimize()
         super().publish(*args, **kwargs)
 
 

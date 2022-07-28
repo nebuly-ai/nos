@@ -1,19 +1,30 @@
 import typing
 from typing import List, Optional
 
+from lightning_app.core import LightningWork, LightningApp
+from lightning_cloud.openapi.api import lightningapp_v2_service_api as app_apis
+
 import lightning
 import lightning as L
-from lightning_cloud.openapi.api import lightningapp_v2_service_api as app_apis
-from lightning_app.core import LightningWork, LightningApp
-
 from . import core
-from .core import WorkflowRunMetrics, OptimizationOptions
+from .core import WorkflowRunMetrics, OptimizationOptions, Task
 
 
 class _LightningHardwareProvider(core.HardwareProvider):
 
     def get_available_hardware(self) -> List[str]:
         return []
+
+
+class _LightningOptimizer(core.TaskOptimizer):
+    def __init__(self, flow: L.LightningFlow, hardware_provider: core.HardwareProvider = None):
+        if hardware_provider is None:
+            hardware_provider = _LightningHardwareProvider()
+        self.tasks = _extract_tasks(flow)
+        super().__init__(hardware_provider)
+
+    def get_tasks(self) -> List[Task]:
+        return self.tasks
 
 
 class _LightningTask(core.Task):
@@ -72,13 +83,10 @@ def _extract_tasks(works: List[lightning.LightningWork]) -> List[core.Task]:
 def optimized(cls):
     original_init = cls.__init__
 
-    def optimize(flow: L.LightningFlow):
-        tasks = _extract_tasks(flow.works())
-        core.TaskOptimizer(_LightningHardwareProvider()).optimize(tasks)
-
     def new_init(self, *args, **kwargs):
         original_init(self, *args, **kwargs)
-        optimize(self)
+        optimizer = _LightningOptimizer(self)
+        optimizer.optimize()
 
     cls.__init__ = new_init
     return cls
@@ -90,8 +98,7 @@ class LightningWorkflow(core.Workflow):
     def __init__(self, app: LightningApp):
         tasks = _extract_tasks(app.works)
         super().__init__(app.root.name, tasks, self.KIND)
-        self.app = app
-        self._optimizer = core.TaskOptimizer(_LightningHardwareProvider())
+        self._optimizer = _LightningOptimizer(app.root)
         self.lightning_cloud_service = app_apis.LightningappV2ServiceApi()
 
     def publish(self):
@@ -104,7 +111,7 @@ class LightningWorkflow(core.Workflow):
         pass
 
     def optimize(self, optimization_options: OptimizationOptions = None):
-        self._optimizer.optimize(self.tasks)
+        self._optimizer.optimize()
 
     def get_run_metrics(self) -> WorkflowRunMetrics:
         pass

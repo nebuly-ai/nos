@@ -18,6 +18,7 @@ from kubernetes.client import (
 )
 
 from . import core, utils
+from .core import Task
 
 
 class _KubeFlowHardwareProvider(core.HardwareProvider):
@@ -76,8 +77,11 @@ class _KubeFlowTask(core.Task):
         self._op.add_pod_label("n8s.nebuly.ai/optimized-for", self.kind.value)
 
 
-class _TaskRegister:
-    def __init__(self):
+class _KubeFlowOptimizer(core.TaskOptimizer):
+    def __init__(self, hardware_provider: core.HardwareProvider = None):
+        if hardware_provider is None:
+            hardware_provider = _KubeFlowHardwareProvider()
+        super().__init__(hardware_provider)
         self.tasks: List[core.Task] = []
 
     def register_op(
@@ -90,41 +94,43 @@ class _TaskRegister:
         task = _KubeFlowTask(kind, optimization_target, operation, model)
         self.tasks.append(task)
 
+    def get_tasks(self) -> List[Task]:
+        return self.tasks
 
-_register: Optional[_TaskRegister] = None
+
+_optimizer: Optional[_KubeFlowOptimizer] = None
 
 
 def optimize_test(operation: dsl.ContainerOp, model_class: Optional = None, optimization_target: Optional = None):
-    if _register is not None:
-        _register.register_op(operation, core.TaskKind.TEST, model_class, optimization_target)
+    if _optimizer is not None:
+        _optimizer.register_op(operation, core.TaskKind.TEST, model_class, optimization_target)
 
 
 def optimize_inference(operation: dsl.ContainerOp, model_class: Optional = None, optimization_target: Optional = None):
-    if _register is not None:
-        _register.register_op(operation, core.TaskKind.INFERENCE, model_class, optimization_target)
+    if _optimizer is not None:
+        _optimizer.register_op(operation, core.TaskKind.INFERENCE, model_class, optimization_target)
 
 
 def optimize_training(operation: dsl.ContainerOp, model_class: Optional = None, optimization_target: Optional = None):
-    if _register is not None:
-        _register.register_op(operation, core.TaskKind.TRAINING, model_class, optimization_target)
+    if _optimizer is not None:
+        _optimizer.register_op(operation, core.TaskKind.TRAINING, model_class, optimization_target)
 
 
 @contextlib.contextmanager
-def _use_register(register: _TaskRegister):
-    global _register
-    __previous_register = _register
-    _register = register
+def _use_optimizer(optimizer: _KubeFlowOptimizer):
+    global _optimizer
+    __previous_optimizer = optimizer
+    _optimizer = optimizer
     yield
-    _register = __previous_register
+    _optimizer = __previous_optimizer
 
 
-def optimized_pipeline(pipeline_func: Callable, register=_TaskRegister()):
+def optimized_pipeline(pipeline_func: Callable, optimizer=_KubeFlowOptimizer()):
     @functools.wraps(pipeline_func)
     def _wrap(*args, **kwargs) -> Any:
-        optimizer = core.TaskOptimizer(_KubeFlowHardwareProvider())
-        with _use_register(register):
+        with _use_optimizer(optimizer):
             res = pipeline_func(*args, **kwargs)
-            optimizer.optimize(register.tasks)
+            optimizer.optimize()
             return res
 
     return _wrap
@@ -146,10 +152,10 @@ class KubeflowWorkflow(core.Workflow):
         super().__init__(name, tasks, self.KIND)
 
     def __compile_pipeline(self) -> List[core.Task]:
-        register = _TaskRegister()
-        with _use_register(register):
+        optimizer = _KubeFlowOptimizer()
+        with _use_optimizer(optimizer):
             self._compiler.compile(self._pipeline_func, str(self._compiled_pipeline_path))
-        return register.tasks
+        return optimizer.tasks
 
     def publish(self):
         if self._client.get_pipeline_id(self.name) is not None:
@@ -167,10 +173,10 @@ class KubeflowWorkflow(core.Workflow):
 
     def optimize(self, optimization_options: core.OptimizationOptions = None):
         # TODO: handle optimization options
-        register = _TaskRegister()
-        wrapped = optimized_pipeline(self._pipeline_func, register)
+        optimizer = _KubeFlowOptimizer()
+        wrapped = optimized_pipeline(self._pipeline_func, optimizer)
         self._compiler.compile(wrapped, str(self._compiled_pipeline_path))
-        self.tasks = register.tasks
+        self.tasks = optimizer.tasks
 
     def get_run_metrics(self) -> core.WorkflowRunMetrics:
         pass

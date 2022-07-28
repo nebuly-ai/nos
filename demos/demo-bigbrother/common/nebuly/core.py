@@ -75,14 +75,18 @@ class HardwareProvider(abc.ABC):
         pass
 
 
-class TaskOptimizer:
+class TaskOptimizer(abc.ABC):
     def __init__(self, hardware_provider: HardwareProvider):
         self._hardware_provider = hardware_provider
         self._nebulex = NebulexClient()
 
-    def optimize(self, tasks: List[Task]):
+    @abc.abstractmethod
+    def get_tasks(self) -> List[Task]:
+        pass
+
+    def optimize(self):
         available_hardware = self._hardware_provider.get_available_hardware()
-        for task in tasks:
+        for task in self.get_tasks():
             config = None
             if task.kind == TaskKind.TRAINING:
                 config = self._nebulex.get_training_config(task.model_class, task.target, available_hardware)
