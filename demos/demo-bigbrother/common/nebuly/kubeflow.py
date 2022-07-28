@@ -20,6 +20,11 @@ from kubernetes.client import (
 from . import core, utils
 
 
+class _KubeFlowHardwareProvider(core.HardwareProvider):
+    def get_available_hardware(self) -> List[str]:
+        return []
+
+
 class _KubeFlowTask(core.Task):
     def __init__(
             self,
@@ -116,7 +121,7 @@ def _use_register(register: _TaskRegister):
 def optimized_pipeline(pipeline_func: Callable, register=_TaskRegister()):
     @functools.wraps(pipeline_func)
     def _wrap(*args, **kwargs) -> Any:
-        optimizer = core.TaskOptimizer()
+        optimizer = core.TaskOptimizer(_KubeFlowHardwareProvider())
         with _use_register(register):
             res = pipeline_func(*args, **kwargs)
             optimizer.optimize(register.tasks)
@@ -130,7 +135,7 @@ class KubeflowWorkflow(core.Workflow):
 
     def __init__(self, client: kfp.Client, pipeline_func: Callable):
         self._client = client
-        self._optimizer = core.TaskOptimizer()
+        self._optimizer = core.TaskOptimizer(_KubeFlowHardwareProvider())
         self._compiler = kfp.compiler.Compiler()
         self._pipeline_func = utils.without_decorator(pipeline_func, optimized_pipeline)
         name = getattr(pipeline_func, "_component_human_name")

@@ -11,8 +11,19 @@ from common.nebuly.core import (
     TaskKind,
     Task,
     TaskOptimizer,
-    OptimizationTarget
+    OptimizationTarget,
+    HardwareProvider,
 )
+
+
+class _AzureMachineLearningHardwareProvider(HardwareProvider):
+    def __init__(self, workspace: Workspace):
+        self._workspace = workspace
+
+    def get_available_hardware(self) -> List[str]:
+        for _, target in self._workspace.compute_targets.items():
+            pass
+        return []
 
 
 class _AzureMachineLearningTask(Task):
@@ -88,7 +99,7 @@ class OptimizedPipeline(Pipeline):
     def __init__(self, workspace, steps, **kwargs):
         super().__init__(workspace, steps, **kwargs)
         self.tasks = _extract_tasks(workspace, steps)
-        self.optimizer = TaskOptimizer()
+        self.optimizer = TaskOptimizer(_AzureMachineLearningHardwareProvider(workspace))
 
     def publish(self, *args, **kwargs):
         self.optimizer.optimize(self.tasks)

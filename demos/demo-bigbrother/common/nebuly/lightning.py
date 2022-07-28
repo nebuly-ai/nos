@@ -10,6 +10,12 @@ from . import core
 from .core import WorkflowRunMetrics, OptimizationOptions
 
 
+class _LightningHardwareProvider(core.HardwareProvider):
+
+    def get_available_hardware(self) -> List[str]:
+        return []
+
+
 class _LightningTask(core.Task):
     def __init__(
             self,
@@ -68,7 +74,7 @@ def optimized(cls):
 
     def optimize(flow: L.LightningFlow):
         tasks = _extract_tasks(flow.works())
-        core.TaskOptimizer().optimize(tasks)
+        core.TaskOptimizer(_LightningHardwareProvider()).optimize(tasks)
 
     def new_init(self, *args, **kwargs):
         original_init(self, *args, **kwargs)
@@ -85,7 +91,7 @@ class LightningWorkflow(core.Workflow):
         tasks = _extract_tasks(app.works)
         super().__init__(app.root.name, tasks, self.KIND)
         self.app = app
-        self._optimizer = core.TaskOptimizer()
+        self._optimizer = core.TaskOptimizer(_LightningHardwareProvider())
         self.lightning_cloud_service = app_apis.LightningappV2ServiceApi()
 
     def publish(self):
