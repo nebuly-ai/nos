@@ -1,6 +1,6 @@
 import os
 
-from azureml.core import Workspace, RunConfiguration
+from azureml.core import Workspace
 from azureml.pipeline.core import Pipeline, StepSequence
 
 from nebuly.azure_ml import TrainingPythonScriptStep, TestPythonScriptStep, OptimizedPipeline

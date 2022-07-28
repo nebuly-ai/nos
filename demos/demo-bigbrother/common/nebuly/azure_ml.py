@@ -1,6 +1,6 @@
 from typing import List
 
-from azureml.core import Workspace, ComputeTarget, RunConfiguration
+from azureml.core import Workspace, ComputeTarget
 from azureml.pipeline.core import Pipeline, PipelineStep
 from azureml.pipeline.steps import PythonScriptStep
 
@@ -114,11 +114,16 @@ def _extract_tasks(workspace: Workspace, steps: List[PipelineStep]) -> List[Task
 class OptimizedPipeline(Pipeline):
     def __init__(self, workspace, steps, **kwargs):
         super().__init__(workspace, steps, **kwargs)
-        self.optimizer = _AzureMachineLearningOptimizer(workspace, steps)
+        self.__init_kwargs = kwargs
+        self.__workspace = workspace
+        self.__steps = steps
+        self.optimizer = _AzureMachineLearningOptimizer(self.__workspace, self.__steps)
 
     def publish(self, *args, **kwargs):
+        # Optimize pipeline steps setting the right hardware
         self.optimizer.optimize()
-        super().publish(*args, **kwargs)
+        # Instantiate a new pipeline in order to build a new graph with the updated hardware
+        Pipeline(self.__workspace, self.__steps, **self.__init_kwargs).publish(*args, **kwargs)
 
 
 class AzureMachineLearningWorkflow(Workflow):
