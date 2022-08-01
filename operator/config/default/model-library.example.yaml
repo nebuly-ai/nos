@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: model-library-credentials
+type: Opaque
+stringData:
+  AZ_CLIENT_ID: xxxxx
+  AZ_CLIENT_SECRET: xxxxx
+  AZ_SUBSCRIPTION_ID: xxxxx
+  AZ_TENANT_ID: xxxxx
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-library-config
+data:
+  config: |-
+    {
+      "uri": "https://myaccount.blob.core.windows.net/mycontainer",
+      "kind": "azure"
+    }
