@@ -7,5 +7,8 @@ setup(
         'jupyter_client.kernel_provisioners': [
             'k8s-provisioner=n8s.provisioner:K8sKernelProvisioner',
         ],
-    }
+    },
+    install_requires=[
+        "jupyter_server==1.18.1",
+    ]
 )
