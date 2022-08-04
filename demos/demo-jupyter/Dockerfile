@@ -8,7 +8,7 @@ USER nebuly
 WORKDIR /home/nebuly
 
 COPY --chown=nebuly n8s/ code/n8s
-COPY setup.py code
+COPY pyproject.toml code/
 RUN pip install --user code/
 
 RUN mkdir -p kernels/k8s

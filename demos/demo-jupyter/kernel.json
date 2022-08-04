@@ -2,7 +2,7 @@
   "argv": [
     "python",
     "-m",
-    "ipykernel_launcher",
+    "n8s.main",
     "-f",
     "{connection_file}"
   ],
