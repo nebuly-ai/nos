@@ -3,7 +3,6 @@ import os
 import queue
 import time
 from threading import Thread
-from typing import Dict, Any
 from uuid import uuid4
 
 import requests
@@ -334,30 +333,3 @@ class NebulnetesKernel(IPythonKernel):
 
         await kernel_manager.shutdown_kernel(now=True)
         return reply_content
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    gateway_client = GatewayClient.instance()
-    gateway_client.url = "http://nebulyaks.westeurope.cloudapp.azure.com"
-    kernel_manager = GatewayKernelManager()
-
-    coro = kernel_manager.start_kernel(kernel_name="python_kubernetes")
-    asyncio.run(coro)
-
-    kernel_client = KernelClient(
-        http_api_endpoint="http://nebulyaks.westeurope.cloudapp.azure.com/api/kernels",
-        ws_api_endpoint="ws://nebulyaks.westeurope.cloudapp.azure.com/api/kernels",
-        kernel_id=kernel_manager.kernel_id,
-        logger=logging.getLogger(__name__)
-    )
-
-    resp = kernel_client.execute("""
-    from time import sleep
-    for i in range(10):
-        print("hello world")
-        sleep(1)
-    a = 5
-    """)
-    print(resp)
