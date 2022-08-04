@@ -1,7 +1,11 @@
+import asyncio
 import logging
 import os
 import queue
+import ssl
 import time
+import traceback
+from ssl import SSLContext
 from threading import Thread
 from uuid import uuid4
 
@@ -32,8 +36,15 @@ class KernelClient(object):
         self.log = logger
         self.log.debug('Initializing kernel client ({}) to {}'.format(kernel_id, self.kernel_ws_api_endpoint))
 
-        self.kernel_socket = websocket.create_connection(self.kernel_ws_api_endpoint, timeout=timeout,
-                                                         enable_multithread=True)
+        self.kernel_socket = websocket.create_connection(
+            self.kernel_ws_api_endpoint,
+            timeout=timeout,
+            enable_multithread=True,
+            sslopt={
+                "cert_reqs": ssl.CERT_NONE,
+                "check_hostname": False,
+            }
+        )
 
         self.response_queues = {}
 
@@ -299,6 +310,7 @@ class NebulnetesKernel(IPythonKernel):
     #     'file_extension': '.txt',
     # }
     banner = "Nebulnetes kernel 🚀"
+    GATEWAY_BASE_ADDRESS = "nebulyaks.westeurope.cloudapp.azure.com"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -306,30 +318,42 @@ class NebulnetesKernel(IPythonKernel):
         self.logger.setLevel(log_level)
         logging.basicConfig()
         gateway_client = GatewayClient.instance()
-        gateway_client.url = "http://nebulyaks.westeurope.cloudapp.azure.com"
+        gateway_client.init_static_args()
+        gateway_client._static_args["validate_cert"] = False  # noqa
+        gateway_client.url = "https://{}".format(self.GATEWAY_BASE_ADDRESS)
 
     async def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False, **kwargs):
-        reply_content = {
-            'status': 'ok',
-            # The base class increments the execution count
-            'execution_count': 1,
-            'payload': [],
-            'user_expressions': {},
-        }
+        reply_content = {}
         kernel_manager = GatewayKernelManager()
         kernel_manager.log = self.logger
 
-        await kernel_manager.start_kernel(kernel_name="python_kubernetes")
-        kernel_client = KernelClient(
-            http_api_endpoint="http://nebulyaks.westeurope.cloudapp.azure.com/api/kernels",
-            ws_api_endpoint="ws://nebulyaks.westeurope.cloudapp.azure.com/api/kernels",
-            kernel_id=kernel_manager.kernel_id,
-            logger=self.logger
-        )
-        resp = kernel_client.execute(code, timeout=60)
-        print(resp)
+        try:
+            await kernel_manager.start_kernel(kernel_name="python_kubernetes")
+            self.logger.info(f"Kernel ID is {kernel_manager.kernel_id}")
+            kernel_client = KernelClient(
+                http_api_endpoint="http://{}/api/kernels".format(self.GATEWAY_BASE_ADDRESS),
+                ws_api_endpoint="wss://{}/api/kernels".format(self.GATEWAY_BASE_ADDRESS),
+                kernel_id=kernel_manager.kernel_id,
+                logger=self.logger
+            )
+            resp = kernel_client.execute(code, timeout=60)
+            print(resp)
 
-        reply_content["status"] = "ok"
+            reply_content["status"] = "ok"
+            reply_content["execution_count"] = 1
+            reply_content["user_expressions"] = {}
+            reply_content["payload"] = []
+        except Exception as e:
+            reply_content["status"] = "error"
+            reply_content["ename"] = type(e).__name__
+            reply_content["evalue"] = str(e)
+            reply_content["etraceback"] = traceback.format_tb(e.__traceback__)
+            self.logger.exception(e)
 
-        await kernel_manager.shutdown_kernel(now=True)
+        def shutdown_kernel():
+            coro = kernel_manager.shutdown_kernel(now=True)
+            asyncio.run(coro)
+
+        Thread(target=shutdown_kernel).start()
+
         return reply_content
