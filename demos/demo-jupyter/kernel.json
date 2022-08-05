@@ -6,7 +6,9 @@
     "-f",
     "{connection_file}"
   ],
-  "env": {},
+  "env": {
+    "GATEWAY_BASE_ADDRESS": "nebulyaks.westeurope.cloudapp.azure.com"
+  },
   "display_name": "Nebulnetes Kernel",
   "language": "python",
   "interrupt_mode": "signal",

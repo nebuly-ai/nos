@@ -5,7 +5,6 @@ import queue
 import ssl
 import time
 import traceback
-from ssl import SSLContext
 from threading import Thread
 from uuid import uuid4
 
@@ -300,39 +299,55 @@ class KernelClient(object):
 
 
 class NebulnetesKernel(IPythonKernel):
-    # implementation = 'Echo'
-    # implementation_version = '1.0'
-    # language = 'no-op'
-    # language_version = '0.1'
-    # language_info = {
-    #     'name': 'Any text',
-    #     'mimetype': 'text/plain',
-    #     'file_extension': '.txt',
-    # }
     banner = "Nebulnetes kernel 🚀"
-    GATEWAY_BASE_ADDRESS = "nebulyaks.westeurope.cloudapp.azure.com"
+    GATEWAY_HOST = os.getenv("GATEWAY_BASE_ADDRESS", "127.0.0.1")
+    N8S_MAGIC_COMMAND = "%%n8s"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(log_level)
         logging.basicConfig()
+        self.__gateway_http_url = "https://{}".format(self.GATEWAY_HOST)
+        self.__gateway_ws_url = "wss://{}".format(self.GATEWAY_HOST)
+        self._init_gateway_client()
+        self.logger.debug("Jupyter Enterprise Gateway endpoints:\nhttp: {}\nws: {}".format(
+            self.__gateway_http_url,
+            self.__gateway_ws_url,
+        ))
+
+    def _init_gateway_client(self):
         gateway_client = GatewayClient.instance()
+        gateway_client.url = self.__gateway_http_url
+        # Disable SSL certs verification, only for dev purposes
         gateway_client.init_static_args()
         gateway_client._static_args["validate_cert"] = False  # noqa
-        gateway_client.url = "https://{}".format(self.GATEWAY_BASE_ADDRESS)
+
+    def _new_kernel_client(self, kernel_id: str) -> KernelClient:
+        return KernelClient(
+            http_api_endpoint="https://{}/api/kernels".format(self.GATEWAY_HOST),
+            ws_api_endpoint="wss://{}/api/kernels".format(self.GATEWAY_HOST),
+            kernel_id=kernel_id,
+            logger=self.logger
+        )
 
     async def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False, **kwargs):
+        code_lines = code.split("\n")
+        if code_lines[0] != self.N8S_MAGIC_COMMAND:
+            return await super().do_execute(code, silent, store_history, user_expressions, allow_stdin, **kwargs)
+
+        self.execution_count += 1
+        code = "\n".join(code_lines[1:])  # remove magic command from code
         reply_content = {}
-        kernel_manager = GatewayKernelManager()
-        kernel_manager.log = self.logger
 
         try:
+            kernel_manager = GatewayKernelManager()
+            kernel_manager.log = self.logger
+            self.logger.info(f"Starting new kernel on {self.GATEWAY_HOST}...")
             await kernel_manager.start_kernel(kernel_name="python_kubernetes")
-            self.logger.info(f"Kernel ID is {kernel_manager.kernel_id}")
             kernel_client = KernelClient(
-                http_api_endpoint="http://{}/api/kernels".format(self.GATEWAY_BASE_ADDRESS),
-                ws_api_endpoint="wss://{}/api/kernels".format(self.GATEWAY_BASE_ADDRESS),
+                http_api_endpoint="{}/api/kernels".format(self.__gateway_http_url),
+                ws_api_endpoint="{}/api/kernels".format(self.__gateway_ws_url),
                 kernel_id=kernel_manager.kernel_id,
                 logger=self.logger
             )
@@ -340,12 +355,13 @@ class NebulnetesKernel(IPythonKernel):
             print(resp)
 
             reply_content["status"] = "ok"
-            reply_content["execution_count"] = 1
+            reply_content["execution_count"] = self.execution_count
             reply_content["user_expressions"] = {}
             reply_content["payload"] = []
         except Exception as e:
             reply_content["status"] = "error"
             reply_content["ename"] = type(e).__name__
+            reply_content["execution_count"] = self.execution_count
             reply_content["evalue"] = str(e)
             reply_content["etraceback"] = traceback.format_tb(e.__traceback__)
             self.logger.exception(e)
