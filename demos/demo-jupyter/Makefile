@@ -18,7 +18,7 @@ install-cert-manager:
 
 install-enterprise-gateway:
 	helm  upgrade --install  enterprise-gateway \
-  		etc/kubernetes/helm/enterprise-gateway \
+		https://github.com/jupyter-server/enterprise_gateway/releases/download/v2.6.0/jupyter_enterprise_gateway_helm-2.6.0.tgz \
    		--namespace enterprise-gateway --create-namespace \
 		-f manifests/enterprise-gateway-values.yaml
 
