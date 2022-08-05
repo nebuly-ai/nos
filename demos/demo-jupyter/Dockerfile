@@ -1,7 +1,7 @@
 FROM python:3.8.13
 
 RUN pip install --upgrade pip
-RUN pip install jupyter notebook
+RUN pip install jupyterlab
 
 RUN useradd -ms /bin/bash nebuly
 USER nebuly
