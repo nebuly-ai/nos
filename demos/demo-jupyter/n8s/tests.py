@@ -4,7 +4,7 @@ import websocket
 from jupyter_server.gateway.gateway_client import GatewayClient
 from jupyter_server.gateway.managers import GatewayKernelManager
 
-from n8s.kernel import KernelClient
+from .kernel import KernelClient
 
 
 def test_remote_code_execution():
@@ -16,24 +16,23 @@ def test_remote_code_execution():
     gateway_client.url = "https://nebulyaks.westeurope.cloudapp.azure.com"
     kernel_manager = GatewayKernelManager()
 
-    coro = kernel_manager.start_kernel(kernel_name="python_kubernetes")
-    asyncio.run(coro)
+    # coro = kernel_manager.start_kernel(kernel_name="python_kubernetes")
+    # asyncio.run(coro)
 
     kernel_client = KernelClient(
         http_api_endpoint="https://nebulyaks.westeurope.cloudapp.azure.com/api/kernels",
         ws_api_endpoint="wss://nebulyaks.westeurope.cloudapp.azure.com/api/kernels",
-        kernel_id=kernel_manager.kernel_id,
+        kernel_id="4a48d6be-0e95-414a-ad41-c05a8e36329e",
         logger=logging.getLogger(__name__)
     )
 
-    resp = kernel_client.execute("""
+    asyncio.run(kernel_client.execute("""
+    asd)
     from time import sleep
     for i in range(10):
         print("hello world")
         sleep(1)
-    a = 5
-    """)
-    print(resp)
+    """))
 
 
 def test_websocket_connection():
@@ -46,4 +45,3 @@ def test_websocket_connection():
         socket.close()
     except Exception as e:
         pass
-
