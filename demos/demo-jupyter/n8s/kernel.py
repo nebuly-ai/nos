@@ -1,11 +1,10 @@
-import asyncio
+import contextlib
 import dataclasses
 import enum
 import logging
 import os
 import ssl
 import traceback
-from threading import Thread
 from typing import Dict, Union, List, Optional
 from uuid import uuid4
 
@@ -272,6 +271,23 @@ class NebulnetesKernel(IPythonKernel):
             logger=self.logger
         )
 
+    async def _start_new_remote_kernel(self) -> GatewayKernelManager:
+        kernel_manager = GatewayKernelManager()
+        kernel_manager.logger = self.logger
+        self.logger.info(f"Starting new kernel on {self.GATEWAY_HOST}...")
+        await kernel_manager.start_kernel(kernel_name="python_kubernetes")
+        return kernel_manager
+
+    @contextlib.asynccontextmanager
+    async def _new_remote_kernel(self):
+        kernel_manager = await self._start_new_remote_kernel()
+        try:
+            yield self._new_kernel_client(kernel_manager.kernel_id)
+        finally:
+            self.logger.debug("Shutting down kernel {}...".format(kernel_manager.kernel_id))
+            await kernel_manager.shutdown_kernel(now=True)
+            self.logger.debug("Shut down kernel {}".format(kernel_manager.kernel_id))
+
     async def _handle_execute_resp(self, msg: ExecuteRespMessage):
         if msg.is_stream():
             content = {"name": "stdout", "text": msg.content}
@@ -284,49 +300,33 @@ class NebulnetesKernel(IPythonKernel):
             }
             self.send_response(self.iopub_socket, MessageType.ERROR.value, content)
 
-    async def _start_new_kernel(self) -> GatewayKernelManager:
-        kernel_manager = GatewayKernelManager()
-        kernel_manager.logger = self.logger
-        self.logger.info(f"Starting new kernel on {self.GATEWAY_HOST}...")
-        await kernel_manager.start_kernel(kernel_name="python_kubernetes")
-        return kernel_manager
-
-    async def _shutdown_kernel(self, kernel_manager: GatewayKernelManager):
-        await kernel_manager.shutdown_kernel(now=True)
-
-    async def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False, **kwargs):
-        code_lines = code.split("\n")
-        if code_lines[0] != self.N8S_MAGIC_COMMAND:
-            return await super().do_execute(code, silent, store_history, user_expressions, allow_stdin, **kwargs)
-
-        self.execution_count += 1
-        code = "\n".join(code_lines[1:])  # remove magic command from code
-        try:
-            kernel_manager = await self._start_new_kernel()
-            kernel_client = KernelClient(
-                http_api_endpoint="{}/api/kernels".format(self.__gateway_http_url),
-                ws_api_endpoint="{}/api/kernels".format(self.__gateway_ws_url),
-                kernel_id=kernel_manager.kernel_id,
-                logger=self.logger
-            )
-
+    async def _do_execute_on_remote_kernel(self, code):
+        async with self._new_remote_kernel() as kernel_client:
             async for msg in kernel_client.execute(code):
                 await self._handle_execute_resp(msg)
                 if msg.is_error():
-                    await self._shutdown_kernel(kernel_manager)
                     return {
                         "status": ExecuteStatus.ERROR.value,
                         "ename": msg.exception_name,
                         "evalue": msg.exception_name,
                         "traceback": msg.exception_traceback,
                     }
-            await self._shutdown_kernel(kernel_manager)
             return {
                 "status": ExecuteStatus.OK.value,
                 "execution_count": self.execution_count,
                 "user_expressions": {},
                 "payload": []
             }
+
+    async def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False, **kwargs):
+        code_lines = code.split("\n")
+        if code_lines[0] != self.N8S_MAGIC_COMMAND:
+            return await super().do_execute(code, silent, store_history, user_expressions, allow_stdin, **kwargs)
+
+        try:
+            self.execution_count += 1
+            code = "\n".join(code_lines[1:])  # remove magic command from code
+            return await self._do_execute_on_remote_kernel(code)
         except Exception as e:
             self.logger.exception(e)
             return {
