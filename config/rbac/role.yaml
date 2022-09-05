@@ -6,7 +6,15 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - sigs.k8s.io
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - n8s.nebuly.ai
   resources:
   - elasticquotas
   verbs:
@@ -18,49 +26,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - sigs.k8s.io
+  - n8s.nebuly.ai
   resources:
   - elasticquotas/finalizers
   verbs:
   - update
 - apiGroups:
-  - sigs.k8s.io
+  - n8s.nebuly.ai
   resources:
   - elasticquotas/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - sigs.k8s.io
-  resources:
-  - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - webapp.my.domain
-  resources:
-  - guestbooks
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - webapp.my.domain
-  resources:
-  - guestbooks/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - webapp.my.domain
-  resources:
-  - guestbooks/status
   verbs:
   - get
   - patch
