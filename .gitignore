@@ -24,3 +24,7 @@ bin/
 .venv/
 .env/
 dist/
+
+
+# At the moment, use vendor only for running k8s hack scripts
+vendor/

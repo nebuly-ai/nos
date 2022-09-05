@@ -1,9 +1,0 @@
-apiVersion: n8s.nebuly.ai/v1alpha1
-kind: ModelDeployment
-metadata:
-  name: sample
-spec:
-  sourceModel:
-    uri: https://nbllabsharedsa.blob.core.windows.net/public/sample.zip
-  optimization:
-    target: Latency
