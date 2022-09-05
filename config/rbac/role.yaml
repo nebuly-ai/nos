@@ -1,0 +1,67 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - sigs.k8s.io
+  resources:
+  - elasticquotas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sigs.k8s.io
+  resources:
+  - elasticquotas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - sigs.k8s.io
+  resources:
+  - elasticquotas/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sigs.k8s.io
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - webapp.my.domain
+  resources:
+  - guestbooks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - webapp.my.domain
+  resources:
+  - guestbooks/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - webapp.my.domain
+  resources:
+  - guestbooks/status
+  verbs:
+  - get
+  - patch
+  - update

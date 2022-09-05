@@ -1,0 +1,9 @@
+apiVersion: n8s.nebuly.ai/v1alpha1
+kind: ElasticQuota
+metadata:
+  name: elasticquota-sample
+spec:
+  max:
+    cpu: 6
+  min:
+    cpu: 4
