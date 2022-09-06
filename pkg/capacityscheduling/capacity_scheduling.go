@@ -127,7 +127,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 	gvr := schema.GroupVersionResource{
 		Group:    v1alpha1.GroupVersion.Group,
 		Version:  v1alpha1.GroupVersion.Version,
-		Resource: "elasticquota",
+		Resource: "elasticquotas",
 	}
 	sharedInformerFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 0)
 
