@@ -22,6 +22,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -137,10 +138,10 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		cache.FilteringResourceEventHandler{
 			FilterFunc: func(obj interface{}) bool {
 				switch t := obj.(type) {
-				case *v1alpha1.ElasticQuota:
+				case *unstructured.Unstructured:
 					return true
 				case cache.DeletedFinalStateUnknown:
-					if _, ok := t.Obj.(*v1alpha1.ElasticQuota); ok {
+					if _, ok := t.Obj.(*unstructured.Unstructured); ok {
 						return true
 					}
 					utilruntime.HandleError(fmt.Errorf("cannot convert to *v1alpha1.ElasticQuota: %v", obj))
@@ -649,7 +650,12 @@ func (p *preemptor) SelectVictimsOnNode(
 }
 
 func (c *CapacityScheduling) addElasticQuota(obj interface{}) {
-	eq := obj.(*v1alpha1.ElasticQuota)
+	eqUnstruct := obj.(*unstructured.Unstructured)
+	eq, err := fromUnstructuredToEq(eqUnstruct)
+	if err != nil {
+		klog.ErrorS(err, "unable to convert unstructured to ElasticQuota")
+		return
+	}
 	oldElasticQuotaInfo := c.elasticQuotaInfos[eq.Namespace]
 	if oldElasticQuotaInfo != nil {
 		return
@@ -663,8 +669,19 @@ func (c *CapacityScheduling) addElasticQuota(obj interface{}) {
 }
 
 func (c *CapacityScheduling) updateElasticQuota(oldObj, newObj interface{}) {
-	oldEQ := oldObj.(*v1alpha1.ElasticQuota)
-	newEQ := newObj.(*v1alpha1.ElasticQuota)
+	unstructOldEQ := oldObj.(*unstructured.Unstructured)
+	unstructNewEQ := newObj.(*unstructured.Unstructured)
+	oldEQ, err := fromUnstructuredToEq(unstructOldEQ)
+	if err != nil {
+		klog.ErrorS(err, "unable to convert oldObj unstructured to ElasticQuota")
+		return
+	}
+	newEQ, err := fromUnstructuredToEq(unstructNewEQ)
+	if err != nil {
+		klog.ErrorS(err, "unable to convert newObj unstructured to ElasticQuota")
+		return
+	}
+
 	newEQInfo := newElasticQuotaInfo(newEQ.Namespace, newEQ.Spec.Min, newEQ.Spec.Max, nil)
 
 	c.Lock()
@@ -679,10 +696,15 @@ func (c *CapacityScheduling) updateElasticQuota(oldObj, newObj interface{}) {
 }
 
 func (c *CapacityScheduling) deleteElasticQuota(obj interface{}) {
-	elasticQuota := obj.(*v1alpha1.ElasticQuota)
+	eqUnstruct := obj.(*unstructured.Unstructured)
+	eq, err := fromUnstructuredToEq(eqUnstruct)
+	if err != nil {
+		klog.ErrorS(err, "unable to convert unstructured to ElasticQuota")
+		return
+	}
 	c.Lock()
 	defer c.Unlock()
-	delete(c.elasticQuotaInfos, elasticQuota.Namespace)
+	delete(c.elasticQuotaInfos, eq.Namespace)
 }
 
 func (c *CapacityScheduling) addPod(obj interface{}) {
@@ -707,7 +729,13 @@ func (c *CapacityScheduling) addPod(obj interface{}) {
 
 		if len(eqs) > 0 {
 			// only one elasticquota is supported in each namespace
-			eq := eqs[0].(*v1alpha1.ElasticQuota)
+			eqUnstruct := eqs[0].(*unstructured.Unstructured)
+			var eq *v1alpha1.ElasticQuota
+			eq, err = fromUnstructuredToEq(eqUnstruct)
+			if err != nil {
+				klog.ErrorS(err, "unable to convert unstructured to ElasticQuota")
+				return
+			}
 			elasticQuotaInfo = newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil)
 			c.elasticQuotaInfos[eq.Namespace] = elasticQuotaInfo
 		}
@@ -910,4 +938,11 @@ func filterPodsWithPDBViolation(podInfos []*framework.PodInfo, pdbs []*policy.Po
 // assignedPod selects pods that are assigned (scheduled and running).
 func assignedPod(pod *v1.Pod) bool {
 	return len(pod.Spec.NodeName) != 0
+}
+
+func fromUnstructuredToEq(eqUnstruct *unstructured.Unstructured) (*v1alpha1.ElasticQuota, error) {
+	// TODO: check performance, might be better to extract single values using unstructured.NestedField(...)
+	var eq v1alpha1.ElasticQuota
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(eqUnstruct.UnstructuredContent(), &eq)
+	return &eq, err
 }
