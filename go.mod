@@ -15,7 +15,6 @@ require (
 	k8s.io/kube-scheduler v0.24.4
 	k8s.io/kubernetes v1.24.4
 	sigs.k8s.io/controller-runtime v0.12.3
-	sigs.k8s.io/scheduler-plugins v0.23.10-0.20220823171925-032373606190
 )
 
 replace (

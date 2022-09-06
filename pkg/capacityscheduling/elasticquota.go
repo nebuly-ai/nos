@@ -17,10 +17,10 @@ limitations under the License.
 package capacityscheduling
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
-	"sigs.k8s.io/scheduler-plugins/pkg/util"
 )
 
 type ElasticQuotaInfos map[string]*ElasticQuotaInfo

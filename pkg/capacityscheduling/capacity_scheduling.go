@@ -20,6 +20,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	"sort"
 	"sync"
 
@@ -42,12 +47,6 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework/preemption"
 	"k8s.io/kubernetes/pkg/scheduler/metrics"
 	schedutil "k8s.io/kubernetes/pkg/scheduler/util"
-
-	schedulerplugins "sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
-	"sigs.k8s.io/scheduler-plugins/pkg/generated/clientset/versioned"
-	schedinformer "sigs.k8s.io/scheduler-plugins/pkg/generated/informers/externalversions"
-	schedulerpluginsgen "sigs.k8s.io/scheduler-plugins/pkg/generated/listers/scheduling/v1alpha1"
-	"sigs.k8s.io/scheduler-plugins/pkg/util"
 )
 
 // CapacityScheduling is a plugin that implements the mechanism of capacity scheduling.
@@ -56,7 +55,7 @@ type CapacityScheduling struct {
 	fh                 framework.Handle
 	podLister          corelisters.PodLister
 	pdbLister          policylisters.PodDisruptionBudgetLister
-	elasticQuotaLister schedulerpluginsgen.ElasticQuotaLister
+	elasticQuotaLister cache.GenericLister
 	elasticQuotaInfos  ElasticQuotaInfos
 }
 
@@ -121,22 +120,27 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
 	}
 
-	client, err := versioned.NewForConfig(handle.KubeConfig())
+	dynamicClient, err := dynamic.NewForConfig(handle.KubeConfig())
 	if err != nil {
 		return nil, err
 	}
+	gvr := schema.GroupVersionResource{
+		Group:    v1alpha1.GroupVersion.Group,
+		Version:  v1alpha1.GroupVersion.Version,
+		Resource: "elasticquota",
+	}
+	sharedInformerFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 0)
 
-	schedSharedInformerFactory := schedinformer.NewSharedInformerFactory(client, 0)
-	c.elasticQuotaLister = schedSharedInformerFactory.Scheduling().V1alpha1().ElasticQuotas().Lister()
-	elasticQuotaInformer := schedSharedInformerFactory.Scheduling().V1alpha1().ElasticQuotas().Informer()
+	c.elasticQuotaLister = sharedInformerFactory.ForResource(gvr).Lister()
+	elasticQuotaInformer := sharedInformerFactory.ForResource(gvr).Informer()
 	elasticQuotaInformer.AddEventHandler(
 		cache.FilteringResourceEventHandler{
 			FilterFunc: func(obj interface{}) bool {
 				switch t := obj.(type) {
-				case *schedulerplugins.ElasticQuota:
+				case *v1alpha1.ElasticQuota:
 					return true
 				case cache.DeletedFinalStateUnknown:
-					if _, ok := t.Obj.(*schedulerplugins.ElasticQuota); ok {
+					if _, ok := t.Obj.(*v1alpha1.ElasticQuota); ok {
 						return true
 					}
 					utilruntime.HandleError(fmt.Errorf("cannot convert to *v1alpha1.ElasticQuota: %v", obj))
@@ -153,7 +157,8 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 			},
 		})
 
-	schedSharedInformerFactory.Start(nil)
+	sharedInformerFactory.Start(nil)
+
 	if !cache.WaitForCacheSync(nil, elasticQuotaInformer.HasSynced) {
 		return nil, fmt.Errorf("timed out waiting for caches to sync %v", Name)
 	}
@@ -644,7 +649,7 @@ func (p *preemptor) SelectVictimsOnNode(
 }
 
 func (c *CapacityScheduling) addElasticQuota(obj interface{}) {
-	eq := obj.(*schedulerplugins.ElasticQuota)
+	eq := obj.(*v1alpha1.ElasticQuota)
 	oldElasticQuotaInfo := c.elasticQuotaInfos[eq.Namespace]
 	if oldElasticQuotaInfo != nil {
 		return
@@ -658,8 +663,8 @@ func (c *CapacityScheduling) addElasticQuota(obj interface{}) {
 }
 
 func (c *CapacityScheduling) updateElasticQuota(oldObj, newObj interface{}) {
-	oldEQ := oldObj.(*schedulerplugins.ElasticQuota)
-	newEQ := newObj.(*schedulerplugins.ElasticQuota)
+	oldEQ := oldObj.(*v1alpha1.ElasticQuota)
+	newEQ := newObj.(*v1alpha1.ElasticQuota)
 	newEQInfo := newElasticQuotaInfo(newEQ.Namespace, newEQ.Spec.Min, newEQ.Spec.Max, nil)
 
 	c.Lock()
@@ -674,7 +679,7 @@ func (c *CapacityScheduling) updateElasticQuota(oldObj, newObj interface{}) {
 }
 
 func (c *CapacityScheduling) deleteElasticQuota(obj interface{}) {
-	elasticQuota := obj.(*schedulerplugins.ElasticQuota)
+	elasticQuota := obj.(*v1alpha1.ElasticQuota)
 	c.Lock()
 	defer c.Unlock()
 	delete(c.elasticQuotaInfos, elasticQuota.Namespace)
@@ -689,7 +694,7 @@ func (c *CapacityScheduling) addPod(obj interface{}) {
 	elasticQuotaInfo := c.elasticQuotaInfos[pod.Namespace]
 	// If elasticQuotaInfo is nil, try to list ElasticQuotas through elasticQuotaLister
 	if elasticQuotaInfo == nil {
-		eqs, err := c.elasticQuotaLister.ElasticQuotas(pod.Namespace).List(labels.NewSelector())
+		eqs, err := c.elasticQuotaLister.ByNamespace(pod.Namespace).List(labels.NewSelector())
 		if err != nil {
 			klog.ErrorS(err, "Failed to get elasticQuota", "elasticQuota", pod.Namespace)
 			return
@@ -702,7 +707,7 @@ func (c *CapacityScheduling) addPod(obj interface{}) {
 
 		if len(eqs) > 0 {
 			// only one elasticquota is supported in each namespace
-			eq := eqs[0]
+			eq := eqs[0].(*v1alpha1.ElasticQuota)
 			elasticQuotaInfo = newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil)
 			c.elasticQuotaInfos[eq.Namespace] = elasticQuotaInfo
 		}

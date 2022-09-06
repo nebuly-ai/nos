@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/capacityscheduling"
 	"math/rand"
 	"os"
 	"time"
@@ -8,10 +9,7 @@ import (
 	"k8s.io/component-base/logs"
 	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 
-	"sigs.k8s.io/scheduler-plugins/pkg/capacityscheduling"
-
-	_ "sigs.k8s.io/scheduler-plugins/apis/config"
-	_ "sigs.k8s.io/scheduler-plugins/apis/scheduling/scheme"
+	_ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 )
 
 func main() {
