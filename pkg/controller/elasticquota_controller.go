@@ -13,8 +13,14 @@ import (
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // ElasticQuotaReconciler reconciles a ElasticQuota object
@@ -74,8 +80,8 @@ func (r *ElasticQuotaReconciler) computeElasticQuotaUsed(ctx context.Context, na
 	logger := log.FromContext(ctx)
 
 	used := newZeroUsed(eq)
-	var podList = new(v1.PodList)
-	if err := r.Client.List(ctx, podList, client.InNamespace(namespace)); err != nil {
+	var podList v1.PodList
+	if err := r.Client.List(ctx, &podList, client.InNamespace(namespace)); err != nil {
 		logger.Error(err, "unable to list Pods")
 		return used, err
 	}
@@ -147,9 +153,59 @@ func newZeroUsed(eq *v1alpha1.ElasticQuota) v1.ResourceList {
 	return res
 }
 
+func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []reconcile.Request {
+	ctx := context.Background()
+	logger := log.FromContext(ctx)
+
+	var eqList v1alpha1.ElasticQuotaList
+	err := r.Client.List(ctx, &eqList, client.InNamespace(pod.GetNamespace()))
+	if err != nil {
+		logger.Error(err, "unable to list ElasticQuotas")
+		return []reconcile.Request{}
+	}
+
+	if len(eqList.Items) > 0 {
+		return []reconcile.Request{{
+			NamespacedName: types.NamespacedName{
+				Name:      eqList.Items[0].Name,
+				Namespace: eqList.Items[0].Namespace,
+			},
+		}}
+	}
+
+	return []reconcile.Request{}
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.ElasticQuota{}).
+		Watches(
+			&source.Kind{Type: &v1.Pod{}},
+			handler.EnqueueRequestsFromMapFunc(r.findElasticQuotaForPod),
+			builder.WithPredicates(
+				predicate.Funcs{
+					CreateFunc: func(_ event.CreateEvent) bool {
+						return false
+					},
+					DeleteFunc: func(_ event.DeleteEvent) bool {
+						return true
+					},
+					UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+						// If new Pod is not Running, then do not trigger Reconcile
+						newPod := updateEvent.ObjectNew.(*v1.Pod)
+						if newPod.Status.Phase != v1.PodRunning {
+							return false
+						}
+						// Trigger Reconcile only if the Pod updated from phase <any> to Running
+						oldPod := updateEvent.ObjectOld.(*v1.Pod)
+						return oldPod.Status.Phase != newPod.Status.Phase
+					},
+					GenericFunc: func(_ event.GenericEvent) bool {
+						return false
+					},
+				},
+			),
+		).
 		Complete(r)
 }
