@@ -1,6 +1,7 @@
 
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= controller:latest
+SCHEDULER_IMG ?= scheduler:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
@@ -69,19 +70,26 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build-controller
-docker-build-controller: test ## Build docker image with the manager.
+docker-build-controller: ## Build docker image with the manager.
 	docker build -t ${CONTROLLER_IMG} -f build/controller/Dockerfile .
 
+.PHONY: docker-build-scheduler
+docker-build-scheduler: ## Build docker image with the scheduler.
+	docker build -t ${SCHEDULER_IMG} -f build/scheduler/Dockerfile .
+
 .PHONY: docker-push-controller
-docker-push-controller: test ## Build docker image with the manager.
+docker-push-controller: ## Build docker image with the manager.
 	docker push ${CONTROLLER_IMG}
+
+.PHONY: docker-push-scheduler
+docker-push-scheduler: ## Build docker image with the scheduler.
+	docker push ${SCHEDULER_IMG}
 
 .PHONY: docker-build
-docker-build: docker-build-controller
+docker-build: test docker-build-controller docker-build-scheduler
 
 .PHONY: docker-push
-docker-push: ## Push docker image with the manager.
-	docker push ${CONTROLLER_IMG}
+docker-push: docker-push-controller docker-build-scheduler
 
 ##@ Deployment
 
@@ -100,6 +108,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}
+	cd config/scheduler && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
