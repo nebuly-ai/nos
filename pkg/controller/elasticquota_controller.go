@@ -23,6 +23,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const (
+	podPhaseKey = "status.phase"
+)
+
 // ElasticQuotaReconciler reconciles a ElasticQuota object
 type ElasticQuotaReconciler struct {
 	client.Client
@@ -58,17 +62,31 @@ func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance *v1a
 func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	// Fetch EQ instance
 	var instance v1alpha1.ElasticQuota
 	if err := r.Client.Get(ctx, req.NamespacedName, &instance); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	resourceList, err := r.computeElasticQuotaUsed(ctx, req.Namespace, &instance)
+	// Fetch running Pods in the EQ namespace
+	var runningPodList v1.PodList
+	opts := []client.ListOption{
+		client.InNamespace(req.Namespace),
+		client.MatchingFields{podPhaseKey: string(v1.PodRunning)},
+	}
+	if err := r.Client.List(ctx, &runningPodList, opts...); err != nil {
+		logger.Error(err, "unable to list running Pods")
+		return ctrl.Result{}, err
+	}
+
+	// Compute used EQ
+	usedResourceList, err := r.computeElasticQuotaUsed(&runningPodList, &instance)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	instance.Status.Used = resourceList
+	instance.Status.Used = usedResourceList
 
+	// Update EQ status
 	err = r.updateStatus(ctx, &instance, logger)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -76,15 +94,8 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return ctrl.Result{}, nil
 }
 
-func (r *ElasticQuotaReconciler) computeElasticQuotaUsed(ctx context.Context, namespace string, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
-	logger := log.FromContext(ctx)
-
+func (r *ElasticQuotaReconciler) computeElasticQuotaUsed(podList *v1.PodList, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
 	used := newZeroUsed(eq)
-	var podList v1.PodList
-	if err := r.Client.List(ctx, &podList, client.InNamespace(namespace)); err != nil {
-		logger.Error(err, "unable to list Pods")
-		return used, err
-	}
 	for _, p := range podList.Items {
 		if p.Status.Phase == v1.PodRunning {
 			used = quota.Add(used, computePodResourceRequest(&p))
@@ -178,6 +189,14 @@ func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []rec
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, name string) error {
+	err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, podPhaseKey, func(rawObj client.Object) []string {
+		pod := rawObj.(*v1.Pod)
+		return []string{string(pod.Status.Phase)}
+	})
+	if err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.ElasticQuota{}).
 		Named(name).
