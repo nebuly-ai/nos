@@ -7,6 +7,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type namespaceBuilder struct {
+	v1.Namespace
+}
+
+func (b *namespaceBuilder) Get() v1.Namespace {
+	return b.Namespace
+}
+
+func BuildNamespace(name string) *namespaceBuilder {
+	namespace := v1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+	return &namespaceBuilder{namespace}
+}
+
 type podBuilder struct {
 	v1.Pod
 }

@@ -1,14 +1,17 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/capacityscheduling"
 	"github.com/nebuly-ai/nebulnetes/pkg/factory"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"reflect"
 	"time"
 )
 
@@ -16,8 +19,6 @@ var _ = Describe("ElasticQuota controller", func() {
 	const (
 		timeout  = time.Second * 10
 		interval = time.Second * 1
-
-		defaultNamespace = "default"
 	)
 
 	BeforeEach(func() {
@@ -44,9 +45,11 @@ var _ = Describe("ElasticQuota controller", func() {
 				containerOneGPUMemory = 1
 				containerTwoCPUMilli  = 500
 				containerTwoGPUMemory = 2
+
+				namespace = "default"
 			)
 			By("Creating an ElasticQuota successfully")
-			elasticQuota := factory.BuildEq(defaultNamespace, elasticQuotaName).
+			elasticQuota := factory.BuildEq(namespace, elasticQuotaName).
 				WithMinCPUMilli(elasticQuotaMinCPUMilli).
 				WithMinGPUMemory(elasticQuotaMinGPUMemory).
 				WithMaxCPUMilli(elasticQuotaMaxCPUMilli).
@@ -66,7 +69,7 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(instance.Spec).To(Equal(elasticQuota.Spec))
 
 			By("Creating a new Pod within the ElasticQuota namespace")
-			pod := factory.BuildPod(defaultNamespace, util.RandomStringLowercase(5)).
+			pod := factory.BuildPod(elasticQuota.Namespace, util.RandomStringLowercase(5)).
 				WithContainer(
 					factory.BuildContainer("container-1", "test:0.0.1").
 						WithCPUMilliLimit(containerOneCPUMilli).
@@ -92,22 +95,43 @@ var _ = Describe("ElasticQuota controller", func() {
 			}, timeout, interval).Should(BeTrue())
 			Expect(instance.Status.Used.Cpu().String()).To(Equal("0"))
 
-			By("Updating the Pod status to running")
-			pod.Status.Phase = v1.PodRunning
-			Expect(k8sClient.Status().Update(ctx, &pod)).To(Succeed())
+			By("Creating a new Namespace")
+			newNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
+			Expect(k8sClient.Create(ctx, &newNamespace)).To(Succeed())
 
-			By("Checking that the ElasticQuota status gets updated")
-			expectedUsedResourceList := util.ResourceListForPod(&framework.Resource{
-				MilliCPU: containerTwoCPUMilli + containerTwoCPUMilli,
-			})
+			By("Creating another Pod belonging to the new namespace")
+			anotherPod := factory.BuildPod(newNamespace.Name, util.RandomStringLowercase(5)).
+				WithContainer(
+					factory.BuildContainer("container-1", "test:0.0.1").
+						WithCPUMilliLimit(containerOneCPUMilli).
+						WithGPUMemoryLimit(containerOneGPUMemory).
+						Get(),
+				).Get()
+			Expect(k8sClient.Create(ctx, &anotherPod)).To(Succeed())
+
+			By("Updating the Pods status to running")
+			pod.Status.Phase = v1.PodRunning
+			anotherPod.Status.Phase = v1.PodRunning
+			Expect(k8sClient.Status().Update(ctx, &pod)).To(Succeed())
+			Expect(k8sClient.Status().Update(ctx, &anotherPod)).To(Succeed())
+
+			By("Checking that the ElasticQuota status gets updated only considering the Pods in its namespace")
+			expectedCPUQuantity, _ := resource.ParseQuantity(fmt.Sprintf("%d", (containerOneCPUMilli+containerTwoCPUMilli)/1000))
+			expectedGPUMemoryQuantity, _ := resource.ParseQuantity(fmt.Sprintf("%d", containerOneGPUMemory+containerTwoGPUMemory))
+			expectedUsedResourceList := v1.ResourceList{
+				v1.ResourceCPU:               expectedCPUQuantity,
+				capacityscheduling.GPUMemory: expectedGPUMemoryQuantity,
+			}
+			previousInstance := instance
 			Eventually(func() bool {
 				lookupKey := types.NamespacedName{Name: elasticQuota.Name, Namespace: elasticQuota.Namespace}
 				if err := k8sClient.Get(ctx, lookupKey, &instance); err != nil {
 					return false
 				}
-				cpuEquals := instance.Status.Used.Cpu().String() == expectedUsedResourceList.Cpu().String()
-				return cpuEquals
+				updated := !reflect.DeepEqual(previousInstance, instance)
+				return updated
 			}, timeout, interval).Should(BeTrue())
+			Expect(instance.Status.Used).To(Equal(expectedUsedResourceList))
 		})
 	})
 })
