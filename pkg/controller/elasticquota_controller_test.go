@@ -2,11 +2,11 @@ package controller
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/factory"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"time"
@@ -17,13 +17,7 @@ var _ = Describe("ElasticQuota controller", func() {
 		timeout  = time.Second * 10
 		interval = time.Second * 1
 
-		elasticQuotaNamespace   = "default"
-		elasticQuotaName        = "test-elasticquota"
-		elasticQuotaMinCPUMilli = 4000
-		elasticQuotaMaxCPUMilli = 6000
-
-		containerOneCPUMilli = 500
-		containerTwoCPUMilli = 500
+		defaultNamespace = "default"
 	)
 
 	BeforeEach(func() {
@@ -39,25 +33,25 @@ var _ = Describe("ElasticQuota controller", func() {
 
 	When("New pods belonging to ElasticQuota namespace are in running status", func() {
 		It("Should update the ElasticQuota status", func() {
+			const (
+				elasticQuotaMinCPUMilli  = 4000
+				elasticQuotaMinGPUMemory = 4
+				elasticQuotaMaxCPUMilli  = 6000
+				elasticQuotaMaxGPUMemory = 6
+				elasticQuotaName         = "test-elasticquota"
+
+				containerOneCPUMilli  = 500
+				containerOneGPUMemory = 1
+				containerTwoCPUMilli  = 500
+				containerTwoGPUMemory = 2
+			)
 			By("Creating an ElasticQuota successfully")
-			elasticQuota := v1alpha1.ElasticQuota{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ElasticQuota",
-					APIVersion: v1alpha1.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      elasticQuotaName,
-					Namespace: elasticQuotaNamespace,
-				},
-				Spec: v1alpha1.ElasticQuotaSpec{
-					Min: util.ResourceList(&framework.Resource{
-						MilliCPU: elasticQuotaMinCPUMilli,
-					}),
-					Max: util.ResourceList(&framework.Resource{
-						MilliCPU: elasticQuotaMaxCPUMilli,
-					}),
-				},
-			}
+			elasticQuota := factory.BuildEq(defaultNamespace, elasticQuotaName).
+				WithMinCPUMilli(elasticQuotaMinCPUMilli).
+				WithMinGPUMemory(elasticQuotaMinGPUMemory).
+				WithMaxCPUMilli(elasticQuotaMaxCPUMilli).
+				WithMaxGPUMemory(elasticQuotaMaxGPUMemory).
+				Get()
 			Expect(k8sClient.Create(ctx, &elasticQuota)).To(Succeed())
 
 			By("Checking the created ElasticQuota matches the specs")
@@ -72,38 +66,20 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(instance.Spec).To(Equal(elasticQuota.Spec))
 
 			By("Creating a new Pod within the ElasticQuota namespace")
-			pod := v1.Pod{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Pod",
-					APIVersion: v1.SchemeGroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      util.RandomStringLowercase(5),
-					Namespace: elasticQuotaNamespace,
-				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						{
-							Name:  "container-1",
-							Image: "test:0.0.1",
-							Resources: v1.ResourceRequirements{
-								Limits: util.ResourceListForPod(&framework.Resource{
-									MilliCPU: containerOneCPUMilli,
-								}),
-							},
-						},
-						{
-							Name:  "container-2",
-							Image: "test:0.0.1",
-							Resources: v1.ResourceRequirements{
-								Limits: util.ResourceListForPod(&framework.Resource{
-									MilliCPU: containerTwoCPUMilli,
-								}),
-							},
-						},
-					},
-				},
-			}
+			pod := factory.BuildPod(defaultNamespace, util.RandomStringLowercase(5)).
+				WithContainer(
+					factory.BuildContainer("container-1", "test:0.0.1").
+						WithCPUMilliLimit(containerOneCPUMilli).
+						WithGPUMemoryLimit(containerOneGPUMemory).
+						Get(),
+				).
+				WithContainer(
+					factory.BuildContainer("container-2", "test:0.0.1").
+						WithCPUMilliLimit(containerTwoCPUMilli).
+						WithGPUMemoryLimit(containerTwoGPUMemory).
+						Get(),
+				).
+				Get()
 			Expect(k8sClient.Create(ctx, &pod)).To(Succeed())
 
 			By("Not updating the ElasticQuota status until the Pod is in running state")
@@ -129,7 +105,8 @@ var _ = Describe("ElasticQuota controller", func() {
 				if err := k8sClient.Get(ctx, lookupKey, &instance); err != nil {
 					return false
 				}
-				return instance.Status.Used.Cpu().String() == expectedUsedResourceList.Cpu().String()
+				cpuEquals := instance.Status.Used.Cpu().String() == expectedUsedResourceList.Cpu().String()
+				return cpuEquals
 			}, timeout, interval).Should(BeTrue())
 		})
 	})
