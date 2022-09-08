@@ -2,8 +2,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -21,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"sort"
 )
 
 const (
@@ -31,27 +34,6 @@ const (
 type ElasticQuotaReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-}
-
-func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance *v1alpha1.ElasticQuota, logger logr.Logger) error {
-	var currentEq v1alpha1.ElasticQuota
-	namespacedName := types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}
-
-	if err := r.Get(ctx, namespacedName, &currentEq); err != nil {
-		logger.Error(err, "unable to fetch ElasticQuota")
-		return err
-	}
-	if equality.Semantic.DeepEqual(currentEq.Status, instance.Status) {
-		logger.V(1).Info("current status and desired status of ElasticQuota are equal, skipping update")
-		return nil
-	}
-	logger.V(1).Info("updating ElasticQuota status", "Status", instance.Status)
-	if err := r.Status().Update(ctx, instance); err != nil {
-		logger.Error(err, "unable to update ElasticQuota status")
-		return err
-	}
-
-	return nil
 }
 
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;create;update;patch;delete
@@ -79,8 +61,8 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	// Compute used EQ
-	usedResourceList, err := r.computeElasticQuotaUsed(&runningPodList, &instance)
+	// Add quota status labels and compute used quota
+	usedResourceList, err := r.patchPodsAndGetUsedQuota(ctx, &runningPodList, &instance)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -94,14 +76,59 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return ctrl.Result{}, nil
 }
 
-func (r *ElasticQuotaReconciler) computeElasticQuotaUsed(podList *v1.PodList, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
+func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, podList *v1.PodList, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
+	// Sort running Pods by creation time
+	sort.Slice(podList.Items, func(i, j int) bool {
+		return podList.Items[i].ObjectMeta.CreationTimestamp.Before(&podList.Items[j].ObjectMeta.CreationTimestamp)
+	})
+
 	used := newZeroUsed(eq)
-	for _, p := range podList.Items {
-		if p.Status.Phase == v1.PodRunning {
-			used = quota.Add(used, computePodResourceRequest(&p))
+	var err error
+	for _, pod := range podList.Items {
+		request := computePodResourceRequest(&pod)
+		used = quota.Add(used, request)
+
+		var desiredCapacityInfo constant.CapacityInfo
+		if less, _ := quota.LessThanOrEqual(used, eq.Spec.Min); less {
+			desiredCapacityInfo = constant.CapacityInfoInQuota
+		} else {
+			desiredCapacityInfo = constant.CapacityInfoOverQuota
+		}
+
+		if _, err = r.patchCapacityInfoIfDifferent(ctx, &pod, desiredCapacityInfo); err != nil {
+			return used, err
 		}
 	}
+
 	return used, nil
+}
+
+func (r *ElasticQuotaReconciler) patchCapacityInfoIfDifferent(ctx context.Context, pod *v1.Pod, desired constant.CapacityInfo) (bool, error) {
+	logger := log.FromContext(ctx)
+	desiredAsString := string(desired)
+	if pod.Labels == nil {
+		pod.Labels = make(map[string]string)
+	}
+	if pod.Labels[constant.LabelCapacityInfo] != desiredAsString {
+		logger.V(1).Info(
+			"updating Pod capacity info label",
+			"currentValue",
+			pod.Labels[constant.LabelCapacityInfo],
+			"desiredValue",
+			desiredAsString,
+			"Pod",
+			pod,
+		)
+		original := pod.DeepCopy()
+		pod.Labels[constant.LabelCapacityInfo] = desiredAsString
+		if err := r.Client.Patch(ctx, pod, client.MergeFrom(original)); err != nil {
+			msg := fmt.Sprintf("unable to update label %q with value %q", constant.LabelCapacityInfo, desiredAsString)
+			logger.Error(err, msg, "pod", original)
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
 }
 
 // computePodResourceRequest returns a v1.ResourceList that covers the largest
@@ -187,6 +214,27 @@ func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []rec
 	return []reconcile.Request{}
 }
 
+func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance *v1alpha1.ElasticQuota, logger logr.Logger) error {
+	var currentEq v1alpha1.ElasticQuota
+	namespacedName := types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}
+
+	if err := r.Get(ctx, namespacedName, &currentEq); err != nil {
+		logger.Error(err, "unable to fetch ElasticQuota")
+		return err
+	}
+	if equality.Semantic.DeepEqual(currentEq.Status, instance.Status) {
+		logger.V(1).Info("current status and desired status of ElasticQuota are equal, skipping update")
+		return nil
+	}
+	logger.V(1).Info("updating ElasticQuota status", "Status", instance.Status)
+	if err := r.Status().Update(ctx, instance); err != nil {
+		logger.Error(err, "unable to update ElasticQuota status")
+		return err
+	}
+
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, name string) error {
 	err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, podPhaseKey, func(rawObj client.Object) []string {
@@ -212,14 +260,12 @@ func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, name string)
 						return true
 					},
 					UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-						// If new Pod is not Running, then do not trigger Reconcile
+						// Reconcile only if Pod changed phase, and either old or new phase status is Running
 						newPod := updateEvent.ObjectNew.(*v1.Pod)
-						if newPod.Status.Phase != v1.PodRunning {
-							return false
-						}
-						// Trigger Reconcile only if the Pod updated from phase <any> to Running
 						oldPod := updateEvent.ObjectOld.(*v1.Pod)
-						return oldPod.Status.Phase != newPod.Status.Phase
+						statusChanged := newPod.Status.Phase != oldPod.Status.Phase
+						anyRunning := (newPod.Status.Phase == v1.PodRunning) || (oldPod.Status.Phase == v1.PodRunning)
+						return statusChanged && anyRunning
 					},
 					GenericFunc: func(_ event.GenericEvent) bool {
 						return false
