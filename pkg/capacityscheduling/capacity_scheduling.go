@@ -21,12 +21,14 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"sort"
+	"strconv"
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
@@ -880,7 +882,30 @@ func computePodResourceRequest(pod *v1.Pod) *framework.Resource {
 		result.Add(pod.Spec.Overhead)
 	}
 
+	gpuMemory, present, err := getPodGPUMemoryRequest(pod)
+	if err != nil {
+		klog.Error(err)
+		return result
+	}
+	if present == true {
+		result.Add(util.ResourceList(&framework.Resource{ScalarResources: map[v1.ResourceName]int64{
+			v1alpha1.ResourceGPUMemory: gpuMemory,
+		}}))
+	}
+
 	return result
+}
+
+func getPodGPUMemoryRequest(pod *v1.Pod) (int64, bool, error) {
+	if val, ok := pod.Labels[constant.LabelGPUMemory]; ok {
+		gpuMemory, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			return 0, false, fmt.Errorf("invalid value for resource %s: expected int64 but got %s", v1alpha1.ResourceGPUMemory, val)
+		} else {
+			return gpuMemory, true, nil
+		}
+	}
+	return 0, false, nil
 }
 
 // filterPodsWithPDBViolation groups the given "pods" into two groups of "violatingPods"

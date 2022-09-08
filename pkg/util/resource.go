@@ -37,18 +37,3 @@ func ResourceList(r *framework.Resource) v1.ResourceList {
 	}
 	return result
 }
-
-func ResourceListForPod(r *framework.Resource) v1.ResourceList {
-	result := v1.ResourceList{
-		v1.ResourceCPU:    *resource.NewMilliQuantity(r.MilliCPU, resource.DecimalSI),
-		v1.ResourceMemory: *resource.NewQuantity(r.Memory, resource.BinarySI),
-	}
-	for rName, rQuant := range r.ScalarResources {
-		if v1helper.IsHugePageResourceName(rName) {
-			result[rName] = *resource.NewQuantity(rQuant, resource.BinarySI)
-		} else {
-			result[rName] = *resource.NewQuantity(rQuant, resource.DecimalSI)
-		}
-	}
-	return result
-}

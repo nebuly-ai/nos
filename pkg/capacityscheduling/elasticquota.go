@@ -23,8 +23,6 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-const GPUMemory v1.ResourceName = "nebuly.ai/gpu-memory"
-
 type ElasticQuotaInfos map[string]*ElasticQuotaInfo
 
 func NewElasticQuotaInfos() ElasticQuotaInfos {

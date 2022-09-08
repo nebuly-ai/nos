@@ -17,6 +17,9 @@ limitations under the License.
 package capacityscheduling
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/factory"
 	"reflect"
 	"testing"
 
@@ -38,15 +41,16 @@ func TestReserveResource(t *testing.T) {
 					MilliCPU: 1000,
 					Memory:   200,
 					ScalarResources: map[v1.ResourceName]int64{
-						ResourceGPU: 2,
+						ResourceGPU:                2,
+						v1alpha1.ResourceGPUMemory: 0,
 					},
 				},
 			},
 			name: "ElasticQuotaInfo ReserveResource",
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 50, 1000, 1, midPriority, "t1-p1", "node-a"),
-				makePod("t1-p2", "ns2", 100, 2000, 0, midPriority, "t1-p2", "node-a"),
-				makePod("t1-p3", "ns2", 0, 0, 2, midPriority, "t1-p3", "node-a"),
+				makePod("t1-p1", "ns1", 50, 1000, 1, 0, midPriority, "t1-p1", "node-a"),
+				makePod("t1-p2", "ns2", 100, 2000, 0, 0, midPriority, "t1-p2", "node-a"),
+				makePod("t1-p3", "ns2", 0, 0, 2, 0, midPriority, "t1-p3", "node-a"),
 			},
 			expected: &ElasticQuotaInfo{
 				Namespace: "ns1",
@@ -54,7 +58,8 @@ func TestReserveResource(t *testing.T) {
 					MilliCPU: 4000,
 					Memory:   350,
 					ScalarResources: map[v1.ResourceName]int64{
-						ResourceGPU: 5,
+						ResourceGPU:                5,
+						v1alpha1.ResourceGPUMemory: 0,
 					},
 				},
 			},
@@ -96,9 +101,9 @@ func TestUnReserveResource(t *testing.T) {
 			},
 			name: "ElasticQuotaInfo UnReserveResource",
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 50, 1000, 1, midPriority, "t1-p1", "node-a"),
-				makePod("t1-p2", "ns2", 100, 2000, 0, midPriority, "t1-p2", "node-a"),
-				makePod("t1-p3", "ns2", 0, 0, 2, midPriority, "t1-p3", "node-a"),
+				makePod("t1-p1", "ns1", 50, 1000, 1, 0, midPriority, "t1-p1", "node-a"),
+				makePod("t1-p2", "ns2", 100, 2000, 0, 0, midPriority, "t1-p2", "node-a"),
+				makePod("t1-p3", "ns2", 0, 0, 2, 0, midPriority, "t1-p3", "node-a"),
 			},
 			expected: &ElasticQuotaInfo{
 				Namespace: "ns1",
@@ -106,7 +111,8 @@ func TestUnReserveResource(t *testing.T) {
 					MilliCPU: 1000,
 					Memory:   50,
 					ScalarResources: map[v1.ResourceName]int64{
-						ResourceGPU: 2,
+						ResourceGPU:                2,
+						v1alpha1.ResourceGPUMemory: 0,
 					},
 				},
 			},
@@ -123,6 +129,56 @@ func TestUnReserveResource(t *testing.T) {
 
 			if !reflect.DeepEqual(elasticQuotaInfo, tt.expected) {
 				t.Errorf("expected %v, got %v", tt.expected.Used, elasticQuotaInfo.Used)
+			}
+		})
+	}
+}
+
+func TestGetPodMemoryRequest(t *testing.T) {
+	tests := []struct {
+		name              string
+		pod               v1.Pod
+		expectedGpuMemory int64
+		expectedFound     bool
+		expectedErr       bool
+	}{
+		{
+			name:              "Pod without labels",
+			pod:               v1.Pod{},
+			expectedGpuMemory: 0,
+			expectedFound:     false,
+			expectedErr:       false,
+		},
+		{
+			name:              "Label with invalid value",
+			pod:               factory.BuildPod("default", "test").WithLabel(constant.LabelGPUMemory, "invalid").Get(),
+			expectedGpuMemory: 0,
+			expectedFound:     false,
+			expectedErr:       true,
+		},
+		{
+			name:              "Label with valid value",
+			pod:               factory.BuildPod("default", "test").WithLabel(constant.LabelGPUMemory, "10").Get(),
+			expectedGpuMemory: 10,
+			expectedFound:     true,
+			expectedErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gpuMemory, found, err := getPodGPUMemoryRequest(&tt.pod)
+			if found != tt.expectedFound {
+				t.Errorf("expected found=%v, got found=%v", tt.expectedFound, found)
+			}
+			if err == nil && tt.expectedErr == true {
+				t.Errorf("error was expected, got err=nil")
+			}
+			if err != nil && tt.expectedErr == false {
+				t.Errorf("nil error was expected, got err=%v", err)
+			}
+			if gpuMemory != tt.expectedGpuMemory {
+				t.Errorf("expected gpuMemory=%v, got gpuMemory=%v", tt.expectedGpuMemory, gpuMemory)
 			}
 		})
 	}

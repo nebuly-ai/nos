@@ -3,7 +3,6 @@ package controller
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/capacityscheduling"
 	"github.com/nebuly-ai/nebulnetes/pkg/factory"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	. "github.com/onsi/ginkgo/v2"
@@ -119,8 +118,8 @@ var _ = Describe("ElasticQuota controller", func() {
 			expectedCPUQuantity, _ := resource.ParseQuantity(fmt.Sprintf("%d", (containerOneCPUMilli+containerTwoCPUMilli)/1000))
 			expectedGPUMemoryQuantity, _ := resource.ParseQuantity(fmt.Sprintf("%d", containerOneGPUMemory+containerTwoGPUMemory))
 			expectedUsedResourceList := v1.ResourceList{
-				v1.ResourceCPU:               expectedCPUQuantity,
-				capacityscheduling.GPUMemory: expectedGPUMemoryQuantity,
+				v1.ResourceCPU:             expectedCPUQuantity,
+				v1alpha1.ResourceGPUMemory: expectedGPUMemoryQuantity,
 			}
 			previousInstance := instance
 			Eventually(func() bool {

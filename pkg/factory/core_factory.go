@@ -1,7 +1,7 @@
 package factory
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/capacityscheduling"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +34,14 @@ type podBuilder struct {
 
 func (b *podBuilder) WithContainer(c v1.Container) *podBuilder {
 	b.Spec.Containers = append(b.Spec.Containers, c)
+	return b
+}
+
+func (b *podBuilder) WithLabel(label, value string) *podBuilder {
+	if b.Labels == nil {
+		b.Labels = make(map[string]string)
+	}
+	b.Labels[label] = value
 	return b
 }
 
@@ -89,7 +97,7 @@ func (b *containerBuilder) WithGPUMemoryLimit(gpuMemory int64) *containerBuilder
 	if b.Container.Resources.Limits == nil {
 		b.Container.Resources.Limits = make(v1.ResourceList)
 	}
-	b.Container.Resources.Limits[capacityscheduling.GPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	b.Container.Resources.Limits[v1alpha1.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 	return b
 }
 
@@ -97,7 +105,7 @@ func (b *containerBuilder) WithGPUMemoryRequest(gpuMemory int64) *containerBuild
 	if b.Container.Resources.Requests == nil {
 		b.Container.Resources.Requests = make(v1.ResourceList)
 	}
-	b.Container.Resources.Requests[capacityscheduling.GPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	b.Container.Resources.Requests[v1alpha1.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 	return b
 }
 

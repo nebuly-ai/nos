@@ -2,7 +2,6 @@ package factory
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/capacityscheduling"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +25,7 @@ func (e *eqBuilder) WithMinGPUMemory(gpuMemory int64) *eqBuilder {
 	if e.ElasticQuota.Spec.Min == nil {
 		e.ElasticQuota.Spec.Min = make(v1.ResourceList)
 	}
-	e.ElasticQuota.Spec.Min[capacityscheduling.GPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	e.ElasticQuota.Spec.Min[v1alpha1.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 	return e
 }
 
@@ -34,7 +33,7 @@ func (e *eqBuilder) WithMaxGPUMemory(gpuMemory int64) *eqBuilder {
 	if e.ElasticQuota.Spec.Max == nil {
 		e.ElasticQuota.Spec.Max = make(v1.ResourceList)
 	}
-	e.ElasticQuota.Spec.Max[capacityscheduling.GPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	e.ElasticQuota.Spec.Max[v1alpha1.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 	return e
 }
 
