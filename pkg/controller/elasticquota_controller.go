@@ -177,9 +177,10 @@ func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []rec
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, name string) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.ElasticQuota{}).
+		Named(name).
 		Watches(
 			&source.Kind{Type: &v1.Pod{}},
 			handler.EnqueueRequestsFromMapFunc(r.findElasticQuotaForPod),

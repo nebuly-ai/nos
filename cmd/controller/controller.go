@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/controller"
 	"os"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -87,7 +88,7 @@ func main() {
 	if err = (&controller.ElasticQuotaReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, constant.ElasticQuotaControllerName); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ElasticQuota")
 		os.Exit(1)
 	}
