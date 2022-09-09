@@ -39,7 +39,7 @@ type ElasticQuotaReconciler struct {
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
 
 func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -77,9 +77,15 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, podList *v1.PodList, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
-	// Sort running Pods by creation time
+	// Sort running Pods by creation timestamps
 	sort.Slice(podList.Items, func(i, j int) bool {
-		return podList.Items[i].ObjectMeta.CreationTimestamp.Before(&podList.Items[j].ObjectMeta.CreationTimestamp)
+		firstPodCT := podList.Items[i].ObjectMeta.CreationTimestamp
+		secondPodCT := podList.Items[j].ObjectMeta.CreationTimestamp
+		// If creation timestamp is the same, sort by Name alphabetically for deterministic results
+		if firstPodCT.Equal(&secondPodCT) {
+			return podList.Items[i].Name < podList.Items[j].Name
+		}
+		return firstPodCT.Before(&secondPodCT)
 	})
 
 	used := newZeroUsed(eq)
