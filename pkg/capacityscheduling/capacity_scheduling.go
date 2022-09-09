@@ -525,8 +525,8 @@ func (p *preemptor) SelectVictimsOnNode(
 		nominatedPodsReqInEQWithPodReq = preFilterState.nominatedPodsReqInEQWithPodReq
 		nominatedPodsReqWithPodReq = preFilterState.nominatedPodsReqWithPodReq
 		moreThanMinWithPreemptor := preemptorElasticQuotaInfo.usedOverMinWith(&nominatedPodsReqInEQWithPodReq)
-		for _, p := range nodeInfo.Pods {
-			eqInfo, withEQ := elasticQuotaInfos[p.Pod.Namespace]
+		for _, pi := range nodeInfo.Pods {
+			eqInfo, withEQ := elasticQuotaInfos[pi.Pod.Namespace]
 			if !withEQ {
 				continue
 			}
@@ -537,9 +537,9 @@ func (p *preemptor) SelectVictimsOnNode(
 				// quotas. So that we will select the pods which subject to the
 				// same quota(namespace) with the lower priority than the
 				// preemptor's priority as potential victims in a node.
-				if p.Pod.Namespace == pod.Namespace && corev1helpers.PodPriority(p.Pod) < podPriority {
-					potentialVictims = append(potentialVictims, p)
-					if err := removePod(p); err != nil {
+				if pi.Pod.Namespace == pod.Namespace && corev1helpers.PodPriority(pi.Pod) < podPriority {
+					potentialVictims = append(potentialVictims, pi)
+					if err := removePod(pi); err != nil {
 						return nil, 0, framework.AsStatus(err)
 					}
 				}
@@ -551,23 +551,23 @@ func (p *preemptor) SelectVictimsOnNode(
 				// will be chosen from Quotas that allocates more resources
 				// than its min, i.e., borrowing resources from other
 				// Quotas.
-				if p.Pod.Namespace != pod.Namespace && eqInfo.usedOverMin() {
-					potentialVictims = append(potentialVictims, p)
-					if err := removePod(p); err != nil {
+				if pi.Pod.Namespace != pod.Namespace && eqInfo.usedOverMin() {
+					potentialVictims = append(potentialVictims, pi)
+					if err := removePod(pi); err != nil {
 						return nil, 0, framework.AsStatus(err)
 					}
 				}
 			}
 		}
 	} else {
-		for _, p := range nodeInfo.Pods {
-			_, withEQ := elasticQuotaInfos[p.Pod.Namespace]
+		for _, pi := range nodeInfo.Pods {
+			_, withEQ := elasticQuotaInfos[pi.Pod.Namespace]
 			if withEQ {
 				continue
 			}
-			if corev1helpers.PodPriority(p.Pod) < podPriority {
-				potentialVictims = append(potentialVictims, p)
-				if err := removePod(p); err != nil {
+			if corev1helpers.PodPriority(pi.Pod) < podPriority {
+				potentialVictims = append(potentialVictims, pi)
+				if err := removePod(pi); err != nil {
 					return nil, 0, framework.AsStatus(err)
 				}
 			}
