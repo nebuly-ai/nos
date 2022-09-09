@@ -3,6 +3,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 	"time"
 )
@@ -141,18 +143,14 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(instance.Status.Used).To(Equal(expectedUsedResourceList))
 
 			By("Checking the Pod's capacity-info label shows that the Pod is in in-quota")
-			var podInstance v1.Pod
-			Eventually(func() bool {
-				lookupKey := types.NamespacedName{Name: pod.Name, Namespace: elasticQuota.Namespace}
-				if err := k8sClient.Get(ctx, lookupKey, &podInstance); err != nil {
-					logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
-					return false
-				}
-				if capacityInfo, ok := podInstance.Labels[constant.LabelCapacityInfo]; ok {
-					return capacityInfo == string(constant.CapacityInfoInQuota)
-				}
-				return false
-			}, timeout, interval).Should(BeTrue())
+			assertPodHasLabel(
+				ctx,
+				pod,
+				constant.LabelCapacityInfo,
+				string(constant.CapacityInfoInQuota),
+				timeout,
+				interval,
+			)
 
 			By("Checking that the Pods in other namespaces do not get labelled with EQ capacity info")
 			var otherNamespacePodInstance v1.Pod
@@ -206,18 +204,14 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(k8sClient.Status().Update(ctx, &pod)).To(Succeed())
 
 			By("Checking the Pod's capacity-info label shows that the Pod is in over-quota")
-			var podInstance v1.Pod
-			Eventually(func() bool {
-				lookupKey := types.NamespacedName{Name: pod.Name, Namespace: elasticQuota.Namespace}
-				if err := k8sClient.Get(ctx, lookupKey, &podInstance); err != nil {
-					logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
-					return false
-				}
-				if capacityInfo, ok := podInstance.Labels[constant.LabelCapacityInfo]; ok {
-					return capacityInfo == string(constant.CapacityInfoOverQuota)
-				}
-				return false
-			}, timeout, interval).Should(BeTrue())
+			assertPodHasLabel(
+				ctx,
+				pod,
+				constant.LabelCapacityInfo,
+				string(constant.CapacityInfoOverQuota),
+				timeout,
+				interval,
+			)
 		})
 
 		When("A Pod is in over-quota and some other Pod stops running freeing up available quotas", func() {
@@ -289,50 +283,147 @@ var _ = Describe("ElasticQuota controller", func() {
 				}, timeout, interval).Should(BeTrue(), fmt.Sprintf("expected used gpu %q, but found %q", expectedUsedGPU, actualUsedGPU))
 
 				By("Checking the in-quota Pod's capacity-info label is in-quota")
-				var inQuotaPodInstance v1.Pod
-				Eventually(func() bool {
-					lookupKey := types.NamespacedName{Name: inQuotaPod.Name, Namespace: elasticQuota.Namespace}
-					if err := k8sClient.Get(ctx, lookupKey, &inQuotaPodInstance); err != nil {
-						logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
-						return false
-					}
-					if capacityInfo, ok := inQuotaPodInstance.Labels[constant.LabelCapacityInfo]; ok {
-						return capacityInfo == string(constant.CapacityInfoInQuota)
-					}
-					return false
-				}, timeout, interval).Should(BeTrue())
+				assertPodHasLabel(
+					ctx,
+					inQuotaPod,
+					constant.LabelCapacityInfo,
+					string(constant.CapacityInfoInQuota),
+					timeout,
+					interval,
+				)
 
 				By("Checking the over-quota Pod's capacity-info label is over-quota")
-				var overQuotaPodInstance v1.Pod
-				Eventually(func() bool {
-					lookupKey := types.NamespacedName{Name: overQuotaPod.Name, Namespace: elasticQuota.Namespace}
-					if err := k8sClient.Get(ctx, lookupKey, &overQuotaPodInstance); err != nil {
-						logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
-						return false
-					}
-					if capacityInfo, ok := overQuotaPodInstance.Labels[constant.LabelCapacityInfo]; ok {
-						return capacityInfo == string(constant.CapacityInfoOverQuota)
-					}
-					return false
-				}, timeout, interval).Should(BeTrue())
+				assertPodHasLabel(
+					ctx,
+					overQuotaPod,
+					constant.LabelCapacityInfo,
+					string(constant.CapacityInfoOverQuota),
+					timeout,
+					interval,
+				)
 
 				By("Updating the in-quota Pod status to succeeded")
-				inQuotaPodInstance.Status.Phase = v1.PodSucceeded
-				Expect(k8sClient.Status().Update(ctx, &inQuotaPodInstance)).To(Succeed())
+				original := inQuotaPod.DeepCopy()
+				inQuotaPod.Status.Phase = v1.PodSucceeded
+				Expect(k8sClient.Status().Patch(ctx, &inQuotaPod, client.MergeFrom(original))).To(Succeed())
 
 				By("Checking the over-quota is now in-quota")
-				Eventually(func() bool {
-					lookupKey := types.NamespacedName{Name: overQuotaPod.Name, Namespace: elasticQuota.Namespace}
-					if err := k8sClient.Get(ctx, lookupKey, &overQuotaPodInstance); err != nil {
-						logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
-						return false
-					}
-					if capacityInfo, ok := overQuotaPodInstance.Labels[constant.LabelCapacityInfo]; ok {
-						return capacityInfo == string(constant.CapacityInfoInQuota)
-					}
-					return false
-				}, timeout, interval).Should(BeTrue())
+				assertPodHasLabel(
+					ctx,
+					overQuotaPod,
+					constant.LabelCapacityInfo,
+					string(constant.CapacityInfoInQuota),
+					timeout,
+					interval,
+				)
+			})
+
+			When("An ElasticQuota min field is updated", func() {
+				It("Should update Pods capacity-info label accordingly", func() {
+					const (
+						elasticQuotaMinGPUMemory            = 4
+						elasticQuotaMinGPUMemoryAfterUpdate = 2
+						elasticQuotaMaxGPUMemory            = 6
+
+						podOneGPUMemory = 2
+						podTwoGPUMemory = 2
+					)
+
+					By("Creating an ElasticQuota successfully")
+					elasticQuota := factory.BuildEq(namespace.Name, util.RandomStringLowercase(10)).
+						WithMinGPUMemory(elasticQuotaMinGPUMemory).
+						WithMaxGPUMemory(elasticQuotaMaxGPUMemory).
+						Get()
+					Expect(k8sClient.Create(ctx, &elasticQuota)).To(Succeed())
+
+					By("Creating new Pods within the ElasticQuota namespace, requesting total GPUMemory <= EQ min")
+					podOne := factory.BuildPod(elasticQuota.Namespace, "pod-1").
+						WithContainer(
+							factory.BuildContainer("container-1", "test:0.0.1").
+								WithGPUMemoryLimit(podOneGPUMemory).
+								Get(),
+						).
+						Get()
+					podTwo := factory.BuildPod(elasticQuota.Namespace, "pod-2").
+						WithContainer(
+							factory.BuildContainer("container-1", "test:0.0.1").
+								WithGPUMemoryLimit(podTwoGPUMemory).
+								Get(),
+						).
+						Get()
+					Expect(k8sClient.Create(ctx, &podOne)).To(Succeed())
+					Expect(k8sClient.Create(ctx, &podTwo)).To(Succeed())
+
+					By("Updating the status phase of the Pods to running")
+					podOne.Status.Phase = v1.PodRunning
+					podTwo.Status.Phase = v1.PodRunning
+					Expect(k8sClient.Status().Update(ctx, &podOne)).To(Succeed())
+					Expect(k8sClient.Status().Update(ctx, &podTwo)).To(Succeed())
+
+					By("Checking that both the Pods are labelled as in-quota")
+					assertPodHasLabel(
+						ctx,
+						podOne,
+						constant.LabelCapacityInfo,
+						string(constant.CapacityInfoInQuota),
+						timeout,
+						interval,
+					)
+					assertPodHasLabel(
+						ctx,
+						podTwo,
+						constant.LabelCapacityInfo,
+						string(constant.CapacityInfoInQuota),
+						timeout,
+						interval,
+					)
+
+					By("Updating the ElasticQuota reducing the min value")
+					original := elasticQuota.DeepCopy()
+					elasticQuota.Spec.Min[v1alpha1.ResourceGPUMemory] = *resource.NewQuantity(elasticQuotaMinGPUMemoryAfterUpdate, resource.DecimalSI)
+					Expect(k8sClient.Patch(ctx, &elasticQuota, client.MergeFrom(original))).To(Succeed())
+
+					By("Checking that the Pod created first is still labelled as in-quota")
+					assertPodHasLabel(
+						ctx,
+						podOne,
+						constant.LabelCapacityInfo,
+						string(constant.CapacityInfoInQuota),
+						timeout,
+						interval,
+					)
+
+					By("Checking that the Pod created last is now labelled as over-quota")
+					assertPodHasLabel(
+						ctx,
+						podTwo,
+						constant.LabelCapacityInfo,
+						string(constant.CapacityInfoOverQuota),
+						timeout,
+						interval,
+					)
+				})
 			})
 		})
 	})
 })
+
+func assertPodHasLabel(ctx context.Context, pod v1.Pod, label, value string, timeout, interval time.Duration) {
+	var instance v1.Pod
+	var actualValue string
+	Eventually(func() bool {
+		var ok bool
+		lookupKey := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
+		if err := k8sClient.Get(ctx, lookupKey, &instance); err != nil {
+			logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
+			return false
+		}
+		if actualValue, ok = instance.Labels[label]; ok {
+			return actualValue == value
+		}
+		return false
+	}, timeout, interval).Should(
+		BeTrue(),
+		fmt.Sprintf("Expected value of label %q was %q, but found %q", label, value, actualValue),
+	)
+}
