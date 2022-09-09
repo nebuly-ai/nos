@@ -179,10 +179,12 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(k8sClient.Create(ctx, &elasticQuota)).To(Succeed())
 
 			By("Creating another ElasticQuota with high GPUMemory min successfully")
+			anotherNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
 			anotherElasticQuota := factory.BuildEq(namespace.Name, util.RandomStringLowercase(10)).
 				WithMinGPUMemory(100).
 				WithMaxGPUMemory(100).
 				Get()
+			Expect(k8sClient.Create(ctx, &anotherNamespace)).To(Succeed())
 			Expect(k8sClient.Create(ctx, &anotherElasticQuota)).To(Succeed())
 
 			By("Creating a new Pod within the ElasticQuota namespace, requesting GPUMemory > EQ min")
