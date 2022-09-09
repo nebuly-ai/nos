@@ -12,6 +12,8 @@ rules:
   verbs:
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - n8s.nebuly.ai

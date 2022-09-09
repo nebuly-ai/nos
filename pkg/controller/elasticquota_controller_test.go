@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -31,7 +32,7 @@ var _ = Describe("ElasticQuota controller", func() {
 		//if utils.GetEnvBool(constants.EnvSkipControllerTests, false) {
 		//	Skip(fmt.Sprintf("%s is true, skipping controller tests", constants.EnvSkipControllerTests))
 		//}
-		namespace = factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
+		namespace = factory.BuildNamespace(util.RandomStringLowercase(16)).Get()
 		Expect(k8sClient.Create(ctx, &namespace)).To(Succeed())
 	})
 
@@ -75,7 +76,7 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(instance.Spec).To(Equal(elasticQuota.Spec))
 
 			By("Creating a new Pod within the ElasticQuota namespace")
-			pod := factory.BuildPod(elasticQuota.Namespace, util.RandomStringLowercase(5)).
+			pod := factory.BuildPod(elasticQuota.Namespace, "pod-1").
 				WithContainer(
 					factory.BuildContainer("container-1", "test:0.0.1").
 						WithCPUMilliLimit(containerOneCPUMilli).
@@ -106,7 +107,7 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(k8sClient.Create(ctx, &newNamespace)).To(Succeed())
 
 			By("Creating another Pod belonging to the new namespace")
-			otherNamespacePod := factory.BuildPod(newNamespace.Name, util.RandomStringLowercase(5)).
+			otherNamespacePod := factory.BuildPod(newNamespace.Name, "pod-2").
 				WithContainer(
 					factory.BuildContainer("container-1", "test:0.0.1").
 						WithCPUMilliLimit(containerOneCPUMilli).
@@ -144,16 +145,14 @@ var _ = Describe("ElasticQuota controller", func() {
 			Eventually(func() bool {
 				lookupKey := types.NamespacedName{Name: pod.Name, Namespace: elasticQuota.Namespace}
 				if err := k8sClient.Get(ctx, lookupKey, &podInstance); err != nil {
+					logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
 					return false
 				}
 				if capacityInfo, ok := podInstance.Labels[constant.LabelCapacityInfo]; ok {
 					return capacityInfo == string(constant.CapacityInfoInQuota)
 				}
 				return false
-			}, timeout, interval).Should(
-				BeTrue(),
-				fmt.Sprintf("Label %q should have value %q", constant.LabelCapacityInfo, constant.CapacityInfoInQuota),
-			)
+			}, timeout, interval).Should(BeTrue())
 
 			By("Checking that the Pods in other namespaces do not get labelled with EQ capacity info")
 			var otherNamespacePodInstance v1.Pod
@@ -180,7 +179,7 @@ var _ = Describe("ElasticQuota controller", func() {
 
 			By("Creating another ElasticQuota with high GPUMemory min successfully")
 			anotherNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
-			anotherElasticQuota := factory.BuildEq(namespace.Name, util.RandomStringLowercase(10)).
+			anotherElasticQuota := factory.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
 				WithMinGPUMemory(100).
 				WithMaxGPUMemory(100).
 				Get()
@@ -188,7 +187,7 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(k8sClient.Create(ctx, &anotherElasticQuota)).To(Succeed())
 
 			By("Creating a new Pod within the ElasticQuota namespace, requesting GPUMemory > EQ min")
-			pod := factory.BuildPod(elasticQuota.Namespace, util.RandomStringLowercase(5)).
+			pod := factory.BuildPod(elasticQuota.Namespace, "pod-2").
 				WithContainer(
 					factory.BuildContainer("container-1", "test:0.0.1").
 						WithGPUMemoryLimit(5).
@@ -211,16 +210,129 @@ var _ = Describe("ElasticQuota controller", func() {
 			Eventually(func() bool {
 				lookupKey := types.NamespacedName{Name: pod.Name, Namespace: elasticQuota.Namespace}
 				if err := k8sClient.Get(ctx, lookupKey, &podInstance); err != nil {
+					logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
 					return false
 				}
 				if capacityInfo, ok := podInstance.Labels[constant.LabelCapacityInfo]; ok {
 					return capacityInfo == string(constant.CapacityInfoOverQuota)
 				}
 				return false
-			}, timeout, interval).Should(
-				BeTrue(),
-				fmt.Sprintf("Label %q should have value %q", constant.LabelCapacityInfo, constant.CapacityInfoOverQuota),
-			)
+			}, timeout, interval).Should(BeTrue())
+		})
+
+		When("A Pod is in over-quota and some other Pod stops running freeing up available quotas", func() {
+			It("Should update the Pod capacity info label from over-quota to in-quota", func() {
+				const (
+					elasticQuotaMinGPUMemory = 4
+					elasticQuotaMaxGPUMemory = 6
+					inQuotaPodGPUMemory      = elasticQuotaMinGPUMemory
+					overQuotaPodGPUMemory    = elasticQuotaMinGPUMemory - 1
+					elasticQuotaName         = "test-elasticquota"
+				)
+
+				By("Creating an ElasticQuota successfully")
+				elasticQuota := factory.BuildEq(namespace.Name, elasticQuotaName).
+					WithMinGPUMemory(elasticQuotaMinGPUMemory).
+					WithMaxGPUMemory(elasticQuotaMaxGPUMemory).
+					Get()
+				Expect(k8sClient.Create(ctx, &elasticQuota)).To(Succeed())
+
+				By("Creating another ElasticQuota with high GPUMemory min successfully")
+				anotherNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
+				anotherElasticQuota := factory.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
+					WithMinGPUMemory(100).
+					WithMaxGPUMemory(100).
+					Get()
+				Expect(k8sClient.Create(ctx, &anotherNamespace)).To(Succeed())
+				Expect(k8sClient.Create(ctx, &anotherElasticQuota)).To(Succeed())
+
+				By("Creating a new Pod within the ElasticQuota namespace, requesting GPUMemory = EQ min")
+				inQuotaPod := factory.BuildPod(elasticQuota.Namespace, "pod-1").
+					WithContainer(
+						factory.BuildContainer("container-1", "test:0.0.1").
+							WithGPUMemoryLimit(inQuotaPodGPUMemory).
+							Get(),
+					).
+					Get()
+				Expect(k8sClient.Create(ctx, &inQuotaPod)).To(Succeed())
+
+				By("Updating the in-quota Pod status to running")
+				inQuotaPod.Status.Phase = v1.PodRunning
+				Expect(k8sClient.Status().Update(ctx, &inQuotaPod)).To(Succeed())
+
+				By("Creating a new over-quota Pod within the ElasticQuota namespace, requesting GPUMemory < EQ min")
+				overQuotaPod := factory.BuildPod(elasticQuota.Namespace, "pod-2").
+					WithContainer(
+						factory.BuildContainer("container-1", "test:0.0.1").
+							WithGPUMemoryLimit(overQuotaPodGPUMemory).
+							Get(),
+					).
+					Get()
+				Expect(k8sClient.Create(ctx, &overQuotaPod)).To(Succeed())
+
+				By("Updating the over-quota Pod status to running")
+				overQuotaPod.Status.Phase = v1.PodRunning
+				Expect(k8sClient.Status().Update(ctx, &overQuotaPod)).To(Succeed())
+
+				By("Checking the ElasticQuota status")
+				var eqInstance v1alpha1.ElasticQuota
+				var actualUsedGPU string
+				var expectedUsedGPU = strconv.Itoa(inQuotaPodGPUMemory + overQuotaPodGPUMemory)
+				Eventually(func() bool {
+					lookupKey := types.NamespacedName{Name: elasticQuota.Name, Namespace: elasticQuota.Namespace}
+					if err := k8sClient.Get(ctx, lookupKey, &eqInstance); err != nil {
+						logger.Error(err, "unable to fetch ElasticQuota", "lookup-key", lookupKey)
+						return false
+					}
+					actualUsedGPU = eqInstance.Status.Used.Name(v1alpha1.ResourceGPUMemory, resource.DecimalSI).String()
+					return actualUsedGPU == expectedUsedGPU
+				}, timeout, interval).Should(BeTrue(), fmt.Sprintf("expected used gpu %q, but found %q", expectedUsedGPU, actualUsedGPU))
+
+				By("Checking the in-quota Pod's capacity-info label is in-quota")
+				var inQuotaPodInstance v1.Pod
+				Eventually(func() bool {
+					lookupKey := types.NamespacedName{Name: inQuotaPod.Name, Namespace: elasticQuota.Namespace}
+					if err := k8sClient.Get(ctx, lookupKey, &inQuotaPodInstance); err != nil {
+						logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
+						return false
+					}
+					if capacityInfo, ok := inQuotaPodInstance.Labels[constant.LabelCapacityInfo]; ok {
+						return capacityInfo == string(constant.CapacityInfoInQuota)
+					}
+					return false
+				}, timeout, interval).Should(BeTrue())
+
+				By("Checking the over-quota Pod's capacity-info label is over-quota")
+				var overQuotaPodInstance v1.Pod
+				Eventually(func() bool {
+					lookupKey := types.NamespacedName{Name: overQuotaPod.Name, Namespace: elasticQuota.Namespace}
+					if err := k8sClient.Get(ctx, lookupKey, &overQuotaPodInstance); err != nil {
+						logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
+						return false
+					}
+					if capacityInfo, ok := overQuotaPodInstance.Labels[constant.LabelCapacityInfo]; ok {
+						return capacityInfo == string(constant.CapacityInfoOverQuota)
+					}
+					return false
+				}, timeout, interval).Should(BeTrue())
+
+				By("Updating the in-quota Pod status to succeeded")
+				inQuotaPodInstance.Status.Phase = v1.PodSucceeded
+				Expect(k8sClient.Status().Update(ctx, &inQuotaPodInstance)).To(Succeed())
+
+				By("Checking the over-quota is now in-quota")
+				Eventually(func() bool {
+					lookupKey := types.NamespacedName{Name: overQuotaPod.Name, Namespace: elasticQuota.Namespace}
+					if err := k8sClient.Get(ctx, lookupKey, &overQuotaPodInstance); err != nil {
+						logger.Error(err, "unable to fetch pod", "lookup-key", lookupKey)
+						return false
+					}
+					if capacityInfo, ok := overQuotaPodInstance.Labels[constant.LabelCapacityInfo]; ok {
+						return capacityInfo == string(constant.CapacityInfoInQuota)
+					}
+					return false
+				}, timeout, interval).Should(BeTrue())
+			})
 		})
 	})
 })
