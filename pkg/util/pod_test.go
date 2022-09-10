@@ -2,7 +2,7 @@ package util
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/factory"
+	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"
@@ -15,7 +15,10 @@ func TestIsPodOverQuota(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "Pod with label with value overquota",
+			name: "Pod with label with value overquota",
+			pod: factory.BuildPod("ns-1", "pd-1").
+				WithLabel(constant.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)).
+				Get(),
 			expected: true,
 		},
 		{

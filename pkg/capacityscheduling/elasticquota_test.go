@@ -19,7 +19,7 @@ package capacityscheduling
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/factory"
+	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"reflect"
 	"testing"
 

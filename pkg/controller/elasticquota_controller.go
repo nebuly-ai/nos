@@ -62,6 +62,7 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// Add quota status labels and compute used quota
+	sortPodListForFindingOverQuotaPods(&runningPodList)
 	usedResourceList, err := r.patchPodsAndGetUsedQuota(ctx, &runningPodList, &instance)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -69,29 +70,50 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	instance.Status.Used = usedResourceList
 
 	// Update EQ status
-	err = r.updateStatus(ctx, &instance, logger)
+	err = r.updateStatus(ctx, instance, logger)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
 }
 
-func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, podList *v1.PodList, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
-	// Sort running Pods by creation timestamps
+// sortPodListForFindingOverQuotaPods sorts the input list so that it can be used for finding the Pods that are
+// "over-quota" (e.g. they are borrowing quotas from another namespace) and the ones that are "in-quota" (e.g.
+// in their respective ElasticQuota used <= min)
+func sortPodListForFindingOverQuotaPods(podList *v1.PodList) {
 	sort.Slice(podList.Items, func(i, j int) bool {
+		// If creation timestamp is not the same, sort by creation timestamp
 		firstPodCT := podList.Items[i].ObjectMeta.CreationTimestamp
 		secondPodCT := podList.Items[j].ObjectMeta.CreationTimestamp
-		// If creation timestamp is the same, sort by Name alphabetically for deterministic results
-		if firstPodCT.Equal(&secondPodCT) {
-			return podList.Items[i].Name < podList.Items[j].Name
+		if !firstPodCT.Equal(&secondPodCT) {
+			return firstPodCT.Before(&secondPodCT)
 		}
-		return firstPodCT.Before(&secondPodCT)
-	})
 
-	used := newZeroUsed(eq)
+		// If priority is not the same, sort by priority
+		firstPodPriority := *podList.Items[i].Spec.Priority
+		secondPodPriority := *podList.Items[j].Spec.Priority
+		if firstPodPriority != secondPodPriority {
+			return firstPodPriority < secondPodPriority
+		}
+
+		// If resource request is not the same, sort by resource request
+		firstPodRequest := computePodResourceRequest(podList.Items[i])
+		secondPodRequest := computePodResourceRequest(podList.Items[j])
+		if !quota.Equals(firstPodRequest, secondPodRequest) {
+			less, _ := quota.LessThanOrEqual(firstPodRequest, secondPodRequest)
+			return less
+		}
+
+		// As last resort, sort by name alphabetically
+		return podList.Items[i].Name < podList.Items[j].Name
+	})
+}
+
+func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, podList *v1.PodList, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
+	used := newZeroUsed(*eq)
 	var err error
 	for _, pod := range podList.Items {
-		request := computePodResourceRequest(&pod)
+		request := computePodResourceRequest(pod)
 		used = quota.Add(used, request)
 
 		var desiredCapacityInfo constant.CapacityInfo
@@ -165,7 +187,7 @@ func (r *ElasticQuotaReconciler) patchCapacityInfoIfDifferent(ctx context.Contex
 //	    Memory: 1G
 //
 // Result: CPU: 3, Memory: 3G
-func computePodResourceRequest(pod *v1.Pod) v1.ResourceList {
+func computePodResourceRequest(pod v1.Pod) v1.ResourceList {
 	result := v1.ResourceList{}
 	for _, container := range pod.Spec.Containers {
 		result = quota.Add(result, container.Resources.Requests)
@@ -184,7 +206,7 @@ func computePodResourceRequest(pod *v1.Pod) v1.ResourceList {
 }
 
 // newZeroUsed will return the zero value of the union of min and max
-func newZeroUsed(eq *v1alpha1.ElasticQuota) v1.ResourceList {
+func newZeroUsed(eq v1alpha1.ElasticQuota) v1.ResourceList {
 	minResources := quota.ResourceNames(eq.Spec.Min)
 	maxResources := quota.ResourceNames(eq.Spec.Max)
 	res := v1.ResourceList{}
@@ -220,7 +242,7 @@ func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []rec
 	return []reconcile.Request{}
 }
 
-func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance *v1alpha1.ElasticQuota, logger logr.Logger) error {
+func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance v1alpha1.ElasticQuota, logger logr.Logger) error {
 	var currentEq v1alpha1.ElasticQuota
 	namespacedName := types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}
 
@@ -233,7 +255,7 @@ func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance *v1a
 		return nil
 	}
 	logger.V(1).Info("updating ElasticQuota status", "Status", instance.Status)
-	if err := r.Status().Update(ctx, instance); err != nil {
+	if err := r.Status().Update(ctx, &instance); err != nil {
 		logger.Error(err, "unable to update ElasticQuota status")
 		return err
 	}

@@ -45,6 +45,16 @@ func (b *podBuilder) WithLabel(label, value string) *podBuilder {
 	return b
 }
 
+func (b *podBuilder) WithCreationTimestamp(timestamp metav1.Time) *podBuilder {
+	b.Pod.CreationTimestamp = timestamp
+	return b
+}
+
+func (b *podBuilder) WithPriority(priority int32) *podBuilder {
+	b.Pod.Spec.Priority = &priority
+	return b
+}
+
 func (b *podBuilder) Get() v1.Pod {
 	return b.Pod
 }
