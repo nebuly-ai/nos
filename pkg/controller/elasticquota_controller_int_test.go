@@ -14,7 +14,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 	"time"
@@ -68,14 +67,11 @@ var _ = Describe("ElasticQuota controller", func() {
 
 			By("Checking the created ElasticQuota matches the specs")
 			var instance = v1alpha1.ElasticQuota{}
-			Eventually(func() bool {
+			Eventually(func() v1alpha1.ElasticQuotaSpec {
 				lookupKey := types.NamespacedName{Name: elasticQuota.Name, Namespace: elasticQuota.Namespace}
-				if err := k8sClient.Get(ctx, lookupKey, &instance); err != nil {
-					return false
-				}
-				return true
-			}, timeout, interval).Should(BeTrue())
-			Expect(instance.Spec).To(Equal(elasticQuota.Spec))
+				_ = k8sClient.Get(ctx, lookupKey, &instance)
+				return instance.Spec
+			}, timeout, interval).Should(Equal(elasticQuota.Spec))
 
 			By("Creating a new Pod within the ElasticQuota namespace")
 			pod := factory.BuildPod(elasticQuota.Namespace, "pod-1").
@@ -95,14 +91,13 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(k8sClient.Create(ctx, &pod)).To(Succeed())
 
 			By("Not updating the ElasticQuota status until the Pod is in running state")
-			Eventually(func() bool {
+			Eventually(func() string {
 				lookupKey := types.NamespacedName{Name: elasticQuota.Name, Namespace: elasticQuota.Namespace}
 				if err := k8sClient.Get(ctx, lookupKey, &instance); err != nil {
-					return false
+					return ""
 				}
-				return true
-			}, timeout, interval).Should(BeTrue())
-			Expect(instance.Status.Used.Cpu().String()).To(Equal("0"))
+				return instance.Status.Used.Cpu().String()
+			}, timeout, interval).Should(Equal("0"))
 
 			By("Creating a new Namespace")
 			newNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
@@ -132,14 +127,11 @@ var _ = Describe("ElasticQuota controller", func() {
 				v1alpha1.ResourceGPUMemory: expectedGPUMemoryQuantity,
 			}
 			previousInstance := instance
-			Eventually(func() bool {
+			Eventually(func() v1alpha1.ElasticQuota {
 				lookupKey := types.NamespacedName{Name: elasticQuota.Name, Namespace: elasticQuota.Namespace}
-				if err := k8sClient.Get(ctx, lookupKey, &instance); err != nil {
-					return false
-				}
-				updated := !reflect.DeepEqual(previousInstance, instance)
-				return updated
-			}, timeout, interval).Should(BeTrue())
+				_ = k8sClient.Get(ctx, lookupKey, &instance)
+				return instance
+			}, timeout, interval).ShouldNot(Equal(previousInstance))
 			Expect(instance.Status.Used).To(Equal(expectedUsedResourceList))
 
 			By("Checking the Pod's capacity-info label shows that the Pod is in in-quota")
@@ -270,17 +262,14 @@ var _ = Describe("ElasticQuota controller", func() {
 
 				By("Checking the ElasticQuota status")
 				var eqInstance v1alpha1.ElasticQuota
-				var actualUsedGPU string
-				var expectedUsedGPU = strconv.Itoa(inQuotaPodGPUMemory + overQuotaPodGPUMemory)
-				Eventually(func() bool {
+				Eventually(func() string {
 					lookupKey := types.NamespacedName{Name: elasticQuota.Name, Namespace: elasticQuota.Namespace}
 					if err := k8sClient.Get(ctx, lookupKey, &eqInstance); err != nil {
 						logger.Error(err, "unable to fetch ElasticQuota", "lookup-key", lookupKey)
-						return false
+						return ""
 					}
-					actualUsedGPU = eqInstance.Status.Used.Name(v1alpha1.ResourceGPUMemory, resource.DecimalSI).String()
-					return actualUsedGPU == expectedUsedGPU
-				}, timeout, interval).Should(BeTrue(), fmt.Sprintf("expected used gpu %q, but found %q", expectedUsedGPU, actualUsedGPU))
+					return eqInstance.Status.Used.Name(v1alpha1.ResourceGPUMemory, resource.DecimalSI).String()
+				}, timeout, interval).Should(Equal(strconv.Itoa(inQuotaPodGPUMemory + overQuotaPodGPUMemory)))
 
 				By("Checking the in-quota Pod's capacity-info label is in-quota")
 				assertPodHasLabel(
