@@ -7,6 +7,7 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/onsi/ginkgo/v2 v2.1.6
 	github.com/onsi/gomega v1.20.2
+	github.com/stretchr/testify v1.8.0
 	k8s.io/api v0.24.4
 	k8s.io/apimachinery v0.24.4
 	k8s.io/apiserver v0.24.4
@@ -40,7 +41,7 @@ replace (
 	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.24.4
 	k8s.io/kubectl => k8s.io/kubectl v0.24.4
 	k8s.io/kubelet => k8s.io/kubelet v0.24.4
-	k8s.io/kubernetes => k8s.io/kubernetes v1.24.3
+	k8s.io/kubernetes => k8s.io/kubernetes v1.24.4
 	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.24.4
 	k8s.io/metrics => k8s.io/metrics v0.24.4
 	k8s.io/mount-utils => k8s.io/mount-utils v0.24.4
@@ -97,6 +98,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/selinux v1.10.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect

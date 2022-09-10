@@ -48,9 +48,9 @@ func TestReserveResource(t *testing.T) {
 			},
 			name: "ElasticQuotaInfo ReserveResource",
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 50, 1000, 1, 0, midPriority, "t1-p1", "node-a"),
-				makePod("t1-p2", "ns2", 100, 2000, 0, 0, midPriority, "t1-p2", "node-a"),
-				makePod("t1-p3", "ns2", 0, 0, 2, 0, midPriority, "t1-p3", "node-a"),
+				makePod("t1-p1", "ns1", 50, 1000, 1, 0, midPriority, "t1-p1", "node-a", false),
+				makePod("t1-p2", "ns2", 100, 2000, 0, 0, midPriority, "t1-p2", "node-a", false),
+				makePod("t1-p3", "ns2", 0, 0, 2, 0, midPriority, "t1-p3", "node-a", false),
 			},
 			expected: &ElasticQuotaInfo{
 				Namespace: "ns1",
@@ -101,9 +101,9 @@ func TestUnReserveResource(t *testing.T) {
 			},
 			name: "ElasticQuotaInfo UnReserveResource",
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 50, 1000, 1, 0, midPriority, "t1-p1", "node-a"),
-				makePod("t1-p2", "ns2", 100, 2000, 0, 0, midPriority, "t1-p2", "node-a"),
-				makePod("t1-p3", "ns2", 0, 0, 2, 0, midPriority, "t1-p3", "node-a"),
+				makePod("t1-p1", "ns1", 50, 1000, 1, 0, midPriority, "t1-p1", "node-a", false),
+				makePod("t1-p2", "ns2", 100, 2000, 0, 0, midPriority, "t1-p2", "node-a", false),
+				makePod("t1-p3", "ns2", 0, 0, 2, 0, midPriority, "t1-p3", "node-a", false),
 			},
 			expected: &ElasticQuotaInfo{
 				Namespace: "ns1",

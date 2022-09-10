@@ -550,11 +550,13 @@ func (p *preemptor) SelectVictimsOnNode(
 				// `borrowed` by other Quota. Potential victims in a node
 				// will be chosen from Quotas that allocates more resources
 				// than its min, i.e., borrowing resources from other
-				// Quotas.
+				// Quotas. Only Pods marked as "overquota" can be preempted.
 				if pi.Pod.Namespace != pod.Namespace && eqInfo.usedOverMin() {
-					potentialVictims = append(potentialVictims, pi)
-					if err := removePod(pi); err != nil {
-						return nil, 0, framework.AsStatus(err)
+					if util.IsPodOverQuota(*pi.Pod) {
+						potentialVictims = append(potentialVictims, pi)
+						if err := removePod(pi); err != nil {
+							return nil, 0, framework.AsStatus(err)
+						}
 					}
 				}
 			}
@@ -610,7 +612,7 @@ func (p *preemptor) SelectVictimsOnNode(
 	// from the highest priority victims.
 	violatingVictims, nonViolatingVictims := filterPodsWithPDBViolation(potentialVictims, pdbs)
 	reprievePod := func(pi *framework.PodInfo) (bool, error) {
-		if err := addPod(pi); err != nil {
+		if err := addPod(pi); err != nil { // this updates elastic quota infos
 			return false, err
 		}
 		s := p.fh.RunFilterPluginsWithNominatedPods(ctx, state, pod, nodeInfo)

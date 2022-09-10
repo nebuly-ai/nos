@@ -49,7 +49,7 @@ import (
 const ResourceGPU v1.ResourceName = "nvidia.com/gpu"
 
 var (
-	midPriority, highPriority = int32(100), int32(1000)
+	lowPriority, midPriority, highPriority = int32(10), int32(100), int32(1000)
 )
 
 func TestPreFilter(t *testing.T) {
@@ -166,7 +166,7 @@ func TestPreFilter(t *testing.T) {
 
 			pods := make([]*v1.Pod, 0)
 			for _, podInfo := range tt.podInfos {
-				pod := makePod(podInfo.podName, podInfo.podNamespace, podInfo.memReq, 0, 0, podInfo.gpuMemReq, 0, podInfo.podName, "")
+				pod := makePod(podInfo.podName, podInfo.podNamespace, podInfo.memReq, 0, 0, podInfo.gpuMemReq, 0, podInfo.podName, "", false)
 				pods = append(pods, pod)
 			}
 
@@ -193,11 +193,11 @@ func TestDryRunPreemption(t *testing.T) {
 	}{
 		{
 			name: "in-namespace preemption",
-			pod:  makePod("t1-p", "ns1", 50, 0, 0, 0, highPriority, "", "t1-p"),
+			pod:  makePod("t1-p", "ns1", 50, 0, 0, 0, highPriority, "", "t1-p", false),
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 50, 0, 0, 0, midPriority, "t1-p1", "node-a"),
-				makePod("t1-p2", "ns2", 50, 0, 0, 0, midPriority, "t1-p2", "node-a"),
-				makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a"),
+				makePod("t1-p1", "ns1", 50, 0, 0, 0, midPriority, "t1-p1", "node-a", false),
+				makePod("t1-p2", "ns2", 50, 0, 0, 0, midPriority, "t1-p2", "node-a", false),
+				makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a", false),
 			},
 			nodes: []*v1.Node{
 				st.MakeNode().Name("node-a").Capacity(res).Obj(),
@@ -235,7 +235,7 @@ func TestDryRunPreemption(t *testing.T) {
 				&candidate{
 					victims: &extenderv1.Victims{
 						Pods: []*v1.Pod{
-							makePod("t1-p1", "ns1", 50, 0, 0, 0, midPriority, "t1-p1", "node-a"),
+							makePod("t1-p1", "ns1", 50, 0, 0, 0, midPriority, "t1-p1", "node-a", false),
 						},
 						NumPDBViolations: 0,
 					},
@@ -245,11 +245,12 @@ func TestDryRunPreemption(t *testing.T) {
 		},
 		{
 			name: "cross-namespace preemption",
-			pod:  makePod("t1-p", "ns1", 50, 0, 0, 0, highPriority, "", "t1-p"),
+			pod:  makePod("t1-p", "ns1", 50, 0, 0, 0, highPriority, "", "t1-p", false),
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 50, 0, 0, 0, midPriority, "t1-p1", "node-a"),
-				makePod("t1-p2", "ns2", 50, 0, 0, 0, highPriority, "t1-p2", "node-a"),
-				makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a"),
+				makePod("t1-p1", "ns1", 40, 0, 0, 0, midPriority, "t1-p1", "node-a", false),
+				makePod("t1-p2", "ns2", 50, 0, 0, 0, highPriority, "t1-p2", "node-a", false),
+				makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a", true),
+				makePod("t1-p4", "ns2", 10, 0, 0, 0, lowPriority, "t1-p4", "node-a", false),
 			},
 			nodes: []*v1.Node{
 				st.MakeNode().Name("node-a").Capacity(res).Obj(),
@@ -287,7 +288,7 @@ func TestDryRunPreemption(t *testing.T) {
 				&candidate{
 					victims: &extenderv1.Victims{
 						Pods: []*v1.Pod{
-							makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a"),
+							makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a", false),
 						},
 						NumPDBViolations: 0,
 					},
@@ -372,7 +373,7 @@ func TestDryRunPreemption(t *testing.T) {
 			})
 
 			if len(got) != len(tt.want) {
-				t.Fatalf("Unexpected candidate length: want %v, but bot %v", len(tt.want), len(got))
+				t.Fatalf("Unexpected candidate length: want %v, but got %v", len(tt.want), len(got))
 			}
 			for i, c := range got {
 				if diff := gocmp.Diff(c.Victims(), got[i].Victims()); diff != "" {
@@ -386,7 +387,7 @@ func TestDryRunPreemption(t *testing.T) {
 	}
 }
 
-func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuReq int64, gpuMemoryReq int64, priority int32, uid string, nodeName string) *v1.Pod {
+func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuReq int64, gpuMemoryReq int64, priority int32, uid string, nodeName string, overquota bool) *v1.Pod {
 	pause := imageutils.GetPauseImageName()
 	pod := st.MakePod().Namespace(namespace).Name(podName).Container(pause).
 		Priority(priority).Node(nodeName).UID(uid).ZeroTerminationGracePeriod().Obj()
@@ -397,9 +398,17 @@ func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuRe
 			ResourceGPU:       *resource.NewQuantity(gpuReq, resource.DecimalSI),
 		},
 	}
+
 	if pod.Labels == nil {
 		pod.Labels = make(map[string]string)
 	}
 	pod.Labels[constant.LabelGPUMemory] = fmt.Sprintf("%d", gpuMemoryReq)
+
+	if overquota == true {
+		pod.Labels[constant.LabelCapacityInfo] = string(constant.CapacityInfoOverQuota)
+	} else {
+		pod.Labels[constant.LabelCapacityInfo] = string(constant.CapacityInfoInQuota)
+	}
+
 	return pod
 }
