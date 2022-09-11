@@ -1,0 +1,54 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-n8s-nebuly-ai-v1alpha1-elasticquota
+  failurePolicy: Fail
+  name: melasticquota.kb.io
+  rules:
+  - apiGroups:
+    - n8s.nebuly.ai
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - elasticquotas
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-n8s-nebuly-ai-v1alpha1-elasticquota
+  failurePolicy: Fail
+  name: velasticquota.kb.io
+  rules:
+  - apiGroups:
+    - n8s.nebuly.ai
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - elasticquotas
+  sideEffects: None

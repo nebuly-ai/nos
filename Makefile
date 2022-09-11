@@ -2,6 +2,7 @@
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= controller:latest
 SCHEDULER_IMG ?= scheduler:latest
+CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
@@ -96,6 +97,9 @@ docker-push: docker-push-controller docker-build-scheduler
 ifndef ignore-not-found
   ignore-not-found = false
 endif
+.PHONY: install-cert-manager
+install-cert-manager:
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml
 
 .PHONY: install
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
