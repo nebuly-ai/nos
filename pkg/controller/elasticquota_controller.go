@@ -219,6 +219,27 @@ func newZeroUsed(eq v1alpha1.ElasticQuota) v1.ResourceList {
 	return res
 }
 
+func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance v1alpha1.ElasticQuota, logger logr.Logger) error {
+	var currentEq v1alpha1.ElasticQuota
+	namespacedName := types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}
+
+	if err := r.Get(ctx, namespacedName, &currentEq); err != nil {
+		logger.Error(err, "unable to fetch ElasticQuota")
+		return err
+	}
+	if equality.Semantic.DeepEqual(currentEq.Status, instance.Status) {
+		logger.V(1).Info("current status and desired status of ElasticQuota are equal, skipping update")
+		return nil
+	}
+	logger.V(1).Info("updating ElasticQuota status", "Status", instance.Status)
+	if err := r.Status().Patch(ctx, &instance, client.MergeFrom(&currentEq)); err != nil {
+		logger.Error(err, "unable to update ElasticQuota status")
+		return err
+	}
+
+	return nil
+}
+
 func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []reconcile.Request {
 	ctx := context.Background()
 	logger := log.FromContext(ctx)
@@ -240,27 +261,6 @@ func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []rec
 	}
 
 	return []reconcile.Request{}
-}
-
-func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance v1alpha1.ElasticQuota, logger logr.Logger) error {
-	var currentEq v1alpha1.ElasticQuota
-	namespacedName := types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}
-
-	if err := r.Get(ctx, namespacedName, &currentEq); err != nil {
-		logger.Error(err, "unable to fetch ElasticQuota")
-		return err
-	}
-	if equality.Semantic.DeepEqual(currentEq.Status, instance.Status) {
-		logger.V(1).Info("current status and desired status of ElasticQuota are equal, skipping update")
-		return nil
-	}
-	logger.V(1).Info("updating ElasticQuota status", "Status", instance.Status)
-	if err := r.Status().Update(ctx, &instance); err != nil {
-		logger.Error(err, "unable to update ElasticQuota status")
-		return err
-	}
-
-	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
