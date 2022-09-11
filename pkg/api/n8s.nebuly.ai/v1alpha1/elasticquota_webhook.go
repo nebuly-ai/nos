@@ -17,7 +17,7 @@ func (r *ElasticQuota) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-n8s-nebuly-ai-v1alpha1-elasticquota,mutating=true,failurePolicy=fail,sideEffects=None,groups=n8s.nebuly.ai,resources=elasticquotas,verbs=create;update,versions=v1,name=melasticquota.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-n8s-nebuly-ai-v1alpha1-elasticquota,mutating=true,failurePolicy=fail,sideEffects=None,groups=n8s.nebuly.ai,resources=elasticquotas,verbs=create;update,versions=v1alpha1,name=melasticquota.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &ElasticQuota{}
 
@@ -28,7 +28,7 @@ func (r *ElasticQuota) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-n8s-nebuly-ai-v1alpha1-elasticquota,mutating=false,failurePolicy=fail,sideEffects=None,groups=n8s.nebuly.ai,resources=elasticquotas,verbs=create;update,versions=v1,name=velasticquota.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-n8s-nebuly-ai-v1alpha1-elasticquota,mutating=false,failurePolicy=fail,sideEffects=None,groups=n8s.nebuly.ai,resources=elasticquotas,verbs=create;update,versions=v1alpha1,name=velasticquota.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &ElasticQuota{}
 
