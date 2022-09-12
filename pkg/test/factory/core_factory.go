@@ -37,6 +37,11 @@ func (b *podBuilder) WithContainer(c v1.Container) *podBuilder {
 	return b
 }
 
+func (b *podBuilder) WithInitContainer(c v1.Container) *podBuilder {
+	b.Spec.InitContainers = append(b.Spec.InitContainers, c)
+	return b
+}
+
 func (b *podBuilder) WithLabel(label, value string) *podBuilder {
 	if b.Labels == nil {
 		b.Labels = make(map[string]string)
@@ -108,6 +113,14 @@ func (b *containerBuilder) WithGPUMemoryLimit(gpuMemory int64) *containerBuilder
 		b.Container.Resources.Limits = make(v1.ResourceList)
 	}
 	b.Container.Resources.Limits[constant.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	return b
+}
+
+func (b *containerBuilder) WithResourceRequest(resourceName v1.ResourceName, quantity resource.Quantity) *containerBuilder {
+	if b.Container.Resources.Requests == nil {
+		b.Container.Resources.Requests = make(v1.ResourceList)
+	}
+	b.Container.Resources.Requests[resourceName] = quantity
 	return b
 }
 

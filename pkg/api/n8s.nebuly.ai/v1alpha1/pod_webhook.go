@@ -56,6 +56,7 @@ func (l *GPUMemoryLabeler) handleUpdate(ctx context.Context, req admission.Reque
 	return l.addGPUMemoryLabelIfMissing(ctx, req)
 }
 
+// TODO: maybe move to capacity scheduling plugin instead of adding label?
 func (l *GPUMemoryLabeler) addGPUMemoryLabelIfMissing(ctx context.Context, req admission.Request) admission.Response {
 	pod, err := l.extractPod(req)
 	if err != nil {
