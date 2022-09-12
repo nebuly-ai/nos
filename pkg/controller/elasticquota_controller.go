@@ -6,14 +6,13 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	quota "k8s.io/apiserver/pkg/quota/v1"
-	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	kubefeatures "k8s.io/kubernetes/pkg/features"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -97,8 +96,8 @@ func sortPodListForFindingOverQuotaPods(podList *v1.PodList) {
 		}
 
 		// If resource request is not the same, sort by resource request
-		firstPodRequest := computePodResourceRequest(podList.Items[i])
-		secondPodRequest := computePodResourceRequest(podList.Items[j])
+		firstPodRequest := util.ComputePodResourceRequest(podList.Items[i])
+		secondPodRequest := util.ComputePodResourceRequest(podList.Items[j])
 		if !quota.Equals(firstPodRequest, secondPodRequest) {
 			less, _ := quota.LessThanOrEqual(firstPodRequest, secondPodRequest)
 			return less
@@ -113,7 +112,7 @@ func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, p
 	used := newZeroUsed(*eq)
 	var err error
 	for _, pod := range podList.Items {
-		request := computePodResourceRequest(pod)
+		request := util.ComputePodResourceRequest(pod)
 		used = quota.Add(used, request)
 
 		var desiredCapacityInfo constant.CapacityInfo
@@ -157,52 +156,6 @@ func (r *ElasticQuotaReconciler) patchCapacityInfoIfDifferent(ctx context.Contex
 		return true, nil
 	}
 	return false, nil
-}
-
-// computePodResourceRequest returns a v1.ResourceList that covers the largest
-// width in each resource dimension. Because init-containers run sequentially, we collect
-// the max in each dimension iteratively. In contrast, we sum the resource vectors for
-// regular containers since they run simultaneously.
-//
-// If Pod Overhead is specified and the feature gate is set, the resources defined for Overhead
-// are added to the calculated Resource request sum
-//
-// Example:
-//
-// Pod:
-//
-//	InitContainers
-//	  IC1:
-//	    CPU: 2
-//	    Memory: 1G
-//	  IC2:
-//	    CPU: 2
-//	    Memory: 3G
-//	Containers
-//	  C1:
-//	    CPU: 2
-//	    Memory: 1G
-//	  C2:
-//	    CPU: 1
-//	    Memory: 1G
-//
-// Result: CPU: 3, Memory: 3G
-func computePodResourceRequest(pod v1.Pod) v1.ResourceList {
-	result := v1.ResourceList{}
-	for _, container := range pod.Spec.Containers {
-		result = quota.Add(result, container.Resources.Requests)
-	}
-	initRes := v1.ResourceList{}
-	// take max_resource for init_containers
-	for _, container := range pod.Spec.InitContainers {
-		initRes = quota.Max(initRes, container.Resources.Requests)
-	}
-	// If Overhead is being utilized, add to the total requests for the pod
-	if pod.Spec.Overhead != nil && utilfeature.DefaultFeatureGate.Enabled(kubefeatures.PodOverhead) {
-		quota.Add(result, pod.Spec.Overhead)
-	}
-	// take max_resource for init_containers and containers
-	return quota.Max(result, initRes)
 }
 
 // newZeroUsed will return the zero value of the union of min and max

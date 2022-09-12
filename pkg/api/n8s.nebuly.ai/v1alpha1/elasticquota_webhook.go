@@ -28,7 +28,7 @@ var _ webhook.Validator = &ElasticQuota{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *ElasticQuota) ValidateCreate() error {
-	eqlog.Info("validate create", "name", r.Name)
+	eqlog.V(1).Info("validate create", "name", r.Name)
 	if client == nil {
 		err := fmt.Errorf(constant.InternalErrorMsg)
 		eqlog.Error(err, "client was not initialized correctly")

@@ -17,7 +17,6 @@ limitations under the License.
 package capacityscheduling
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +42,7 @@ func TestReserveResource(t *testing.T) {
 					Memory:   200,
 					ScalarResources: map[v1.ResourceName]int64{
 						ResourceGPU:                2,
-						v1alpha1.ResourceGPUMemory: 0,
+						constant.ResourceGPUMemory: 0,
 					},
 				},
 			},
@@ -60,7 +59,7 @@ func TestReserveResource(t *testing.T) {
 					Memory:   350,
 					ScalarResources: map[v1.ResourceName]int64{
 						ResourceGPU:                5,
-						v1alpha1.ResourceGPUMemory: 0,
+						constant.ResourceGPUMemory: 0,
 					},
 				},
 			},
@@ -113,7 +112,7 @@ func TestUnReserveResource(t *testing.T) {
 					Memory:   50,
 					ScalarResources: map[v1.ResourceName]int64{
 						ResourceGPU:                2,
-						v1alpha1.ResourceGPUMemory: 0,
+						constant.ResourceGPUMemory: 0,
 					},
 				},
 			},

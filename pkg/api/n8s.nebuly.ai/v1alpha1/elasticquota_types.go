@@ -5,8 +5,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const ResourceGPUMemory v1.ResourceName = "nebuly.ai/gpu-memory"
-
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:shortName={eq,eqs}
 // +kubebuilder:subresource:status

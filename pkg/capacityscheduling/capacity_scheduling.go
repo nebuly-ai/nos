@@ -891,7 +891,7 @@ func computePodResourceRequest(pod *v1.Pod) *framework.Resource {
 	}
 	if present == true {
 		result.Add(util.ResourceList(&framework.Resource{ScalarResources: map[v1.ResourceName]int64{
-			v1alpha1.ResourceGPUMemory: gpuMemory,
+			constant.ResourceGPUMemory: gpuMemory,
 		}}))
 	}
 
@@ -902,7 +902,7 @@ func getPodGPUMemoryRequest(pod *v1.Pod) (int64, bool, error) {
 	if val, ok := pod.Labels[constant.LabelGPUMemory]; ok {
 		gpuMemory, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			return 0, false, fmt.Errorf("invalid value for resource %s: expected int64 but got %s", v1alpha1.ResourceGPUMemory, val)
+			return 0, false, fmt.Errorf("invalid value for resource %s: expected int64 but got %s", constant.ResourceGPUMemory, val)
 		} else {
 			return gpuMemory, true, nil
 		}

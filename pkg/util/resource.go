@@ -1,11 +1,19 @@
 package util
 
 import (
+	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"regexp"
+	"strconv"
 )
+
+var migDeviceRegexp = regexp.MustCompile(constant.RegexNvidiaMigDevice)
+var migDeviceMemoryRegexp = regexp.MustCompile(constant.RegexNvidiaMigFormatMemory)
+var numberRegexp = regexp.MustCompile("\\d+")
 
 // ResourceList
 // Copyright 2020 The Kubernetes Authors.
@@ -36,4 +44,23 @@ func ResourceList(r *framework.Resource) v1.ResourceList {
 		}
 	}
 	return result
+}
+
+func IsNvidiaMigDevice(resourceName v1.ResourceName) bool {
+	return migDeviceRegexp.MatchString(string(resourceName))
+}
+
+func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64, error) {
+	var err error
+	var res int64
+
+	matches := migDeviceMemoryRegexp.FindAllString(string(migFormatResourceName), -1)
+	if len(matches) != 1 {
+		return res, fmt.Errorf("invalid input string, expected 1 regexp match but found %d", len(matches))
+	}
+	if res, err = strconv.ParseInt(numberRegexp.FindString(matches[0]), 10, 64); err != nil {
+		return res, err
+	}
+
+	return res, nil
 }

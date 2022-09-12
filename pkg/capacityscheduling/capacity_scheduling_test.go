@@ -19,7 +19,6 @@ package capacityscheduling
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"sort"
 	"testing"
@@ -76,7 +75,7 @@ func TestPreFilter(t *testing.T) {
 				"ns1": {
 					Namespace: "ns1",
 					Min: &framework.Resource{
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
 					},
 					Used: &framework.Resource{},
 				},
@@ -98,15 +97,15 @@ func TestPreFilter(t *testing.T) {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 10},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 10},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 4},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4},
 					},
 				},
 			},
@@ -128,18 +127,18 @@ func TestPreFilter(t *testing.T) {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 4},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4},
 					},
 				},
 				"ns2": {
 					Namespace: "ns2",
 					Min: &framework.Resource{
 						Memory:          5000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 6},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6},
 					},
 					Used: &framework.Resource{},
 				},
@@ -161,30 +160,30 @@ func TestPreFilter(t *testing.T) {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 100},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100},
 					},
 					Used: &framework.Resource{
 						Memory:          1800,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 4},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4},
 					},
 				},
 				"ns2": {
 					Namespace: "ns2",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 1},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 100},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100},
 					},
 					Used: &framework.Resource{
 						Memory:          200,
-						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 1},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1},
 					},
 				},
 			},

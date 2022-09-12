@@ -124,7 +124,7 @@ var _ = Describe("ElasticQuota controller", func() {
 			expectedGPUMemoryQuantity, _ := resource.ParseQuantity(fmt.Sprintf("%d", containerOneGPUMemory+containerTwoGPUMemory))
 			expectedUsedResourceList := v1.ResourceList{
 				v1.ResourceCPU:             expectedCPUQuantity,
-				v1alpha1.ResourceGPUMemory: expectedGPUMemoryQuantity,
+				constant.ResourceGPUMemory: expectedGPUMemoryQuantity,
 			}
 			previousInstance := instance
 			Eventually(func() v1alpha1.ElasticQuota {
@@ -268,7 +268,7 @@ var _ = Describe("ElasticQuota controller", func() {
 						logger.Error(err, "unable to fetch ElasticQuota", "lookup-key", lookupKey)
 						return ""
 					}
-					return eqInstance.Status.Used.Name(v1alpha1.ResourceGPUMemory, resource.DecimalSI).String()
+					return eqInstance.Status.Used.Name(constant.ResourceGPUMemory, resource.DecimalSI).String()
 				}, timeout, interval).Should(Equal(strconv.Itoa(inQuotaPodGPUMemory + overQuotaPodGPUMemory)))
 
 				By("Checking the in-quota Pod's capacity-info label is in-quota")
@@ -369,7 +369,7 @@ var _ = Describe("ElasticQuota controller", func() {
 
 					By("Updating the ElasticQuota reducing the min value")
 					original := elasticQuota.DeepCopy()
-					elasticQuota.Spec.Min[v1alpha1.ResourceGPUMemory] = *resource.NewQuantity(elasticQuotaMinGPUMemoryAfterUpdate, resource.DecimalSI)
+					elasticQuota.Spec.Min[constant.ResourceGPUMemory] = *resource.NewQuantity(elasticQuotaMinGPUMemoryAfterUpdate, resource.DecimalSI)
 					Expect(k8sClient.Patch(ctx, &elasticQuota, client.MergeFrom(original))).To(Succeed())
 
 					By("Checking that the Pod created first is still labelled as in-quota")
