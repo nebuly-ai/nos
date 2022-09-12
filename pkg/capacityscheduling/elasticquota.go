@@ -53,20 +53,22 @@ func (e ElasticQuotaInfos) aggregatedUsedOverMinWith(podRequest framework.Resour
 // ElasticQuotaInfo is a wrapper to a ElasticQuota with information.
 // Each namespace can only have one ElasticQuota.
 type ElasticQuotaInfo struct {
-	Namespace string
-	pods      sets.String
-	Min       *framework.Resource
-	Max       *framework.Resource
-	Used      *framework.Resource
+	Namespace   string
+	pods        sets.String
+	Min         *framework.Resource
+	Max         *framework.Resource
+	Used        *framework.Resource
+	MaxEnforced bool
 }
 
 func newElasticQuotaInfo(namespace string, min, max, used v1.ResourceList) *ElasticQuotaInfo {
 	elasticQuotaInfo := &ElasticQuotaInfo{
-		Namespace: namespace,
-		pods:      sets.NewString(),
-		Min:       framework.NewResource(min),
-		Max:       framework.NewResource(max),
-		Used:      framework.NewResource(used),
+		Namespace:   namespace,
+		pods:        sets.NewString(),
+		Min:         framework.NewResource(min),
+		Max:         framework.NewResource(max),
+		Used:        framework.NewResource(used),
+		MaxEnforced: max != nil,
 	}
 	return elasticQuotaInfo
 }
@@ -92,7 +94,10 @@ func (e *ElasticQuotaInfo) usedOverMinWith(podRequest *framework.Resource) bool 
 }
 
 func (e *ElasticQuotaInfo) usedOverMaxWith(podRequest *framework.Resource) bool {
-	return cmp2(podRequest, e.Used, e.Max)
+	if e.MaxEnforced {
+		return cmp2(podRequest, e.Used, e.Max)
+	}
+	return false
 }
 
 func (e *ElasticQuotaInfo) usedOverMin() bool {

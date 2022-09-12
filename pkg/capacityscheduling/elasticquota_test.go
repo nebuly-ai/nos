@@ -20,6 +20,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
 
@@ -180,6 +181,61 @@ func TestGetPodMemoryRequest(t *testing.T) {
 			if gpuMemory != tt.expectedGpuMemory {
 				t.Errorf("expected gpuMemory=%v, got gpuMemory=%v", tt.expectedGpuMemory, gpuMemory)
 			}
+		})
+	}
+}
+
+func TestElasticQuotaInfo_NewElasticQuotaInfo(t *testing.T) {
+	t.Run("NewElasticQuotaInfo - max provided", func(t *testing.T) {
+		eq := newElasticQuotaInfo("test", v1.ResourceList{}, v1.ResourceList{}, v1.ResourceList{})
+		assert.True(t, eq.MaxEnforced)
+	})
+
+	t.Run("NewElasticQuotaInfo - max is nil", func(t *testing.T) {
+		eq := newElasticQuotaInfo("test", v1.ResourceList{}, nil, v1.ResourceList{})
+		assert.False(t, eq.MaxEnforced)
+	})
+}
+
+func TestElasticQuotaInfo_UsedOverMaxWith(t *testing.T) {
+	tests := []struct {
+		name     string
+		eq       ElasticQuotaInfo
+		resource framework.Resource
+		expected bool
+	}{
+		{
+			name:     "Max not enforced",
+			eq:       ElasticQuotaInfo{MaxEnforced: false},
+			resource: framework.Resource{MilliCPU: 100},
+			expected: false,
+		},
+		{
+			name: "Max enforced - used > max",
+			eq: ElasticQuotaInfo{
+				Used:        &framework.Resource{MilliCPU: 100},
+				Max:         &framework.Resource{MilliCPU: 100},
+				MaxEnforced: true,
+			},
+			resource: framework.Resource{MilliCPU: 100},
+			expected: true,
+		},
+		{
+			name: "Max enforced - used = max",
+			eq: ElasticQuotaInfo{
+				Used:        &framework.Resource{MilliCPU: 50},
+				Max:         &framework.Resource{MilliCPU: 100},
+				MaxEnforced: true,
+			},
+			resource: framework.Resource{MilliCPU: 50},
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := tt.eq.usedOverMaxWith(&tt.resource)
+			assert.Equal(t, tt.expected, actual)
 		})
 	}
 }

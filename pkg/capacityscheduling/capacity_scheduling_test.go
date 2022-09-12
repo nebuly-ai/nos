@@ -97,6 +97,40 @@ func TestPreFilter(t *testing.T) {
 			},
 		},
 		{
+			name: "ElasticQuota not enforcing Max",
+			podInfos: []podInfo{
+				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500, gpuMemReq: 1},
+				{podName: "ns1-p2", podNamespace: "ns1", memReq: 1800, gpuMemReq: 1},
+				{podName: "ns1-p2", podNamespace: "ns1", gpuMemReq: 3},
+			},
+			elasticQuotas: map[string]*ElasticQuotaInfo{
+				"ns1": {
+					Namespace: "ns1",
+					Min: &framework.Resource{
+						Memory:          1000,
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5},
+					},
+					Used: &framework.Resource{
+						Memory:          300,
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 4},
+					},
+				},
+				"ns2": {
+					Namespace: "ns2",
+					Min: &framework.Resource{
+						Memory:          5000,
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 6},
+					},
+					Used: &framework.Resource{},
+				},
+			},
+			expected: []framework.Code{
+				framework.Success,
+				framework.Success,
+				framework.Success,
+			},
+		},
+		{
 			name: "the sum of used is bigger than the sum of min",
 			podInfos: []podInfo{
 				{podName: "ns2-p1", podNamespace: "ns2", memReq: 500},
