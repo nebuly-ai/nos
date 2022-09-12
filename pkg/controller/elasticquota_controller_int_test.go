@@ -57,7 +57,7 @@ var _ = Describe("ElasticQuota controller", func() {
 				containerTwoGPUMemory = 2
 			)
 			By("Creating an ElasticQuota successfully")
-			elasticQuota := factory.BuildEq(namespace.Name, elasticQuotaName).
+			elasticQuota := v1alpha1.BuildEq(namespace.Name, elasticQuotaName).
 				WithMinCPUMilli(elasticQuotaMinCPUMilli).
 				WithMinGPUMemory(elasticQuotaMinGPUMemory).
 				WithMaxCPUMilli(elasticQuotaMaxCPUMilli).
@@ -161,7 +161,7 @@ var _ = Describe("ElasticQuota controller", func() {
 			)
 
 			By("Creating an ElasticQuota successfully")
-			elasticQuota := factory.BuildEq(namespace.Name, elasticQuotaName).
+			elasticQuota := v1alpha1.BuildEq(namespace.Name, elasticQuotaName).
 				WithMinGPUMemory(elasticQuotaMinGPUMemory).
 				WithMaxGPUMemory(elasticQuotaMaxGPUMemory).
 				Get()
@@ -169,7 +169,7 @@ var _ = Describe("ElasticQuota controller", func() {
 
 			By("Creating another ElasticQuota with high GPUMemory min successfully")
 			anotherNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
-			anotherElasticQuota := factory.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
+			anotherElasticQuota := v1alpha1.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
 				WithMinGPUMemory(100).
 				WithMaxGPUMemory(100).
 				Get()
@@ -217,7 +217,7 @@ var _ = Describe("ElasticQuota controller", func() {
 				)
 
 				By("Creating an ElasticQuota successfully")
-				elasticQuota := factory.BuildEq(namespace.Name, elasticQuotaName).
+				elasticQuota := v1alpha1.BuildEq(namespace.Name, elasticQuotaName).
 					WithMinGPUMemory(elasticQuotaMinGPUMemory).
 					WithMaxGPUMemory(elasticQuotaMaxGPUMemory).
 					Get()
@@ -225,7 +225,7 @@ var _ = Describe("ElasticQuota controller", func() {
 
 				By("Creating another ElasticQuota with high GPUMemory min successfully")
 				anotherNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
-				anotherElasticQuota := factory.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
+				anotherElasticQuota := v1alpha1.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
 					WithMinGPUMemory(100).
 					WithMaxGPUMemory(100).
 					Get()
@@ -319,7 +319,7 @@ var _ = Describe("ElasticQuota controller", func() {
 					)
 
 					By("Creating an ElasticQuota successfully")
-					elasticQuota := factory.BuildEq(namespace.Name, util.RandomStringLowercase(10)).
+					elasticQuota := v1alpha1.BuildEq(namespace.Name, util.RandomStringLowercase(10)).
 						WithMinGPUMemory(elasticQuotaMinGPUMemory).
 						WithMaxGPUMemory(elasticQuotaMaxGPUMemory).
 						Get()
