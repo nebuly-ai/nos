@@ -2,7 +2,7 @@ apiVersion: kind.x-k8s.io/v1alpha4
 kind: Cluster
 nodes:
   - role: control-plane
-    image: kindest/node:v1.23.3
+    image: kindest/node:v1.24.4
     kubeadmConfigPatches:
     - |
       kind: ClusterConfiguration
@@ -10,4 +10,4 @@ nodes:
           extraArgs:
             enable-admission-plugins: NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook
   - role: worker
-    image: kindest/node:v1.23.3
+    image: kindest/node:v1.24.4
