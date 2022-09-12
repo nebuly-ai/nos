@@ -67,7 +67,27 @@ func TestPreFilter(t *testing.T) {
 		expected      []framework.Code
 	}{
 		{
-			name: "pod subjects to ElasticQuota",
+			name: "pods requesting resources not specified in ElasticQuota",
+			podInfos: []podInfo{
+				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500, gpuMemReq: 1},
+				{podName: "ns1-p2", podNamespace: "ns1", memReq: 10, gpuMemReq: 1},
+			},
+			elasticQuotas: map[string]*ElasticQuotaInfo{
+				"ns1": {
+					Namespace: "ns1",
+					Min: &framework.Resource{
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5},
+					},
+					Used: &framework.Resource{},
+				},
+			},
+			expected: []framework.Code{
+				framework.Unschedulable,
+				framework.Unschedulable,
+			},
+		},
+		{
+			name: "pods subject to ElasticQuota",
 			podInfos: []podInfo{
 				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500, gpuMemReq: 1},
 				{podName: "ns1-p2", podNamespace: "ns1", memReq: 1800, gpuMemReq: 1},
