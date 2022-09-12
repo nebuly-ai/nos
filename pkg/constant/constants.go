@@ -17,3 +17,7 @@ const (
 	// LabelCapacityInfo specifies the status of a Pod in regard to the ElasticQuota it belongs to
 	LabelCapacityInfo = "n8s.nebuly.ai/capacity"
 )
+
+const (
+	InternalErrorMsg = "internal error"
+)
