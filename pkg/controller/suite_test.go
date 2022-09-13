@@ -5,6 +5,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -63,9 +64,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&ElasticQuotaReconciler{
-		Client:            k8sManager.GetClient(),
-		Scheme:            k8sManager.GetScheme(),
-		nvidiaGPUMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
+		Client:             k8sManager.GetClient(),
+		Scheme:             k8sManager.GetScheme(),
+		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory},
 	}).SetupWithManager(k8sManager, constant.ElasticQuotaControllerName)
 	Expect(err).ToNot(HaveOccurred())
 

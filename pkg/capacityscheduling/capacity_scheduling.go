@@ -59,6 +59,7 @@ type CapacityScheduling struct {
 	pdbLister          policylisters.PodDisruptionBudgetLister
 	elasticQuotaLister cache.GenericLister
 	elasticQuotaInfos  ElasticQuotaInfos
+	resourceCalculator util.ResourceCalculator
 }
 
 // PreFilterState computed at PreFilter and used at PostFilter or Reserve.
@@ -120,6 +121,9 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		elasticQuotaInfos: NewElasticQuotaInfos(),
 		podLister:         handle.SharedInformerFactory().Core().V1().Pods().Lister(),
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
+		resourceCalculator: util.ResourceCalculator{
+			NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
+		},
 	}
 
 	dynamicClient, err := dynamic.NewForConfig(handle.KubeConfig())
@@ -209,7 +213,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 	// TODO improve the efficiency of taking snapshot
 	// e.g. use a two-pointer data structure to only copy the updated EQs when necessary.
 	snapshotElasticQuota := c.snapshotElasticQuota()
-	req := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
+	req := c.resourceCalculator.ComputePodResourceRequest(*pod)
 	podReq := util.FromResourceListToFrameworkResource(req)
 
 	state.Write(ElasticQuotaSnapshotKey, snapshotElasticQuota)
@@ -247,7 +251,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 			ns := p.Pod.Namespace
 			info := c.elasticQuotaInfos[ns]
 			if info != nil {
-				pResourceRequest := util.ComputePodResourceRequest(*p.Pod, constant.DefaultNvidiaGPUResourceMemory)
+				pResourceRequest := c.resourceCalculator.ComputePodResourceRequest(*p.Pod)
 				// If they are subject to the same quota(namespace) and p is more important than pod,
 				// p will be added to the nominatedResource and totalNominatedResource.
 				// If they aren't subject to the same quota(namespace) and the usage of quota(p's namespace) does not exceed min,
@@ -665,7 +669,7 @@ func (c *CapacityScheduling) addElasticQuota(obj interface{}) {
 		return
 	}
 
-	elasticQuotaInfo := newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil)
+	elasticQuotaInfo := newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil, c.resourceCalculator)
 
 	c.Lock()
 	defer c.Unlock()
@@ -686,7 +690,7 @@ func (c *CapacityScheduling) updateElasticQuota(oldObj, newObj interface{}) {
 		return
 	}
 
-	newEQInfo := newElasticQuotaInfo(newEQ.Namespace, newEQ.Spec.Min, newEQ.Spec.Max, nil)
+	newEQInfo := newElasticQuotaInfo(newEQ.Namespace, newEQ.Spec.Min, newEQ.Spec.Max, nil, c.resourceCalculator)
 
 	c.Lock()
 	defer c.Unlock()
@@ -740,7 +744,7 @@ func (c *CapacityScheduling) addPod(obj interface{}) {
 				klog.ErrorS(err, "unable to convert unstructured to ElasticQuota")
 				return
 			}
-			elasticQuotaInfo = newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil)
+			elasticQuotaInfo = newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil, c.resourceCalculator)
 			c.elasticQuotaInfos[eq.Namespace] = elasticQuotaInfo
 		}
 	}

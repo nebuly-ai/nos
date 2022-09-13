@@ -17,7 +17,6 @@ limitations under the License.
 package capacityscheduling
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -54,22 +53,24 @@ func (e ElasticQuotaInfos) aggregatedUsedOverMinWith(podRequest framework.Resour
 // ElasticQuotaInfo is a wrapper to a ElasticQuota with information.
 // Each namespace can only have one ElasticQuota.
 type ElasticQuotaInfo struct {
-	Namespace   string
-	pods        sets.String
-	Min         *framework.Resource
-	Max         *framework.Resource
-	Used        *framework.Resource
-	MaxEnforced bool
+	Namespace          string
+	pods               sets.String
+	Min                *framework.Resource
+	Max                *framework.Resource
+	Used               *framework.Resource
+	MaxEnforced        bool
+	resourceCalculator util.ResourceCalculator
 }
 
-func newElasticQuotaInfo(namespace string, min, max, used v1.ResourceList) *ElasticQuotaInfo {
+func newElasticQuotaInfo(namespace string, min, max, used v1.ResourceList, resourceCalculator util.ResourceCalculator) *ElasticQuotaInfo {
 	elasticQuotaInfo := &ElasticQuotaInfo{
-		Namespace:   namespace,
-		pods:        sets.NewString(),
-		Min:         framework.NewResource(min),
-		Max:         framework.NewResource(max),
-		Used:        framework.NewResource(used),
-		MaxEnforced: max != nil,
+		Namespace:          namespace,
+		pods:               sets.NewString(),
+		Min:                framework.NewResource(min),
+		Max:                framework.NewResource(max),
+		Used:               framework.NewResource(used),
+		MaxEnforced:        max != nil,
+		resourceCalculator: resourceCalculator,
 	}
 	return elasticQuotaInfo
 }
@@ -141,7 +142,7 @@ func (e *ElasticQuotaInfo) addPodIfNotPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Insert(key)
-	r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
+	r := e.resourceCalculator.ComputePodResourceRequest(*pod)
 	podRequest := util.FromResourceListToFrameworkResource(r)
 	e.reserveResource(podRequest)
 
@@ -159,7 +160,7 @@ func (e *ElasticQuotaInfo) deletePodIfPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Delete(key)
-	r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
+	r := e.resourceCalculator.ComputePodResourceRequest(*pod)
 	podRequest := util.FromResourceListToFrameworkResource(r)
 	e.unreserveResource(podRequest)
 

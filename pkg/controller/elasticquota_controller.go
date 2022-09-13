@@ -32,8 +32,16 @@ const (
 // ElasticQuotaReconciler reconciles a ElasticQuota object
 type ElasticQuotaReconciler struct {
 	client.Client
-	Scheme            *runtime.Scheme
-	nvidiaGPUMemoryGB int64
+	Scheme             *runtime.Scheme
+	resourceCalculator util.ResourceCalculator
+}
+
+func NewElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGPUResourceMemoryGB int64) ElasticQuotaReconciler {
+	return ElasticQuotaReconciler{
+		Client:             client,
+		Scheme:             scheme,
+		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB},
+	}
 }
 
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;create;update;patch;delete
@@ -97,8 +105,8 @@ func (r *ElasticQuotaReconciler) sortPodListForFindingOverQuotaPods(podList *v1.
 		}
 
 		// If resource request is not the same, sort by resource request
-		firstPodRequest := util.ComputePodResourceRequest(podList.Items[i], r.nvidiaGPUMemoryGB)
-		secondPodRequest := util.ComputePodResourceRequest(podList.Items[j], r.nvidiaGPUMemoryGB)
+		firstPodRequest := r.resourceCalculator.ComputePodResourceRequest(podList.Items[i])
+		secondPodRequest := r.resourceCalculator.ComputePodResourceRequest(podList.Items[j])
 		if !quota.Equals(firstPodRequest, secondPodRequest) {
 			less, _ := quota.LessThanOrEqual(firstPodRequest, secondPodRequest)
 			return less
@@ -113,7 +121,7 @@ func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, p
 	used := newZeroUsed(*eq)
 	var err error
 	for _, pod := range podList.Items {
-		request := util.ComputePodResourceRequest(pod, r.nvidiaGPUMemoryGB)
+		request := r.resourceCalculator.ComputePodResourceRequest(pod)
 		used = quota.Add(used, request)
 
 		var desiredCapacityInfo constant.CapacityInfo

@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,7 +99,9 @@ func TestSortPodListForFindingOverQuotaPods(t *testing.T) {
 		},
 	}
 
-	r := ElasticQuotaReconciler{nvidiaGPUMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	r := ElasticQuotaReconciler{
+		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r.sortPodListForFindingOverQuotaPods(&tt.podList)

@@ -78,10 +78,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.ElasticQuotaReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, constant.ElasticQuotaControllerName); err != nil {
+	elasticQuotaReconciler := controller.NewElasticQuotaReconciler(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+		*controllerConfig.NvidiaGPUResourceMemoryGB,
+	)
+	if err = elasticQuotaReconciler.SetupWithManager(mgr, constant.ElasticQuotaControllerName); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ElasticQuota")
 		os.Exit(1)
 	}

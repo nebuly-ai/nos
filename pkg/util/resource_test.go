@@ -97,7 +97,7 @@ func TestExtractMemoryGBFromMigDevice(t *testing.T) {
 	}
 }
 
-func TestComputeRequiredGPUMemoryGB(t *testing.T) {
+func TestResourceCalculator_ComputeRequiredGPUMemoryGB(t *testing.T) {
 	const nvidiaDeviceGPUMemoryGB = 8
 	tests := []struct {
 		name         string
@@ -132,9 +132,12 @@ func TestComputeRequiredGPUMemoryGB(t *testing.T) {
 		},
 	}
 
+	resourceCalculator := ResourceCalculator{
+		NvidiaGPUDeviceMemoryGB: nvidiaDeviceGPUMemoryGB,
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := ComputeRequiredGPUMemoryGB(tt.resourceList, nvidiaDeviceGPUMemoryGB)
+			actual := resourceCalculator.ComputeRequiredGPUMemoryGB(tt.resourceList)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}

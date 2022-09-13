@@ -47,5 +47,7 @@ const (
 const (
 	// DefaultNvidiaGPUResourceMemory is the default memory value (in GigaByte) that is associated to
 	// nvidia.com/gpu resources. The value represents the GPU memory requirement of a single resource.
+	// This value is used when the controller and scheduler configurations do not specify any value for this
+	// setting.
 	DefaultNvidiaGPUResourceMemory = 16
 )

@@ -66,11 +66,12 @@ func TestReserveResource(t *testing.T) {
 		},
 	}
 
+	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
-				r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
+				r := resourceCalculator.ComputePodResourceRequest(*pod)
 				request := util.FromResourceListToFrameworkResource(r)
 				elasticQuotaInfo.reserveResource(request)
 			}
@@ -121,11 +122,12 @@ func TestUnReserveResource(t *testing.T) {
 		},
 	}
 
+	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
-				r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
+				r := resourceCalculator.ComputePodResourceRequest(*pod)
 				request := util.FromResourceListToFrameworkResource(r)
 				elasticQuotaInfo.unreserveResource(request)
 			}
@@ -139,12 +141,24 @@ func TestUnReserveResource(t *testing.T) {
 
 func TestElasticQuotaInfo_NewElasticQuotaInfo(t *testing.T) {
 	t.Run("NewElasticQuotaInfo - max provided", func(t *testing.T) {
-		eq := newElasticQuotaInfo("test", v1.ResourceList{}, v1.ResourceList{}, v1.ResourceList{})
+		eq := newElasticQuotaInfo(
+			"test",
+			v1.ResourceList{},
+			v1.ResourceList{},
+			v1.ResourceList{},
+			util.ResourceCalculator{},
+		)
 		assert.True(t, eq.MaxEnforced)
 	})
 
 	t.Run("NewElasticQuotaInfo - max is nil", func(t *testing.T) {
-		eq := newElasticQuotaInfo("test", v1.ResourceList{}, nil, v1.ResourceList{})
+		eq := newElasticQuotaInfo(
+			"test",
+			v1.ResourceList{},
+			nil,
+			v1.ResourceList{},
+			util.ResourceCalculator{},
+		)
 		assert.False(t, eq.MaxEnforced)
 	})
 }
