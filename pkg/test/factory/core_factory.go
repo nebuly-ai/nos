@@ -108,11 +108,35 @@ func (b *containerBuilder) WithCPUMilliRequest(cpuMilli int64) *containerBuilder
 	return b
 }
 
-func (b *containerBuilder) WithGPUMemoryLimit(gpuMemory int64) *containerBuilder {
+func (b *containerBuilder) WithNvidiaGPULimit(amount int64) *containerBuilder {
 	if b.Container.Resources.Limits == nil {
 		b.Container.Resources.Limits = make(v1.ResourceList)
 	}
-	b.Container.Resources.Limits[constant.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	b.Container.Resources.Limits[constant.ResourceNvidiaGPU] = *resource.NewQuantity(amount, resource.DecimalSI)
+	return b
+}
+
+func (b *containerBuilder) WithNvidiaGPURequest(amount int64) *containerBuilder {
+	if b.Container.Resources.Requests == nil {
+		b.Container.Resources.Requests = make(v1.ResourceList)
+	}
+	b.Container.Resources.Requests[constant.ResourceNvidiaGPU] = *resource.NewQuantity(amount, resource.DecimalSI)
+	return b
+}
+
+func (b *containerBuilder) WithNvidiaMigRequest(migDevice string, amount int64) *containerBuilder {
+	if b.Container.Resources.Requests == nil {
+		b.Container.Resources.Requests = make(v1.ResourceList)
+	}
+	b.Container.Resources.Requests[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
+	return b
+}
+
+func (b *containerBuilder) WithNvidiaMigLimit(migDevice string, amount int64) *containerBuilder {
+	if b.Container.Resources.Limits == nil {
+		b.Container.Resources.Limits = make(v1.ResourceList)
+	}
+	b.Container.Resources.Limits[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
 	return b
 }
 
@@ -121,14 +145,6 @@ func (b *containerBuilder) WithResourceRequest(resourceName v1.ResourceName, qua
 		b.Container.Resources.Requests = make(v1.ResourceList)
 	}
 	b.Container.Resources.Requests[resourceName] = quantity
-	return b
-}
-
-func (b *containerBuilder) WithGPUMemoryRequest(gpuMemory int64) *containerBuilder {
-	if b.Container.Resources.Requests == nil {
-		b.Container.Resources.Requests = make(v1.ResourceList)
-	}
-	b.Container.Resources.Requests[constant.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 	return b
 }
 

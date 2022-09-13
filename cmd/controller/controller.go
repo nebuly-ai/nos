@@ -22,8 +22,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/controller"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -89,7 +87,6 @@ func main() {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ElasticQuota")
 		os.Exit(1)
 	}
-	mgr.GetWebhookServer().Register("/mutate-v1-pod", &webhook.Admission{Handler: &v1alpha1.GPUMemoryLabeler{}})
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")

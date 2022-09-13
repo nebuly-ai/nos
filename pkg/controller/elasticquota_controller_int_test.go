@@ -30,9 +30,6 @@ var _ = Describe("ElasticQuota controller", func() {
 
 	BeforeEach(func() {
 		// Add any setup steps that needs to be executed before each test
-		//if utils.GetEnvBool(constants.EnvSkipControllerTests, false) {
-		//	Skip(fmt.Sprintf("%s is true, skipping controller tests", constants.EnvSkipControllerTests))
-		//}
 		namespace = factory.BuildNamespace(util.RandomStringLowercase(16)).Get()
 		Expect(k8sClient.Create(ctx, &namespace)).To(Succeed())
 	})
@@ -46,16 +43,21 @@ var _ = Describe("ElasticQuota controller", func() {
 		It("Should update the ElasticQuota status", func() {
 			const (
 				elasticQuotaMinCPUMilli  = 4000
-				elasticQuotaMinGPUMemory = 4
+				elasticQuotaMinGPUMemory = 4 * constant.DefaultNvidiaGPUMemory
 				elasticQuotaMaxCPUMilli  = 6000
-				elasticQuotaMaxGPUMemory = 6
+				elasticQuotaMaxGPUMemory = 5 * constant.DefaultNvidiaGPUMemory
 				elasticQuotaName         = "test-elasticquota"
 
-				containerOneCPUMilli  = 500
-				containerOneGPUMemory = 1
-				containerTwoCPUMilli  = 500
-				containerTwoGPUMemory = 2
+				containerOneCPUMilli        = 500
+				containerOneNvidiaGpu       = 1
+				containerTwoCPUMilli        = 500
+				containerTwoNvidiaGpu       = 2
+				containerTwoNvidiaMigMemory = 1
 			)
+			var containerTwoNvidiaMigResource = v1.ResourceName(
+				fmt.Sprintf("nvidia.com/mig-1g%dgb", containerTwoNvidiaMigMemory),
+			)
+
 			By("Creating an ElasticQuota successfully")
 			elasticQuota := v1alpha1.BuildEq(namespace.Name, elasticQuotaName).
 				WithMinCPUMilli(elasticQuotaMinCPUMilli).
@@ -78,13 +80,14 @@ var _ = Describe("ElasticQuota controller", func() {
 				WithContainer(
 					factory.BuildContainer("container-1", "test:0.0.1").
 						WithCPUMilliLimit(containerOneCPUMilli).
-						WithGPUMemoryLimit(containerOneGPUMemory).
+						WithNvidiaGPULimit(containerOneNvidiaGpu).
 						Get(),
 				).
 				WithContainer(
 					factory.BuildContainer("container-2", "test:0.0.1").
 						WithCPUMilliLimit(containerTwoCPUMilli).
-						WithGPUMemoryLimit(containerTwoGPUMemory).
+						WithNvidiaGPULimit(containerTwoNvidiaGpu).
+						WithNvidiaMigLimit(string(containerTwoNvidiaMigResource), 1).
 						Get(),
 				).
 				Get()
@@ -108,7 +111,7 @@ var _ = Describe("ElasticQuota controller", func() {
 				WithContainer(
 					factory.BuildContainer("container-1", "test:0.0.1").
 						WithCPUMilliLimit(containerOneCPUMilli).
-						WithGPUMemoryLimit(containerOneGPUMemory).
+						WithNvidiaGPULimit(containerOneNvidiaGpu).
 						Get(),
 				).Get()
 			Expect(k8sClient.Create(ctx, &otherNamespacePod)).To(Succeed())
@@ -119,9 +122,13 @@ var _ = Describe("ElasticQuota controller", func() {
 			Expect(k8sClient.Status().Update(ctx, &pod)).To(Succeed())
 			Expect(k8sClient.Status().Update(ctx, &otherNamespacePod)).To(Succeed())
 
-			By("Checking that the ElasticQuota status gets updated only considering the Pods in its namespace")
-			expectedCPUQuantity, _ := resource.ParseQuantity(fmt.Sprintf("%d", (containerOneCPUMilli+containerTwoCPUMilli)/1000))
-			expectedGPUMemoryQuantity, _ := resource.ParseQuantity(fmt.Sprintf("%d", containerOneGPUMemory+containerTwoGPUMemory))
+			By("Checking that the ElasticQuota status gets updated only considering (1) the Pods in its namespace and (2) the resources defined in the quota spec")
+			expectedCPUQuantity, _ := resource.ParseQuantity(
+				strconv.Itoa((containerOneCPUMilli + containerTwoCPUMilli) / 1000),
+			)
+			expectedGPUMemoryQuantity, _ := resource.ParseQuantity(
+				strconv.Itoa((containerOneNvidiaGpu+containerTwoNvidiaGpu)*constant.DefaultNvidiaGPUMemory + containerTwoNvidiaMigMemory),
+			)
 			expectedUsedResourceList := v1.ResourceList{
 				v1.ResourceCPU:             expectedCPUQuantity,
 				constant.ResourceGPUMemory: expectedGPUMemoryQuantity,
@@ -155,8 +162,8 @@ var _ = Describe("ElasticQuota controller", func() {
 	When("A new Pod is scheduled in over-quota", func() {
 		It("Should add a label specifying that the Pod is using over-quotas and can thus be preempted", func() {
 			const (
-				elasticQuotaMinGPUMemory = 4
-				elasticQuotaMaxGPUMemory = 6
+				elasticQuotaMinGPUMemory = 4 * constant.DefaultNvidiaGPUMemory
+				elasticQuotaMaxGPUMemory = 6 * constant.DefaultNvidiaGPUMemory
 				elasticQuotaName         = "test-elasticquota"
 			)
 
@@ -170,8 +177,8 @@ var _ = Describe("ElasticQuota controller", func() {
 			By("Creating another ElasticQuota with high GPUMemory min successfully")
 			anotherNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
 			anotherElasticQuota := v1alpha1.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
-				WithMinGPUMemory(100).
-				WithMaxGPUMemory(100).
+				WithMinGPUMemory(100 * constant.DefaultNvidiaGPUMemory).
+				WithMaxGPUMemory(100 * constant.DefaultNvidiaGPUMemory).
 				Get()
 			Expect(k8sClient.Create(ctx, &anotherNamespace)).To(Succeed())
 			Expect(k8sClient.Create(ctx, &anotherElasticQuota)).To(Succeed())
@@ -180,12 +187,12 @@ var _ = Describe("ElasticQuota controller", func() {
 			pod := factory.BuildPod(elasticQuota.Namespace, "pod-2").
 				WithContainer(
 					factory.BuildContainer("container-1", "test:0.0.1").
-						WithGPUMemoryLimit(5).
+						WithNvidiaGPULimit(5).
 						Get(),
 				).
 				WithContainer(
 					factory.BuildContainer("container-2", "test:0.0.1").
-						WithGPUMemoryLimit(5).
+						WithNvidiaGPULimit(5).
 						Get(),
 				).
 				Get()
@@ -209,10 +216,10 @@ var _ = Describe("ElasticQuota controller", func() {
 		When("A Pod is in over-quota and some other Pod stops running freeing up available quotas", func() {
 			It("Should update the Pod capacity info label from over-quota to in-quota", func() {
 				const (
-					elasticQuotaMinGPUMemory = 4
-					elasticQuotaMaxGPUMemory = 6
-					inQuotaPodGPUMemory      = elasticQuotaMinGPUMemory - 2 // since pods are created at the same time, in-quota Pod GPU request must be < over-quota Pod GPU request so that they get labelled properly
-					overQuotaPodGPUMemory    = elasticQuotaMinGPUMemory - 1
+					elasticQuotaMinGPUMemory = 4 * constant.DefaultNvidiaGPUMemory
+					elasticQuotaMaxGPUMemory = 6 * constant.DefaultNvidiaGPUMemory
+					inQuotaPodGPU            = 4 - 2 // since pods are created at the same time, in-quota Pod GPU request must be < over-quota Pod GPU request so that they get labelled properly
+					overQuotaPodGPU          = 4 - 1
 					elasticQuotaName         = "test-elasticquota"
 				)
 
@@ -226,8 +233,8 @@ var _ = Describe("ElasticQuota controller", func() {
 				By("Creating another ElasticQuota with high GPUMemory min successfully")
 				anotherNamespace := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
 				anotherElasticQuota := v1alpha1.BuildEq(anotherNamespace.Name, util.RandomStringLowercase(10)).
-					WithMinGPUMemory(100).
-					WithMaxGPUMemory(100).
+					WithMinGPUMemory(100 * constant.DefaultNvidiaGPUMemory).
+					WithMaxGPUMemory(100 * constant.DefaultNvidiaGPUMemory).
 					Get()
 				Expect(k8sClient.Create(ctx, &anotherNamespace)).To(Succeed())
 				Expect(k8sClient.Create(ctx, &anotherElasticQuota)).To(Succeed())
@@ -236,7 +243,7 @@ var _ = Describe("ElasticQuota controller", func() {
 				inQuotaPod := factory.BuildPod(elasticQuota.Namespace, "pod-1").
 					WithContainer(
 						factory.BuildContainer("container-1", "test:0.0.1").
-							WithGPUMemoryLimit(inQuotaPodGPUMemory).
+							WithNvidiaGPULimit(inQuotaPodGPU).
 							Get(),
 					).
 					Get()
@@ -250,7 +257,7 @@ var _ = Describe("ElasticQuota controller", func() {
 				overQuotaPod := factory.BuildPod(elasticQuota.Namespace, "pod-2").
 					WithContainer(
 						factory.BuildContainer("container-1", "test:0.0.1").
-							WithGPUMemoryLimit(overQuotaPodGPUMemory).
+							WithNvidiaGPULimit(overQuotaPodGPU).
 							Get(),
 					).
 					Get()
@@ -269,7 +276,7 @@ var _ = Describe("ElasticQuota controller", func() {
 						return ""
 					}
 					return eqInstance.Status.Used.Name(constant.ResourceGPUMemory, resource.DecimalSI).String()
-				}, timeout, interval).Should(Equal(strconv.Itoa(inQuotaPodGPUMemory + overQuotaPodGPUMemory)))
+				}, timeout, interval).Should(Equal(strconv.Itoa((inQuotaPodGPU + overQuotaPodGPU) * constant.DefaultNvidiaGPUMemory)))
 
 				By("Checking the in-quota Pod's capacity-info label is in-quota")
 				assertPodHasLabel(
@@ -310,12 +317,12 @@ var _ = Describe("ElasticQuota controller", func() {
 			When("An ElasticQuota min field is updated", func() {
 				It("Should update Pods capacity-info label accordingly", func() {
 					const (
-						elasticQuotaMinGPUMemory            = 4
-						elasticQuotaMinGPUMemoryAfterUpdate = 2
-						elasticQuotaMaxGPUMemory            = 6
+						elasticQuotaMinGPUMemory            = 4 * constant.DefaultNvidiaGPUMemory
+						elasticQuotaMinGPUMemoryAfterUpdate = 2 * constant.DefaultNvidiaGPUMemory
+						elasticQuotaMaxGPUMemory            = 6 * constant.DefaultNvidiaGPUMemory
 
-						podOneGPUMemory = 2
-						podTwoGPUMemory = 2
+						podOneNvidiaGPU = 2
+						podTwoNvidiaGPU = 2
 					)
 
 					By("Creating an ElasticQuota successfully")
@@ -329,14 +336,14 @@ var _ = Describe("ElasticQuota controller", func() {
 					podOne := factory.BuildPod(elasticQuota.Namespace, "pod-1").
 						WithContainer(
 							factory.BuildContainer("container-1", "test:0.0.1").
-								WithGPUMemoryLimit(podOneGPUMemory).
+								WithNvidiaGPULimit(podOneNvidiaGPU).
 								Get(),
 						).
 						Get()
 					podTwo := factory.BuildPod(elasticQuota.Namespace, "pod-2").
 						WithContainer(
 							factory.BuildContainer("container-1", "test:0.0.1").
-								WithGPUMemoryLimit(podTwoGPUMemory).
+								WithNvidiaGPULimit(podTwoNvidiaGPU).
 								Get(),
 						).
 						Get()

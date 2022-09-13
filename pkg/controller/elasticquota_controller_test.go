@@ -62,17 +62,17 @@ func TestSortPodListForFindingOverQuotaPods(t *testing.T) {
 				factory.BuildPod("ns-1", "pd-1").
 					WithCreationTimestamp(metav1.NewTime(time.Date(1995, 1, 1, 0, 0, 0, 0, time.UTC))).
 					WithPriority(int32(10)).
-					WithContainer(factory.BuildContainer("c1", "test").WithGPUMemoryRequest(10).Get()).
+					WithContainer(factory.BuildContainer("c1", "test").WithNvidiaGPURequest(10).Get()).
 					Get(),
 				factory.BuildPod("ns-1", "pd-2").
 					WithCreationTimestamp(metav1.NewTime(time.Date(1995, 1, 1, 0, 0, 0, 0, time.UTC))).
 					WithPriority(int32(10)).
-					WithContainer(factory.BuildContainer("c1", "test").WithGPUMemoryRequest(1).Get()).
+					WithContainer(factory.BuildContainer("c1", "test").WithNvidiaGPURequest(1).Get()).
 					Get(),
 				factory.BuildPod("ns-1", "pd-3").
 					WithCreationTimestamp(metav1.NewTime(time.Date(1995, 1, 1, 0, 0, 0, 0, time.UTC))).
 					WithPriority(int32(10)).
-					WithContainer(factory.BuildContainer("c1", "test").WithGPUMemoryRequest(5).Get()).
+					WithContainer(factory.BuildContainer("c1", "test").WithNvidiaGPURequest(5).Get()).
 					Get(),
 			}},
 			expectedSortedPodNames: []string{"pd-2", "pd-3", "pd-1"},

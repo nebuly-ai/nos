@@ -1,26 +1,20 @@
 apiVersion: n8s.nebuly.ai/v1alpha1
 kind: ElasticQuota
 metadata:
-  name: elasticquota-sample
+  name: quota-a
+  namespace: team-a
 spec:
-  max:
-    cpu: 6
   min:
-    cpu: 4
+    cpu: 2m
+    nebuly.ai/gpu-memory: 64
 
 ---
 
-apiVersion: v1
-kind: Pod
+apiVersion: n8s.nebuly.ai/v1alpha1
+kind: ElasticQuota
 metadata:
-  name: nginx-2
+  name: quota-b
+  namespace: team-b
 spec:
-  containers:
-    - name: nginx
-      image: nginx:1.14.2
-      ports:
-      - containerPort: 80
-      resources:
-        limits:
-          cpu: 100m
-          memory: 128Mi
+  min:
+    cpu: 6m

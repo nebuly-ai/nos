@@ -18,8 +18,8 @@ package capacityscheduling
 
 import (
 	"context"
-	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"sort"
 	"testing"
 
@@ -45,8 +45,6 @@ import (
 	testutil "github.com/nebuly-ai/nebulnetes/pkg/test/util"
 )
 
-const ResourceGPU v1.ResourceName = "nvidia.com/gpu"
-
 var (
 	lowPriority, midPriority, highPriority = int32(10), int32(100), int32(1000)
 )
@@ -56,7 +54,8 @@ func TestPreFilter(t *testing.T) {
 		podName      string
 		podNamespace string
 		memReq       int64
-		gpuMemReq    int64
+		cpuReq       int64
+		gpuReq       int64
 	}
 
 	tests := []struct {
@@ -68,44 +67,48 @@ func TestPreFilter(t *testing.T) {
 		{
 			name: "pods requesting resources not specified in ElasticQuota",
 			podInfos: []podInfo{
-				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500, gpuMemReq: 1},
-				{podName: "ns1-p2", podNamespace: "ns1", memReq: 10, gpuMemReq: 1},
+				{podName: "ns1-p1", podNamespace: "ns1", cpuReq: 0, memReq: 500},
+				{podName: "ns1-p2", podNamespace: "ns1", cpuReq: 0, memReq: 10},
+				{podName: "ns1-p2", podNamespace: "ns1", cpuReq: 10, memReq: 10},          // request non-scalar resource not defined in quota
+				{podName: "ns1-p2", podNamespace: "ns1", cpuReq: 0, memReq: 0, gpuReq: 1}, // request scalar resource not defined in quota
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
 					Namespace: "ns1",
 					Min: &framework.Resource{
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
+						Memory: 1000,
 					},
 					Used: &framework.Resource{},
 				},
 			},
 			expected: []framework.Code{
+				framework.Success,
+				framework.Success,
 				framework.Unschedulable,
-				framework.Unschedulable,
+				framework.Success,
 			},
 		},
 		{
 			name: "pods subject to ElasticQuota",
 			podInfos: []podInfo{
-				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500, gpuMemReq: 1},
-				{podName: "ns1-p2", podNamespace: "ns1", memReq: 1800, gpuMemReq: 1},
-				{podName: "ns1-p2", podNamespace: "ns1", gpuMemReq: 3},
+				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500, gpuReq: 1},
+				{podName: "ns1-p2", podNamespace: "ns1", memReq: 1800},
+				{podName: "ns1-p2", podNamespace: "ns1", gpuReq: 2},
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 10},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * constant.DefaultNvidiaGPUMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUMemory},
 					},
 				},
 			},
@@ -118,27 +121,27 @@ func TestPreFilter(t *testing.T) {
 		{
 			name: "ElasticQuota not enforcing Max",
 			podInfos: []podInfo{
-				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500, gpuMemReq: 1},
-				{podName: "ns1-p2", podNamespace: "ns1", memReq: 1800, gpuMemReq: 1},
-				{podName: "ns1-p2", podNamespace: "ns1", gpuMemReq: 3},
+				{podName: "ns1-p1", podNamespace: "ns1", memReq: 500},
+				{podName: "ns1-p2", podNamespace: "ns1", memReq: 1800},
+				{podName: "ns1-p2", podNamespace: "ns1", gpuReq: 6},
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUMemory},
 					},
 				},
 				"ns2": {
 					Namespace: "ns2",
 					Min: &framework.Resource{
 						Memory:          5000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * constant.DefaultNvidiaGPUMemory},
 					},
 					Used: &framework.Resource{},
 				},
@@ -153,37 +156,37 @@ func TestPreFilter(t *testing.T) {
 			name: "the sum of used is bigger than the sum of min",
 			podInfos: []podInfo{
 				{podName: "ns2-p1", podNamespace: "ns2", memReq: 500},
-				{podName: "ns2-p1", podNamespace: "ns2", gpuMemReq: 2},
+				{podName: "ns2-p1", podNamespace: "ns2", gpuReq: 2},
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * constant.DefaultNvidiaGPUMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          1800,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUMemory},
 					},
 				},
 				"ns2": {
 					Namespace: "ns2",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * constant.DefaultNvidiaGPUMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * constant.DefaultNvidiaGPUMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          200,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * constant.DefaultNvidiaGPUMemory},
 					},
 				},
 			},
@@ -219,7 +222,7 @@ func TestPreFilter(t *testing.T) {
 
 			pods := make([]*v1.Pod, 0)
 			for _, podInfo := range tt.podInfos {
-				pod := makePod(podInfo.podName, podInfo.podNamespace, podInfo.memReq, 0, 0, podInfo.gpuMemReq, 0, podInfo.podName, "", false)
+				pod := makePod(podInfo.podName, podInfo.podNamespace, podInfo.memReq, podInfo.cpuReq, podInfo.gpuReq, 0, podInfo.podName, "", false)
 				pods = append(pods, pod)
 			}
 
@@ -246,11 +249,11 @@ func TestDryRunPreemption(t *testing.T) {
 	}{
 		{
 			name: "in-namespace preemption",
-			pod:  makePod("t1-p", "ns1", 50, 0, 0, 0, highPriority, "", "t1-p", false),
+			pod:  makePod("t1-p", "ns1", 50, 0, 0, highPriority, "", "t1-p", false),
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 50, 0, 0, 0, midPriority, "t1-p1", "node-a", false),
-				makePod("t1-p2", "ns2", 50, 0, 0, 0, midPriority, "t1-p2", "node-a", false),
-				makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a", false),
+				makePod("t1-p1", "ns1", 50, 0, 0, midPriority, "t1-p1", "node-a", false),
+				makePod("t1-p2", "ns2", 50, 0, 0, midPriority, "t1-p2", "node-a", false),
+				makePod("t1-p3", "ns2", 50, 0, 0, midPriority, "t1-p3", "node-a", false),
 			},
 			nodes: []*v1.Node{
 				st.MakeNode().Name("node-a").Capacity(res).Obj(),
@@ -288,7 +291,7 @@ func TestDryRunPreemption(t *testing.T) {
 				&candidate{
 					victims: &extenderv1.Victims{
 						Pods: []*v1.Pod{
-							makePod("t1-p1", "ns1", 50, 0, 0, 0, midPriority, "t1-p1", "node-a", false),
+							makePod("t1-p1", "ns1", 50, 0, 0, midPriority, "t1-p1", "node-a", false),
 						},
 						NumPDBViolations: 0,
 					},
@@ -298,12 +301,12 @@ func TestDryRunPreemption(t *testing.T) {
 		},
 		{
 			name: "cross-namespace preemption",
-			pod:  makePod("t1-p", "ns1", 50, 0, 0, 0, highPriority, "", "t1-p", false),
+			pod:  makePod("t1-p", "ns1", 50, 0, 0, highPriority, "", "t1-p", false),
 			pods: []*v1.Pod{
-				makePod("t1-p1", "ns1", 40, 0, 0, 0, midPriority, "t1-p1", "node-a", false),
-				makePod("t1-p2", "ns2", 50, 0, 0, 0, highPriority, "t1-p2", "node-a", false),
-				makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a", true),
-				makePod("t1-p4", "ns2", 10, 0, 0, 0, lowPriority, "t1-p4", "node-a", false),
+				makePod("t1-p1", "ns1", 40, 0, 0, midPriority, "t1-p1", "node-a", false),
+				makePod("t1-p2", "ns2", 50, 0, 0, highPriority, "t1-p2", "node-a", false),
+				makePod("t1-p3", "ns2", 50, 0, 0, midPriority, "t1-p3", "node-a", true),
+				makePod("t1-p4", "ns2", 10, 0, 0, lowPriority, "t1-p4", "node-a", false),
 			},
 			nodes: []*v1.Node{
 				st.MakeNode().Name("node-a").Capacity(res).Obj(),
@@ -341,7 +344,7 @@ func TestDryRunPreemption(t *testing.T) {
 				&candidate{
 					victims: &extenderv1.Victims{
 						Pods: []*v1.Pod{
-							makePod("t1-p3", "ns2", 50, 0, 0, 0, midPriority, "t1-p3", "node-a", false),
+							makePod("t1-p3", "ns2", 50, 0, 0, midPriority, "t1-p3", "node-a", false),
 						},
 						NumPDBViolations: 0,
 					},
@@ -384,14 +387,15 @@ func TestDryRunPreemption(t *testing.T) {
 				t.Errorf("Unexpected preFilterStatus: %v", preFilterStatus)
 			}
 
-			podReq := computePodResourceRequest(tt.pod)
+			r := util.ComputePodResourceRequest(*tt.pod)
+			podReq := util.FromResourceListToFrameworkResource(r)
 			elasticQuotaSnapshotState := &ElasticQuotaSnapshotState{
 				elasticQuotaInfos: tt.elasticQuotas,
 			}
 			prefilterStatue := &PreFilterState{
-				podReq:                         *podReq,
-				nominatedPodsReqWithPodReq:     *podReq,
-				nominatedPodsReqInEQWithPodReq: *podReq,
+				podReq:                         podReq,
+				nominatedPodsReqWithPodReq:     podReq,
+				nominatedPodsReqInEQWithPodReq: podReq,
 			}
 			state.Write(preFilterStateKey, prefilterStatue)
 			state.Write(ElasticQuotaSnapshotKey, elasticQuotaSnapshotState)
@@ -440,22 +444,21 @@ func TestDryRunPreemption(t *testing.T) {
 	}
 }
 
-func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuReq int64, gpuMemoryReq int64, priority int32, uid string, nodeName string, overquota bool) *v1.Pod {
+func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuReq int64, priority int32, uid string, nodeName string, overquota bool) *v1.Pod {
 	pause := imageutils.GetPauseImageName()
 	pod := st.MakePod().Namespace(namespace).Name(podName).Container(pause).
 		Priority(priority).Node(nodeName).UID(uid).ZeroTerminationGracePeriod().Obj()
 	pod.Spec.Containers[0].Resources = v1.ResourceRequirements{
 		Requests: v1.ResourceList{
-			v1.ResourceMemory: *resource.NewQuantity(memReq, resource.DecimalSI),
-			v1.ResourceCPU:    *resource.NewMilliQuantity(cpuReq, resource.DecimalSI),
-			ResourceGPU:       *resource.NewQuantity(gpuReq, resource.DecimalSI),
+			v1.ResourceMemory:          *resource.NewQuantity(memReq, resource.DecimalSI),
+			v1.ResourceCPU:             *resource.NewMilliQuantity(cpuReq, resource.DecimalSI),
+			constant.ResourceNvidiaGPU: *resource.NewQuantity(gpuReq, resource.DecimalSI),
 		},
 	}
 
 	if pod.Labels == nil {
 		pod.Labels = make(map[string]string)
 	}
-	pod.Labels[constant.LabelGPUMemory] = fmt.Sprintf("%d", gpuMemoryReq)
 
 	if overquota == true {
 		pod.Labels[constant.LabelCapacityInfo] = string(constant.CapacityInfoOverQuota)

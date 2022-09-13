@@ -21,14 +21,12 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"sort"
-	"strconv"
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
@@ -210,7 +208,8 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 	// TODO improve the efficiency of taking snapshot
 	// e.g. use a two-pointer data structure to only copy the updated EQs when necessary.
 	snapshotElasticQuota := c.snapshotElasticQuota()
-	podReq := computePodResourceRequest(pod)
+	req := util.ComputePodResourceRequest(*pod)
+	podReq := util.FromResourceListToFrameworkResource(req)
 
 	state.Write(ElasticQuotaSnapshotKey, snapshotElasticQuota)
 
@@ -218,7 +217,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 	eq := snapshotElasticQuota.elasticQuotaInfos[pod.Namespace]
 	if eq == nil {
 		preFilterState := &PreFilterState{
-			podReq: *podReq,
+			podReq: podReq,
 		}
 		state.Write(preFilterStateKey, preFilterState)
 		return nil, framework.NewStatus(framework.Success)
@@ -247,7 +246,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 			ns := p.Pod.Namespace
 			info := c.elasticQuotaInfos[ns]
 			if info != nil {
-				pResourceRequest := util.ResourceList(computePodResourceRequest(p.Pod))
+				pResourceRequest := util.ComputePodResourceRequest(*p.Pod)
 				// If they are subject to the same quota(namespace) and p is more important than pod,
 				// p will be added to the nominatedResource and totalNominatedResource.
 				// If they aren't subject to the same quota(namespace) and the usage of quota(p's namespace) does not exceed min,
@@ -262,10 +261,10 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 		}
 	}
 
-	nominatedPodsReqInEQWithPodReq.Add(util.ResourceList(podReq))
-	nominatedPodsReqWithPodReq.Add(util.ResourceList(podReq))
+	nominatedPodsReqInEQWithPodReq.Add(util.FromFrameworkResourceToResourceList(podReq))
+	nominatedPodsReqWithPodReq.Add(util.FromFrameworkResourceToResourceList(podReq))
 	preFilterState := &PreFilterState{
-		podReq:                         *podReq,
+		podReq:                         podReq,
 		nominatedPodsReqInEQWithPodReq: *nominatedPodsReqInEQWithPodReq,
 		nominatedPodsReqWithPodReq:     *nominatedPodsReqWithPodReq,
 	}
@@ -838,76 +837,6 @@ func getPodDisruptionBudgets(pdbLister policylisters.PodDisruptionBudgetLister) 
 		return pdbLister.List(labels.Everything())
 	}
 	return nil, nil
-}
-
-// computePodResourceRequest returns a framework.Resource that covers the largest
-// width in each resource dimension. Because init-containers run sequentially, we collect
-// the max in each dimension iteratively. In contrast, we sum the resource vectors for
-// regular containers since they run simultaneously.
-//
-// If Pod Overhead is specified and the feature gate is set, the resources defined for Overhead
-// are added to the calculated Resource request sum
-//
-// Example:
-//
-// Pod:
-//
-//	InitContainers
-//	  IC1:
-//	    CPU: 2
-//	    Memory: 1G
-//	  IC2:
-//	    CPU: 2
-//	    Memory: 3G
-//	Containers
-//	  C1:
-//	    CPU: 2
-//	    Memory: 1G
-//	  C2:
-//	    CPU: 1
-//	    Memory: 1G
-//
-// Result: CPU: 3, Memory: 3G
-func computePodResourceRequest(pod *v1.Pod) *framework.Resource {
-	result := &framework.Resource{}
-	for _, container := range pod.Spec.Containers {
-		result.Add(container.Resources.Requests)
-	}
-
-	// take max_resource(sum_pod, any_init_container)
-	for _, container := range pod.Spec.InitContainers {
-		result.SetMaxResource(container.Resources.Requests)
-	}
-
-	// If Overhead is being utilized, add to the total requests for the pod
-	if pod.Spec.Overhead != nil && utilfeature.DefaultFeatureGate.Enabled(kubefeatures.PodOverhead) {
-		result.Add(pod.Spec.Overhead)
-	}
-
-	gpuMemory, present, err := getPodGPUMemoryRequest(pod)
-	if err != nil {
-		klog.Error(err)
-		return result
-	}
-	if present == true {
-		result.Add(util.ResourceList(&framework.Resource{ScalarResources: map[v1.ResourceName]int64{
-			constant.ResourceGPUMemory: gpuMemory,
-		}}))
-	}
-
-	return result
-}
-
-func getPodGPUMemoryRequest(pod *v1.Pod) (int64, bool, error) {
-	if val, ok := pod.Labels[constant.LabelGPUMemory]; ok {
-		gpuMemory, err := strconv.ParseInt(val, 10, 64)
-		if err != nil {
-			return 0, false, fmt.Errorf("invalid value for resource %s: expected int64 but got %s", constant.ResourceGPUMemory, val)
-		} else {
-			return gpuMemory, true, nil
-		}
-	}
-	return 0, false, nil
 }
 
 // filterPodsWithPDBViolation groups the given "pods" into two groups of "violatingPods"

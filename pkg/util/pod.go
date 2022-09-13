@@ -3,6 +3,7 @@ package util
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	quota "k8s.io/apiserver/pkg/quota/v1"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	kubefeatures "k8s.io/kubernetes/pkg/features"
@@ -51,9 +52,9 @@ import (
 // See the License for the specific language governing permissions and
 // limitations under the License.
 func ComputePodResourceRequest(pod v1.Pod) v1.ResourceList {
-	result := v1.ResourceList{}
+	containersRes := v1.ResourceList{}
 	for _, container := range pod.Spec.Containers {
-		result = quota.Add(result, container.Resources.Requests)
+		containersRes = quota.Add(containersRes, container.Resources.Requests)
 	}
 	initRes := v1.ResourceList{}
 	// take max_resource for init_containers
@@ -62,10 +63,15 @@ func ComputePodResourceRequest(pod v1.Pod) v1.ResourceList {
 	}
 	// If Overhead is being utilized, add to the total requests for the pod
 	if pod.Spec.Overhead != nil && utilfeature.DefaultFeatureGate.Enabled(kubefeatures.PodOverhead) {
-		quota.Add(result, pod.Spec.Overhead)
+		quota.Add(containersRes, pod.Spec.Overhead)
 	}
 	// take max_resource for init_containers and containers
-	return quota.Max(result, initRes)
+	res := quota.Max(containersRes, initRes)
+	// add required GPU memory resource
+	gpuMemory := ComputeRequiredGPUMemoryGB(res, 16) // TODO: use memory of smallest GPU currently present instead of fixed value
+	res[constant.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+
+	return res
 }
 
 // IsPodOverQuota foo

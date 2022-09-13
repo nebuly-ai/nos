@@ -123,7 +123,14 @@ func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, p
 		}
 
 		if _, err = r.patchCapacityInfoIfDifferent(ctx, &pod, desiredCapacityInfo); err != nil {
-			return used, err
+			return nil, err
+		}
+	}
+
+	// Remove resources that are not enforced by ElasticQuota limits
+	for r := range used {
+		if _, ok := eq.Spec.Min[r]; !ok {
+			delete(used, r)
 		}
 	}
 

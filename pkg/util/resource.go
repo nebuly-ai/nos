@@ -14,22 +14,15 @@ import (
 var migDeviceRegexp = regexp.MustCompile(constant.RegexNvidiaMigDevice)
 var migDeviceMemoryRegexp = regexp.MustCompile(constant.RegexNvidiaMigFormatMemory)
 var numberRegexp = regexp.MustCompile("\\d+")
+var nonScalarResources = []v1.ResourceName{
+	v1.ResourceCPU,
+	v1.ResourceMemory,
+	v1.ResourcePods,
+	v1.ResourceEphemeralStorage,
+}
 
-// ResourceList
-// Copyright 2020 The Kubernetes Authors.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-func ResourceList(r *framework.Resource) v1.ResourceList {
+// FromFrameworkResourceToResourceList
+func FromFrameworkResourceToResourceList(r framework.Resource) v1.ResourceList {
 	result := v1.ResourceList{
 		v1.ResourceCPU:              *resource.NewMilliQuantity(r.MilliCPU, resource.DecimalSI),
 		v1.ResourceMemory:           *resource.NewQuantity(r.Memory, resource.BinarySI),
@@ -44,6 +37,31 @@ func ResourceList(r *framework.Resource) v1.ResourceList {
 		}
 	}
 	return result
+}
+
+func FromResourceListToFrameworkResource(r v1.ResourceList) framework.Resource {
+	res := framework.Resource{
+		MilliCPU:         r.Cpu().MilliValue(),
+		Memory:           r.Memory().Value(),
+		EphemeralStorage: r.StorageEphemeral().Value(),
+		AllowedPodNumber: int(r.Pods().Value()),
+		ScalarResources:  make(map[v1.ResourceName]int64),
+	}
+	for resourceName, quantity := range r {
+		if IsScalarResource(resourceName) {
+			res.ScalarResources[resourceName] = quantity.Value()
+		}
+	}
+	return res
+}
+
+func IsScalarResource(name v1.ResourceName) bool {
+	for _, r := range nonScalarResources {
+		if r == name {
+			return false
+		}
+	}
+	return true
 }
 
 func IsNvidiaMigDevice(resourceName v1.ResourceName) bool {
@@ -63,4 +81,22 @@ func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64,
 	}
 
 	return res, nil
+}
+
+func ComputeRequiredGPUMemoryGB(resourceList v1.ResourceList, nvidiaGPUDeviceMemoryGB int64) int64 {
+	var totalRequiredGB int64
+
+	for resourceName, quantity := range resourceList {
+		if resourceName == constant.ResourceNvidiaGPU {
+			totalRequiredGB += nvidiaGPUDeviceMemoryGB * quantity.Value()
+			continue
+		}
+		if IsNvidiaMigDevice(resourceName) {
+			migMemory, _ := ExtractMemoryGBFromMigFormat(resourceName)
+			totalRequiredGB += migMemory * quantity.Value()
+			continue
+		}
+	}
+
+	return totalRequiredGB
 }

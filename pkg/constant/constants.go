@@ -2,17 +2,17 @@ package constant
 
 import v1 "k8s.io/api/core/v1"
 
-// Controller names
-const (
-	// ElasticQuotaControllerName todo
-	ElasticQuotaControllerName = "elasticquota-controller"
-)
-
 type CapacityInfo string
 
 const (
 	CapacityInfoOverQuota CapacityInfo = "over-quota"
 	CapacityInfoInQuota   CapacityInfo = "in-quota"
+)
+
+// Controller names
+const (
+	// ElasticQuotaControllerName todo
+	ElasticQuotaControllerName = "elasticquota-controller"
 )
 
 // Labels
@@ -42,4 +42,8 @@ const (
 	ResourceGPUMemory v1.ResourceName = "nebuly.ai/gpu-memory"
 	// ResourceNvidiaGPU is the name of the GPU resource exposed by the NVIDIA device plugin
 	ResourceNvidiaGPU v1.ResourceName = "nvidia.com/gpu"
+)
+
+const (
+	DefaultNvidiaGPUMemory = 16
 )

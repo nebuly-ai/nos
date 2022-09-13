@@ -42,11 +42,11 @@ func (e ElasticQuotaInfos) aggregatedUsedOverMinWith(podRequest framework.Resour
 	min := framework.NewResource(nil)
 
 	for _, elasticQuotaInfo := range e {
-		used.Add(util.ResourceList(elasticQuotaInfo.Used))
-		min.Add(util.ResourceList(elasticQuotaInfo.Min))
+		used.Add(util.FromFrameworkResourceToResourceList(*elasticQuotaInfo.Used))
+		min.Add(util.FromFrameworkResourceToResourceList(*elasticQuotaInfo.Min))
 	}
 
-	used.Add(util.ResourceList(&podRequest))
+	used.Add(util.FromFrameworkResourceToResourceList(podRequest))
 	return cmp(used, min)
 }
 
@@ -140,8 +140,9 @@ func (e *ElasticQuotaInfo) addPodIfNotPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Insert(key)
-	podRequest := computePodResourceRequest(pod)
-	e.reserveResource(*podRequest)
+	r := util.ComputePodResourceRequest(*pod)
+	podRequest := util.FromResourceListToFrameworkResource(r)
+	e.reserveResource(podRequest)
 
 	return nil
 }
@@ -157,8 +158,9 @@ func (e *ElasticQuotaInfo) deletePodIfPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Delete(key)
-	podRequest := computePodResourceRequest(pod)
-	e.unreserveResource(*podRequest)
+	r := util.ComputePodResourceRequest(*pod)
+	podRequest := util.FromResourceListToFrameworkResource(r)
+	e.unreserveResource(podRequest)
 
 	return nil
 }
@@ -177,8 +179,10 @@ func cmp2(x1, x2, y *framework.Resource) bool {
 	}
 
 	for rName, rQuant := range x1.ScalarResources {
-		if rQuant+x2.ScalarResources[rName] > y.ScalarResources[rName] {
-			return true
+		if _, ok := y.ScalarResources[rName]; ok {
+			if rQuant+x2.ScalarResources[rName] > y.ScalarResources[rName] {
+				return true
+			}
 		}
 	}
 
