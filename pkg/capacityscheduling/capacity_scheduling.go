@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -208,7 +209,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 	// TODO improve the efficiency of taking snapshot
 	// e.g. use a two-pointer data structure to only copy the updated EQs when necessary.
 	snapshotElasticQuota := c.snapshotElasticQuota()
-	req := util.ComputePodResourceRequest(*pod)
+	req := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
 	podReq := util.FromResourceListToFrameworkResource(req)
 
 	state.Write(ElasticQuotaSnapshotKey, snapshotElasticQuota)
@@ -246,7 +247,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 			ns := p.Pod.Namespace
 			info := c.elasticQuotaInfos[ns]
 			if info != nil {
-				pResourceRequest := util.ComputePodResourceRequest(*p.Pod)
+				pResourceRequest := util.ComputePodResourceRequest(*p.Pod, constant.DefaultNvidiaGPUResourceMemory)
 				// If they are subject to the same quota(namespace) and p is more important than pod,
 				// p will be added to the nominatedResource and totalNominatedResource.
 				// If they aren't subject to the same quota(namespace) and the usage of quota(p's namespace) does not exceed min,

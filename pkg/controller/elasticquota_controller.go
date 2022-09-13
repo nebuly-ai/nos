@@ -32,7 +32,8 @@ const (
 // ElasticQuotaReconciler reconciles a ElasticQuota object
 type ElasticQuotaReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme            *runtime.Scheme
+	nvidiaGPUMemoryGB int64
 }
 
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;create;update;patch;delete
@@ -61,7 +62,7 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// Add quota status labels and compute used quota
-	sortPodListForFindingOverQuotaPods(&runningPodList)
+	r.sortPodListForFindingOverQuotaPods(&runningPodList)
 	usedResourceList, err := r.patchPodsAndGetUsedQuota(ctx, &runningPodList, &instance)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -79,7 +80,7 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 // sortPodListForFindingOverQuotaPods sorts the input list so that it can be used for finding the Pods that are
 // "over-quota" (e.g. they are borrowing quotas from another namespace) and the ones that are "in-quota" (e.g.
 // in their respective ElasticQuota used <= min)
-func sortPodListForFindingOverQuotaPods(podList *v1.PodList) {
+func (r *ElasticQuotaReconciler) sortPodListForFindingOverQuotaPods(podList *v1.PodList) {
 	sort.Slice(podList.Items, func(i, j int) bool {
 		// If creation timestamp is not the same, sort by creation timestamp
 		firstPodCT := podList.Items[i].ObjectMeta.CreationTimestamp
@@ -96,8 +97,8 @@ func sortPodListForFindingOverQuotaPods(podList *v1.PodList) {
 		}
 
 		// If resource request is not the same, sort by resource request
-		firstPodRequest := util.ComputePodResourceRequest(podList.Items[i])
-		secondPodRequest := util.ComputePodResourceRequest(podList.Items[j])
+		firstPodRequest := util.ComputePodResourceRequest(podList.Items[i], r.nvidiaGPUMemoryGB)
+		secondPodRequest := util.ComputePodResourceRequest(podList.Items[j], r.nvidiaGPUMemoryGB)
 		if !quota.Equals(firstPodRequest, secondPodRequest) {
 			less, _ := quota.LessThanOrEqual(firstPodRequest, secondPodRequest)
 			return less
@@ -112,7 +113,7 @@ func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, p
 	used := newZeroUsed(*eq)
 	var err error
 	for _, pod := range podList.Items {
-		request := util.ComputePodResourceRequest(pod)
+		request := util.ComputePodResourceRequest(pod, r.nvidiaGPUMemoryGB)
 		used = quota.Add(used, request)
 
 		var desiredCapacityInfo constant.CapacityInfo

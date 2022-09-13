@@ -63,8 +63,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	err = (&ElasticQuotaReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
+		Client:            k8sManager.GetClient(),
+		Scheme:            k8sManager.GetScheme(),
+		nvidiaGPUMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
 	}).SetupWithManager(k8sManager, constant.ElasticQuotaControllerName)
 	Expect(err).ToNot(HaveOccurred())
 

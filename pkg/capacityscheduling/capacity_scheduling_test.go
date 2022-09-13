@@ -100,15 +100,15 @@ func TestPreFilter(t *testing.T) {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 				},
 			},
@@ -130,18 +130,18 @@ func TestPreFilter(t *testing.T) {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 				},
 				"ns2": {
 					Namespace: "ns2",
 					Min: &framework.Resource{
 						Memory:          5000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{},
 				},
@@ -163,30 +163,30 @@ func TestPreFilter(t *testing.T) {
 					Namespace: "ns1",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          1800,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 				},
 				"ns2": {
 					Namespace: "ns2",
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          200,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * constant.DefaultNvidiaGPUMemory},
+						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * constant.DefaultNvidiaGPUResourceMemory},
 					},
 				},
 			},
@@ -387,7 +387,7 @@ func TestDryRunPreemption(t *testing.T) {
 				t.Errorf("Unexpected preFilterStatus: %v", preFilterStatus)
 			}
 
-			r := util.ComputePodResourceRequest(*tt.pod)
+			r := util.ComputePodResourceRequest(*tt.pod, constant.DefaultNvidiaGPUResourceMemory)
 			podReq := util.FromResourceListToFrameworkResource(r)
 			elasticQuotaSnapshotState := &ElasticQuotaSnapshotState{
 				elasticQuotaInfos: tt.elasticQuotas,

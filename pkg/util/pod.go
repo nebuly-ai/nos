@@ -51,7 +51,7 @@ import (
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-func ComputePodResourceRequest(pod v1.Pod) v1.ResourceList {
+func ComputePodResourceRequest(pod v1.Pod, nvidiaGPUDeviceMemoryGB int64) v1.ResourceList {
 	containersRes := v1.ResourceList{}
 	for _, container := range pod.Spec.Containers {
 		containersRes = quota.Add(containersRes, container.Resources.Requests)
@@ -68,7 +68,7 @@ func ComputePodResourceRequest(pod v1.Pod) v1.ResourceList {
 	// take max_resource for init_containers and containers
 	res := quota.Max(containersRes, initRes)
 	// add required GPU memory resource
-	gpuMemory := ComputeRequiredGPUMemoryGB(res, 16) // TODO: use memory of smallest GPU currently present instead of fixed value
+	gpuMemory := ComputeRequiredGPUMemoryGB(res, nvidiaGPUDeviceMemoryGB)
 	res[constant.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 
 	return res

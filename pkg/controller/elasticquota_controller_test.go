@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -97,9 +98,10 @@ func TestSortPodListForFindingOverQuotaPods(t *testing.T) {
 		},
 	}
 
+	r := ElasticQuotaReconciler{nvidiaGPUMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sortPodListForFindingOverQuotaPods(&tt.podList)
+			r.sortPodListForFindingOverQuotaPods(&tt.podList)
 			podNames := make([]string, len(tt.podList.Items))
 			for i, pod := range tt.podList.Items {
 				podNames[i] = pod.Name

@@ -42,7 +42,7 @@ func TestReserveResource(t *testing.T) {
 					Memory:   200,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 2,
-						constant.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUMemory,
+						constant.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -59,7 +59,7 @@ func TestReserveResource(t *testing.T) {
 					Memory:   350,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 5,
-						constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory,
+						constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -70,7 +70,7 @@ func TestReserveResource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
-				r := util.ComputePodResourceRequest(*pod)
+				r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
 				request := util.FromResourceListToFrameworkResource(r)
 				elasticQuotaInfo.reserveResource(request)
 			}
@@ -97,7 +97,7 @@ func TestUnReserveResource(t *testing.T) {
 					Memory:   200,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 5,
-						constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUMemory,
+						constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -114,7 +114,7 @@ func TestUnReserveResource(t *testing.T) {
 					Memory:   50,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 2,
-						constant.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUMemory,
+						constant.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -125,7 +125,7 @@ func TestUnReserveResource(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
-				r := util.ComputePodResourceRequest(*pod)
+				r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
 				request := util.FromResourceListToFrameworkResource(r)
 				elasticQuotaInfo.unreserveResource(request)
 			}

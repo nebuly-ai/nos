@@ -17,6 +17,7 @@ limitations under the License.
 package capacityscheduling
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -140,7 +141,7 @@ func (e *ElasticQuotaInfo) addPodIfNotPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Insert(key)
-	r := util.ComputePodResourceRequest(*pod)
+	r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
 	podRequest := util.FromResourceListToFrameworkResource(r)
 	e.reserveResource(podRequest)
 
@@ -158,7 +159,7 @@ func (e *ElasticQuotaInfo) deletePodIfPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Delete(key)
-	r := util.ComputePodResourceRequest(*pod)
+	r := util.ComputePodResourceRequest(*pod, constant.DefaultNvidiaGPUResourceMemory)
 	podRequest := util.FromResourceListToFrameworkResource(r)
 	e.unreserveResource(podRequest)
 

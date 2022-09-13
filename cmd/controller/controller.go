@@ -61,14 +61,16 @@ func main() {
 	options := ctrl.Options{
 		Scheme: scheme,
 	}
+	controllerConfig := v1alpha1.CustomControllerManagerConfig{}
 	var err error
 	if configFile != "" {
-		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
+		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile).OfKind(&controllerConfig))
 		if err != nil {
 			setupLog.Error(err, "unable to load the config file")
 			os.Exit(1)
 		}
 	}
+	controllerConfig.FillDefaultValues()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
