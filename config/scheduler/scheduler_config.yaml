@@ -18,3 +18,9 @@ profiles:
     reserve:
       enabled:
         - name: CapacityScheduling
+  pluginConfig:
+    - name: CapacityScheduling
+      args:
+        # Defines how much GB of memory does a nvidia.com/gpu has.
+        # Should be equal to controller-manager config field "nvidiaGPUResourceMemoryGB" (controller_manager_config.yaml)
+        nvidiaGPUResourceMemoryGB: 32

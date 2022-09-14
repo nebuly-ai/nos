@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/scheduler/config"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,13 +116,20 @@ func (c *CapacityScheduling) Name() string {
 
 // New initializes a new plugin and returns it.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
+	args, ok := obj.(*config.CapacitySchedulingArgs)
+	if !ok {
+		return nil, fmt.Errorf("[CapacityScheduling] want args to be of type CapacitySchedulingArgs, got %T", obj)
+	}
+
+	klog.Info("using nvidiaGPUResourceMemoryGB=", args.NvidiaGPUResourceMemoryGB)
+
 	c := &CapacityScheduling{
 		fh:                handle,
 		elasticQuotaInfos: NewElasticQuotaInfos(),
 		podLister:         handle.SharedInformerFactory().Core().V1().Pods().Lister(),
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
 		resourceCalculator: util.ResourceCalculator{
-			NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
+			NvidiaGPUDeviceMemoryGB: args.NvidiaGPUResourceMemoryGB,
 		},
 	}
 
@@ -192,7 +199,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 			},
 		},
 	)
-	klog.InfoS("CapacityScheduling start")
+	klog.InfoS("[CapacityScheduling] started")
 	return c, nil
 }
 

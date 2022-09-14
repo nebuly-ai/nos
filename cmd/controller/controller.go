@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/controller"
@@ -71,6 +72,7 @@ func main() {
 		}
 	}
 	controllerConfig.FillDefaultValues()
+	setupLog.Info(fmt.Sprintf("using nvidiaGPUResourceMemoryGB=%d", *controllerConfig.NvidiaGPUResourceMemoryGB))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
