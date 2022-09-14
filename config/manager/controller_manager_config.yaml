@@ -19,4 +19,7 @@ leaderElection:
 # if you are doing or is intended to do any operation such as perform cleanups
 # after the manager stops then its usage might be unsafe.
   leaderElectionReleaseOnCancel: true
-  nvidiaGPUResourceMemoryGB: 32
+
+# Defines how much GB of memory does a nvidia.com/gpu has.
+# Should be equal to scheduler arg "nvidiaGPUResourceMemoryGB" (scheduler_config.yaml)
+nvidiaGPUResourceMemoryGB: 32
