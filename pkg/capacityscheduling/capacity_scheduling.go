@@ -19,9 +19,8 @@ package capacityscheduling
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/scheduler/config"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	schedulerconfig "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,7 +115,7 @@ func (c *CapacityScheduling) Name() string {
 
 // New initializes a new plugin and returns it.
 func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) {
-	args, ok := obj.(*config.CapacitySchedulingArgs)
+	args, ok := obj.(*schedulerconfig.CapacitySchedulingArgs)
 	if !ok {
 		return nil, fmt.Errorf("[CapacityScheduling] want args to be of type CapacitySchedulingArgs, got %T", obj)
 	}
@@ -206,7 +205,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 func (c *CapacityScheduling) EventsToRegister() []framework.ClusterEvent {
 	// To register a custom event, follow the naming convention at:
 	// https://git.k8s.io/kubernetes/pkg/scheduler/eventhandlers.go#L403-L410
-	eqGVK := fmt.Sprintf("elasticquotas.v1alpha1.%v", n8s_nebuly_ai.GroupName)
+	eqGVK := fmt.Sprintf("elasticquotas.v1alpha1.%v", v1alpha1.GroupName)
 	return []framework.ClusterEvent{
 		{Resource: framework.Pod, ActionType: framework.Delete},
 		{Resource: framework.GVK(eqGVK), ActionType: framework.All},

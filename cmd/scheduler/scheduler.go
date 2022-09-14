@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/scheduler/config"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/scheduler/config/v1beta3"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
 	"github.com/nebuly-ai/nebulnetes/pkg/capacityscheduling"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"math/rand"
@@ -13,10 +13,10 @@ import (
 	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 	kubeschedulerscheme "k8s.io/kubernetes/pkg/scheduler/apis/config/scheme"
 
-	// Ensure v1alpha1 package is initialized
+	// Ensure n8s.nebuly.ai/v1alpha1 package is initialized
 	_ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	// Ensure scheduler config package is initialized.
-	_ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/scheduler/config"
+	// Ensure scheduler package is initialized.
+	_ "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 )
 
 var (
@@ -27,7 +27,7 @@ var (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	utilruntime.Must(config.AddToScheme(scheme))
+	utilruntime.Must(scheduler.AddToScheme(scheme))
 	utilruntime.Must(v1beta3.AddToScheme(scheme))
 
 	command := app.NewSchedulerCommand(

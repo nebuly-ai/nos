@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/controller"
@@ -43,6 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(configv1alpha1.AddToScheme(scheme))
 }
 
 func main() {
@@ -62,7 +64,7 @@ func main() {
 	options := ctrl.Options{
 		Scheme: scheme,
 	}
-	controllerConfig := v1alpha1.CustomControllerManagerConfig{}
+	controllerConfig := configv1alpha1.CustomControllerManagerConfig{}
 	var err error
 	if configFile != "" {
 		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile).OfKind(&controllerConfig))
