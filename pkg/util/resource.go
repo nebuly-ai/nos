@@ -57,6 +57,50 @@ func FromResourceListToFrameworkResource(r v1.ResourceList) framework.Resource {
 	return res
 }
 
+// SumResources returns the sum of the two resources provided as argument.
+// The returned resource contains the union of the scalar resources of the two input resources.
+//
+// Example:
+//
+//	r1:
+//		nvidia.com/gpu: 2
+//		nebuly.ai/gpu-memory: 16
+//
+//	r2:
+//		nvidia.com/gpu: 1
+//
+//	result:
+//		nvidia.com/gpu: 3
+//		nebuly.ai/gpu-memory: 16
+func SumResources(r1 framework.Resource, r2 framework.Resource) framework.Resource {
+	var res = framework.Resource{}
+	res.Memory = r1.Memory + r2.Memory
+	res.MilliCPU = r1.MilliCPU + r2.MilliCPU
+	res.AllowedPodNumber = r1.AllowedPodNumber + r2.AllowedPodNumber
+	res.EphemeralStorage = r1.EphemeralStorage + r2.EphemeralStorage
+
+	for _, r := range GetKeys(r1.ScalarResources, r2.ScalarResources) {
+		sum := r1.ScalarResources[r] + r2.ScalarResources[r]
+		res.SetScalar(r, sum)
+	}
+
+	return res
+}
+
+// SubtractResources returns a new resource corresponding to the result of r1 - r2.
+func SubtractResources(r1 framework.Resource, r2 framework.Resource) framework.Resource {
+	var res = framework.Resource{}
+	res.Memory = r1.Memory - r2.Memory
+	res.MilliCPU = r1.MilliCPU - r2.MilliCPU
+	res.AllowedPodNumber = r1.AllowedPodNumber - r2.AllowedPodNumber
+	res.EphemeralStorage = r1.EphemeralStorage - r2.EphemeralStorage
+	for _, r := range GetKeys(r1.ScalarResources, r2.ScalarResources) {
+		sub := r1.ScalarResources[r] - r2.ScalarResources[r]
+		res.SetScalar(r, sub)
+	}
+	return res
+}
+
 func IsScalarResource(name v1.ResourceName) bool {
 	for _, r := range nonScalarResources {
 		if r == name {
