@@ -279,20 +279,9 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						EphemeralStorage: 0,
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU:      5,
-							constant.ResourceGPUMemory:      64,
-							v1.ResourceName("new-resource"): 3, // resource present only in eq-1
-						},
-					},
-					Max: &framework.Resource{
-						MilliCPU:         20,
-						Memory:           20,
-						EphemeralStorage: 0,
-						AllowedPodNumber: 20,
-						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU:      10,
-							constant.ResourceGPUMemory:      128,
-							v1.ResourceName("new-resource"): 5,
+							constant.ResourceNvidiaGPU:                5,
+							constant.ResourceGPUMemory:                64,
+							v1.ResourceName("nebuly.ai/new-resource"): 3, // resource present only in eq-1
 						},
 					},
 					Used: &framework.Resource{
@@ -301,9 +290,9 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						EphemeralStorage: 0,
 						AllowedPodNumber: 5,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU:      0,
-							constant.ResourceGPUMemory:      10,
-							v1.ResourceName("new-resource"): 1,
+							constant.ResourceNvidiaGPU:                0,
+							constant.ResourceGPUMemory:                10,
+							v1.ResourceName("nebuly.ai/new-resource"): 1,
 						},
 					},
 					MaxEnforced: false,
@@ -319,16 +308,6 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 3,
 							constant.ResourceGPUMemory: 24,
-						},
-					},
-					Max: &framework.Resource{
-						MilliCPU:         60,
-						Memory:           60,
-						EphemeralStorage: 60,
-						AllowedPodNumber: 60,
-						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU: 10,
-							constant.ResourceGPUMemory: 128,
 						},
 					},
 					Used: &framework.Resource{
@@ -352,12 +331,6 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						EphemeralStorage: 20,
 						AllowedPodNumber: 0,
 					},
-					Max: &framework.Resource{
-						MilliCPU:         40,
-						Memory:           40,
-						EphemeralStorage: 40,
-						AllowedPodNumber: 0,
-					},
 					Used: &framework.Resource{
 						MilliCPU:         10,
 						Memory:           10,
@@ -369,14 +342,14 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 			},
 			elasticQuotaName: "eq-1",
 			expectedGuaranteedOverquotas: &framework.Resource{
-				MilliCPU:         10 / (10 + 30 + 20) * 100 * ((10 + 30 + 20) - (5 + 35 + 10)),
-				Memory:           10 / (10 + 30 + 20) * 100 * ((10 + 30 + 20) - (5 + 35 + 10)),
+				MilliCPU:         1, // math.Floor(10 / (10 + 30 + 20) * ((10 + 30 + 20) - (5 + 35 + 10)))
+				Memory:           1, // math.Floor(10 / (10 + 30 + 20) * ((10 + 30 + 20) - (5 + 35 + 10)))
 				EphemeralStorage: 0,
-				AllowedPodNumber: 10 / (10 + 30 + 0) * 100 * ((10 + 30 + 0) - (5 + 5 + 0)),
+				AllowedPodNumber: 7, // math.Floor(10 / (10 + 30 + 0) * ((10 + 30 + 0) - (5 + 5 + 0)))
 				ScalarResources: map[v1.ResourceName]int64{
-					v1.ResourceName("new-resource"): 2, // tot. unused overquotas, since "new-resource" is defined only for eq-1
-					constant.ResourceNvidiaGPU:      5 / (5 + 3) * 100 * ((5 + 3) - (0 + 0)),
-					constant.ResourceGPUMemory:      64 / (64 + 24) * 100 * ((64 + 24) - (10 + 10)),
+					v1.ResourceName("nebuly.ai/new-resource"): 2,  // tot. unused overquotas, since "new-resource" is defined only for eq-1
+					constant.ResourceNvidiaGPU:                5,  // math.Floor(5 / (5 + 3) * ((5 + 3) - (0 + 0)))
+					constant.ResourceGPUMemory:                49, // math.Floor(64 / (64 + 24) * ((64 + 24) - (10 + 10)))
 				},
 			},
 			errorExpected: false,
@@ -392,28 +365,44 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			assert.Equal(t, tt.expectedGuaranteedOverquotas, guaranteedOverquotas)
-			t.Run("Sum of guaranteed overquotas must be equal to total unused quotas", func(t *testing.T) {
-				var totalUsed v1.ResourceList
-				var totalMin v1.ResourceList
-				var totalGuaranteedOverquotas v1.ResourceList
-				for eq, eqInfo := range tt.elasticQuotaInfos {
+
+			// Sum of guaranteed overquotas must be <= total unused quotas
+			var totalUsed = make(v1.ResourceList)
+			var totalMin = make(v1.ResourceList)
+			var totalGuaranteedOverquotas = make(v1.ResourceList)
+			for eq, eqInfo := range tt.elasticQuotaInfos {
+				if eqInfo.Used != nil {
 					totalUsed = quota.Add(
 						totalUsed,
 						util.FromFrameworkResourceToResourceList(*eqInfo.Used),
 					)
+				}
+				if eqInfo.Min != nil {
 					totalMin = quota.Add(
 						totalMin,
 						util.FromFrameworkResourceToResourceList(*eqInfo.Min),
 					)
-					guaranteed, _ := tt.elasticQuotaInfos.GetGuaranteedOverquotas(eq)
-					totalGuaranteedOverquotas = quota.Add(
-						totalGuaranteedOverquotas,
-						util.FromFrameworkResourceToResourceList(*guaranteed),
-					)
 				}
-				totalUnusedQuotas := quota.Subtract(totalMin, totalUsed)
-				assert.Equal(t, totalUnusedQuotas, totalGuaranteedOverquotas)
-			})
+				guaranteed, _ := tt.elasticQuotaInfos.GetGuaranteedOverquotas(eq)
+				totalGuaranteedOverquotas = quota.Add(
+					totalGuaranteedOverquotas,
+					util.FromFrameworkResourceToResourceList(*guaranteed),
+				)
+			}
+			totalUnusedQuotas := quota.Subtract(totalMin, totalUsed)
+
+			for r, unused := range totalUnusedQuotas {
+				guaranteed := totalGuaranteedOverquotas[r]
+				assert.LessOrEqual(
+					t,
+					guaranteed.Value(),
+					unused.Value(),
+					"expected guaranteed overquota <= unused quota, got guaranteed=%d, unused=%d for resource %q",
+					guaranteed.Value(),
+					unused.Value(),
+					r,
+				)
+			}
 		})
 	}
 }

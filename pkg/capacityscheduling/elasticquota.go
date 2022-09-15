@@ -21,7 +21,9 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	quota "k8s.io/apiserver/pkg/quota/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"math"
 )
 
 type ElasticQuotaInfos map[string]*ElasticQuotaInfo
@@ -46,13 +48,25 @@ func (e ElasticQuotaInfos) AggregatedUsedOverMinWith(podRequest framework.Resour
 }
 
 func (e ElasticQuotaInfos) GetGuaranteedOverquotas(elasticQuota string) (*framework.Resource, error) {
-	_, ok := e[elasticQuota]
+	eqInfo, ok := e[elasticQuota]
 	if !ok {
 		return nil, fmt.Errorf("elastic quota %q not present in elastic quota infos", elasticQuota)
 	}
-	//percentages := e.getGuaranteedOverquotasPercentages(eqInfo)
 
-	return nil, nil
+	var result = framework.NewResource(nil)
+	percentages := e.getGuaranteedOverquotasPercentages(eqInfo)
+	aggregatedUnused := e.getAggregatedUnused()
+
+	result.MilliCPU = int64(math.Floor(float64(aggregatedUnused.MilliCPU) * percentages[v1.ResourceCPU]))
+	result.Memory = int64(math.Floor(float64(aggregatedUnused.Memory) * percentages[v1.ResourceMemory]))
+	result.AllowedPodNumber = int(math.Floor(float64(aggregatedUnused.AllowedPodNumber) * percentages[v1.ResourcePods]))
+	result.EphemeralStorage = int64(math.Floor(float64(aggregatedUnused.EphemeralStorage) * percentages[v1.ResourceEphemeralStorage]))
+
+	for r, v := range aggregatedUnused.ScalarResources {
+		result.SetScalar(r, int64(math.Floor(float64(v)*percentages[r])))
+	}
+
+	return result, nil
 }
 
 func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo *ElasticQuotaInfo) map[v1.ResourceName]float64 {
@@ -79,6 +93,7 @@ func (e ElasticQuotaInfos) getAggregatedMin() *framework.Resource {
 		if eqi.Min == nil {
 			continue
 		}
+		// TODO: probably we can optimize by avoiding conversion and working only with framework.Resource
 		totalMin.Add(util.FromFrameworkResourceToResourceList(*eqi.Min))
 	}
 	return totalMin
@@ -90,9 +105,21 @@ func (e ElasticQuotaInfos) getAggregatedUsed() *framework.Resource {
 		if eqi.Min == nil {
 			continue
 		}
+		// TODO: probably we can optimize by avoiding conversion and working only with framework.Resource
 		totalUsed.Add(util.FromFrameworkResourceToResourceList(*eqi.Used))
 	}
 	return totalUsed
+}
+
+func (e ElasticQuotaInfos) getAggregatedUnused() framework.Resource {
+	totalMin := e.getAggregatedMin()
+	totalUsed := e.getAggregatedUsed()
+	res := quota.Subtract(
+		util.FromFrameworkResourceToResourceList(*totalMin),
+		util.FromFrameworkResourceToResourceList(*totalUsed),
+	)
+	// TODO: probably we can optimize by avoiding multiple conversions and working only with framework.Resource
+	return util.FromResourceListToFrameworkResource(res)
 }
 
 // ElasticQuotaInfo is a wrapper to a ElasticQuota with information.

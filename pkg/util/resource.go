@@ -48,11 +48,10 @@ func FromResourceListToFrameworkResource(r v1.ResourceList) framework.Resource {
 		Memory:           r.Memory().Value(),
 		EphemeralStorage: r.StorageEphemeral().Value(),
 		AllowedPodNumber: int(r.Pods().Value()),
-		ScalarResources:  make(map[v1.ResourceName]int64),
 	}
 	for resourceName, quantity := range r {
 		if IsScalarResource(resourceName) {
-			res.ScalarResources[resourceName] = quantity.Value()
+			res.SetScalar(resourceName, quantity.Value())
 		}
 	}
 	return res
