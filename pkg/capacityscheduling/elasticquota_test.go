@@ -565,9 +565,9 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						EphemeralStorage: 0,
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU:      5,
-							constant.ResourceGPUMemory:      64,
-							v1.ResourceName("new-resource"): 3, // resource present only in eq-1
+							constant.ResourceNvidiaGPU:                5,
+							constant.ResourceGPUMemory:                64,
+							v1.ResourceName("nebuly.ai/new-resource"): 3, // resource present only in eq-1
 						},
 					},
 				},
@@ -598,13 +598,13 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 			},
 			elasticQuota: "eq-1",
 			expected: map[v1.ResourceName]float64{
-				v1.ResourceCPU:                  0.5,
-				v1.ResourceMemory:               0.1,
-				v1.ResourcePods:                 0.25,
-				v1.ResourceEphemeralStorage:     0,
-				v1.ResourceName("new-resource"): 1,
-				constant.ResourceGPUMemory:      float64(64) / float64(64+24),
-				constant.ResourceNvidiaGPU:      float64(5) / float64(5+3),
+				v1.ResourceCPU:                            0.5,
+				v1.ResourceMemory:                         0.1,
+				v1.ResourcePods:                           0.25,
+				v1.ResourceEphemeralStorage:               0,
+				v1.ResourceName("nebuly.ai/new-resource"): 1,
+				constant.ResourceGPUMemory:                float64(64) / float64(64+24),
+				constant.ResourceNvidiaGPU:                float64(5) / float64(5+3),
 			},
 		},
 	}
@@ -612,13 +612,13 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			eqInfo := tt.elasticQuotaInfos[tt.elasticQuota]
-			percentages := tt.elasticQuotaInfos.getGuaranteedOverquotasPercentages(*eqInfo)
+			percentages := tt.elasticQuotaInfos.getGuaranteedOverquotasPercentages(eqInfo)
 			assert.Equal(t, tt.expected, percentages)
 		})
 		t.Run("Sum of guaranteed overquotas percentages should be 1", func(t *testing.T) {
 			var totalPercentages = make(map[v1.ResourceName]float64)
 			for _, eqInfo := range tt.elasticQuotaInfos {
-				for r, p := range tt.elasticQuotaInfos.getGuaranteedOverquotasPercentages(*eqInfo) {
+				for r, p := range tt.elasticQuotaInfos.getGuaranteedOverquotasPercentages(eqInfo) {
 					totalPercentages[r] += p
 				}
 			}

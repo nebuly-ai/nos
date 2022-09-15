@@ -21,7 +21,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-	quota "k8s.io/apiserver/pkg/quota/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
@@ -40,14 +39,8 @@ func (e ElasticQuotaInfos) clone() ElasticQuotaInfos {
 }
 
 func (e ElasticQuotaInfos) AggregatedUsedOverMinWith(podRequest framework.Resource) bool {
-	used := framework.NewResource(nil)
-	min := framework.NewResource(nil)
-
-	for _, elasticQuotaInfo := range e {
-		used.Add(util.FromFrameworkResourceToResourceList(*elasticQuotaInfo.Used))
-		min.Add(util.FromFrameworkResourceToResourceList(*elasticQuotaInfo.Min))
-	}
-
+	min := e.getAggregatedMin()
+	used := e.getAggregatedUsed()
 	used.Add(util.FromFrameworkResourceToResourceList(podRequest))
 	return cmp(used, min)
 }
@@ -57,22 +50,18 @@ func (e ElasticQuotaInfos) GetGuaranteedOverquotas(elasticQuota string) (*framew
 	if !ok {
 		return nil, fmt.Errorf("elastic quota %q not present in elastic quota infos", elasticQuota)
 	}
+	//percentages := e.getGuaranteedOverquotasPercentages(eqInfo)
+
 	return nil, nil
 }
 
-func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo ElasticQuotaInfo) map[v1.ResourceName]float64 {
+func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo *ElasticQuotaInfo) map[v1.ResourceName]float64 {
 	var result = make(map[v1.ResourceName]float64)
 	if eqInfo.Min == nil {
 		return result
 	}
 
-	var totalMin v1.ResourceList
-	for _, eqi := range e {
-		if eqi.Min == nil {
-			continue
-		}
-		totalMin = quota.Add(totalMin, util.FromFrameworkResourceToResourceList(*eqi.Min))
-	}
+	var totalMin = util.FromFrameworkResourceToResourceList(*e.getAggregatedMin())
 	for r, m := range util.FromFrameworkResourceToResourceList(*eqInfo.Min) {
 		t := totalMin[r]
 		var p float64
@@ -82,6 +71,28 @@ func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo ElasticQuot
 		result[r] = p
 	}
 	return result
+}
+
+func (e ElasticQuotaInfos) getAggregatedMin() *framework.Resource {
+	var totalMin = framework.NewResource(nil)
+	for _, eqi := range e {
+		if eqi.Min == nil {
+			continue
+		}
+		totalMin.Add(util.FromFrameworkResourceToResourceList(*eqi.Min))
+	}
+	return totalMin
+}
+
+func (e ElasticQuotaInfos) getAggregatedUsed() *framework.Resource {
+	var totalUsed = framework.NewResource(nil)
+	for _, eqi := range e {
+		if eqi.Min == nil {
+			continue
+		}
+		totalUsed.Add(util.FromFrameworkResourceToResourceList(*eqi.Used))
+	}
+	return totalUsed
 }
 
 // ElasticQuotaInfo is a wrapper to a ElasticQuota with information.
