@@ -58,3 +58,22 @@ func RandomStringLowercase(n int) string {
 func GetNamespacedName(object client.Object) string {
 	return fmt.Sprintf("%s/%s", object.GetNamespace(), object.GetName())
 }
+
+type empty struct {
+}
+
+func GetKeys[K comparable, V any](maps ...map[K]V) []K {
+	var set = make(map[K]empty)
+	for _, m := range maps {
+		for k := range m {
+			set[k] = empty{}
+		}
+	}
+	var res = make([]K, len(set))
+	var i int
+	for k := range set {
+		res[i] = k
+		i++
+	}
+	return res
+}
