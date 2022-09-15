@@ -20,6 +20,10 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/sets"
+	quota "k8s.io/apiserver/pkg/quota/v1"
+	"math"
 	"reflect"
 	"testing"
 
@@ -202,6 +206,436 @@ func TestElasticQuotaInfo_UsedOverMaxWith(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			actual := tt.eq.usedOverMaxWith(&tt.resource)
 			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
+	tests := []struct {
+		name                         string
+		elasticQuotaInfos            ElasticQuotaInfos
+		elasticQuotaName             string
+		expectedGuaranteedOverquotas *framework.Resource
+		errorExpected                bool
+	}{
+		{
+			name:                         "ElasticQuotaInfo not present",
+			elasticQuotaInfos:            NewElasticQuotaInfos(),
+			elasticQuotaName:             "not-present",
+			expectedGuaranteedOverquotas: nil,
+			errorExpected:                true,
+		},
+		{
+			name: "ElasticQuota is empty",
+			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
+				"eq-1": {},
+				"eq-2": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         100,
+						Memory:           1000,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 10,
+					},
+					Max: &framework.Resource{
+						MilliCPU:         200,
+						Memory:           2000,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 20,
+					},
+					Used: &framework.Resource{
+						MilliCPU:         50,
+						Memory:           50,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 5,
+					},
+					MaxEnforced: false,
+				},
+			},
+			elasticQuotaName:             "eq-1",
+			expectedGuaranteedOverquotas: &framework.Resource{},
+			errorExpected:                false,
+		},
+		{
+			name: "All ElasticQuotas are empty",
+			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
+				"eq-1": {},
+				"eq-2": {},
+			},
+			elasticQuotaName:             "eq-1",
+			expectedGuaranteedOverquotas: &framework.Resource{},
+			errorExpected:                false,
+		},
+		{
+			name: "ElasticQuota with scalar resources - guaranteed overquotas for each resource is proportional to Min",
+			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
+				"eq-1": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         10,
+						Memory:           10,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 10,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU:      5,
+							constant.ResourceGPUMemory:      64,
+							v1.ResourceName("new-resource"): 3, // resource present only in eq-1
+						},
+					},
+					Max: &framework.Resource{
+						MilliCPU:         20,
+						Memory:           20,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 20,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU:      10,
+							constant.ResourceGPUMemory:      128,
+							v1.ResourceName("new-resource"): 5,
+						},
+					},
+					Used: &framework.Resource{
+						MilliCPU:         5,
+						Memory:           5,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 5,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU:      0,
+							constant.ResourceGPUMemory:      10,
+							v1.ResourceName("new-resource"): 1,
+						},
+					},
+					MaxEnforced: false,
+				},
+				"eq-2": {
+					Namespace: "ns-2",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         30,
+						Memory:           30,
+						EphemeralStorage: 30,
+						AllowedPodNumber: 30,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 3,
+							constant.ResourceGPUMemory: 24,
+						},
+					},
+					Max: &framework.Resource{
+						MilliCPU:         60,
+						Memory:           60,
+						EphemeralStorage: 60,
+						AllowedPodNumber: 60,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 10,
+							constant.ResourceGPUMemory: 128,
+						},
+					},
+					Used: &framework.Resource{
+						MilliCPU:         35,
+						Memory:           35,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 5,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 0,
+							constant.ResourceGPUMemory: 10,
+						},
+					},
+					MaxEnforced: false,
+				},
+				"eq-3": {
+					Namespace: "ns-3",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         20,
+						Memory:           20,
+						EphemeralStorage: 20,
+						AllowedPodNumber: 0,
+					},
+					Max: &framework.Resource{
+						MilliCPU:         40,
+						Memory:           40,
+						EphemeralStorage: 40,
+						AllowedPodNumber: 0,
+					},
+					Used: &framework.Resource{
+						MilliCPU:         10,
+						Memory:           10,
+						EphemeralStorage: 10,
+						AllowedPodNumber: 0,
+					},
+					MaxEnforced: false,
+				},
+			},
+			elasticQuotaName: "eq-1",
+			expectedGuaranteedOverquotas: &framework.Resource{
+				MilliCPU:         10 / (10 + 30 + 20) * 100 * ((10 + 30 + 20) - (5 + 35 + 10)),
+				Memory:           10 / (10 + 30 + 20) * 100 * ((10 + 30 + 20) - (5 + 35 + 10)),
+				EphemeralStorage: 0,
+				AllowedPodNumber: 10 / (10 + 30 + 0) * 100 * ((10 + 30 + 0) - (5 + 5 + 0)),
+				ScalarResources: map[v1.ResourceName]int64{
+					v1.ResourceName("new-resource"): 2, // tot. unused overquotas, since "new-resource" is defined only for eq-1
+					constant.ResourceNvidiaGPU:      5 / (5 + 3) * 100 * ((5 + 3) - (0 + 0)),
+					constant.ResourceGPUMemory:      64 / (64 + 24) * 100 * ((64 + 24) - (10 + 10)),
+				},
+			},
+			errorExpected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			guaranteedOverquotas, err := tt.elasticQuotaInfos.GetGuaranteedOverquotas(tt.elasticQuotaName)
+			if tt.errorExpected {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectedGuaranteedOverquotas, guaranteedOverquotas)
+			t.Run("Sum of guaranteed overquotas must be equal to total unused quotas", func(t *testing.T) {
+				var totalUsed v1.ResourceList
+				var totalMin v1.ResourceList
+				var totalGuaranteedOverquotas v1.ResourceList
+				for eq, eqInfo := range tt.elasticQuotaInfos {
+					totalUsed = quota.Add(
+						totalUsed,
+						util.FromFrameworkResourceToResourceList(*eqInfo.Used),
+					)
+					totalMin = quota.Add(
+						totalMin,
+						util.FromFrameworkResourceToResourceList(*eqInfo.Min),
+					)
+					guaranteed, _ := tt.elasticQuotaInfos.GetGuaranteedOverquotas(eq)
+					totalGuaranteedOverquotas = quota.Add(
+						totalGuaranteedOverquotas,
+						util.FromFrameworkResourceToResourceList(*guaranteed),
+					)
+				}
+				totalUnusedQuotas := quota.Subtract(totalMin, totalUsed)
+				assert.Equal(t, totalUnusedQuotas, totalGuaranteedOverquotas)
+			})
+		})
+	}
+}
+
+func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
+	tests := []struct {
+		name              string
+		elasticQuotaInfos ElasticQuotaInfos
+		elasticQuota      string
+		expected          map[v1.ResourceName]float64
+	}{
+		{
+			name: "Single empty elastic quota",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq-1": {},
+			},
+			elasticQuota: "eq-1",
+			expected:     map[v1.ResourceName]float64{},
+		},
+		{
+			name: "Multiple elastic quotas, one is empty",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq-1": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         30,
+						Memory:           30,
+						EphemeralStorage: 30,
+						AllowedPodNumber: 30,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 3,
+							constant.ResourceGPUMemory: 24,
+						},
+					},
+				},
+				"eq-2": {},
+			},
+			elasticQuota: "eq-1",
+			expected: map[v1.ResourceName]float64{
+				v1.ResourceCPU:              1,
+				v1.ResourceMemory:           1,
+				v1.ResourcePods:             1,
+				v1.ResourceEphemeralStorage: 1,
+				constant.ResourceGPUMemory:  1,
+				constant.ResourceNvidiaGPU:  1,
+			},
+		},
+		{
+			name: "Single elastic quota, guaranteed overquotas percentage should be 100%",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq-1": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         30,
+						Memory:           30,
+						EphemeralStorage: 30,
+						AllowedPodNumber: 30,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 3,
+							constant.ResourceGPUMemory: 24,
+						},
+					},
+				},
+			},
+			elasticQuota: "eq-1",
+			expected: map[v1.ResourceName]float64{
+				v1.ResourceCPU:              1,
+				v1.ResourceMemory:           1,
+				v1.ResourcePods:             1,
+				v1.ResourceEphemeralStorage: 1,
+				constant.ResourceGPUMemory:  1,
+				constant.ResourceNvidiaGPU:  1,
+			},
+		},
+		{
+			name: "Resource values are max",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq-1": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         resource.MaxMilliValue,
+						Memory:           math.MaxInt64,
+						EphemeralStorage: math.MaxInt64,
+						AllowedPodNumber: math.MaxInt64,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: math.MaxInt64,
+							constant.ResourceGPUMemory: math.MaxInt64,
+						},
+					},
+				},
+			},
+			elasticQuota: "eq-1",
+			expected: map[v1.ResourceName]float64{
+				v1.ResourceCPU:              1,
+				v1.ResourceMemory:           1,
+				v1.ResourcePods:             1,
+				v1.ResourceEphemeralStorage: 1,
+				constant.ResourceGPUMemory:  1,
+				constant.ResourceNvidiaGPU:  1,
+			},
+		},
+		{
+			name: "ElasticQuotas do not specify a Min for some resources - Percentages include all non-scalar resources",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq-1": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU: 10,
+						Memory:   10,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 10,
+						},
+					},
+				},
+				"eq-2": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         10,
+						AllowedPodNumber: 10,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceGPUMemory: 10,
+						},
+					},
+				},
+			},
+			elasticQuota: "eq-1",
+			expected: map[v1.ResourceName]float64{
+				v1.ResourceCPU:              0.5,
+				v1.ResourceMemory:           1,
+				v1.ResourcePods:             0,
+				v1.ResourceEphemeralStorage: 0,
+				constant.ResourceNvidiaGPU:  1,
+			},
+		},
+		{
+			name: "Multiple elastic quota, elastic quota with scalar resources. Overquotas % should be proportional to Min.",
+			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
+				"eq-1": {
+					Namespace: "ns-1",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         50,
+						Memory:           10,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 10,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU:      5,
+							constant.ResourceGPUMemory:      64,
+							v1.ResourceName("new-resource"): 3, // resource present only in eq-1
+						},
+					},
+				},
+				"eq-2": {
+					Namespace: "ns-2",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         30,
+						Memory:           30,
+						EphemeralStorage: 30,
+						AllowedPodNumber: 30,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 3,
+							constant.ResourceGPUMemory: 24,
+						},
+					},
+				},
+				"eq-3": {
+					Namespace: "ns-3",
+					pods:      sets.NewString("pd-1", "pd-2"),
+					Min: &framework.Resource{
+						MilliCPU:         20,
+						Memory:           60,
+						EphemeralStorage: 20,
+						AllowedPodNumber: 0,
+					},
+				},
+			},
+			elasticQuota: "eq-1",
+			expected: map[v1.ResourceName]float64{
+				v1.ResourceCPU:                  0.5,
+				v1.ResourceMemory:               0.1,
+				v1.ResourcePods:                 0.25,
+				v1.ResourceEphemeralStorage:     0,
+				v1.ResourceName("new-resource"): 1,
+				constant.ResourceGPUMemory:      float64(64) / float64(64+24),
+				constant.ResourceNvidiaGPU:      float64(5) / float64(5+3),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			eqInfo := tt.elasticQuotaInfos[tt.elasticQuota]
+			percentages := tt.elasticQuotaInfos.getGuaranteedOverquotasPercentages(*eqInfo)
+			assert.Equal(t, tt.expected, percentages)
+		})
+		t.Run("Sum of guaranteed overquotas percentages should be 1", func(t *testing.T) {
+			var totalPercentages = make(map[v1.ResourceName]float64)
+			for _, eqInfo := range tt.elasticQuotaInfos {
+				for r, p := range tt.elasticQuotaInfos.getGuaranteedOverquotasPercentages(*eqInfo) {
+					totalPercentages[r] += p
+				}
+			}
+			for r, p := range totalPercentages {
+				if p != 0 {
+					assert.Greater(t, p, float64(0))
+					assert.InDeltaf(
+						t,
+						float64(1),
+						p,
+						1e-4,
+						"Sum of all guaranteed overquata percentages should be approximately 1: got %f for resource %s",
+						p,
+						r,
+					)
+				}
+			}
 		})
 	}
 }

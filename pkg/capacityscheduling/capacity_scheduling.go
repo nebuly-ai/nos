@@ -285,7 +285,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 		return nil, framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Pod %v/%v is rejected in PreFilter because ElasticQuota %v is more than Max", pod.Namespace, pod.Name, eq.Namespace))
 	}
 
-	if elasticQuotaInfos.aggregatedUsedOverMinWith(*nominatedPodsReqWithPodReq) {
+	if elasticQuotaInfos.AggregatedUsedOverMinWith(*nominatedPodsReqWithPodReq) {
 		return nil, framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Pod %v/%v is rejected in PreFilter because total ElasticQuota used is more than min", pod.Namespace, pod.Name))
 	}
 
@@ -607,7 +607,7 @@ func (p *preemptor) SelectVictimsOnNode(
 	// we are almost done and this node is not suitable for preemption.
 	if preemptorWithElasticQuota {
 		if preemptorElasticQuotaInfo.usedOverMaxWith(&podReq) ||
-			elasticQuotaInfos.aggregatedUsedOverMinWith(podReq) {
+			elasticQuotaInfos.AggregatedUsedOverMinWith(podReq) {
 			return nil, 0, framework.NewStatus(framework.Unschedulable, "global quota max exceeded")
 		}
 	}
@@ -635,7 +635,7 @@ func (p *preemptor) SelectVictimsOnNode(
 			klog.V(5).InfoS("Found a potential preemption victim on node", "pod", klog.KObj(pi.Pod), "node", klog.KObj(nodeInfo.Node()))
 		}
 
-		if preemptorWithElasticQuota && (preemptorElasticQuotaInfo.usedOverMaxWith(&nominatedPodsReqInEQWithPodReq) || elasticQuotaInfos.aggregatedUsedOverMinWith(nominatedPodsReqWithPodReq)) {
+		if preemptorWithElasticQuota && (preemptorElasticQuotaInfo.usedOverMaxWith(&nominatedPodsReqInEQWithPodReq) || elasticQuotaInfos.AggregatedUsedOverMinWith(nominatedPodsReqWithPodReq)) {
 			if err := removePod(pi); err != nil {
 				return false, err
 			}

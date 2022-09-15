@@ -17,9 +17,11 @@ limitations under the License.
 package capacityscheduling
 
 import (
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	quota "k8s.io/apiserver/pkg/quota/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
@@ -37,7 +39,7 @@ func (e ElasticQuotaInfos) clone() ElasticQuotaInfos {
 	return elasticQuotas
 }
 
-func (e ElasticQuotaInfos) aggregatedUsedOverMinWith(podRequest framework.Resource) bool {
+func (e ElasticQuotaInfos) AggregatedUsedOverMinWith(podRequest framework.Resource) bool {
 	used := framework.NewResource(nil)
 	min := framework.NewResource(nil)
 
@@ -48,6 +50,38 @@ func (e ElasticQuotaInfos) aggregatedUsedOverMinWith(podRequest framework.Resour
 
 	used.Add(util.FromFrameworkResourceToResourceList(podRequest))
 	return cmp(used, min)
+}
+
+func (e ElasticQuotaInfos) GetGuaranteedOverquotas(elasticQuota string) (*framework.Resource, error) {
+	_, ok := e[elasticQuota]
+	if !ok {
+		return nil, fmt.Errorf("elastic quota %q not present in elastic quota infos", elasticQuota)
+	}
+	return nil, nil
+}
+
+func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo ElasticQuotaInfo) map[v1.ResourceName]float64 {
+	var result = make(map[v1.ResourceName]float64)
+	if eqInfo.Min == nil {
+		return result
+	}
+
+	var totalMin v1.ResourceList
+	for _, eqi := range e {
+		if eqi.Min == nil {
+			continue
+		}
+		totalMin = quota.Add(totalMin, util.FromFrameworkResourceToResourceList(*eqi.Min))
+	}
+	for r, m := range util.FromFrameworkResourceToResourceList(*eqInfo.Min) {
+		t := totalMin[r]
+		var p float64
+		if t.Value() > 0 {
+			p = m.AsApproximateFloat64() / t.AsApproximateFloat64()
+		}
+		result[r] = p
+	}
+	return result
 }
 
 // ElasticQuotaInfo is a wrapper to a ElasticQuota with information.
@@ -92,18 +126,26 @@ func (e *ElasticQuotaInfo) unreserveResource(request framework.Resource) {
 }
 
 func (e *ElasticQuotaInfo) usedOverMinWith(podRequest *framework.Resource) bool {
-	return cmp2(podRequest, e.Used, e.Min)
+	return e.usedOverWith(e.Min, podRequest)
 }
 
 func (e *ElasticQuotaInfo) usedOverMaxWith(podRequest *framework.Resource) bool {
 	if e.MaxEnforced {
-		return cmp2(podRequest, e.Used, e.Max)
+		return e.usedOverWith(e.Max, podRequest)
 	}
 	return false
 }
 
 func (e *ElasticQuotaInfo) usedOverMin() bool {
-	return cmp(e.Used, e.Min)
+	return e.usedOver(e.Min)
+}
+
+func (e *ElasticQuotaInfo) usedOver(resource *framework.Resource) bool {
+	return cmp(e.Used, resource)
+}
+
+func (e *ElasticQuotaInfo) usedOverWith(resource *framework.Resource, podRequest *framework.Resource) bool {
+	return cmp2(podRequest, e.Used, resource)
 }
 
 func (e *ElasticQuotaInfo) clone() *ElasticQuotaInfo {
