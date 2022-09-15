@@ -242,7 +242,6 @@ func TestPreFilter(t *testing.T) {
 
 func TestDryRunPreemption(t *testing.T) {
 	const nvidiaGPUResourceMemory = 8
-	res := map[v1.ResourceName]string{v1.ResourceMemory: "150"}
 	tests := []struct {
 		name          string
 		pod           *v1.Pod
@@ -261,7 +260,7 @@ func TestDryRunPreemption(t *testing.T) {
 				makePod("t1-p3", "ns2", 50, 0, 0, midPriority, "t1-p3", "node-a", false),
 			},
 			nodes: []*v1.Node{
-				st.MakeNode().Name("node-a").Capacity(res).Obj(),
+				st.MakeNode().Name("node-a").Capacity(map[v1.ResourceName]string{v1.ResourceMemory: "150"}).Obj(),
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
@@ -305,7 +304,7 @@ func TestDryRunPreemption(t *testing.T) {
 			},
 		},
 		{
-			name: "cross-namespace preemption",
+			name: "cross-namespace preemption - preemptor uses its Min quotas",
 			pod:  makePod("t1-p", "ns1", 50, 0, 0, highPriority, "", "t1-p", false),
 			pods: []*v1.Pod{
 				makePod("t1-p1", "ns1", 40, 0, 0, midPriority, "t1-p1", "node-a", false),
@@ -314,7 +313,7 @@ func TestDryRunPreemption(t *testing.T) {
 				makePod("t1-p4", "ns2", 10, 0, 0, lowPriority, "t1-p4", "node-a", false),
 			},
 			nodes: []*v1.Node{
-				st.MakeNode().Name("node-a").Capacity(res).Obj(),
+				st.MakeNode().Name("node-a").Capacity(map[v1.ResourceName]string{v1.ResourceMemory: "150"}).Obj(),
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
@@ -350,6 +349,83 @@ func TestDryRunPreemption(t *testing.T) {
 					victims: &extenderv1.Victims{
 						Pods: []*v1.Pod{
 							makePod("t1-p3", "ns2", 50, 0, 0, midPriority, "t1-p3", "node-a", false),
+						},
+						NumPDBViolations: 0,
+					},
+					name: "node-a",
+				},
+			},
+		},
+		{
+			name: "cross-namespace preemption - guaranteed overquota limits",
+			pod:  makePod("t1-p", "ns1", 70, 0, 0, highPriority, "", "t1-p", true),
+			pods: []*v1.Pod{
+				makePod("t1-p1", "ns1", 100, 100, 0, midPriority, "t1-p1", "node-a", false),
+				makePod("t1-p2", "ns1", 150, 100, 0, midPriority, "t1-p2", "node-a", false),
+				makePod("t1-p3", "ns2", 50, 0, 0, highPriority, "t1-p3", "node-a", false),
+				makePod("t1-p4", "ns2", 50, 0, 0, midPriority, "t1-p4", "node-a", true),
+				makePod("t1-p5", "ns2", 10, 0, 0, lowPriority, "t1-p5", "node-a", true),
+			},
+			nodes: []*v1.Node{
+				st.MakeNode().
+					Name("node-a").
+					Capacity(map[v1.ResourceName]string{
+						v1.ResourceMemory: "350",
+						v1.ResourceCPU:    "200",
+					}).
+					Obj(),
+			},
+			elasticQuotas: map[string]*ElasticQuotaInfo{
+				"ns1": {
+					Namespace: "ns1",
+					Max: &framework.Resource{
+						Memory:   300,
+						MilliCPU: 300,
+					},
+					Min: &framework.Resource{
+						Memory:   150, // guaranteed overquota = 75 = 150 / (150 + 50 + 300) * ( (150 + 50 + 300) - (150 + 100 + 0) )
+						MilliCPU: 200, // guaranteed overquota = 103 = 200 / (200 + 20 + 300) * ( (200 + 20 + 300) - (200 + 50 + 0) )
+					},
+					Used: &framework.Resource{
+						Memory:   150,
+						MilliCPU: 200,
+					},
+				},
+				"ns2": {
+					Namespace: "ns2",
+					Max: &framework.Resource{
+						Memory:   300,
+						MilliCPU: 300,
+					},
+					Min: &framework.Resource{
+						Memory:   50, // guaranteed overquota = 25 = 50 / (150 + 50 + 300) * ( (150 + 50 + 300) - (150 + 100 + 0) )
+						MilliCPU: 20, // guaranteed overquota = 20 = 20 / (200 + 20 + 300) * ( (200 + 20 + 300) - (0 + 0 + 0) )
+					},
+					Used: &framework.Resource{
+						Memory:   100, // used > (min + guaranteed overquota)
+						MilliCPU: 50,  // used > (min + guaranteed overquota)
+					},
+				},
+				"ns3": {
+					Namespace: "ns3",
+					Min: &framework.Resource{
+						Memory:   300,
+						MilliCPU: 300,
+					},
+					Used: &framework.Resource{
+						Memory:   0,
+						MilliCPU: 0,
+					},
+				},
+			},
+			nodesStatuses: framework.NodeToStatusMap{
+				"node-a": framework.NewStatus(framework.Unschedulable),
+			},
+			want: []preemption.Candidate{
+				&candidate{
+					victims: &extenderv1.Victims{
+						Pods: []*v1.Pod{
+							makePod("t1-p5", "ns2", 10, 0, 0, lowPriority, "t1-p5", "node-a", true),
 						},
 						NumPDBViolations: 0,
 					},

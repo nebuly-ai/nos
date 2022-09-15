@@ -535,21 +535,40 @@ func (p *preemptor) SelectVictimsOnNode(
 		nominatedPodsReqInEQWithPodReq = preFilterState.nominatedPodsReqInEQWithPodReq
 		nominatedPodsReqWithPodReq = preFilterState.nominatedPodsReqWithPodReq
 		moreThanMinWithPreemptor := preemptorElasticQuotaInfo.usedOverMinWith(&nominatedPodsReqInEQWithPodReq)
-		for _, pi := range nodeInfo.Pods {
-			eqInfo, withEQ := elasticQuotaInfos[pi.Pod.Namespace]
+		for _, pvPi := range nodeInfo.Pods {
+			pvEqInfo, withEQ := elasticQuotaInfos[pvPi.Pod.Namespace]
 			if !withEQ {
 				continue
 			}
-
+			// Preemptor.Request + Quota.Used > Quota.Min  => overquota
 			if moreThanMinWithPreemptor {
-				// If Preemptor.Request + Quota.Used > Quota.Min:
-				// It means that its guaranteed isn't borrowed by other
-				// quotas. So that we will select the pods which subject to the
+				// If Request + Quota.Used <= Quota.Min + GuaranteedOverquotas:
+				// it means that the preemptor EQ has overquotas available,
+				// so we select pods in other namespaces where
+				// UsedOverquotas > GuaranteedOverquotas
+				guaranteeedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pod.Namespace)
+				minPlusGuaranteeedOverquotas := util.SumResources(*guaranteeedOverquotas, *preemptorElasticQuotaInfo.Min)
+				if preemptorElasticQuotaInfo.usedLteWith(&minPlusGuaranteeedOverquotas, &nominatedPodsReqInEQWithPodReq) {
+					pvGuaranteedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pvEqInfo.Namespace)
+					pvMinPlusGuaranteedOverquotas := util.SumResources(*pvGuaranteedOverquotas, *pvEqInfo.Min)
+					if pvEqInfo.usedOver(&pvMinPlusGuaranteedOverquotas) {
+						potentialVictims = append(potentialVictims, pvPi)
+						if err := removePod(pvPi); err != nil {
+							return nil, 0, framework.AsStatus(err)
+						}
+					}
+					continue
+				}
+
+				// If Request + Quota.Used > Quota.Min + GuaranteedOverquotas:
+				// It means that the preemptor EQ does not have enough overquotas
+				// available for hosting the preemptor,
+				// so we will select the pods which subject to the
 				// same quota(namespace) with the lower priority than the
 				// preemptor's priority as potential victims in a node.
-				if pi.Pod.Namespace == pod.Namespace && corev1helpers.PodPriority(pi.Pod) < podPriority {
-					potentialVictims = append(potentialVictims, pi)
-					if err := removePod(pi); err != nil {
+				if pvPi.Pod.Namespace == pod.Namespace && corev1helpers.PodPriority(pvPi.Pod) < podPriority {
+					potentialVictims = append(potentialVictims, pvPi)
+					if err := removePod(pvPi); err != nil {
 						return nil, 0, framework.AsStatus(err)
 					}
 				}
@@ -561,10 +580,10 @@ func (p *preemptor) SelectVictimsOnNode(
 				// will be chosen from Quotas that allocates more resources
 				// than its min, i.e., borrowing resources from other
 				// Quotas. Only Pods marked as "overquota" can be preempted.
-				if pi.Pod.Namespace != pod.Namespace && eqInfo.usedOverMin() {
-					if util.IsPodOverQuota(*pi.Pod) {
-						potentialVictims = append(potentialVictims, pi)
-						if err := removePod(pi); err != nil {
+				if pvPi.Pod.Namespace != pod.Namespace && pvEqInfo.usedOverMin() {
+					if util.IsPodOverQuota(*pvPi.Pod) {
+						potentialVictims = append(potentialVictims, pvPi)
+						if err := removePod(pvPi); err != nil {
 							return nil, 0, framework.AsStatus(err)
 						}
 					}
