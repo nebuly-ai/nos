@@ -18,6 +18,32 @@ rules:
 - apiGroups:
   - n8s.nebuly.ai
   resources:
+  - compositeelasticquotas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
+  - compositeelasticquotas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
+  - compositeelasticquotas/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - n8s.nebuly.ai
+  resources:
   - elasticquotas
   verbs:
   - create
