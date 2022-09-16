@@ -1,0 +1,16 @@
+apiVersion: n8s.nebuly.ai/v1alpha1
+kind: CompositeElasticQuota
+metadata:
+  name: composite-quota-a
+  namespace: namespace-a
+spec:
+  namespaces:
+    - namespace-a
+    - namespace-b
+    - namespace-c
+  min:
+    cpu: 2m
+    memory: 10m
+  max:
+    cpu: 10m
+    memory: 100m

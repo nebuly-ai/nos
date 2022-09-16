@@ -53,7 +53,3 @@ type ElasticQuotaList struct {
 	// Items is a list of ElasticQuota objects.
 	Items []ElasticQuota `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&ElasticQuota{}, &ElasticQuotaList{})
-}
