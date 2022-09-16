@@ -11,8 +11,8 @@ const (
 
 // Controller names
 const (
-	// ElasticQuotaControllerName todo
-	ElasticQuotaControllerName = "elasticquota-controller"
+	ElasticQuotaControllerName          = "elasticquota-controller"
+	CompositeElasticQuotaControllerName = "composite-elasticquota-controller"
 )
 
 // Labels

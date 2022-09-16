@@ -82,6 +82,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Setup ElasticQuota
 	elasticQuotaReconciler := controller.NewElasticQuotaReconciler(
 		mgr.GetClient(),
 		mgr.GetScheme(),
@@ -93,6 +94,17 @@ func main() {
 	}
 	if err = (&v1alpha1.ElasticQuota{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ElasticQuota")
+		os.Exit(1)
+	}
+
+	// Setup CompositeElasticQuota
+	compositeElasticQuotaReconciler := controller.NewCompositeElasticQuotaReconciler(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+		*controllerConfig.NvidiaGPUResourceMemoryGB,
+	)
+	if err = compositeElasticQuotaReconciler.SetupWithManager(mgr, constant.CompositeElasticQuotaControllerName); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CompositeElasticQuota")
 		os.Exit(1)
 	}
 
