@@ -63,11 +63,20 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
+	// Setup ElasticQuota controller
 	err = (&ElasticQuotaReconciler{
 		Client:             k8sManager.GetClient(),
 		Scheme:             k8sManager.GetScheme(),
 		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory},
 	}).SetupWithManager(k8sManager, constant.ElasticQuotaControllerName)
+	Expect(err).ToNot(HaveOccurred())
+
+	// Setup CompositeElasticQuota controller
+	err = (&CompositeElasticQuotaReconciler{
+		Client:             k8sManager.GetClient(),
+		Scheme:             k8sManager.GetScheme(),
+		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory},
+	}).SetupWithManager(k8sManager, constant.CompositeElasticQuotaControllerName)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {

@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	. "sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
@@ -12,6 +11,9 @@ import (
 var ceqLog = logf.Log.WithName("compositeelasticquota-resource")
 
 func (r *CompositeElasticQuota) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	if client == nil {
+		client = mgr.GetClient()
+	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -35,12 +37,5 @@ func (r *CompositeElasticQuota) ValidateUpdate(old runtime.Object) error {
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *CompositeElasticQuota) ValidateDelete() error {
-	return nil
-}
-
-func (r *CompositeElasticQuota) InjectClient(c Client) error {
-	if client == nil {
-		client = c
-	}
 	return nil
 }

@@ -15,6 +15,9 @@ import (
 var eqlog = logf.Log.WithName("elasticquota-resource")
 
 func (r *ElasticQuota) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	if client == nil {
+		client = mgr.GetClient()
+	}
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -57,12 +60,5 @@ func (r *ElasticQuota) ValidateUpdate(old runtime.Object) error {
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *ElasticQuota) ValidateDelete() error {
-	return nil
-}
-
-func (r *ElasticQuota) InjectClient(c Client) error {
-	if client == nil {
-		client = c
-	}
 	return nil
 }
