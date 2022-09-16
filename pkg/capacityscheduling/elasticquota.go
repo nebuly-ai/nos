@@ -86,6 +86,39 @@ func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo *ElasticQuo
 	return result
 }
 
+// getAggregatedOverquotas returns the total amount of quotas that can be used as "over-quotas", namely
+// the quotas that ElasticQuotas can use for hosting a Pod over their Min limits.
+//
+// Example:
+//
+//	ElasticQuota A:
+//		min:
+//			cpu: 100m
+//		used:
+//			cpu: 350m
+//
+//	ElasticQuota B:
+//		min:
+//			cpu: 50m
+//		used:
+//			cpu: 0m
+//
+//	ElasticQuota C:
+//		min:
+//			cpu: 200m
+//		used:
+//			cpu: 50m
+//
+// Tot. available overquotas = 50m + 150m = 200m (150m of these quotas are already being used by ElasticQuota A)
+func (e ElasticQuotaInfos) getAggregatedOverquotas() framework.Resource {
+	var result = framework.Resource{}
+	for _, eqInfo := range e {
+		unused := util.SubtractResourcesNonNegative(*eqInfo.Min, *eqInfo.Used)
+		result = util.SumResources(result, unused)
+	}
+	return result
+}
+
 func (e ElasticQuotaInfos) getAggregatedMin() *framework.Resource {
 	var totalMin = framework.Resource{}
 	for _, eqi := range e {

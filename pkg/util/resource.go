@@ -57,21 +57,8 @@ func FromResourceListToFrameworkResource(r v1.ResourceList) framework.Resource {
 	return res
 }
 
-// SumResources returns the sum of the two resources provided as argument.
-// The returned resource contains the union of the scalar resources of the two input resources.
-//
-// Example:
-//
-//	r1:
-//		nvidia.com/gpu: 2
-//		nebuly.ai/gpu-memory: 16
-//
-//	r2:
-//		nvidia.com/gpu: 1
-//
-//	result:
-//		nvidia.com/gpu: 3
-//		nebuly.ai/gpu-memory: 16
+// SumResources returns a new resource corresponding to the result of Max(0, r1 - r2).
+// The returned resource contains the union of the scalar resources of r1 and r2.
 func SumResources(r1 framework.Resource, r2 framework.Resource) framework.Resource {
 	var res = framework.Resource{}
 	res.Memory = r1.Memory + r2.Memory
@@ -87,7 +74,24 @@ func SumResources(r1 framework.Resource, r2 framework.Resource) framework.Resour
 	return res
 }
 
+// SubtractResourcesNonNegative returns a new resource corresponding to the result of Max(0, r1 - r2).
+// The returned resource contains the union of the scalar resources of r1 and r2.
+func SubtractResourcesNonNegative(r1 framework.Resource, r2 framework.Resource) framework.Resource {
+	res := SubtractResources(r1, r2)
+
+	res.Memory = Max(0, res.Memory)
+	res.MilliCPU = Max(0, res.MilliCPU)
+	res.AllowedPodNumber = Max(0, res.AllowedPodNumber)
+	res.EphemeralStorage = Max(0, res.EphemeralStorage)
+	for r, v := range res.ScalarResources {
+		res.SetScalar(r, Max(0, v))
+	}
+
+	return res
+}
+
 // SubtractResources returns a new resource corresponding to the result of r1 - r2.
+// The returned resource contains the union of the scalar resources of r1 and r2.
 func SubtractResources(r1 framework.Resource, r2 framework.Resource) framework.Resource {
 	var res = framework.Resource{}
 	res.Memory = r1.Memory - r2.Memory

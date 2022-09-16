@@ -628,3 +628,155 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 		})
 	}
 }
+
+func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
+	tests := []struct {
+		name              string
+		elasticQuotaInfos ElasticQuotaInfos
+		expected          framework.Resource
+	}{
+		{
+			name:              "Empty elastic quota infos",
+			elasticQuotaInfos: ElasticQuotaInfos{},
+			expected:          framework.Resource{},
+		},
+		{
+			name: "Single elastic quota info",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq": {
+					Namespace: "ns",
+					Min: &framework.Resource{
+						MilliCPU:         100,
+						Memory:           200,
+						EphemeralStorage: 5,
+						AllowedPodNumber: 10,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 5,
+							constant.ResourceGPUMemory: 5,
+						},
+					},
+					Max: nil,
+					Used: &framework.Resource{
+						MilliCPU:         0,
+						Memory:           100,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 0,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 5,
+							constant.ResourceGPUMemory: 0,
+						},
+					},
+				},
+			},
+			expected: framework.Resource{
+				MilliCPU:         100,
+				Memory:           100,
+				EphemeralStorage: 5,
+				AllowedPodNumber: 10,
+				ScalarResources: map[v1.ResourceName]int64{
+					constant.ResourceNvidiaGPU: 0,
+					constant.ResourceGPUMemory: 5,
+				},
+			},
+		},
+		{
+			name: "Multiple ElasticQuotaInfos",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq-1": { // overquota
+					Namespace: "ns-1",
+					Min: &framework.Resource{
+						MilliCPU:         100,
+						Memory:           200,
+						EphemeralStorage: 5,
+						AllowedPodNumber: 5,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 5,
+							constant.ResourceGPUMemory: 5,
+						},
+					},
+					Used: &framework.Resource{
+						MilliCPU:         150,
+						Memory:           250,
+						EphemeralStorage: 10,
+						AllowedPodNumber: 10,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 10,
+							constant.ResourceGPUMemory: 10,
+						},
+					},
+				},
+				"eq-2": {
+					Namespace: "ns-2",
+					Min: &framework.Resource{
+						MilliCPU:         200,
+						Memory:           200,
+						EphemeralStorage: 5,
+						AllowedPodNumber: 5,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 5,
+							constant.ResourceGPUMemory: 5,
+						},
+					},
+					Used: &framework.Resource{
+						MilliCPU:         200,
+						Memory:           0,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 0,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 0,
+							constant.ResourceGPUMemory: 0,
+						},
+					},
+				},
+				"eq-3": {
+					Namespace: "ns-3",
+					Min: &framework.Resource{
+						MilliCPU:         200,
+						Memory:           200,
+						EphemeralStorage: 5,
+						AllowedPodNumber: 5,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 5,
+						},
+					},
+					Used: &framework.Resource{
+						MilliCPU:         0,
+						Memory:           10,
+						EphemeralStorage: 0,
+						AllowedPodNumber: 0,
+						ScalarResources: map[v1.ResourceName]int64{
+							constant.ResourceNvidiaGPU: 1,
+						},
+					},
+				},
+			},
+			expected: framework.Resource{
+				MilliCPU:         0 + 0 + 200,
+				Memory:           0 + 200 + 190,
+				EphemeralStorage: 0 + 5 + 5,
+				AllowedPodNumber: 0 + 5 + 5,
+				ScalarResources: map[v1.ResourceName]int64{
+					constant.ResourceNvidiaGPU: 0 + 5 + 4,
+					constant.ResourceGPUMemory: 0 + 5 + 0,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := tt.elasticQuotaInfos.getAggregatedOverquotas()
+			assert.Equal(t, tt.expected, actual)
+
+			// aggregated_overquotas must be <= aggregated_min
+			aggregatedMin := tt.elasticQuotaInfos.getAggregatedMin()
+			assert.LessOrEqual(t, actual.MilliCPU, aggregatedMin.MilliCPU)
+			assert.LessOrEqual(t, actual.Memory, aggregatedMin.Memory)
+			assert.LessOrEqual(t, actual.EphemeralStorage, aggregatedMin.EphemeralStorage)
+			assert.LessOrEqual(t, actual.AllowedPodNumber, aggregatedMin.AllowedPodNumber)
+			for r, v := range actual.ScalarResources {
+				assert.LessOrEqual(t, v, aggregatedMin.ScalarResources[r])
+			}
+		})
+	}
+}
