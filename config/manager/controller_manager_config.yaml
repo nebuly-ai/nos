@@ -1,4 +1,4 @@
-apiVersion: n8s.nebuly.ai/v1alpha1
+apiVersion: config.n8s.nebuly.ai/v1alpha1
 kind: CustomControllerManagerConfig
 health:
   healthProbeBindAddress: :8081
