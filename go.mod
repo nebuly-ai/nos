@@ -8,6 +8,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.1.6
 	github.com/onsi/gomega v1.20.2
 	github.com/stretchr/testify v1.8.0
+	golang.org/x/exp v0.0.0-20220915210609-840b3808d824
 	k8s.io/api v0.24.4
 	k8s.io/apimachinery v0.24.4
 	k8s.io/apiserver v0.24.4

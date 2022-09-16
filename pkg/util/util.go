@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"golang.org/x/exp/constraints"
 	"math/rand"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -76,4 +77,18 @@ func GetKeys[K comparable, V any](maps ...map[K]V) []K {
 		i++
 	}
 	return res
+}
+
+func Min[K constraints.Ordered](v1 K, v2 K) K {
+	if v1 < v2 {
+		return v1
+	}
+	return v2
+}
+
+func Max[K constraints.Ordered](v1 K, v2 K) K {
+	if v1 > v2 {
+		return v1
+	}
+	return v2
 }

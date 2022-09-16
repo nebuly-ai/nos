@@ -51,3 +51,139 @@ func TestGetKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestMax(t *testing.T) {
+	testsInt := []struct {
+		name     string
+		v1       int
+		v2       int
+		expected int
+	}{
+		{
+			name:     "v1 == v2",
+			v1:       10,
+			v2:       10,
+			expected: 10,
+		},
+		{
+			name:     "v1 > v2",
+			v1:       11,
+			v2:       10,
+			expected: 11,
+		},
+		{
+			name:     "v1 < v2",
+			v1:       9,
+			v2:       10,
+			expected: 10,
+		},
+	}
+
+	for _, tt := range testsInt {
+		t.Run(tt.name, func(t *testing.T) {
+			max := Max(tt.v1, tt.v2)
+			assert.Equal(t, tt.expected, max)
+		})
+	}
+
+	testsFloat := []struct {
+		name     string
+		v1       float64
+		v2       float64
+		expected float64
+	}{
+		{
+			name:     "v1 == v2",
+			v1:       10.001,
+			v2:       10.001,
+			expected: 10.001,
+		},
+		{
+			name:     "v1 > v2",
+			v1:       10.1,
+			v2:       10,
+			expected: 10.1,
+		},
+		{
+			name:     "v1 < v2",
+			v1:       10,
+			v2:       10.1,
+			expected: 10.1,
+		},
+	}
+
+	for _, tt := range testsFloat {
+		t.Run(tt.name, func(t *testing.T) {
+			max := Max(tt.v1, tt.v2)
+			assert.Equal(t, tt.expected, max)
+		})
+	}
+}
+
+func TestMin(t *testing.T) {
+	testsInt := []struct {
+		name     string
+		v1       int
+		v2       int
+		expected int
+	}{
+		{
+			name:     "v1 == v2",
+			v1:       10,
+			v2:       10,
+			expected: 10,
+		},
+		{
+			name:     "v1 > v2",
+			v1:       11,
+			v2:       10,
+			expected: 10,
+		},
+		{
+			name:     "v1 < v2",
+			v1:       9,
+			v2:       10,
+			expected: 9,
+		},
+	}
+
+	for _, tt := range testsInt {
+		t.Run(tt.name, func(t *testing.T) {
+			max := Min(tt.v1, tt.v2)
+			assert.Equal(t, tt.expected, max)
+		})
+	}
+
+	testsFloat := []struct {
+		name     string
+		v1       float64
+		v2       float64
+		expected float64
+	}{
+		{
+			name:     "v1 == v2",
+			v1:       10.001,
+			v2:       10.001,
+			expected: 10.001,
+		},
+		{
+			name:     "v1 > v2",
+			v1:       10.1,
+			v2:       10,
+			expected: 10,
+		},
+		{
+			name:     "v1 < v2",
+			v1:       10,
+			v2:       10.1,
+			expected: 10,
+		},
+	}
+
+	for _, tt := range testsFloat {
+		t.Run(tt.name, func(t *testing.T) {
+			max := Min(tt.v1, tt.v2)
+			assert.Equal(t, tt.expected, max)
+		})
+	}
+}
