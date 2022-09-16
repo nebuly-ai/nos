@@ -1,0 +1,35 @@
+# Tot. unused CPU: 250 - 250 = 0
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-1
+  namespace: team-a
+spec:
+  schedulerName: n8s-scheduler
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+      resources:
+        limits:
+          cpu: 100m # used quota of team-a: 100/100
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-1
+  namespace: team-b
+spec:
+  schedulerName: n8s-scheduler
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+      resources:
+        limits:
+          cpu: 150m # used quota of team-b: 200/50

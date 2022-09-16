@@ -54,7 +54,7 @@ func (e ElasticQuotaInfos) GetGuaranteedOverquotas(elasticQuota string) (*framew
 
 	var result = framework.NewResource(nil)
 	percentages := e.getGuaranteedOverquotasPercentages(eqInfo)
-	aggregatedUnused := e.getAggregatedUnused()
+	aggregatedUnused := e.getAggregatedOverquotas()
 
 	result.MilliCPU = int64(math.Floor(float64(aggregatedUnused.MilliCPU) * percentages[v1.ResourceCPU]))
 	result.Memory = int64(math.Floor(float64(aggregatedUnused.Memory) * percentages[v1.ResourceMemory]))
@@ -139,12 +139,6 @@ func (e ElasticQuotaInfos) getAggregatedUsed() *framework.Resource {
 		totalUsed = util.SumResources(totalUsed, *eqi.Used)
 	}
 	return &totalUsed
-}
-
-func (e ElasticQuotaInfos) getAggregatedUnused() framework.Resource {
-	totalMin := e.getAggregatedMin()
-	totalUsed := e.getAggregatedUsed()
-	return util.SubtractResources(*totalMin, *totalUsed)
 }
 
 // ElasticQuotaInfo is a wrapper to a ElasticQuota with information.

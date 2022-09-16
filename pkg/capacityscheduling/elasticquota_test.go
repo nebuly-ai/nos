@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/sets"
-	quota "k8s.io/apiserver/pkg/quota/v1"
 	"math"
 	"reflect"
 	"testing"
@@ -228,7 +227,11 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 		{
 			name: "ElasticQuota is empty",
 			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
-				"eq-1": {},
+				"eq-1": {
+					Min:  &framework.Resource{},
+					Max:  &framework.Resource{},
+					Used: &framework.Resource{},
+				},
 				"eq-2": {
 					Namespace: "ns-1",
 					pods:      sets.NewString("pd-1", "pd-2"),
@@ -260,8 +263,16 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 		{
 			name: "All ElasticQuotas are empty",
 			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
-				"eq-1": {},
-				"eq-2": {},
+				"eq-1": {
+					Min:  &framework.Resource{},
+					Max:  &framework.Resource{},
+					Used: &framework.Resource{},
+				},
+				"eq-2": {
+					Min:  &framework.Resource{},
+					Max:  &framework.Resource{},
+					Used: &framework.Resource{},
+				},
 			},
 			elasticQuotaName:             "eq-1",
 			expectedGuaranteedOverquotas: &framework.Resource{},
@@ -342,14 +353,14 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 			},
 			elasticQuotaName: "eq-1",
 			expectedGuaranteedOverquotas: &framework.Resource{
-				MilliCPU:         1, // math.Floor(10 / (10 + 30 + 20) * ((10 + 30 + 20) - (5 + 35 + 10)))
-				Memory:           1, // math.Floor(10 / (10 + 30 + 20) * ((10 + 30 + 20) - (5 + 35 + 10)))
+				MilliCPU:         2, // math.Floor(10 / (10 + 30 + 20) * (Max(0, 10-5) + Max(0, 30-35) + Max(0, 20-10)))
+				Memory:           2, // math.Floor(10 / (10 + 30 + 20) * (Max(0, 10-5) + Max(0, 30-35) + Max(0, 20-10)))
 				EphemeralStorage: 0,
-				AllowedPodNumber: 7, // math.Floor(10 / (10 + 30 + 0) * ((10 + 30 + 0) - (5 + 5 + 0)))
+				AllowedPodNumber: 7, // math.Floor(10 / (10 + 30 + 0) * (Max(0, 10-5) + Max(0, 30-5) + Max(0, 0-0)))
 				ScalarResources: map[v1.ResourceName]int64{
 					v1.ResourceName("nebuly.ai/new-resource"): 2,  // tot. unused overquotas, since "new-resource" is defined only for eq-1
-					constant.ResourceNvidiaGPU:                5,  // math.Floor(5 / (5 + 3) * ((5 + 3) - (0 + 0)))
-					constant.ResourceGPUMemory:                49, // math.Floor(64 / (64 + 24) * ((64 + 24) - (10 + 10)))
+					constant.ResourceNvidiaGPU:                5,  // math.Floor(5 / (5 + 3) * (Max(0, 5-0) + Max(0, 3-0)))
+					constant.ResourceGPUMemory:                49, // math.Floor(64 / (64 + 24) * (Max(0, 64-10) + Max(0, 24-10)))
 				},
 			},
 			errorExpected: false,
@@ -365,44 +376,6 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			assert.Equal(t, tt.expectedGuaranteedOverquotas, guaranteedOverquotas)
-
-			// Sum of guaranteed overquotas must be <= total unused quotas
-			var totalUsed = make(v1.ResourceList)
-			var totalMin = make(v1.ResourceList)
-			var totalGuaranteedOverquotas = make(v1.ResourceList)
-			for eq, eqInfo := range tt.elasticQuotaInfos {
-				if eqInfo.Used != nil {
-					totalUsed = quota.Add(
-						totalUsed,
-						util.FromFrameworkResourceToResourceList(*eqInfo.Used),
-					)
-				}
-				if eqInfo.Min != nil {
-					totalMin = quota.Add(
-						totalMin,
-						util.FromFrameworkResourceToResourceList(*eqInfo.Min),
-					)
-				}
-				guaranteed, _ := tt.elasticQuotaInfos.GetGuaranteedOverquotas(eq)
-				totalGuaranteedOverquotas = quota.Add(
-					totalGuaranteedOverquotas,
-					util.FromFrameworkResourceToResourceList(*guaranteed),
-				)
-			}
-			totalUnusedQuotas := quota.Subtract(totalMin, totalUsed)
-
-			for r, unused := range totalUnusedQuotas {
-				guaranteed := totalGuaranteedOverquotas[r]
-				assert.LessOrEqual(
-					t,
-					guaranteed.Value(),
-					unused.Value(),
-					"expected guaranteed overquota <= unused quota, got guaranteed=%d, unused=%d for resource %q",
-					guaranteed.Value(),
-					unused.Value(),
-					r,
-				)
-			}
 		})
 	}
 }

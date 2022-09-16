@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: team-a
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-b
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-c
+
+---
+
+apiVersion: n8s.nebuly.ai/v1alpha1
+kind: ElasticQuota
+metadata:
+  name: quota-a
+  namespace: team-a
+spec:
+  min:
+    cpu: 100m # Overquota % = 100 / (100 + 50 + 100) = 0.40
+
+---
+
+apiVersion: n8s.nebuly.ai/v1alpha1
+kind: ElasticQuota
+metadata:
+  name: quota-b
+  namespace: team-b
+spec:
+  min:
+    cpu: 50m # Overquota % = 50 / (100 + 50 + 100) ~= 0.20
+
+---
+
+apiVersion: n8s.nebuly.ai/v1alpha1
+kind: ElasticQuota
+metadata:
+  name: quota-c
+  namespace: team-c
+spec:
+  min:
+    cpu: 100m # Overquota % = 100 / (100 + 50 + 100) ~= 0.40

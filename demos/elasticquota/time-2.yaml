@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-2
+  namespace: team-a
+spec:
+  schedulerName: n8s-scheduler
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+      resources:
+        limits:
+          cpu: 10m
+
