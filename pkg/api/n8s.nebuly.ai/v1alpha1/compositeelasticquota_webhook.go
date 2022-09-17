@@ -26,12 +26,14 @@ var _ webhook.Validator = &CompositeElasticQuota{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *CompositeElasticQuota) ValidateCreate() error {
 	ceqLog.V(1).Info("validate create", "name", r.Name)
-
+	// TODO: Check that the specified namespaces do not already belong to another CompositeElasticQuota
 	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *CompositeElasticQuota) ValidateUpdate(old runtime.Object) error {
+	ceqLog.V(1).Info("validate update", "name", r.Name)
+	// TODO: Check that the specified namespaces do not already belong to another CompositeElasticQuota
 	return nil
 }
 

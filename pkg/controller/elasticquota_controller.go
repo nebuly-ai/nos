@@ -2,17 +2,12 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	quota "k8s.io/apiserver/pkg/quota/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -22,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sort"
 )
 
 const (
@@ -33,14 +27,20 @@ const (
 type ElasticQuotaReconciler struct {
 	client.Client
 	Scheme             *runtime.Scheme
-	resourceCalculator util.ResourceCalculator
+	resourceCalculator *util.ResourceCalculator
+	podsReconciler     *elasticQuotaPodsReconciler
 }
 
 func NewElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGPUResourceMemoryGB int64) ElasticQuotaReconciler {
+	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB}
 	return ElasticQuotaReconciler{
 		Client:             client,
 		Scheme:             scheme,
-		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB},
+		resourceCalculator: &resourceCalculator,
+		podsReconciler: &elasticQuotaPodsReconciler{
+			c:                  client,
+			resourceCalculator: &resourceCalculator,
+		},
 	}
 }
 
@@ -69,126 +69,27 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	// Add quota status labels and compute used quota
-	r.sortPodListForFindingOverQuotaPods(&runningPodList)
-	usedResourceList, err := r.patchPodsAndGetUsedQuota(ctx, &runningPodList, &instance)
+	// Update pods in EQ namespaces and compute used quota
+	used, err := r.podsReconciler.PatchPodsAndComputeUsedQuota(
+		ctx,
+		runningPodList.Items,
+		instance.Spec.Min,
+		instance.Spec.Max,
+	)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, nil
 	}
-	instance.Status.Used = usedResourceList
 
 	// Update EQ status
-	err = r.updateStatus(ctx, instance, logger)
-	if err != nil {
+	instance.Status.Used = used
+	if err = r.updateStatus(ctx, instance); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
 }
 
-// sortPodListForFindingOverQuotaPods sorts the input list so that it can be used for finding the Pods that are
-// "over-quota" (e.g. they are borrowing quotas from another namespace) and the ones that are "in-quota" (e.g.
-// in their respective ElasticQuota used <= min)
-func (r *ElasticQuotaReconciler) sortPodListForFindingOverQuotaPods(podList *v1.PodList) {
-	sort.Slice(podList.Items, func(i, j int) bool {
-		// If creation timestamp is not the same, sort by creation timestamp
-		firstPodCT := podList.Items[i].ObjectMeta.CreationTimestamp
-		secondPodCT := podList.Items[j].ObjectMeta.CreationTimestamp
-		if !firstPodCT.Equal(&secondPodCT) {
-			return firstPodCT.Before(&secondPodCT)
-		}
-
-		// If priority is not the same, sort by priority
-		firstPodPriority := *podList.Items[i].Spec.Priority
-		secondPodPriority := *podList.Items[j].Spec.Priority
-		if firstPodPriority != secondPodPriority {
-			return firstPodPriority < secondPodPriority
-		}
-
-		// If resource request is not the same, sort by resource request
-		firstPodRequest := r.resourceCalculator.ComputePodResourceRequest(podList.Items[i])
-		secondPodRequest := r.resourceCalculator.ComputePodResourceRequest(podList.Items[j])
-		if !quota.Equals(firstPodRequest, secondPodRequest) {
-			less, _ := quota.LessThanOrEqual(firstPodRequest, secondPodRequest)
-			return less
-		}
-
-		// As last resort, sort by name alphabetically
-		return podList.Items[i].Name < podList.Items[j].Name
-	})
-}
-
-func (r *ElasticQuotaReconciler) patchPodsAndGetUsedQuota(ctx context.Context, podList *v1.PodList, eq *v1alpha1.ElasticQuota) (v1.ResourceList, error) {
-	used := newZeroUsed(*eq)
-	var err error
-	for _, pod := range podList.Items {
-		request := r.resourceCalculator.ComputePodResourceRequest(pod)
-		used = quota.Add(used, request)
-
-		var desiredCapacityInfo constant.CapacityInfo
-		if less, _ := quota.LessThanOrEqual(used, eq.Spec.Min); less {
-			desiredCapacityInfo = constant.CapacityInfoInQuota
-		} else {
-			desiredCapacityInfo = constant.CapacityInfoOverQuota
-		}
-
-		if _, err = r.patchCapacityInfoIfDifferent(ctx, &pod, desiredCapacityInfo); err != nil {
-			return nil, err
-		}
-	}
-
-	// Remove resources that are not enforced by ElasticQuota limits
-	for r := range used {
-		if _, ok := eq.Spec.Min[r]; !ok {
-			delete(used, r)
-		}
-	}
-
-	return used, nil
-}
-
-func (r *ElasticQuotaReconciler) patchCapacityInfoIfDifferent(ctx context.Context, pod *v1.Pod, desired constant.CapacityInfo) (bool, error) {
-	logger := log.FromContext(ctx)
-	desiredAsString := string(desired)
-	if pod.Labels == nil {
-		pod.Labels = make(map[string]string)
-	}
-	if pod.Labels[constant.LabelCapacityInfo] != desiredAsString {
-		logger.V(1).Info(
-			"updating Pod capacity info label",
-			"currentValue",
-			pod.Labels[constant.LabelCapacityInfo],
-			"desiredValue",
-			desiredAsString,
-			"Pod",
-			pod,
-		)
-		original := pod.DeepCopy()
-		pod.Labels[constant.LabelCapacityInfo] = desiredAsString
-		if err := r.Client.Patch(ctx, pod, client.MergeFrom(original)); err != nil {
-			msg := fmt.Sprintf("unable to update label %q with value %q", constant.LabelCapacityInfo, desiredAsString)
-			logger.Error(err, msg, "pod", original)
-			return false, err
-		}
-		return true, nil
-	}
-	return false, nil
-}
-
-// newZeroUsed will return the zero value of the union of min and max
-func newZeroUsed(eq v1alpha1.ElasticQuota) v1.ResourceList {
-	minResources := quota.ResourceNames(eq.Spec.Min)
-	maxResources := quota.ResourceNames(eq.Spec.Max)
-	res := v1.ResourceList{}
-	for _, v := range minResources {
-		res[v] = *resource.NewQuantity(0, resource.DecimalSI)
-	}
-	for _, v := range maxResources {
-		res[v] = *resource.NewQuantity(0, resource.DecimalSI)
-	}
-	return res
-}
-
-func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance v1alpha1.ElasticQuota, logger logr.Logger) error {
+func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance v1alpha1.ElasticQuota) error {
+	var logger = log.FromContext(ctx)
 	var currentEq v1alpha1.ElasticQuota
 	namespacedName := types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}
 

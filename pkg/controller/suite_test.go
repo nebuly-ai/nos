@@ -5,7 +5,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -64,19 +63,21 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup ElasticQuota controller
-	err = (&ElasticQuotaReconciler{
-		Client:             k8sManager.GetClient(),
-		Scheme:             k8sManager.GetScheme(),
-		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory},
-	}).SetupWithManager(k8sManager, constant.ElasticQuotaControllerName)
+	eqReconciler := NewElasticQuotaReconciler(
+		k8sManager.GetClient(),
+		k8sManager.GetScheme(),
+		constant.DefaultNvidiaGPUResourceMemory,
+	)
+	err = eqReconciler.SetupWithManager(k8sManager, constant.ElasticQuotaControllerName)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup CompositeElasticQuota controller
-	err = (&CompositeElasticQuotaReconciler{
-		Client:             k8sManager.GetClient(),
-		Scheme:             k8sManager.GetScheme(),
-		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory},
-	}).SetupWithManager(k8sManager, constant.CompositeElasticQuotaControllerName)
+	ceqReconciler := NewCompositeElasticQuotaReconciler(
+		k8sManager.GetClient(),
+		k8sManager.GetScheme(),
+		constant.DefaultNvidiaGPUResourceMemory,
+	)
+	err = ceqReconciler.SetupWithManager(k8sManager, constant.CompositeElasticQuotaControllerName)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {

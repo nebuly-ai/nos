@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestSortPodListForFindingOverQuotaPods(t *testing.T) {
+func TestElasticQuotaPodsReconciler_sortPodListForFindingOverQuotaPods(t *testing.T) {
 	tests := []struct {
 		name                   string
 		podList                v1.PodList
@@ -99,12 +99,14 @@ func TestSortPodListForFindingOverQuotaPods(t *testing.T) {
 		},
 	}
 
-	r := ElasticQuotaReconciler{
-		resourceCalculator: util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory},
+	r := elasticQuotaPodsReconciler{
+		resourceCalculator: &util.ResourceCalculator{
+			NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r.sortPodListForFindingOverQuotaPods(&tt.podList)
+			r.sortPodListForFindingOverQuotaPods(tt.podList.Items)
 			podNames := make([]string, len(tt.podList.Items))
 			for i, pod := range tt.podList.Items {
 				podNames[i] = pod.Name
