@@ -23,6 +23,7 @@ type CompositeElasticQuota struct {
 
 type CompositeElasticQuotaSpec struct {
 	// Namespaces is the desired list of namespaces in which the specified limits will be enforced
+	//+kubebuilder:validation:MinItems:=1
 	Namespaces []string `json:"namespaces,omitempty" protobuf:"bytes,1,rep,name=namespaces"`
 
 	// Min is the set of desired guaranteed limits for each named resource.

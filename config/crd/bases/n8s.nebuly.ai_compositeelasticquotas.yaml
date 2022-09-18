@@ -63,6 +63,7 @@ spec:
                   the specified limits will be enforced
                 items:
                   type: string
+                minItems: 1
                 type: array
             type: object
           status:
