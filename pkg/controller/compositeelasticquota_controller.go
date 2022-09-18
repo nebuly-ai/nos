@@ -9,8 +9,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // CompositeElasticQuotaReconciler reconciles a CompositeElasticQuota object
@@ -104,7 +110,7 @@ func (r *CompositeElasticQuotaReconciler) updateStatus(ctx context.Context, inst
 		return err
 	}
 	if equality.Semantic.DeepEqual(currentEq.Status, instance.Status) {
-		logger.V(1).Info("current status and desired status of ElasticQuota are equal, skipping update")
+		logger.V(1).Info("current status and desired status of CompositeElasticQuota are equal, skipping update")
 		return nil
 	}
 	logger.V(1).Info("updating CompositeElasticQuota status", "Status", instance.Status)
@@ -121,30 +127,52 @@ func (r *CompositeElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, nam
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.CompositeElasticQuota{}).
 		Named(name).
-		//Watches(
-		//	&source.Kind{Type: &v1.Pod{}},
-		//	handler.EnqueueRequestsFromMapFunc(r.findCompositeElasticQuotaForPod),
-		//	builder.WithPredicates(
-		//		predicate.Funcs{
-		//			CreateFunc: func(_ event.CreateEvent) bool {
-		//				return false
-		//			},
-		//			DeleteFunc: func(_ event.DeleteEvent) bool {
-		//				return true
-		//			},
-		//			UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-		//				// Reconcile only if Pod changed phase, and either old or new phase status is Running
-		//				newPod := updateEvent.ObjectNew.(*v1.Pod)
-		//				oldPod := updateEvent.ObjectOld.(*v1.Pod)
-		//				statusChanged := newPod.Status.Phase != oldPod.Status.Phase
-		//				anyRunning := (newPod.Status.Phase == v1.PodRunning) || (oldPod.Status.Phase == v1.PodRunning)
-		//				return statusChanged && anyRunning
-		//			},
-		//			GenericFunc: func(_ event.GenericEvent) bool {
-		//				return false
-		//			},
-		//		},
-		//	),
-		//).
+		Watches(
+			&source.Kind{Type: &v1.Pod{}},
+			handler.EnqueueRequestsFromMapFunc(r.findCompositeElasticQuotaForPod),
+			builder.WithPredicates(
+				predicate.Funcs{
+					CreateFunc: func(_ event.CreateEvent) bool {
+						return false
+					},
+					DeleteFunc: func(_ event.DeleteEvent) bool {
+						return true
+					},
+					UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+						// Reconcile only if Pod changed phase, and either old or new phase status is Running
+						newPod := updateEvent.ObjectNew.(*v1.Pod)
+						oldPod := updateEvent.ObjectOld.(*v1.Pod)
+						statusChanged := newPod.Status.Phase != oldPod.Status.Phase
+						anyRunning := (newPod.Status.Phase == v1.PodRunning) || (oldPod.Status.Phase == v1.PodRunning)
+						return statusChanged && anyRunning
+					},
+					GenericFunc: func(_ event.GenericEvent) bool {
+						return false
+					},
+				},
+			),
+		).
 		Complete(r)
+}
+
+func (r *CompositeElasticQuotaReconciler) findCompositeElasticQuotaForPod(pod client.Object) []reconcile.Request {
+	ctx := context.Background()
+	logger := log.FromContext(ctx)
+
+	var eqList v1alpha1.CompositeElasticQuotaList
+	err := r.Client.List(ctx, &eqList, client.InNamespace(pod.GetNamespace()))
+	if err != nil {
+		logger.Error(err, "unable to list CompositeElasticQuotas")
+		return []reconcile.Request{}
+	}
+
+	if len(eqList.Items) > 0 {
+		return []reconcile.Request{{
+			NamespacedName: types.NamespacedName{
+				Name:      eqList.Items[0].Name,
+				Namespace: eqList.Items[0].Namespace,
+			},
+		}}
+	}
+	return []reconcile.Request{}
 }

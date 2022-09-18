@@ -110,29 +110,6 @@ func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance v1al
 	return nil
 }
 
-func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []reconcile.Request {
-	ctx := context.Background()
-	logger := log.FromContext(ctx)
-
-	var eqList v1alpha1.ElasticQuotaList
-	err := r.Client.List(ctx, &eqList, client.InNamespace(pod.GetNamespace()))
-	if err != nil {
-		logger.Error(err, "unable to list ElasticQuotas")
-		return []reconcile.Request{}
-	}
-
-	if len(eqList.Items) > 0 {
-		return []reconcile.Request{{
-			NamespacedName: types.NamespacedName{
-				Name:      eqList.Items[0].Name,
-				Namespace: eqList.Items[0].Namespace,
-			},
-		}}
-	}
-
-	return []reconcile.Request{}
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, name string) error {
 	err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, podPhaseKey, func(rawObj client.Object) []string {
@@ -172,4 +149,27 @@ func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, name string)
 			),
 		).
 		Complete(r)
+}
+
+func (r *ElasticQuotaReconciler) findElasticQuotaForPod(pod client.Object) []reconcile.Request {
+	ctx := context.Background()
+	logger := log.FromContext(ctx)
+
+	var eqList v1alpha1.ElasticQuotaList
+	err := r.Client.List(ctx, &eqList, client.InNamespace(pod.GetNamespace()))
+	if err != nil {
+		logger.Error(err, "unable to list ElasticQuotas")
+		return []reconcile.Request{}
+	}
+
+	if len(eqList.Items) > 0 {
+		return []reconcile.Request{{
+			NamespacedName: types.NamespacedName{
+				Name:      eqList.Items[0].Name,
+				Namespace: eqList.Items[0].Namespace,
+			},
+		}}
+	}
+
+	return []reconcile.Request{}
 }
