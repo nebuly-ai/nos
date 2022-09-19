@@ -240,6 +240,7 @@ func (e *ElasticQuotaInfo) clone() *ElasticQuotaInfo {
 		ResourceNamespace: e.ResourceNamespace,
 		pods:              sets.NewString(),
 		Namespaces:        sets.NewString(),
+		MaxEnforced:       e.MaxEnforced,
 	}
 
 	if e.Min != nil {
