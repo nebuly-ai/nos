@@ -43,18 +43,7 @@ func FromFrameworkResourceToResourceList(r framework.Resource) v1.ResourceList {
 }
 
 func FromResourceListToFrameworkResource(r v1.ResourceList) framework.Resource {
-	res := framework.Resource{
-		MilliCPU:         r.Cpu().MilliValue(),
-		Memory:           r.Memory().Value(),
-		EphemeralStorage: r.StorageEphemeral().Value(),
-		AllowedPodNumber: int(r.Pods().Value()),
-	}
-	for resourceName, quantity := range r {
-		if IsScalarResource(resourceName) {
-			res.SetScalar(resourceName, quantity.Value())
-		}
-	}
-	return res
+	return *framework.NewResource(r)
 }
 
 // SumResources returns a new resource corresponding to the result of Max(0, r1 - r2).
@@ -103,15 +92,6 @@ func SubtractResources(r1 framework.Resource, r2 framework.Resource) framework.R
 		res.SetScalar(r, sub)
 	}
 	return res
-}
-
-func IsScalarResource(name v1.ResourceName) bool {
-	for _, r := range nonScalarResources {
-		if r == name {
-			return false
-		}
-	}
-	return true
 }
 
 type ResourceCalculator struct {
