@@ -92,3 +92,12 @@ func Max[K constraints.Ordered](v1 K, v2 K) K {
 	}
 	return v2
 }
+
+func InSlice[K comparable](item K, slice []K) bool {
+	for _, i := range slice {
+		if i == item {
+			return true
+		}
+	}
+	return false
+}

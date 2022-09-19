@@ -21,6 +21,7 @@ webhooks:
     - v1alpha1
     operations:
     - CREATE
+    - UPDATE
     resources:
     - compositeelasticquotas
   sideEffects: None
