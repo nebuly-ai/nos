@@ -666,7 +666,7 @@ func (c *CapacityScheduling) addElasticQuotaInfo(obj interface{}) {
 	klog.V(1).InfoS("add ElasticQuotaInfo", "namespace", eqInfo.ResourceNamespace, "name", eqInfo.ResourceName)
 	c.Lock()
 	defer c.Unlock()
-	c.elasticQuotaInfos.AddIfNotPresent(eqInfo)
+	c.elasticQuotaInfos.Add(eqInfo)
 }
 
 func (c *CapacityScheduling) updateElasticQuotaInfo(oldObj, newObj interface{}) {

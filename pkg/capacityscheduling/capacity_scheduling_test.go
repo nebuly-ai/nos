@@ -555,7 +555,7 @@ func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuRe
 	return pod
 }
 
-func TestElasticQuotaInfos_AddIfNotPresent(t *testing.T) {
+func TestElasticQuotaInfos_Add(t *testing.T) {
 	tests := []struct {
 		name     string
 		eqInfos  ElasticQuotaInfos
@@ -617,7 +617,7 @@ func TestElasticQuotaInfos_AddIfNotPresent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.eqInfos.AddIfNotPresent(&tt.eqInfo)
+			tt.eqInfos.Add(&tt.eqInfo)
 			assert.Len(t, tt.eqInfos, len(tt.expected))
 			for ns, eqInfo := range tt.eqInfos {
 				assert.Equal(t, tt.expected[ns].ResourceNamespace, eqInfo.ResourceNamespace)
