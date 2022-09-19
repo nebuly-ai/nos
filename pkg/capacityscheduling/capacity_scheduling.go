@@ -22,10 +22,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	schedulerconfig "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
 	"sort"
 	"sync"
 
@@ -34,7 +30,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/informers"
 	corelisters "k8s.io/client-go/listers/core/v1"
@@ -53,12 +48,12 @@ import (
 // CapacityScheduling is a plugin that implements the mechanism of capacity scheduling.
 type CapacityScheduling struct {
 	sync.RWMutex
-	fh                 framework.Handle
-	podLister          corelisters.PodLister
-	pdbLister          policylisters.PodDisruptionBudgetLister
-	elasticQuotaLister cache.GenericLister
-	elasticQuotaInfos  ElasticQuotaInfos
-	resourceCalculator util.ResourceCalculator
+	fh                       framework.Handle
+	podLister                corelisters.PodLister
+	pdbLister                policylisters.PodDisruptionBudgetLister
+	elasticQuotaInfos        ElasticQuotaInfos
+	resourceCalculator       *util.ResourceCalculator
+	elasticQuotaInfoInformer *ElasticQuotaInfoInformer
 }
 
 // PreFilterState computed at PreFilter and used at PostFilter or Reserve.
@@ -127,53 +122,25 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		elasticQuotaInfos: NewElasticQuotaInfos(),
 		podLister:         handle.SharedInformerFactory().Core().V1().Pods().Lister(),
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
-		resourceCalculator: util.ResourceCalculator{
+		resourceCalculator: &util.ResourceCalculator{
 			NvidiaGPUDeviceMemoryGB: args.NvidiaGPUResourceMemoryGB,
 		},
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(handle.KubeConfig())
+	informer, err := NewElasticQuotaInfoInformer(handle.KubeConfig(), c.resourceCalculator)
 	if err != nil {
 		return nil, err
 	}
-	gvr := schema.GroupVersionResource{
-		Group:    v1alpha1.GroupVersion.Group,
-		Version:  v1alpha1.GroupVersion.Version,
-		Resource: "elasticquotas",
-	}
-	sharedInformerFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 0)
-
-	c.elasticQuotaLister = sharedInformerFactory.ForResource(gvr).Lister()
-	elasticQuotaInformer := sharedInformerFactory.ForResource(gvr).Informer()
-	elasticQuotaInformer.AddEventHandler(
-		cache.FilteringResourceEventHandler{
-			FilterFunc: func(obj interface{}) bool {
-				switch t := obj.(type) {
-				case *unstructured.Unstructured:
-					return true
-				case cache.DeletedFinalStateUnknown:
-					if _, ok := t.Obj.(*unstructured.Unstructured); ok {
-						return true
-					}
-					utilruntime.HandleError(fmt.Errorf("cannot convert to *v1alpha1.ElasticQuota: %v", obj))
-					return false
-				default:
-					utilruntime.HandleError(fmt.Errorf("unable to handle object in %T", obj))
-					return false
-				}
-			},
-			Handler: cache.ResourceEventHandlerFuncs{
-				AddFunc:    c.addElasticQuota,
-				UpdateFunc: c.updateElasticQuota,
-				DeleteFunc: c.deleteElasticQuota,
-			},
-		})
-
-	sharedInformerFactory.Start(nil)
-
-	if !cache.WaitForCacheSync(nil, elasticQuotaInformer.HasSynced) {
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    c.addElasticQuotaInfo,
+		UpdateFunc: c.updateElasticQuotaInfo,
+		DeleteFunc: c.deleteElasticQuotaInfo,
+	})
+	informer.Start(nil)
+	if !cache.WaitForCacheSync(nil, informer.HasSynced) {
 		return nil, fmt.Errorf("timed out waiting for caches to sync %v", Name)
 	}
+	c.elasticQuotaInfoInformer = informer
 
 	podInformer := handle.SharedInformerFactory().Core().V1().Pods().Informer()
 	podInformer.AddEventHandler(
@@ -282,11 +249,23 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 	state.Write(preFilterStateKey, preFilterState)
 
 	if eq.usedOverMaxWith(nominatedPodsReqInEQWithPodReq) {
-		return nil, framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Pod %v/%v is rejected in PreFilter because ElasticQuota %v is more than Max", pod.Namespace, pod.Name, eq.Namespace))
+		msg := fmt.Sprintf(
+			"Pod %v/%v is rejected in PreFilter because quota %v/%v is more than Max",
+			pod.Namespace,
+			pod.Name,
+			eq.ResourceNamespace,
+			eq.ResourceName,
+		)
+		return nil, framework.NewStatus(framework.Unschedulable, msg)
 	}
 
 	if elasticQuotaInfos.AggregatedUsedOverMinWith(*nominatedPodsReqWithPodReq) {
-		return nil, framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Pod %v/%v is rejected in PreFilter because total ElasticQuota used is more than min", pod.Namespace, pod.Name))
+		msg := fmt.Sprintf(
+			"Pod %v/%v is rejected in PreFilter because total quota used is more than min",
+			pod.Namespace,
+			pod.Name,
+		)
+		return nil, framework.NewStatus(framework.Unschedulable, msg)
 	}
 
 	return nil, framework.NewStatus(framework.Success, "")
@@ -549,7 +528,7 @@ func (p *preemptor) SelectVictimsOnNode(
 				guaranteeedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pod.Namespace)
 				minPlusGuaranteeedOverquotas := util.SumResources(*guaranteeedOverquotas, *preemptorElasticQuotaInfo.Min)
 				if preemptorElasticQuotaInfo.usedLteWith(&minPlusGuaranteeedOverquotas, &nominatedPodsReqInEQWithPodReq) {
-					pvGuaranteedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pvEqInfo.Namespace)
+					pvGuaranteedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pvPi.Pod.Namespace)
 					pvMinPlusGuaranteedOverquotas := util.SumResources(*pvGuaranteedOverquotas, *pvEqInfo.Min)
 					if pvEqInfo.usedOver(&pvMinPlusGuaranteedOverquotas) {
 						potentialVictims = append(potentialVictims, pvPi)
@@ -682,62 +661,29 @@ func (p *preemptor) SelectVictimsOnNode(
 	return victims, numViolatingVictim, framework.NewStatus(framework.Success)
 }
 
-func (c *CapacityScheduling) addElasticQuota(obj interface{}) {
-	eqUnstruct := obj.(*unstructured.Unstructured)
-	eq, err := fromUnstructuredToEq(eqUnstruct)
-	if err != nil {
-		klog.ErrorS(err, "unable to convert unstructured to ElasticQuota")
-		return
-	}
-	oldElasticQuotaInfo := c.elasticQuotaInfos[eq.Namespace]
-	if oldElasticQuotaInfo != nil {
-		return
-	}
-
-	elasticQuotaInfo := newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil, c.resourceCalculator)
-
+func (c *CapacityScheduling) addElasticQuotaInfo(obj interface{}) {
+	eqInfo := obj.(*ElasticQuotaInfo)
+	klog.V(1).InfoS("add ElasticQuotaInfo", "namespace", eqInfo.ResourceNamespace, "name", eqInfo.ResourceName)
 	c.Lock()
 	defer c.Unlock()
-	c.elasticQuotaInfos[eq.Namespace] = elasticQuotaInfo
+	c.elasticQuotaInfos.AddIfNotPresent(eqInfo)
 }
 
-func (c *CapacityScheduling) updateElasticQuota(oldObj, newObj interface{}) {
-	unstructOldEQ := oldObj.(*unstructured.Unstructured)
-	unstructNewEQ := newObj.(*unstructured.Unstructured)
-	oldEQ, err := fromUnstructuredToEq(unstructOldEQ)
-	if err != nil {
-		klog.ErrorS(err, "unable to convert oldObj unstructured to ElasticQuota")
-		return
-	}
-	newEQ, err := fromUnstructuredToEq(unstructNewEQ)
-	if err != nil {
-		klog.ErrorS(err, "unable to convert newObj unstructured to ElasticQuota")
-		return
-	}
-
-	newEQInfo := newElasticQuotaInfo(newEQ.Namespace, newEQ.Spec.Min, newEQ.Spec.Max, nil, c.resourceCalculator)
-
+func (c *CapacityScheduling) updateElasticQuotaInfo(oldObj, newObj interface{}) {
+	oldEqInfo := oldObj.(*ElasticQuotaInfo)
+	newEqInfo := newObj.(*ElasticQuotaInfo)
+	klog.V(1).InfoS("update ElasticQuotaInfo", "namespace", oldEqInfo.ResourceNamespace, "name", oldEqInfo.ResourceName)
 	c.Lock()
 	defer c.Unlock()
-
-	oldEQInfo := c.elasticQuotaInfos[oldEQ.Namespace]
-	if oldEQInfo != nil {
-		newEQInfo.pods = oldEQInfo.pods
-		newEQInfo.Used = oldEQInfo.Used
-	}
-	c.elasticQuotaInfos[newEQ.Namespace] = newEQInfo
+	c.elasticQuotaInfos.Update(oldEqInfo, newEqInfo)
 }
 
-func (c *CapacityScheduling) deleteElasticQuota(obj interface{}) {
-	eqUnstruct := obj.(*unstructured.Unstructured)
-	eq, err := fromUnstructuredToEq(eqUnstruct)
-	if err != nil {
-		klog.ErrorS(err, "unable to convert unstructured to ElasticQuota")
-		return
-	}
+func (c *CapacityScheduling) deleteElasticQuotaInfo(obj interface{}) {
+	eqInfo := obj.(*ElasticQuotaInfo)
+	klog.V(1).InfoS("delete ElasticQuotaInfo", "namespace", eqInfo.ResourceNamespace, "name", eqInfo.ResourceName)
 	c.Lock()
 	defer c.Unlock()
-	delete(c.elasticQuotaInfos, eq.Namespace)
+	c.elasticQuotaInfos.Delete(eqInfo)
 }
 
 func (c *CapacityScheduling) addPod(obj interface{}) {
@@ -746,38 +692,38 @@ func (c *CapacityScheduling) addPod(obj interface{}) {
 	c.Lock()
 	defer c.Unlock()
 
-	elasticQuotaInfo := c.elasticQuotaInfos[pod.Namespace]
-	// If elasticQuotaInfo is nil, try to list ElasticQuotas through elasticQuotaLister
-	if elasticQuotaInfo == nil {
-		eqs, err := c.elasticQuotaLister.ByNamespace(pod.Namespace).List(labels.NewSelector())
+	elasticQuotaInfo := c.getElasticQuotaInfoForPod(pod)
+	if elasticQuotaInfo != nil {
+		err := elasticQuotaInfo.addPodIfNotPresent(pod)
 		if err != nil {
-			klog.ErrorS(err, "Failed to get elasticQuota", "elasticQuota", pod.Namespace)
-			return
-		}
-
-		// If the length of elasticQuotas is 0, return.
-		if len(eqs) == 0 {
-			return
-		}
-
-		if len(eqs) > 0 {
-			// only one elasticquota is supported in each namespace
-			eqUnstruct := eqs[0].(*unstructured.Unstructured)
-			var eq *v1alpha1.ElasticQuota
-			eq, err = fromUnstructuredToEq(eqUnstruct)
-			if err != nil {
-				klog.ErrorS(err, "unable to convert unstructured to ElasticQuota")
-				return
-			}
-			elasticQuotaInfo = newElasticQuotaInfo(eq.Namespace, eq.Spec.Min, eq.Spec.Max, nil, c.resourceCalculator)
-			c.elasticQuotaInfos[eq.Namespace] = elasticQuotaInfo
+			klog.ErrorS(err, "Failed to add Pod to its associated elasticQuota", "pod", klog.KObj(pod))
 		}
 	}
+}
 
-	err := elasticQuotaInfo.addPodIfNotPresent(pod)
+func (c *CapacityScheduling) getElasticQuotaInfoForPod(pod *v1.Pod) *ElasticQuotaInfo {
+	elasticQuotaInfo := c.elasticQuotaInfos[pod.Namespace]
+	if elasticQuotaInfo != nil {
+		return elasticQuotaInfo
+	}
+
+	// If elasticQuotaInfo is nil, first try to fetch it from CompositeElasticQuotas
+	compositeEq, err := c.elasticQuotaInfoInformer.GetAssociatedCompositeElasticQuota(pod.Namespace)
 	if err != nil {
-		klog.ErrorS(err, "Failed to add Pod to its associated elasticQuota", "pod", klog.KObj(pod))
+		klog.ErrorS(err, "Failed to get associated CompositeElasticQuota", "namespace", pod.Namespace)
+		return nil
 	}
+	if compositeEq != nil {
+		return compositeEq
+	}
+
+	// If no CompositeElasticQuotas is defined on Pod's namespace, try to fetch ElasticQuotaInfo from ElasticQuotas
+	eq, err := c.elasticQuotaInfoInformer.GetAssociatedElasticQuota(pod.Namespace)
+	if err != nil {
+		klog.ErrorS(err, "Failed to get associated ElasticQuota", "namespace", pod.Namespace)
+		return nil
+	}
+	return eq
 }
 
 func (c *CapacityScheduling) updatePod(oldObj, newObj interface{}) {
@@ -924,11 +870,4 @@ func filterPodsWithPDBViolation(podInfos []*framework.PodInfo, pdbs []*policy.Po
 // assignedPod selects pods that are assigned (scheduled and running).
 func assignedPod(pod *v1.Pod) bool {
 	return len(pod.Spec.NodeName) != 0
-}
-
-func fromUnstructuredToEq(eqUnstruct *unstructured.Unstructured) (*v1alpha1.ElasticQuota, error) {
-	// TODO: check performance, might be better to extract single values using unstructured.NestedField(...)
-	var eq v1alpha1.ElasticQuota
-	err := runtime.DefaultUnstructuredConverter.FromUnstructured(eqUnstruct.UnstructuredContent(), &eq)
-	return &eq, err
 }

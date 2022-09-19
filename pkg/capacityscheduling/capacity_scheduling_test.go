@@ -20,6 +20,8 @@ import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sort"
 	"testing"
 
@@ -76,7 +78,7 @@ func TestPreFilter(t *testing.T) {
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
-					Namespace: "ns1",
+					Namespaces: sets.NewString("ns1"),
 					Min: &framework.Resource{
 						Memory: 1000,
 					},
@@ -99,7 +101,7 @@ func TestPreFilter(t *testing.T) {
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
-					Namespace: "ns1",
+					Namespaces: sets.NewString("ns1"),
 					Min: &framework.Resource{
 						Memory:          1000,
 						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
@@ -129,7 +131,7 @@ func TestPreFilter(t *testing.T) {
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
-					Namespace: "ns1",
+					Namespaces: sets.NewString("ns1"),
 					Min: &framework.Resource{
 						Memory:          1000,
 						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
@@ -140,7 +142,7 @@ func TestPreFilter(t *testing.T) {
 					},
 				},
 				"ns2": {
-					Namespace: "ns2",
+					Namespaces: sets.NewString("ns2"),
 					Min: &framework.Resource{
 						Memory:          5000,
 						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * nvidiaGPUResourceMemory},
@@ -162,7 +164,7 @@ func TestPreFilter(t *testing.T) {
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
-					Namespace: "ns1",
+					Namespaces: sets.NewString("ns1"),
 					Min: &framework.Resource{
 						Memory:          1000,
 						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
@@ -177,7 +179,7 @@ func TestPreFilter(t *testing.T) {
 					},
 				},
 				"ns2": {
-					Namespace: "ns2",
+					Namespaces: sets.NewString("ns2"),
 					Min: &framework.Resource{
 						Memory:          1000,
 						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * nvidiaGPUResourceMemory},
@@ -221,7 +223,7 @@ func TestPreFilter(t *testing.T) {
 			cs := &CapacityScheduling{
 				elasticQuotaInfos:  tt.elasticQuotas,
 				fh:                 fwk,
-				resourceCalculator: resourceCalculator,
+				resourceCalculator: &resourceCalculator,
 			}
 
 			pods := make([]*v1.Pod, 0)
@@ -264,7 +266,7 @@ func TestDryRunPreemption(t *testing.T) {
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
-					Namespace: "ns1",
+					Namespaces: sets.NewString("ns1"),
 					Max: &framework.Resource{
 						Memory: 200,
 					},
@@ -276,7 +278,7 @@ func TestDryRunPreemption(t *testing.T) {
 					},
 				},
 				"ns2": {
-					Namespace: "ns2",
+					Namespaces: sets.NewString("ns2"),
 					Max: &framework.Resource{
 						Memory: 200,
 					},
@@ -317,7 +319,7 @@ func TestDryRunPreemption(t *testing.T) {
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
-					Namespace: "ns1",
+					Namespaces: sets.NewString("ns1"),
 					Max: &framework.Resource{
 						Memory: 200,
 					},
@@ -329,7 +331,7 @@ func TestDryRunPreemption(t *testing.T) {
 					},
 				},
 				"ns2": {
-					Namespace: "ns2",
+					Namespaces: sets.NewString("ns2"),
 					Max: &framework.Resource{
 						Memory: 200,
 					},
@@ -377,7 +379,7 @@ func TestDryRunPreemption(t *testing.T) {
 			},
 			elasticQuotas: map[string]*ElasticQuotaInfo{
 				"ns1": {
-					Namespace: "ns1",
+					Namespaces: sets.NewString("ns1"),
 					Max: &framework.Resource{
 						Memory:   300,
 						MilliCPU: 300,
@@ -392,7 +394,7 @@ func TestDryRunPreemption(t *testing.T) {
 					},
 				},
 				"ns2": {
-					Namespace: "ns2",
+					Namespaces: sets.NewString("ns2"),
 					Max: &framework.Resource{
 						Memory:   300,
 						MilliCPU: 300,
@@ -407,7 +409,7 @@ func TestDryRunPreemption(t *testing.T) {
 					},
 				},
 				"ns3": {
-					Namespace: "ns3",
+					Namespaces: sets.NewString("ns3"),
 					Min: &framework.Resource{
 						Memory:   300,
 						MilliCPU: 300,
@@ -551,4 +553,148 @@ func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuRe
 	}
 
 	return pod
+}
+
+func TestElasticQuotaInfos_AddIfNotPresent(t *testing.T) {
+	tests := []struct {
+		name     string
+		eqInfos  ElasticQuotaInfos
+		eqInfo   ElasticQuotaInfo
+		expected ElasticQuotaInfos
+	}{
+		{
+			name:     "Empty ElasticQuotaInfos, empty ElasticQuotaInfo",
+			eqInfos:  NewElasticQuotaInfos(),
+			eqInfo:   ElasticQuotaInfo{},
+			expected: NewElasticQuotaInfos(),
+		},
+		{
+			name: "Empty ElasticQuotaInfo",
+			eqInfos: ElasticQuotaInfos{
+				"ns-1": &ElasticQuotaInfo{},
+			},
+			eqInfo: ElasticQuotaInfo{},
+			expected: ElasticQuotaInfos{
+				"ns-1": &ElasticQuotaInfo{},
+			},
+		},
+		{
+			name: "ElasticQuotaInfo with some namespaces not present",
+			eqInfos: ElasticQuotaInfos{
+				"ns-1": &ElasticQuotaInfo{
+					ResourceName:      "test",
+					ResourceNamespace: "test",
+				},
+			},
+			eqInfo: ElasticQuotaInfo{
+				ResourceName:      "updated",
+				ResourceNamespace: "updated",
+				Namespaces:        sets.NewString("ns-2", "ns-3", "ns-4"),
+			},
+			expected: ElasticQuotaInfos{
+				"ns-1": &ElasticQuotaInfo{
+					ResourceName:      "test",
+					ResourceNamespace: "test",
+				},
+				"ns-2": &ElasticQuotaInfo{
+					ResourceName:      "updated",
+					ResourceNamespace: "updated",
+					Namespaces:        sets.NewString("ns-2", "ns-3", "ns-4"),
+				},
+				"ns-3": &ElasticQuotaInfo{
+					ResourceName:      "updated",
+					ResourceNamespace: "updated",
+					Namespaces:        sets.NewString("ns-2", "ns-3", "ns-4"),
+				},
+				"ns-4": &ElasticQuotaInfo{
+					ResourceName:      "updated",
+					ResourceNamespace: "updated",
+					Namespaces:        sets.NewString("ns-2", "ns-3", "ns-4"),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.eqInfos.AddIfNotPresent(&tt.eqInfo)
+			assert.Len(t, tt.eqInfos, len(tt.expected))
+			for ns, eqInfo := range tt.eqInfos {
+				assert.Equal(t, tt.expected[ns].ResourceNamespace, eqInfo.ResourceNamespace)
+				assert.Equal(t, tt.expected[ns].ResourceName, eqInfo.ResourceName)
+				assert.Equal(t, tt.expected[ns].Namespaces, eqInfo.Namespaces)
+			}
+		})
+	}
+}
+
+func TestElasticQuotaInfos_Update(t *testing.T) {
+	tests := []struct {
+		name      string
+		eqInfos   ElasticQuotaInfos
+		oldEqInfo ElasticQuotaInfo
+		newEqInfo ElasticQuotaInfo
+		expected  ElasticQuotaInfos
+	}{
+		{
+			name:      "Empty ElasticQuotaInfos",
+			eqInfos:   NewElasticQuotaInfos(),
+			oldEqInfo: ElasticQuotaInfo{},
+			newEqInfo: ElasticQuotaInfo{
+				ResourceNamespace: "new-ns",
+				ResourceName:      "new-name",
+				Namespaces:        sets.NewString("ns-1", "ns-2"),
+			},
+			expected: ElasticQuotaInfos{
+				"ns-1": &ElasticQuotaInfo{
+					ResourceNamespace: "new-ns",
+					ResourceName:      "new-name",
+					Namespaces:        sets.NewString("ns-1", "ns-2"),
+				},
+				"ns-2": &ElasticQuotaInfo{
+					ResourceNamespace: "new-ns",
+					ResourceName:      "new-name",
+					Namespaces:        sets.NewString("ns-1", "ns-2"),
+				},
+			},
+		},
+		{
+			name:    "New EqInfo does not contain some namespaces present in old EqInfo",
+			eqInfos: NewElasticQuotaInfos(),
+			oldEqInfo: ElasticQuotaInfo{
+				ResourceName:      "old-name",
+				ResourceNamespace: "old-ns",
+				Namespaces:        sets.NewString("ns-1", "ns-2"),
+			},
+			newEqInfo: ElasticQuotaInfo{
+				ResourceNamespace: "new-ns",
+				ResourceName:      "new-name",
+				Namespaces:        sets.NewString("ns-2", "ns-3"),
+			},
+			expected: ElasticQuotaInfos{
+				"ns-2": &ElasticQuotaInfo{
+					ResourceNamespace: "new-ns",
+					ResourceName:      "new-name",
+					Namespaces:        sets.NewString("ns-2", "ns-3"),
+				},
+				"ns-3": &ElasticQuotaInfo{
+					ResourceNamespace: "new-ns",
+					ResourceName:      "new-name",
+					Namespaces:        sets.NewString("ns-2", "ns-3"),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.eqInfos.Update(&tt.oldEqInfo, &tt.newEqInfo)
+			assert.Len(t, tt.eqInfos, len(tt.expected))
+			for ns, eqInfo := range tt.eqInfos {
+				assert.Equal(t, tt.expected[ns].ResourceNamespace, eqInfo.ResourceNamespace)
+				assert.Equal(t, tt.expected[ns].ResourceName, eqInfo.ResourceName)
+				assert.Equal(t, tt.expected[ns].Namespaces, eqInfo.Namespaces)
+			}
+		})
+	}
 }

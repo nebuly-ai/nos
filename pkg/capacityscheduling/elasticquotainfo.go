@@ -25,6 +25,7 @@ import (
 	"math"
 )
 
+// ElasticQuotaInfos associates namespaces with the respective ElasticQuotaInfo that defines its quota
 type ElasticQuotaInfos map[string]*ElasticQuotaInfo
 
 func NewElasticQuotaInfos() ElasticQuotaInfos {
@@ -37,6 +38,33 @@ func (e ElasticQuotaInfos) clone() ElasticQuotaInfos {
 		elasticQuotas[key] = elasticQuotaInfo.clone()
 	}
 	return elasticQuotas
+}
+
+func (e ElasticQuotaInfos) Delete(eqInfo *ElasticQuotaInfo) {
+	for _, ns := range eqInfo.Namespaces.List() {
+		delete(e, ns)
+	}
+}
+
+func (e ElasticQuotaInfos) Update(oldEqInfo, newEqInfo *ElasticQuotaInfo) {
+	// Set new EqInfo to specified namespaces
+	for _, ns := range newEqInfo.Namespaces.List() {
+		e[ns] = newEqInfo
+	}
+	// Delete possible old namespaces not specified by new EqInfo
+	for _, ns := range oldEqInfo.Namespaces.List() {
+		if !util.InSlice(ns, newEqInfo.Namespaces.List()) {
+			delete(e, ns)
+		}
+	}
+}
+
+func (e ElasticQuotaInfos) AddIfNotPresent(eqInfo *ElasticQuotaInfo) {
+	for _, ns := range eqInfo.Namespaces.List() {
+		if _, present := e[ns]; !present {
+			e[ns] = eqInfo
+		}
+	}
 }
 
 func (e ElasticQuotaInfos) AggregatedUsedOverMinWith(podRequest framework.Resource) bool {
@@ -141,29 +169,22 @@ func (e ElasticQuotaInfos) getAggregatedUsed() *framework.Resource {
 	return &totalUsed
 }
 
-// ElasticQuotaInfo is a wrapper to a ElasticQuota with information.
-// Each namespace can only have one ElasticQuota.
+// ElasticQuotaInfo wraps ElasticQuotas and CompositeElasticQuotas adding additional information and utility methods.
 type ElasticQuotaInfo struct {
-	Namespace          string
+	// ResourceName is the name of the resource (ElasticQuota or CompositeElasticQuota)
+	// associated to the ElasticQuotaInfo
+	ResourceName string
+	// ResourceNamespace is the namespace to which the resource (ElasticQuota or CompositeElasticQuota)
+	// associated to the ElasticQuotaInfo belongs to
+	ResourceNamespace string
+
+	Namespaces         sets.String
 	pods               sets.String
 	Min                *framework.Resource
 	Max                *framework.Resource
 	Used               *framework.Resource
 	MaxEnforced        bool
-	resourceCalculator util.ResourceCalculator
-}
-
-func newElasticQuotaInfo(namespace string, min, max, used v1.ResourceList, resourceCalculator util.ResourceCalculator) *ElasticQuotaInfo {
-	elasticQuotaInfo := &ElasticQuotaInfo{
-		Namespace:          namespace,
-		pods:               sets.NewString(),
-		Min:                framework.NewResource(min),
-		Max:                framework.NewResource(max),
-		Used:               framework.NewResource(used),
-		MaxEnforced:        max != nil,
-		resourceCalculator: resourceCalculator,
-	}
-	return elasticQuotaInfo
+	resourceCalculator *util.ResourceCalculator
 }
 
 func (e *ElasticQuotaInfo) reserveResource(request framework.Resource) {
@@ -215,8 +236,10 @@ func (e *ElasticQuotaInfo) usedLteWith(resource *framework.Resource, podRequest 
 
 func (e *ElasticQuotaInfo) clone() *ElasticQuotaInfo {
 	newEQInfo := &ElasticQuotaInfo{
-		Namespace: e.Namespace,
-		pods:      sets.NewString(),
+		ResourceName:      e.ResourceName,
+		ResourceNamespace: e.ResourceNamespace,
+		pods:              sets.NewString(),
+		Namespaces:        sets.NewString(),
 	}
 
 	if e.Min != nil {
@@ -232,6 +255,12 @@ func (e *ElasticQuotaInfo) clone() *ElasticQuotaInfo {
 		pods := e.pods.List()
 		for _, pod := range pods {
 			newEQInfo.pods.Insert(pod)
+		}
+	}
+	if len(e.Namespaces) > 0 {
+		namespaces := e.Namespaces.List()
+		for _, ns := range namespaces {
+			newEQInfo.Namespaces.Insert(ns)
 		}
 	}
 

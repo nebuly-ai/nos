@@ -71,6 +71,9 @@ rules:
 - apiGroups: ["n8s.nebuly.ai"]
   resources: ["elasticquotas"]
   verbs: ["get", "list", "watch"]
+- apiGroups: ["n8s.nebuly.ai"]
+  resources: ["compositeelasticquotas"]
+  verbs: ["get", "list", "watch"]
 
 ---
 kind: ClusterRoleBinding

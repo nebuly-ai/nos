@@ -39,7 +39,7 @@ func TestReserveResource(t *testing.T) {
 	}{
 		{
 			before: &ElasticQuotaInfo{
-				Namespace: "ns1",
+				Namespaces: sets.NewString("ns1"),
 				Used: &framework.Resource{
 					MilliCPU: 1000,
 					Memory:   200,
@@ -56,7 +56,7 @@ func TestReserveResource(t *testing.T) {
 				makePod("t1-p3", "ns2", 0, 0, 2, midPriority, "t1-p3", "node-a", false),
 			},
 			expected: &ElasticQuotaInfo{
-				Namespace: "ns1",
+				Namespaces: sets.NewString("ns1"),
 				Used: &framework.Resource{
 					MilliCPU: 4000,
 					Memory:   350,
@@ -95,7 +95,7 @@ func TestUnReserveResource(t *testing.T) {
 	}{
 		{
 			before: &ElasticQuotaInfo{
-				Namespace: "ns1",
+				Namespaces: sets.NewString("ns1"),
 				Used: &framework.Resource{
 					MilliCPU: 4000,
 					Memory:   200,
@@ -112,7 +112,7 @@ func TestUnReserveResource(t *testing.T) {
 				makePod("t1-p3", "ns2", 0, 0, 2, midPriority, "t1-p3", "node-a", false),
 			},
 			expected: &ElasticQuotaInfo{
-				Namespace: "ns1",
+				Namespaces: sets.NewString("ns1"),
 				Used: &framework.Resource{
 					MilliCPU: 1000,
 					Memory:   50,
@@ -140,30 +140,6 @@ func TestUnReserveResource(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestElasticQuotaInfo_NewElasticQuotaInfo(t *testing.T) {
-	t.Run("NewElasticQuotaInfo - max provided", func(t *testing.T) {
-		eq := newElasticQuotaInfo(
-			"test",
-			v1.ResourceList{},
-			v1.ResourceList{},
-			v1.ResourceList{},
-			util.ResourceCalculator{},
-		)
-		assert.True(t, eq.MaxEnforced)
-	})
-
-	t.Run("NewElasticQuotaInfo - max is nil", func(t *testing.T) {
-		eq := newElasticQuotaInfo(
-			"test",
-			v1.ResourceList{},
-			nil,
-			v1.ResourceList{},
-			util.ResourceCalculator{},
-		)
-		assert.False(t, eq.MaxEnforced)
-	})
 }
 
 func TestElasticQuotaInfo_UsedOverMaxWith(t *testing.T) {
@@ -233,8 +209,8 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 					Used: &framework.Resource{},
 				},
 				"eq-2": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         100,
 						Memory:           1000,
@@ -282,8 +258,8 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 			name: "ElasticQuota with scalar resources - guaranteed overquotas for each resource is proportional to Min",
 			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
 				"eq-1": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         10,
 						Memory:           10,
@@ -309,8 +285,8 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 					MaxEnforced: false,
 				},
 				"eq-2": {
-					Namespace: "ns-2",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-2"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         30,
 						Memory:           30,
@@ -334,8 +310,8 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 					MaxEnforced: false,
 				},
 				"eq-3": {
-					Namespace: "ns-3",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-3"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         20,
 						Memory:           20,
@@ -399,8 +375,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 			name: "Multiple elastic quotas, one is empty",
 			elasticQuotaInfos: ElasticQuotaInfos{
 				"eq-1": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         30,
 						Memory:           30,
@@ -428,8 +404,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 			name: "Single elastic quota, guaranteed overquotas percentage should be 100%",
 			elasticQuotaInfos: ElasticQuotaInfos{
 				"eq-1": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         30,
 						Memory:           30,
@@ -456,8 +432,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 			name: "Resource values are max",
 			elasticQuotaInfos: ElasticQuotaInfos{
 				"eq-1": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         resource.MaxMilliValue,
 						Memory:           math.MaxInt64,
@@ -484,8 +460,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 			name: "ElasticQuotas do not specify a Min for some resources - Percentages include all non-scalar resources",
 			elasticQuotaInfos: ElasticQuotaInfos{
 				"eq-1": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU: 10,
 						Memory:   10,
@@ -495,8 +471,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 					},
 				},
 				"eq-2": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         10,
 						AllowedPodNumber: 10,
@@ -519,8 +495,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 			name: "Multiple elastic quota, elastic quota with scalar resources. Overquotas % should be proportional to Min.",
 			elasticQuotaInfos: map[string]*ElasticQuotaInfo{
 				"eq-1": {
-					Namespace: "ns-1",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-1"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         50,
 						Memory:           10,
@@ -534,8 +510,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 					},
 				},
 				"eq-2": {
-					Namespace: "ns-2",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-2"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         30,
 						Memory:           30,
@@ -548,8 +524,8 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 					},
 				},
 				"eq-3": {
-					Namespace: "ns-3",
-					pods:      sets.NewString("pd-1", "pd-2"),
+					Namespaces: sets.NewString("ns-3"),
+					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
 						MilliCPU:         20,
 						Memory:           60,
@@ -617,7 +593,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 			name: "Single elastic quota info",
 			elasticQuotaInfos: ElasticQuotaInfos{
 				"eq": {
-					Namespace: "ns",
+					Namespaces: sets.NewString("ns"),
 					Min: &framework.Resource{
 						MilliCPU:         100,
 						Memory:           200,
@@ -656,7 +632,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 			name: "Multiple ElasticQuotaInfos",
 			elasticQuotaInfos: ElasticQuotaInfos{
 				"eq-1": { // overquota
-					Namespace: "ns-1",
+					Namespaces: sets.NewString("ns-1"),
 					Min: &framework.Resource{
 						MilliCPU:         100,
 						Memory:           200,
@@ -679,7 +655,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 					},
 				},
 				"eq-2": {
-					Namespace: "ns-2",
+					Namespaces: sets.NewString("ns-2"),
 					Min: &framework.Resource{
 						MilliCPU:         200,
 						Memory:           200,
@@ -702,7 +678,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 					},
 				},
 				"eq-3": {
-					Namespace: "ns-3",
+					Namespaces: sets.NewString("ns-3"),
 					Min: &framework.Resource{
 						MilliCPU:         200,
 						Memory:           200,

@@ -20,7 +20,9 @@ spec:
       - args: [
         "--config",
         "/etc/kubernetes/scheduler_config.yaml",
-        "--leader-elect"
+        "--leader-elect",
+        "--v",
+        "1" # debug
         ]
         image: scheduler:latest
         livenessProbe:
