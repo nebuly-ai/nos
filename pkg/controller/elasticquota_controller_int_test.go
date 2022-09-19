@@ -36,7 +36,6 @@ var _ = Describe("ElasticQuota controller", func() {
 
 	AfterEach(func() {
 		// Add any setup steps that needs to be executed after each test
-		Expect(k8sClient.Delete(ctx, &namespace)).To(Succeed())
 	})
 
 	When("New pods belonging to ElasticQuota namespace are in running status", func() {
