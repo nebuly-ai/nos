@@ -56,8 +56,8 @@ func NewElasticQuotaInfoInformer(kubeConfig *restclient.Config, resourceCalculat
 	}
 
 	return &ElasticQuotaInfoInformer{
-		compositeElasticQuotaInformer: sharedInformerFactory.ForResource(elasticQuotaGvr),
-		elasticQuotaInformer:          sharedInformerFactory.ForResource(compositeElasticQuotaGvr),
+		compositeElasticQuotaInformer: sharedInformerFactory.ForResource(compositeElasticQuotaGvr),
+		elasticQuotaInformer:          sharedInformerFactory.ForResource(elasticQuotaGvr),
 		sharedInformerFactory:         sharedInformerFactory,
 		resourceCalculator:            resourceCalculator,
 	}, nil
