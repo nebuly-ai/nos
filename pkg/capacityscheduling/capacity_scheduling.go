@@ -194,6 +194,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 	elasticQuotaInfos := snapshotElasticQuota.elasticQuotaInfos
 	eq := snapshotElasticQuota.elasticQuotaInfos[pod.Namespace]
 	if eq == nil {
+		klog.V(1).InfoS("pod's namespace is not subject to any quota", "namespace", pod.Namespace)
 		preFilterState := &PreFilterState{
 			podReq: podReq,
 		}

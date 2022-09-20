@@ -59,11 +59,9 @@ func (e ElasticQuotaInfos) Update(oldEqInfo, newEqInfo *ElasticQuotaInfo) {
 	}
 }
 
-func (e ElasticQuotaInfos) AddIfNotPresent(eqInfo *ElasticQuotaInfo) {
+func (e ElasticQuotaInfos) Add(eqInfo *ElasticQuotaInfo) {
 	for _, ns := range eqInfo.Namespaces.List() {
-		if _, present := e[ns]; !present {
-			e[ns] = eqInfo
-		}
+		e[ns] = eqInfo
 	}
 }
 
