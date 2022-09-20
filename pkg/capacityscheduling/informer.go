@@ -102,7 +102,9 @@ func (i ElasticQuotaInfoInformer) GetAssociatedCompositeElasticQuota(namespace s
 }
 
 // GetAssociatedElasticQuota returns, if present, the ElasticQuotaInfo that sets the quota limits on the
-// namespace provided as argument
+// namespace provided as argument.
+//
+// If namespace is not associated with any ElasticQuota then nil is returned.
 func (i ElasticQuotaInfoInformer) GetAssociatedElasticQuota(namespace string) (*ElasticQuotaInfo, error) {
 	objs, err := i.elasticQuotaInformer.Lister().ByNamespace(namespace).List(labels.NewSelector())
 	if err != nil {

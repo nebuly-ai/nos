@@ -664,7 +664,15 @@ func (p *preemptor) SelectVictimsOnNode(
 
 func (c *CapacityScheduling) addElasticQuotaInfo(obj interface{}) {
 	eqInfo := obj.(*ElasticQuotaInfo)
-	klog.V(1).InfoS("add ElasticQuotaInfo", "namespace", eqInfo.ResourceNamespace, "name", eqInfo.ResourceName)
+	klog.V(1).InfoS(
+		"add ElasticQuotaInfo",
+		"namespace",
+		eqInfo.ResourceNamespace,
+		"name",
+		eqInfo.ResourceName,
+		"namespaces",
+		eqInfo.Namespaces.List(),
+	)
 	c.Lock()
 	defer c.Unlock()
 	c.elasticQuotaInfos.Add(eqInfo)
@@ -673,7 +681,15 @@ func (c *CapacityScheduling) addElasticQuotaInfo(obj interface{}) {
 func (c *CapacityScheduling) updateElasticQuotaInfo(oldObj, newObj interface{}) {
 	oldEqInfo := oldObj.(*ElasticQuotaInfo)
 	newEqInfo := newObj.(*ElasticQuotaInfo)
-	klog.V(1).InfoS("update ElasticQuotaInfo", "namespace", oldEqInfo.ResourceNamespace, "name", oldEqInfo.ResourceName)
+	klog.V(1).InfoS(
+		"update ElasticQuotaInfo",
+		"namespace",
+		oldEqInfo.ResourceNamespace,
+		"name",
+		oldEqInfo.ResourceName,
+		"namespaces",
+		oldEqInfo.Namespaces.List(),
+	)
 	c.Lock()
 	defer c.Unlock()
 	c.elasticQuotaInfos.Update(oldEqInfo, newEqInfo)
@@ -681,7 +697,15 @@ func (c *CapacityScheduling) updateElasticQuotaInfo(oldObj, newObj interface{}) 
 
 func (c *CapacityScheduling) deleteElasticQuotaInfo(obj interface{}) {
 	eqInfo := obj.(*ElasticQuotaInfo)
-	klog.V(1).InfoS("delete ElasticQuotaInfo", "namespace", eqInfo.ResourceNamespace, "name", eqInfo.ResourceName)
+	klog.V(1).InfoS(
+		"delete ElasticQuotaInfo",
+		"namespace",
+		eqInfo.ResourceNamespace,
+		"name",
+		eqInfo.ResourceName,
+		"namespaces",
+		eqInfo.Namespaces.List(),
+	)
 	c.Lock()
 	defer c.Unlock()
 	c.elasticQuotaInfos.Delete(eqInfo)
