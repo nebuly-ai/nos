@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	. "sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,18 +37,34 @@ func (r *ElasticQuota) ValidateCreate() error {
 		return err
 	}
 
+	// Check if there's already another ElasticQuota in the same namespace
 	var eqList ElasticQuotaList
 	if err := client.List(context.Background(), &eqList, InNamespace(r.Namespace)); IgnoreNotFound(err) != nil {
 		eqlog.Error(err, "unable to list elastic quotas")
 		return fmt.Errorf(constant.InternalErrorMsg)
 	}
-
 	if len(eqList.Items) > 0 {
 		return fmt.Errorf(
 			"only 1 ElasticQuota per namespace is allowed - ElasticQuota %q already exists in namespace %q",
 			eqList.Items[0].Name,
 			r.Namespace,
 		)
+	}
+
+	// Check if there's already a CompositeElasticQuota defining a quota for the ElasticQuota namespace
+	var compositeEqList CompositeElasticQuotaList
+	if err := client.List(context.Background(), &compositeEqList); err != nil {
+		eqlog.Error(err, "unable to list composite elastic quotas")
+		return fmt.Errorf(constant.InternalErrorMsg)
+	}
+	for _, compositeEq := range compositeEqList.Items {
+		if util.InSlice(r.Namespace, compositeEq.Spec.Namespaces) {
+			return fmt.Errorf("the CompositeElasticQuota \"%s/%s\" already defines quotas for namespace %q",
+				compositeEq.Namespace,
+				compositeEq.Name,
+				r.Namespace,
+			)
+		}
 	}
 
 	return nil
