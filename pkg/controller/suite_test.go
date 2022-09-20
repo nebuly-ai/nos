@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"testing"
 )
 
 var cfg *rest.Config
@@ -36,7 +37,7 @@ func TestAPIs(t *testing.T) {
 var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel = context.WithCancel(context.Background())
-	logger = log.FromContext(ctx)
+	logger = logf.FromContext(ctx)
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
