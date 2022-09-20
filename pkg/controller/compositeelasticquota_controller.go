@@ -43,6 +43,7 @@ func NewCompositeElasticQuotaReconciler(client client.Client, scheme *runtime.Sc
 }
 
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=compositeelasticquotas,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=list;delete
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=compositeelasticquotas/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=compositeelasticquotas/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
@@ -54,7 +55,12 @@ func (r *CompositeElasticQuotaReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	//Fetch running Pods in the namespaces specified by the EQ
+	// Delete any overlapping ElasticQuota
+	if err := r.deleteOverlappingElasticQuotas(ctx, instance); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Fetch running Pods in the namespaces specified by the EQ
 	pods, err := r.fetchRunningPods(ctx, instance)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -77,6 +83,35 @@ func (r *CompositeElasticQuotaReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
+}
+
+// deleteOverlappingElasticQuotas deletes any ElasticQuota existing in one of the namespaces specified by the
+// CompositeElasticQuota provided as argument.
+func (r *CompositeElasticQuotaReconciler) deleteOverlappingElasticQuotas(ctx context.Context, instance v1alpha1.CompositeElasticQuota) error {
+	logger := log.FromContext(ctx)
+	var eqList v1alpha1.ElasticQuotaList
+	var err error
+	for _, ns := range instance.Spec.Namespaces {
+		if err = r.Client.List(ctx, &eqList, client.InNamespace(ns)); err != nil {
+			return err
+		}
+		if len(eqList.Items) == 0 {
+			continue
+		}
+		for _, eq := range eqList.Items {
+			logger.Info(
+				"deleting overlapping ElasticQuota",
+				"ElasticQuota",
+				eq.Name,
+				"Namespace",
+				eq.Namespace,
+			)
+			if err = r.Client.Delete(ctx, &eq); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (r *CompositeElasticQuotaReconciler) fetchRunningPods(ctx context.Context,

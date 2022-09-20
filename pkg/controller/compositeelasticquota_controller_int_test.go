@@ -13,6 +13,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 	"time"
 )
@@ -267,6 +268,67 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 				g.Expect(k8sClient.Get(ctx, lookupKey, &podInstance)).To(Succeed())
 				g.Expect(podInstance.Labels).To(HaveKeyWithValue(constant.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)))
 			}, timeout, interval).Should(Succeed())
+		})
+	})
+
+	When("A CompositeElasticQuota is created", func() {
+		It("Should delete any overlapping ElasticQuota existing in one of the namespaces specified by the CompositeElasticQuota", func() {
+			By("Creating namespaces successfully")
+			namespaceOne := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
+			namespaceTwo := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
+			namespaceThree := factory.BuildNamespace(util.RandomStringLowercase(10)).Get()
+			Expect(k8sClient.Create(ctx, &namespaceOne)).To(Succeed())
+			Expect(k8sClient.Create(ctx, &namespaceTwo)).To(Succeed())
+			Expect(k8sClient.Create(ctx, &namespaceThree)).To(Succeed())
+
+			By("Creating three ElasticQuotas successfully")
+			eqOne := v1alpha1.BuildEq(namespaceOne.Name, "eq-1").
+				WithMinCPUMilli(100).
+				Get()
+			eqTwo := v1alpha1.BuildEq(namespaceTwo.Name, "eq-2").
+				WithMinCPUMilli(200).
+				Get()
+			eqThree := v1alpha1.BuildEq(namespaceThree.Name, "eq-3").
+				WithMinCPUMilli(200).
+				Get()
+			Expect(k8sClient.Create(ctx, &eqOne)).To(Succeed())
+			Expect(k8sClient.Create(ctx, &eqTwo)).To(Succeed())
+			Expect(k8sClient.Create(ctx, &eqThree)).To(Succeed())
+
+			By("Creating a CompositeElasticQuota successfully")
+			compositeEq := v1alpha1.BuildCompositeEq(namespaceOne.Name, "composite-eq").
+				WithMinCPUMilli(100).
+				WithNamespaces(namespaceOne.Name, namespaceTwo.Name).
+				Get()
+			Expect(k8sClient.Create(ctx, &compositeEq)).To(Succeed())
+
+			By("Checking that the ElasticQuotas existing in the two namespaces defined by the " +
+				"CompositeElasticQuota get deleted")
+			Eventually(func() bool {
+				var nsOneEqList v1alpha1.ElasticQuotaList
+				if err := k8sClient.List(ctx, &nsOneEqList, client.InNamespace(eqOne.Namespace)); err != nil {
+					return false
+				}
+				if len(nsOneEqList.Items) > 0 {
+					return false
+				}
+				var nsTwoEqList v1alpha1.ElasticQuotaList
+				if err := k8sClient.List(ctx, &nsTwoEqList, client.InNamespace(eqTwo.Namespace)); err != nil {
+					return false
+				}
+				if len(nsTwoEqList.Items) > 0 {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
+
+			By("Checking that the non-overlapping ElasticQuota does not get deleted")
+			var eqInstance v1alpha1.ElasticQuota
+			lookupKey := types.NamespacedName{
+				Name:      eqThree.Name,
+				Namespace: eqThree.Namespace,
+			}
+			Expect(k8sClient.Get(ctx, lookupKey, &eqInstance)).To(Succeed())
 		})
 	})
 })
