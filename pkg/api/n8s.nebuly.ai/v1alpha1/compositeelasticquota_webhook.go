@@ -7,6 +7,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	. "sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
@@ -53,6 +54,9 @@ func validateCompositeElasticQuotaNamespaces(instance *CompositeElasticQuota) er
 		return fmt.Errorf(constant.InternalErrorMsg)
 	}
 	for _, ceq := range ceqList.Items {
+		if ObjectKeyFromObject(&ceq) == ObjectKeyFromObject(instance) {
+			continue
+		}
 		for _, ns := range instance.Spec.Namespaces {
 			if util.InSlice(ns, ceq.Spec.Namespaces) {
 				return fmt.Errorf(
