@@ -65,7 +65,6 @@ spec:
                   type: string
                 minItems: 1
                 type: array
-                uniqueItems: true
             type: object
           status:
             description: CompositeElasticQuotaStatus defines the observed use.
