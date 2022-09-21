@@ -194,18 +194,26 @@ func (r *CompositeElasticQuotaReconciler) findCompositeElasticQuotaForPod(pod cl
 	ctx := context.Background()
 	logger := log.FromContext(ctx)
 
-	var eqList v1alpha1.CompositeElasticQuotaList
-	err := r.Client.List(ctx, &eqList, client.InNamespace(pod.GetNamespace()))
+	var allCompositeEqList v1alpha1.CompositeElasticQuotaList
+	err := r.Client.List(ctx, &allCompositeEqList)
 	if err != nil {
 		logger.Error(err, "unable to list CompositeElasticQuotas")
 		return []reconcile.Request{}
 	}
 
-	if len(eqList.Items) > 0 {
+	var podCompositeEq *v1alpha1.CompositeElasticQuota
+	for _, compositeEq := range allCompositeEqList.Items {
+		if util.InSlice(pod.GetNamespace(), compositeEq.Spec.Namespaces) {
+			podCompositeEq = &compositeEq
+			break
+		}
+	}
+
+	if podCompositeEq != nil {
 		return []reconcile.Request{{
 			NamespacedName: types.NamespacedName{
-				Name:      eqList.Items[0].Name,
-				Namespace: eqList.Items[0].Namespace,
+				Name:      podCompositeEq.Name,
+				Namespace: podCompositeEq.Namespace,
 			},
 		}}
 	}

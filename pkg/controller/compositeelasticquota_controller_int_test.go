@@ -35,9 +35,10 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 	When("New pods belonging to CompositeElasticQuota namespaces are in running status", func() {
 		It("Should update the CompositeElasticQuota status", func() {
 			const (
-				namespaceOneName = "ns-1"
-				namespaceTwoName = "ns-2"
-				compositeEqName  = "composite-eq-1"
+				namespaceOneName   = "ns-1"
+				namespaceTwoName   = "ns-2"
+				namespaceThreeName = "ns-3"
+				compositeEqName    = "composite-eq-1"
 
 				elasticQuotaMinCPUMilli  = 4000
 				elasticQuotaMinGPUMemory = 4 * constant.DefaultNvidiaGPUResourceMemory
@@ -57,11 +58,13 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 			By("Creating namespaces successfully")
 			namespaceOne := factory.BuildNamespace(namespaceOneName).Get()
 			namespaceTwo := factory.BuildNamespace(namespaceTwoName).Get()
+			namespaceThree := factory.BuildNamespace(namespaceThreeName).Get()
 			Expect(k8sClient.Create(ctx, &namespaceOne)).To(Succeed())
 			Expect(k8sClient.Create(ctx, &namespaceTwo)).To(Succeed())
+			Expect(k8sClient.Create(ctx, &namespaceThree)).To(Succeed())
 
 			By("Creating a CompositeElasticQuota successfully")
-			compositeElasticQuota := v1alpha1.BuildCompositeEq(namespaceTwoName, compositeEqName).
+			compositeElasticQuota := v1alpha1.BuildCompositeEq(namespaceThreeName, compositeEqName).
 				WithNamespaces(namespaceOneName, namespaceTwoName).
 				WithMinCPUMilli(elasticQuotaMinCPUMilli).
 				WithMinGPUMemory(elasticQuotaMinGPUMemory).
