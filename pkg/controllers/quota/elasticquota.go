@@ -1,10 +1,10 @@
-package controller
+package quota
 
 import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	quota "k8s.io/apiserver/pkg/quota/v1"
@@ -15,7 +15,7 @@ import (
 
 type elasticQuotaPodsReconciler struct {
 	c                  client.Client
-	resourceCalculator *util.ResourceCalculator
+	resourceCalculator *resource2.Calculator
 }
 
 func (r *elasticQuotaPodsReconciler) PatchPodsAndComputeUsedQuota(ctx context.Context,
@@ -29,7 +29,7 @@ func (r *elasticQuotaPodsReconciler) PatchPodsAndComputeUsedQuota(ctx context.Co
 	used := newZeroUsed(quotaMin, quotaMax)
 	var err error
 	for _, pod := range pods {
-		request := r.resourceCalculator.ComputePodResourceRequest(pod)
+		request := r.resourceCalculator.ComputePodRequest(pod)
 		used = quota.Add(used, request)
 
 		var desiredCapacityInfo constant.CapacityInfo
@@ -74,8 +74,8 @@ func (r *elasticQuotaPodsReconciler) sortPodListForFindingOverQuotaPods(pods []v
 		}
 
 		// If resource request is not the same, sort by resource request
-		firstPodRequest := r.resourceCalculator.ComputePodResourceRequest(pods[i])
-		secondPodRequest := r.resourceCalculator.ComputePodResourceRequest(pods[j])
+		firstPodRequest := r.resourceCalculator.ComputePodRequest(pods[i])
+		secondPodRequest := r.resourceCalculator.ComputePodRequest(pods[j])
 		if !quota.Equals(firstPodRequest, secondPodRequest) {
 			less, _ := quota.LessThanOrEqual(firstPodRequest, secondPodRequest)
 			return less

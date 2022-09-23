@@ -19,7 +19,7 @@ package capacityscheduling
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sort"
@@ -219,7 +219,7 @@ func TestPreFilter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
+			resourceCalculator := resource2.Calculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
 			cs := &CapacityScheduling{
 				elasticQuotaInfos:  tt.elasticQuotas,
 				fh:                 fwk,
@@ -437,7 +437,7 @@ func TestDryRunPreemption(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := util.ResourceCalculator{
+	resourceCalculator := resource2.Calculator{
 		NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory,
 	}
 	for _, tt := range tests {
@@ -473,8 +473,8 @@ func TestDryRunPreemption(t *testing.T) {
 				t.Errorf("Unexpected preFilterStatus: %v", preFilterStatus)
 			}
 
-			r := resourceCalculator.ComputePodResourceRequest(*tt.pod)
-			podReq := util.FromResourceListToFrameworkResource(r)
+			r := resourceCalculator.ComputePodRequest(*tt.pod)
+			podReq := resource2.FromListToFramework(r)
 			elasticQuotaSnapshotState := &ElasticQuotaSnapshotState{
 				elasticQuotaInfos: tt.elasticQuotas,
 			}

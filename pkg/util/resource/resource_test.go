@@ -1,4 +1,4 @@
-package util
+package resource
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
@@ -133,7 +133,7 @@ func TestResourceCalculator_ComputeRequiredGPUMemoryGB(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := ResourceCalculator{
+	resourceCalculator := Calculator{
 		NvidiaGPUDeviceMemoryGB: nvidiaDeviceGPUMemoryGB,
 	}
 	for _, tt := range tests {
@@ -144,7 +144,7 @@ func TestResourceCalculator_ComputeRequiredGPUMemoryGB(t *testing.T) {
 	}
 }
 
-func TestSumResources(t *testing.T) {
+func TestSum(t *testing.T) {
 	tests := []struct {
 		name     string
 		r1       framework.Resource
@@ -215,13 +215,13 @@ func TestSumResources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res := SumResources(tt.r1, tt.r2)
+			res := Sum(tt.r1, tt.r2)
 			assert.Equal(t, tt.expected, res)
 		})
 	}
 }
 
-func TestSubtractResources(t *testing.T) {
+func TestSubtract(t *testing.T) {
 	tests := []struct {
 		name     string
 		r1       framework.Resource
@@ -292,13 +292,13 @@ func TestSubtractResources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res := SubtractResources(tt.r1, tt.r2)
+			res := Subtract(tt.r1, tt.r2)
 			assert.Equal(t, tt.expected, res)
 		})
 	}
 }
 
-func TestSubtractResourcesNonNegative(t *testing.T) {
+func TestSubtractNonNegative(t *testing.T) {
 	tests := []struct {
 		name     string
 		r1       framework.Resource
@@ -369,7 +369,7 @@ func TestSubtractResourcesNonNegative(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res := SubtractResourcesNonNegative(tt.r1, tt.r2)
+			res := SubtractNonNegative(tt.r1, tt.r2)
 			assert.Equal(t, tt.expected, res)
 		})
 	}

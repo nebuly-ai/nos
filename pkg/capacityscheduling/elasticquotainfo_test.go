@@ -18,7 +18,7 @@ package capacityscheduling
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -69,13 +69,13 @@ func TestReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := resource2.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
-				r := resourceCalculator.ComputePodResourceRequest(*pod)
-				request := util.FromResourceListToFrameworkResource(r)
+				r := resourceCalculator.ComputePodRequest(*pod)
+				request := resource2.FromListToFramework(r)
 				elasticQuotaInfo.reserveResource(request)
 			}
 
@@ -125,13 +125,13 @@ func TestUnReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := resource2.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
-				r := resourceCalculator.ComputePodResourceRequest(*pod)
-				request := util.FromResourceListToFrameworkResource(r)
+				r := resourceCalculator.ComputePodRequest(*pod)
+				request := resource2.FromListToFramework(r)
 				elasticQuotaInfo.unreserveResource(request)
 			}
 

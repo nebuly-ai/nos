@@ -1,9 +1,9 @@
-package controller
+package quota
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -100,7 +100,7 @@ func TestElasticQuotaPodsReconciler_sortPodListForFindingOverQuotaPods(t *testin
 	}
 
 	r := elasticQuotaPodsReconciler{
-		resourceCalculator: &util.ResourceCalculator{
+		resourceCalculator: &resource.Calculator{
 			NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
 		},
 	}

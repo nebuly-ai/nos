@@ -1,9 +1,9 @@
-package controller
+package quota
 
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,12 +27,12 @@ const (
 type ElasticQuotaReconciler struct {
 	client.Client
 	Scheme             *runtime.Scheme
-	resourceCalculator *util.ResourceCalculator
+	resourceCalculator *resource.Calculator
 	podsReconciler     *elasticQuotaPodsReconciler
 }
 
 func NewElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGPUResourceMemoryGB int64) ElasticQuotaReconciler {
-	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB}
+	resourceCalculator := resource.Calculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB}
 	return ElasticQuotaReconciler{
 		Client:             client,
 		Scheme:             scheme,

@@ -1,8 +1,9 @@
-package util
+package resource
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	quota "k8s.io/apiserver/pkg/quota/v1"
@@ -24,8 +25,8 @@ var nonScalarResources = []v1.ResourceName{
 	v1.ResourceEphemeralStorage,
 }
 
-// FromFrameworkResourceToResourceList
-func FromFrameworkResourceToResourceList(r framework.Resource) v1.ResourceList {
+// FromFrameworkToList
+func FromFrameworkToList(r framework.Resource) v1.ResourceList {
 	result := v1.ResourceList{
 		v1.ResourceCPU:              *resource.NewMilliQuantity(r.MilliCPU, resource.DecimalSI),
 		v1.ResourceMemory:           *resource.NewQuantity(r.Memory, resource.BinarySI),
@@ -42,20 +43,20 @@ func FromFrameworkResourceToResourceList(r framework.Resource) v1.ResourceList {
 	return result
 }
 
-func FromResourceListToFrameworkResource(r v1.ResourceList) framework.Resource {
+func FromListToFramework(r v1.ResourceList) framework.Resource {
 	return *framework.NewResource(r)
 }
 
-// SumResources returns a new resource corresponding to the result of Max(0, r1 - r2).
+// Sum returns a new resource corresponding to the result of Max(0, r1 - r2).
 // The returned resource contains the union of the scalar resources of r1 and r2.
-func SumResources(r1 framework.Resource, r2 framework.Resource) framework.Resource {
+func Sum(r1 framework.Resource, r2 framework.Resource) framework.Resource {
 	var res = framework.Resource{}
 	res.Memory = r1.Memory + r2.Memory
 	res.MilliCPU = r1.MilliCPU + r2.MilliCPU
 	res.AllowedPodNumber = r1.AllowedPodNumber + r2.AllowedPodNumber
 	res.EphemeralStorage = r1.EphemeralStorage + r2.EphemeralStorage
 
-	for _, r := range GetKeys(r1.ScalarResources, r2.ScalarResources) {
+	for _, r := range util.GetKeys(r1.ScalarResources, r2.ScalarResources) {
 		sum := r1.ScalarResources[r] + r2.ScalarResources[r]
 		res.SetScalar(r, sum)
 	}
@@ -63,42 +64,42 @@ func SumResources(r1 framework.Resource, r2 framework.Resource) framework.Resour
 	return res
 }
 
-// SubtractResourcesNonNegative returns a new resource corresponding to the result of Max(0, r1 - r2).
+// SubtractNonNegative returns a new resource corresponding to the result of Max(0, r1 - r2).
 // The returned resource contains the union of the scalar resources of r1 and r2.
-func SubtractResourcesNonNegative(r1 framework.Resource, r2 framework.Resource) framework.Resource {
-	res := SubtractResources(r1, r2)
+func SubtractNonNegative(r1 framework.Resource, r2 framework.Resource) framework.Resource {
+	res := Subtract(r1, r2)
 
-	res.Memory = Max(0, res.Memory)
-	res.MilliCPU = Max(0, res.MilliCPU)
-	res.AllowedPodNumber = Max(0, res.AllowedPodNumber)
-	res.EphemeralStorage = Max(0, res.EphemeralStorage)
+	res.Memory = util.Max(0, res.Memory)
+	res.MilliCPU = util.Max(0, res.MilliCPU)
+	res.AllowedPodNumber = util.Max(0, res.AllowedPodNumber)
+	res.EphemeralStorage = util.Max(0, res.EphemeralStorage)
 	for r, v := range res.ScalarResources {
-		res.SetScalar(r, Max(0, v))
+		res.SetScalar(r, util.Max(0, v))
 	}
 
 	return res
 }
 
-// SubtractResources returns a new resource corresponding to the result of r1 - r2.
+// Subtract returns a new resource corresponding to the result of r1 - r2.
 // The returned resource contains the union of the scalar resources of r1 and r2.
-func SubtractResources(r1 framework.Resource, r2 framework.Resource) framework.Resource {
+func Subtract(r1 framework.Resource, r2 framework.Resource) framework.Resource {
 	var res = framework.Resource{}
 	res.Memory = r1.Memory - r2.Memory
 	res.MilliCPU = r1.MilliCPU - r2.MilliCPU
 	res.AllowedPodNumber = r1.AllowedPodNumber - r2.AllowedPodNumber
 	res.EphemeralStorage = r1.EphemeralStorage - r2.EphemeralStorage
-	for _, r := range GetKeys(r1.ScalarResources, r2.ScalarResources) {
+	for _, r := range util.GetKeys(r1.ScalarResources, r2.ScalarResources) {
 		sub := r1.ScalarResources[r] - r2.ScalarResources[r]
 		res.SetScalar(r, sub)
 	}
 	return res
 }
 
-type ResourceCalculator struct {
+type Calculator struct {
 	NvidiaGPUDeviceMemoryGB int64
 }
 
-// ComputePodResourceRequest returns a v1.ResourceList that covers the largest
+// ComputePodRequest returns a v1.ResourceList that covers the largest
 // width in each resource dimension. Because init-containers run sequentially, we collect
 // the max in each dimension iteratively. In contrast, we sum the resource vectors for
 // regular containers since they run simultaneously.
@@ -126,7 +127,7 @@ type ResourceCalculator struct {
 //	    Memory: 1G
 //
 // Result: CPU: 3, Memory: 3G
-func (r ResourceCalculator) ComputePodResourceRequest(pod v1.Pod) v1.ResourceList {
+func (r Calculator) ComputePodRequest(pod v1.Pod) v1.ResourceList {
 	containersRes := v1.ResourceList{}
 	for _, container := range pod.Spec.Containers {
 		containersRes = quota.Add(containersRes, container.Resources.Requests)
@@ -153,7 +154,7 @@ func (r ResourceCalculator) ComputePodResourceRequest(pod v1.Pod) v1.ResourceLis
 	return res
 }
 
-func (r ResourceCalculator) ComputeRequiredGPUMemoryGB(resourceList v1.ResourceList) int64 {
+func (r Calculator) ComputeRequiredGPUMemoryGB(resourceList v1.ResourceList) int64 {
 	var totalRequiredGB int64
 
 	for resourceName, quantity := range resourceList {

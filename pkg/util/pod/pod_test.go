@@ -1,4 +1,4 @@
-package util
+package pod
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
@@ -37,7 +37,7 @@ func TestIsPodOverQuota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, IsPodOverQuota(tt.pod))
+			assert.Equal(t, tt.expected, IsOverQuota(tt.pod))
 		})
 	}
 }

@@ -19,6 +19,7 @@ package capacityscheduling
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
@@ -68,7 +69,7 @@ func (e ElasticQuotaInfos) Add(eqInfo *ElasticQuotaInfo) {
 func (e ElasticQuotaInfos) AggregatedUsedOverMinWith(podRequest framework.Resource) bool {
 	min := e.getAggregatedMin()
 	used := e.getAggregatedUsed()
-	used.Add(util.FromFrameworkResourceToResourceList(podRequest))
+	used.Add(resource.FromFrameworkToList(podRequest))
 	return cmp(used, min)
 }
 
@@ -100,8 +101,8 @@ func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo *ElasticQuo
 		return result
 	}
 
-	var totalMin = util.FromFrameworkResourceToResourceList(*e.getAggregatedMin())
-	for r, m := range util.FromFrameworkResourceToResourceList(*eqInfo.Min) {
+	var totalMin = resource.FromFrameworkToList(*e.getAggregatedMin())
+	for r, m := range resource.FromFrameworkToList(*eqInfo.Min) {
 		t := totalMin[r]
 		var p float64
 		if t.Value() > 0 {
@@ -139,8 +140,8 @@ func (e ElasticQuotaInfos) getGuaranteedOverquotasPercentages(eqInfo *ElasticQuo
 func (e ElasticQuotaInfos) getAggregatedOverquotas() framework.Resource {
 	var result = framework.Resource{}
 	for _, eqInfo := range e {
-		unused := util.SubtractResourcesNonNegative(*eqInfo.Min, *eqInfo.Used)
-		result = util.SumResources(result, unused)
+		unused := resource.SubtractNonNegative(*eqInfo.Min, *eqInfo.Used)
+		result = resource.Sum(result, unused)
 	}
 	return result
 }
@@ -151,7 +152,7 @@ func (e ElasticQuotaInfos) getAggregatedMin() *framework.Resource {
 		if eqi.Min == nil {
 			continue
 		}
-		totalMin = util.SumResources(totalMin, *eqi.Min)
+		totalMin = resource.Sum(totalMin, *eqi.Min)
 	}
 	return &totalMin
 }
@@ -162,7 +163,7 @@ func (e ElasticQuotaInfos) getAggregatedUsed() *framework.Resource {
 		if eqi.Used == nil {
 			continue
 		}
-		totalUsed = util.SumResources(totalUsed, *eqi.Used)
+		totalUsed = resource.Sum(totalUsed, *eqi.Used)
 	}
 	return &totalUsed
 }
@@ -182,7 +183,7 @@ type ElasticQuotaInfo struct {
 	Max                *framework.Resource
 	Used               *framework.Resource
 	MaxEnforced        bool
-	resourceCalculator *util.ResourceCalculator
+	resourceCalculator *resource.Calculator
 }
 
 func (e *ElasticQuotaInfo) reserveResource(request framework.Resource) {
@@ -277,8 +278,8 @@ func (e *ElasticQuotaInfo) addPodIfNotPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Insert(key)
-	r := e.resourceCalculator.ComputePodResourceRequest(*pod)
-	podRequest := util.FromResourceListToFrameworkResource(r)
+	r := e.resourceCalculator.ComputePodRequest(*pod)
+	podRequest := resource.FromListToFramework(r)
 	e.reserveResource(podRequest)
 
 	return nil
@@ -295,8 +296,8 @@ func (e *ElasticQuotaInfo) deletePodIfPresent(pod *v1.Pod) error {
 	}
 
 	e.pods.Delete(key)
-	r := e.resourceCalculator.ComputePodResourceRequest(*pod)
-	podRequest := util.FromResourceListToFrameworkResource(r)
+	r := e.resourceCalculator.ComputePodRequest(*pod)
+	podRequest := resource.FromListToFramework(r)
 	e.unreserveResource(podRequest)
 
 	return nil

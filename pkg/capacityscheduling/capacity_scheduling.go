@@ -21,7 +21,8 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	schedulerconfig "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	podutil "github.com/nebuly-ai/nebulnetes/pkg/util/pod"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"sort"
 	"sync"
 
@@ -52,7 +53,7 @@ type CapacityScheduling struct {
 	podLister                corelisters.PodLister
 	pdbLister                policylisters.PodDisruptionBudgetLister
 	elasticQuotaInfos        ElasticQuotaInfos
-	resourceCalculator       *util.ResourceCalculator
+	resourceCalculator       *resource.Calculator
 	elasticQuotaInfoInformer *ElasticQuotaInfoInformer
 }
 
@@ -122,7 +123,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		elasticQuotaInfos: NewElasticQuotaInfos(),
 		podLister:         handle.SharedInformerFactory().Core().V1().Pods().Lister(),
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
-		resourceCalculator: &util.ResourceCalculator{
+		resourceCalculator: &resource.Calculator{
 			NvidiaGPUDeviceMemoryGB: args.NvidiaGPUResourceMemoryGB,
 		},
 	}
@@ -186,8 +187,8 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 	// TODO improve the efficiency of taking snapshot
 	// e.g. use a two-pointer data structure to only copy the updated EQs when necessary.
 	snapshotElasticQuota := c.snapshotElasticQuota()
-	req := c.resourceCalculator.ComputePodResourceRequest(*pod)
-	podReq := util.FromResourceListToFrameworkResource(req)
+	req := c.resourceCalculator.ComputePodRequest(*pod)
+	podReq := resource.FromListToFramework(req)
 
 	state.Write(ElasticQuotaSnapshotKey, snapshotElasticQuota)
 
@@ -225,7 +226,7 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 			ns := p.Pod.Namespace
 			info := c.elasticQuotaInfos[ns]
 			if info != nil {
-				pResourceRequest := c.resourceCalculator.ComputePodResourceRequest(*p.Pod)
+				pResourceRequest := c.resourceCalculator.ComputePodRequest(*p.Pod)
 				// If they are subject to the same quota(namespace) and p is more important than pod,
 				// p will be added to the nominatedResource and totalNominatedResource.
 				// If they aren't subject to the same quota(namespace) and the usage of quota(p's namespace) does not exceed min,
@@ -240,8 +241,8 @@ func (c *CapacityScheduling) PreFilter(ctx context.Context, state *framework.Cyc
 		}
 	}
 
-	nominatedPodsReqInEQWithPodReq.Add(util.FromFrameworkResourceToResourceList(podReq))
-	nominatedPodsReqWithPodReq.Add(util.FromFrameworkResourceToResourceList(podReq))
+	nominatedPodsReqInEQWithPodReq.Add(resource.FromFrameworkToList(podReq))
+	nominatedPodsReqWithPodReq.Add(resource.FromFrameworkToList(podReq))
 	preFilterState := &PreFilterState{
 		podReq:                         podReq,
 		nominatedPodsReqInEQWithPodReq: *nominatedPodsReqInEQWithPodReq,
@@ -527,10 +528,10 @@ func (p *preemptor) SelectVictimsOnNode(
 				// so we select pods in other namespaces where
 				// UsedOverquotas > GuaranteedOverquotas
 				guaranteeedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pod.Namespace)
-				minPlusGuaranteeedOverquotas := util.SumResources(*guaranteeedOverquotas, *preemptorElasticQuotaInfo.Min)
+				minPlusGuaranteeedOverquotas := resource.Sum(*guaranteeedOverquotas, *preemptorElasticQuotaInfo.Min)
 				if preemptorElasticQuotaInfo.usedLteWith(&minPlusGuaranteeedOverquotas, &nominatedPodsReqInEQWithPodReq) {
 					pvGuaranteedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pvPi.Pod.Namespace)
-					pvMinPlusGuaranteedOverquotas := util.SumResources(*pvGuaranteedOverquotas, *pvEqInfo.Min)
+					pvMinPlusGuaranteedOverquotas := resource.Sum(*pvGuaranteedOverquotas, *pvEqInfo.Min)
 					if pvEqInfo.usedOver(&pvMinPlusGuaranteedOverquotas) {
 						potentialVictims = append(potentialVictims, pvPi)
 						if err := removePod(pvPi); err != nil {
@@ -561,7 +562,7 @@ func (p *preemptor) SelectVictimsOnNode(
 				// than its min, i.e., borrowing resources from other
 				// Quotas. Only Pods marked as "overquota" can be preempted.
 				if pvPi.Pod.Namespace != pod.Namespace && pvEqInfo.usedOverMin() {
-					if util.IsPodOverQuota(*pvPi.Pod) {
+					if podutil.IsOverQuota(*pvPi.Pod) {
 						potentialVictims = append(potentialVictims, pvPi)
 						if err := removePod(pvPi); err != nil {
 							return nil, 0, framework.AsStatus(err)

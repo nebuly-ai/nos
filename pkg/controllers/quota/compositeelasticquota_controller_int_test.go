@@ -1,6 +1,6 @@
 //go:build integration
 
-package controller
+package quota
 
 import (
 	"fmt"

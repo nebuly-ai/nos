@@ -22,7 +22,7 @@ import (
 	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/controller"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/quota"
 	"os"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -83,7 +83,7 @@ func main() {
 	}
 
 	// Setup ElasticQuota
-	elasticQuotaReconciler := controller.NewElasticQuotaReconciler(
+	elasticQuotaReconciler := quota.NewElasticQuotaReconciler(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		*controllerConfig.NvidiaGPUResourceMemoryGB,
@@ -98,7 +98,7 @@ func main() {
 	}
 
 	// Setup CompositeElasticQuota
-	compositeElasticQuotaReconciler := controller.NewCompositeElasticQuotaReconciler(
+	compositeElasticQuotaReconciler := quota.NewCompositeElasticQuotaReconciler(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		*controllerConfig.NvidiaGPUResourceMemoryGB,
