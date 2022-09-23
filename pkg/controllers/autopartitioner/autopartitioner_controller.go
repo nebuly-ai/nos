@@ -2,6 +2,7 @@ package autopartitioner
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/pod"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,18 +32,21 @@ func NewController(client client.Client, scheme *runtime.Scheme) Controller {
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	//logger := log.FromContext(ctx)
 
+	// Fetch instance
 	var instance v1.Pod
 	if err := c.Client.Get(ctx, types.NamespacedName{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// If extra resources generated from partitioning don't help with
+	// scheduling then we don't need to reconcile this Pod
+	if !pod.ExtraResourcesCouldHelpScheduling(instance) {
+		return ctrl.Result{}, nil
+	}
+
 	return ctrl.Result{}, nil
 }
 
-//func IsPodUnschedulable(pod v1.Pod) {
-//	return !IsScheduled(pod) &&
-//		!IsPreempting(pod) &&
-//		FailedToSchedule(pod) &&
-//		!IsOwnedByDaemonSet(pod) &&
-//		!IsOwnedByNode(pod)
-//}
+func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {
+	return nil
+}

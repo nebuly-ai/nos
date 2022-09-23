@@ -1,4 +1,4 @@
-package quota
+package elasticquota
 
 import (
 	"context"

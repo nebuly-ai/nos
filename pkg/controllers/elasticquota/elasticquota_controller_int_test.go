@@ -1,6 +1,6 @@
 //go:build integration
 
-package quota
+package elasticquota
 
 import (
 	"context"

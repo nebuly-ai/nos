@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
-	"github.com/nebuly-ai/nebulnetes/pkg/capacityscheduling"
+	"github.com/nebuly-ai/nebulnetes/pkg/plugins/capacityscheduling"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"math/rand"
 	"os"
