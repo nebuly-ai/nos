@@ -2,7 +2,7 @@
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= controller:latest
 SCHEDULER_IMG ?= scheduler:latest
-AUTOPARTITIONER_IMG ?= autopartitioner:latest
+GPUPARTITIONER_IMG ?= gpupartitioner:latest
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -80,9 +80,9 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-.PHONY: docker-build-autopartitioner
-docker-build-autopartitioner: ## Build docker image with the manager.
-	docker build -t ${AUTOPARTITIONER_IMG} -f build/autopartitioner/Dockerfile .
+.PHONY: docker-build-gpupartitioner
+docker-build-gpupartitioner: ## Build docker image with the manager.
+	docker build -t ${GPUPARTITIONER_IMG} -f build/gpupartitioner/Dockerfile .
 
 .PHONY: docker-build-controller
 docker-build-controller: ## Build docker image with the manager.
@@ -101,7 +101,7 @@ docker-push-scheduler: ## Build docker image with the scheduler.
 	docker push ${SCHEDULER_IMG}
 
 .PHONY: docker-build
-docker-build: test docker-build-controller docker-build-scheduler docker-build-autopartitioner
+docker-build: test docker-build-controller docker-build-scheduler docker-build-gpupartitioner
 
 .PHONY: docker-push
 docker-push: docker-push-controller docker-build-scheduler

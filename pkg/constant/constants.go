@@ -51,3 +51,7 @@ const (
 	// setting.
 	DefaultNvidiaGPUResourceMemory = 16
 )
+
+const (
+	PodPhaseKey = "status.phase"
+)

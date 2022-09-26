@@ -10,17 +10,17 @@ COPY ../../go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY cmd/autopartitioner/autopartitioner.go main.go
+COPY cmd/gpupartitioner/gpupartitioner.go main.go
 COPY ../../pkg pkg/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o autopartitioner main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o gpupartitioner main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/autopartitioner .
+COPY --from=builder /workspace/gpupartitioner .
 USER 65532:65532
 
-ENTRYPOINT ["/autopartitioner"]
+ENTRYPOINT ["/gpupartitioner"]

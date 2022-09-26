@@ -3,6 +3,7 @@ package elasticquota
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
@@ -50,6 +51,8 @@ func NewCompositeElasticQuotaReconciler(client client.Client, scheme *runtime.Sc
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
 
 func (r *CompositeElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
 	// Fetch CEQ instance
 	var instance v1alpha1.CompositeElasticQuota
 	if err := r.Client.Get(ctx, req.NamespacedName, &instance); err != nil {
@@ -64,6 +67,7 @@ func (r *CompositeElasticQuotaReconciler) Reconcile(ctx context.Context, req ctr
 	// Fetch running Pods in the namespaces specified by the EQ
 	pods, err := r.fetchRunningPods(ctx, instance)
 	if err != nil {
+		logger.Error(err, "unable to fetch running pods", "namespaces", instance.Spec.Namespaces)
 		return ctrl.Result{}, err
 	}
 
@@ -125,7 +129,7 @@ func (r *CompositeElasticQuotaReconciler) fetchRunningPods(ctx context.Context,
 	for _, namespace := range eq.Spec.Namespaces {
 		opts := []client.ListOption{
 			client.InNamespace(namespace),
-			client.MatchingFields{podPhaseKey: string(v1.PodRunning)},
+			client.MatchingFields{constant.PodPhaseKey: string(v1.PodRunning)},
 		}
 		if err := r.Client.List(ctx, &namespaceRunningPods, opts...); err != nil {
 			logger.Error(err, "unable to list running Pods", "namespace", namespace)

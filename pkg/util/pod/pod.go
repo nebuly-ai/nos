@@ -4,6 +4,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/component-helpers/scheduling/corev1"
 )
 
 // IsOverQuota returns true if the pod is "over-quota", false otherwise.
@@ -68,4 +69,11 @@ func IsOwnedBy(pod v1.Pod, gvk schema.GroupVersionKind) bool {
 		}
 	}
 	return false
+}
+
+// IsMoreImportant returns true if p1 is more important than p2, false otherwise
+func IsMoreImportant(p1 v1.Pod, p2 v1.Pod) bool {
+	p1Priority := corev1.PodPriority(&p1)
+	p2Priority := corev1.PodPriority(&p2)
+	return p1Priority > p2Priority
 }

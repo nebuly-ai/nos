@@ -3,6 +3,7 @@ package elasticquota
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -17,10 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-)
-
-const (
-	podPhaseKey = "status.phase"
 )
 
 // ElasticQuotaReconciler reconciles a ElasticQuota object
@@ -62,7 +59,7 @@ func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	var runningPodList v1.PodList
 	opts := []client.ListOption{
 		client.InNamespace(req.Namespace),
-		client.MatchingFields{podPhaseKey: string(v1.PodRunning)},
+		client.MatchingFields{constant.PodPhaseKey: string(v1.PodRunning)},
 	}
 	if err := r.Client.List(ctx, &runningPodList, opts...); err != nil {
 		logger.Error(err, "unable to list running Pods")
@@ -112,7 +109,7 @@ func (r *ElasticQuotaReconciler) updateStatus(ctx context.Context, instance v1al
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ElasticQuotaReconciler) SetupWithManager(mgr ctrl.Manager, name string) error {
-	err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, podPhaseKey, func(rawObj client.Object) []string {
+	err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, constant.PodPhaseKey, func(rawObj client.Object) []string {
 		pod := rawObj.(*v1.Pod)
 		return []string{string(pod.Status.Phase)}
 	})

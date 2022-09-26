@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/autopartitioner"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -42,13 +43,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Setup autopartitioner controller
-	autopartitionerController := autopartitioner.NewController(
+	clusterState := state.NewClusterState()
+
+	// Setup state controller
+	stateController := state.NewController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
+		clusterState,
 	)
-	if err := autopartitionerController.SetupWithManager(mgr, ""); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AutopartitionerController")
+	if err := stateController.SetupWithManager(mgr, ""); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterStateController")
+	}
+	// Setup MIG partitioner controller
+	migController := mig.NewController(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+		clusterState,
+	)
+	if err := migController.SetupWithManager(mgr, ""); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MIGController")
 	}
 
 	// Setup health checks

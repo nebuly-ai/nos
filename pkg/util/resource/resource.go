@@ -128,24 +128,7 @@ type Calculator struct {
 //
 // Result: CPU: 3, Memory: 3G
 func (r Calculator) ComputePodRequest(pod v1.Pod) v1.ResourceList {
-	containersRes := v1.ResourceList{}
-	for _, container := range pod.Spec.Containers {
-		containersRes = quota.Add(containersRes, container.Resources.Requests)
-	}
-	initRes := v1.ResourceList{}
-
-	// take max_resource for init_containers
-	for _, container := range pod.Spec.InitContainers {
-		initRes = quota.Max(initRes, container.Resources.Requests)
-	}
-
-	// If Overhead is being utilized, add to the total requests for the pod
-	if pod.Spec.Overhead != nil && utilfeature.DefaultFeatureGate.Enabled(kubefeatures.PodOverhead) {
-		quota.Add(containersRes, pod.Spec.Overhead)
-	}
-
-	// take max_resource for init_containers and containers
-	res := quota.Max(containersRes, initRes)
+	res := ComputePodRequest(pod)
 
 	// add required GPU memory resource
 	gpuMemory := r.ComputeRequiredGPUMemoryGB(res)
@@ -170,6 +153,27 @@ func (r Calculator) ComputeRequiredGPUMemoryGB(resourceList v1.ResourceList) int
 	}
 
 	return totalRequiredGB
+}
+
+func ComputePodRequest(pod v1.Pod) v1.ResourceList {
+	containersRes := v1.ResourceList{}
+	for _, container := range pod.Spec.Containers {
+		containersRes = quota.Add(containersRes, container.Resources.Requests)
+	}
+	initRes := v1.ResourceList{}
+
+	// take max_resource for init_containers
+	for _, container := range pod.Spec.InitContainers {
+		initRes = quota.Max(initRes, container.Resources.Requests)
+	}
+
+	// If Overhead is being utilized, add to the total requests for the pod
+	if pod.Spec.Overhead != nil && utilfeature.DefaultFeatureGate.Enabled(kubefeatures.PodOverhead) {
+		quota.Add(containersRes, pod.Spec.Overhead)
+	}
+
+	// take max_resource for init_containers and containers
+	return quota.Max(containersRes, initRes)
 }
 
 func IsNvidiaMigDevice(resourceName v1.ResourceName) bool {
