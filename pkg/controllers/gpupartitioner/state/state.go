@@ -10,7 +10,7 @@ import (
 type ClusterState interface {
 	GetNodeInfo(nodeName string) (*framework.NodeInfo, error)
 	GetLackingResources(pod v1.Pod) v1.ResourceList
-	GetSnapshot() *ClusterSnapshot
+	GetSnapshot() ClusterSnapshot
 }
 
 func NewClusterState() ClusterState {
@@ -46,7 +46,7 @@ func (c *clusterStateImpl) GetNodeInfo(nodeName string) (*framework.NodeInfo, er
 	return nil, nil
 }
 
-func (c *clusterStateImpl) GetSnapshot() *ClusterSnapshot {
+func (c *clusterStateImpl) GetSnapshot() ClusterSnapshot {
 	return nil
 }
 

@@ -19,7 +19,7 @@ type Planner struct {
 	schedulerFramework framework.Framework
 }
 
-func NewPlanner(kubeClient kubernetes.Interface) (*Planner, error) {
+func NewPlanner(kubeClient kubernetes.Interface, clusterSnapshot state.ClusterSnapshot) (*Planner, error) {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
 	config, err := scheduler_config.Default()
 	if err != nil {
@@ -38,7 +38,7 @@ func NewPlanner(kubeClient kubernetes.Interface) (*Planner, error) {
 		return nil, fmt.Errorf("couldn't create scheduler framework; %v", err)
 	}
 
-	return &Planner{schedulerFramework: f}, nil
+	return &Planner{schedulerFramework: f, snapshot: clusterSnapshot}, nil
 }
 
 func (p Planner) GetNodesPartitioningPlan(pendingCandidates []v1.Pod) (map[string]core.PartitioningPlan, error) {

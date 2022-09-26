@@ -30,7 +30,7 @@ func (p Partitioner) RunPartitioning(ctx context.Context, pendingCandidates []v1
 	logger := log.FromContext(ctx).WithName("mig-partitioner")
 
 	// Init planner
-	planner, err := NewPlanner(p.k8sClient)
+	planner, err := NewPlanner(p.k8sClient, p.clusterState.GetSnapshot())
 	if err != nil {
 		return err
 	}
@@ -38,6 +38,7 @@ func (p Partitioner) RunPartitioning(ctx context.Context, pendingCandidates []v1
 	// Compute partitioning plan
 	plan, err := planner.GetNodesPartitioningPlan(pendingCandidates)
 	if err != nil {
+		logger.Error(err, "unable to compute partitioning plan")
 		return err
 	}
 	if len(plan) == 0 {
@@ -51,6 +52,7 @@ func (p Partitioner) RunPartitioning(ctx context.Context, pendingCandidates []v1
 
 	// Apply partitioning plan
 	if err := p.actuator.ApplyPartitioning(ctx, plan); err != nil {
+		logger.Error(err, "unable to apply partitioning plan")
 		return err
 	}
 
