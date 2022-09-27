@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"golang.org/x/exp/constraints"
+	"k8s.io/apimachinery/pkg/types"
 	"math/rand"
 	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -56,8 +57,11 @@ func RandomStringLowercase(n int) string {
 	return string(b)
 }
 
-func GetNamespacedName(object client.Object) string {
-	return fmt.Sprintf("%s/%s", object.GetNamespace(), object.GetName())
+func GetNamespacedName(object client.Object) types.NamespacedName {
+	return types.NamespacedName{
+		Name:      object.GetName(),
+		Namespace: object.GetNamespace(),
+	}
 }
 
 type empty struct {

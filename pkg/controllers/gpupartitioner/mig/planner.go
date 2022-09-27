@@ -1,8 +1,8 @@
 package mig
 
 import (
+	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
@@ -41,24 +41,62 @@ func NewPlanner(kubeClient kubernetes.Interface, clusterSnapshot state.ClusterSn
 	return &Planner{schedulerFramework: f, snapshot: clusterSnapshot}, nil
 }
 
-func (p Planner) GetNodesPartitioningPlan(pendingCandidates []v1.Pod) (map[string]core.PartitioningPlan, error) {
-	plan := make(map[string]core.PartitioningPlan)
+func (p Planner) GetNodesPartitioningPlan(ctx context.Context, pendingCandidates []v1.Pod) (map[string]v1.ResourceList, error) {
+	plan := make(map[string]v1.ResourceList)
 	for _, pod := range pendingCandidates {
-		lackingMIGs := p.getLackingMIGResources(pod)
-		if len(lackingMIGs) == 0 {
+		podLackingMIGs := p.getLackingMIGResources(pod)
+		if len(podLackingMIGs) == 0 {
 			continue
 		}
-		// TODO
+		nodesWithPartitionedResources := p.getCandidateNodesForPartitioning(podLackingMIGs)
+		for n, scalarResources := range nodesWithPartitionedResources {
+			p.snapshot.Fork()
+			_ = p.snapshot.UpdateAllocatableScalarResources(n, scalarResources)
+			nodeFits, err := p.nodeFits(ctx, n, pod)
+			if err != nil {
+				return nil, err
+			}
+			if !nodeFits {
+				p.snapshot.Revert()
+				continue
+			}
+			_ = p.snapshot.AddPod(n, pod)
+			p.snapshot.Commit()
+		}
 	}
 	return plan, nil
 }
 
 func (p Planner) getLackingMIGResources(pod v1.Pod) v1.ResourceList {
 	result := make(v1.ResourceList)
-	for r, q := range p.snapshot.GetLackingResources(pod) {
+	for r, q := range p.snapshot.GetLackingScalarResources(pod) {
 		if resource.IsNvidiaMigDevice(r) {
 			result[r] = q
 		}
 	}
 	return result
+}
+
+func (p Planner) getCandidateNodesForPartitioning(requiredMigResources v1.ResourceList) map[string]v1.ResourceList {
+
+	//for _, n := range p.snapshot.GetNodes() {
+	//	for _, r := range n.Allocatable.ScalarResources {
+	//	}
+	//}
+
+	return nil
+}
+
+func (p Planner) nodeFits(ctx context.Context, nodeName string, pod v1.Pod) (bool, error) {
+	cycleState := framework.NewCycleState()
+	node, found := p.snapshot.GetNode(nodeName)
+	if !found {
+		return false, nil
+	}
+	_, preFilterStatus := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod)
+	if !preFilterStatus.IsSuccess() {
+		return false, fmt.Errorf("error running pre filter plugins for pod %s; %s", pod.Name, preFilterStatus.Message())
+	}
+	filterStatus := p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge()
+	return filterStatus.IsSuccess(), nil
 }

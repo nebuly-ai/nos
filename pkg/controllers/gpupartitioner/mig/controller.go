@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-func NewController(client client.Client, scheme *runtime.Scheme, clusterState state.ClusterState) core.Controller {
+func NewController(client client.Client, scheme *runtime.Scheme, clusterState *state.ClusterState) core.Controller {
 	restConfig := config.GetConfigOrDie()
 	k8sClient := kubernetes.NewForConfigOrDie(restConfig)
 	migPartitioner := NewPartitioner(clusterState, client, k8sClient)

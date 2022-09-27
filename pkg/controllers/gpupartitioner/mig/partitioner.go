@@ -11,13 +11,13 @@ import (
 )
 
 type Partitioner struct {
-	clusterState state.ClusterState
+	clusterState *state.ClusterState
 	client       client.Client
 	k8sClient    kubernetes.Interface
 	actuator     core.Actuator
 }
 
-func NewPartitioner(state state.ClusterState, client client.Client, k8sClient kubernetes.Interface) Partitioner {
+func NewPartitioner(state *state.ClusterState, client client.Client, k8sClient kubernetes.Interface) Partitioner {
 	return Partitioner{
 		clusterState: state,
 		client:       client,
@@ -36,7 +36,7 @@ func (p Partitioner) RunPartitioning(ctx context.Context, pendingCandidates []v1
 	}
 
 	// Compute partitioning plan
-	plan, err := planner.GetNodesPartitioningPlan(pendingCandidates)
+	plan, err := planner.GetNodesPartitioningPlan(ctx, pendingCandidates)
 	if err != nil {
 		logger.Error(err, "unable to compute partitioning plan")
 		return err

@@ -17,10 +17,10 @@ type Controller struct {
 	client.Client
 	Scheme       *runtime.Scheme
 	partitioner  Partitioner
-	clusterState state.ClusterState
+	clusterState *state.ClusterState
 }
 
-func NewController(client client.Client, scheme *runtime.Scheme, clusterState state.ClusterState, partitioner Partitioner) Controller {
+func NewController(client client.Client, scheme *runtime.Scheme, clusterState *state.ClusterState, partitioner Partitioner) Controller {
 	return Controller{
 		Client:       client,
 		Scheme:       scheme,

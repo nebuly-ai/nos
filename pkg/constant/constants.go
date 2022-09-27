@@ -13,12 +13,13 @@ const (
 const (
 	ElasticQuotaControllerName          = "elasticquota-controller"
 	CompositeElasticQuotaControllerName = "composite-elasticquota-controller"
+	ClusterStateNodeControllerName      = "clusterstate-node-controller"
+	ClusterStatePodControllerName       = "clusterstate-pod-controller"
+	MIGPartitionerControllerName        = "mig-partitioner-controller"
 )
 
 // Labels
 const (
-	// LabelGPUMemory specifies the GPU Memory requirements of Pod, expressed in GigaByte
-	LabelGPUMemory = "n8s.nebuly.ai/gpu-memory"
 	// LabelCapacityInfo specifies the status of a Pod in regard to the ElasticQuota it belongs to
 	LabelCapacityInfo = "n8s.nebuly.ai/capacity"
 )
@@ -53,5 +54,6 @@ const (
 )
 
 const (
-	PodPhaseKey = "status.phase"
+	PodPhaseKey    = "status.phase"
+	PodNodeNameKey = "spec.nodeName"
 )

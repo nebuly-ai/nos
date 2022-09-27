@@ -6,18 +6,13 @@ import (
 )
 
 type Planner interface {
-	GetNodesPartitioningPlan(pendingPods []v1.Pod) (map[string]PartitioningPlan, error)
+	GetNodesPartitioningPlan(ctx context.Context, pendingPods []v1.Pod) (map[string]v1.ResourceList, error)
 }
 
 type Actuator interface {
-	ApplyPartitioning(ctx context.Context, plan map[string]PartitioningPlan) error
+	ApplyPartitioning(ctx context.Context, plan map[string]v1.ResourceList) error
 }
 
 type Partitioner interface {
 	RunPartitioning(ctx context.Context, pendingCandidates []v1.Pod) error
-}
-
-type PartitioningPlan struct {
-	ResourceName v1.ResourceName
-	Quantity     int
 }

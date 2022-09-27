@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,23 +46,50 @@ func main() {
 
 	clusterState := state.NewClusterState()
 
-	// Setup state controller
-	stateController := state.NewController(
+	// Setup state controllers
+	nodeController := state.NewNodeController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		clusterState,
+		&clusterState,
 	)
-	if err := stateController.SetupWithManager(mgr, ""); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ClusterStateController")
+	if err := nodeController.SetupWithManager(mgr, constant.ClusterStateNodeControllerName); err != nil {
+		setupLog.Error(
+			err,
+			"unable to create controller",
+			"controller",
+			constant.ClusterStateNodeControllerName,
+		)
+		os.Exit(1)
 	}
+	podController := state.NewPodController(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+		&clusterState,
+	)
+	if err := podController.SetupWithManager(mgr, constant.ClusterStatePodControllerName); err != nil {
+		setupLog.Error(
+			err,
+			"unable to create controller",
+			"controller",
+			constant.ClusterStatePodControllerName,
+		)
+		os.Exit(1)
+	}
+
 	// Setup MIG partitioner controller
 	migController := mig.NewController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		clusterState,
+		&clusterState,
 	)
-	if err := migController.SetupWithManager(mgr, ""); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MIGController")
+	if err := migController.SetupWithManager(mgr, constant.MIGPartitionerControllerName); err != nil {
+		setupLog.Error(
+			err,
+			"unable to create controller",
+			"controller",
+			constant.MIGPartitionerControllerName,
+		)
+		os.Exit(1)
 	}
 
 	// Setup health checks
