@@ -5,7 +5,29 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
+
+type nodeBuilder struct {
+	v1.Node
+}
+
+func (b *nodeBuilder) Get() v1.Node {
+	return b.Node
+}
+
+func BuildNode(name string) *nodeBuilder {
+	node := v1.Node{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Node",
+			APIVersion: v1.SchemeGroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+	return &nodeBuilder{node}
+}
 
 type namespaceBuilder struct {
 	v1.Namespace
@@ -18,7 +40,7 @@ func (b *namespaceBuilder) Get() v1.Namespace {
 func BuildNamespace(name string) *namespaceBuilder {
 	namespace := v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Pod",
+			Kind:       "Namespace",
 			APIVersion: v1.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -37,6 +59,16 @@ func (b *podBuilder) WithContainer(c v1.Container) *podBuilder {
 	return b
 }
 
+func (b *podBuilder) WithPhase(f v1.PodPhase) *podBuilder {
+	b.Status.Phase = f
+	return b
+}
+
+func (b *podBuilder) WithUID(uid string) *podBuilder {
+	b.UID = types.UID(uid)
+	return b
+}
+
 func (b *podBuilder) WithInitContainer(c v1.Container) *podBuilder {
 	b.Spec.InitContainers = append(b.Spec.InitContainers, c)
 	return b
@@ -50,13 +82,18 @@ func (b *podBuilder) WithLabel(label, value string) *podBuilder {
 	return b
 }
 
+func (b *podBuilder) WithNodeName(nodeName string) *podBuilder {
+	b.Spec.NodeName = nodeName
+	return b
+}
+
 func (b *podBuilder) WithCreationTimestamp(timestamp metav1.Time) *podBuilder {
-	b.Pod.CreationTimestamp = timestamp
+	b.CreationTimestamp = timestamp
 	return b
 }
 
 func (b *podBuilder) WithPriority(priority int32) *podBuilder {
-	b.Pod.Spec.Priority = &priority
+	b.Spec.Priority = &priority
 	return b
 }
 
@@ -83,68 +120,68 @@ type containerBuilder struct {
 }
 
 func (b *containerBuilder) WithLimits(limits v1.ResourceList) *containerBuilder {
-	b.Container.Resources.Limits = limits
+	b.Resources.Limits = limits
 	return b
 }
 
 func (b *containerBuilder) WithRequests(requests v1.ResourceList) *containerBuilder {
-	b.Container.Resources.Requests = requests
+	b.Resources.Requests = requests
 	return b
 }
 
 func (b *containerBuilder) WithCPUMilliLimit(cpuMilli int64) *containerBuilder {
-	if b.Container.Resources.Limits == nil {
-		b.Container.Resources.Limits = make(v1.ResourceList)
+	if b.Resources.Limits == nil {
+		b.Resources.Limits = make(v1.ResourceList)
 	}
-	b.Container.Resources.Limits[v1.ResourceCPU] = *resource.NewMilliQuantity(cpuMilli, resource.DecimalSI)
+	b.Resources.Limits[v1.ResourceCPU] = *resource.NewMilliQuantity(cpuMilli, resource.DecimalSI)
 	return b
 }
 
 func (b *containerBuilder) WithCPUMilliRequest(cpuMilli int64) *containerBuilder {
-	if b.Container.Resources.Requests == nil {
-		b.Container.Resources.Requests = make(v1.ResourceList)
+	if b.Resources.Requests == nil {
+		b.Resources.Requests = make(v1.ResourceList)
 	}
-	b.Container.Resources.Requests[v1.ResourceCPU] = *resource.NewMilliQuantity(cpuMilli, resource.DecimalSI)
+	b.Resources.Requests[v1.ResourceCPU] = *resource.NewMilliQuantity(cpuMilli, resource.DecimalSI)
 	return b
 }
 
 func (b *containerBuilder) WithNvidiaGPULimit(amount int64) *containerBuilder {
-	if b.Container.Resources.Limits == nil {
-		b.Container.Resources.Limits = make(v1.ResourceList)
+	if b.Resources.Limits == nil {
+		b.Resources.Limits = make(v1.ResourceList)
 	}
-	b.Container.Resources.Limits[constant.ResourceNvidiaGPU] = *resource.NewQuantity(amount, resource.DecimalSI)
+	b.Resources.Limits[constant.ResourceNvidiaGPU] = *resource.NewQuantity(amount, resource.DecimalSI)
 	return b
 }
 
 func (b *containerBuilder) WithNvidiaGPURequest(amount int64) *containerBuilder {
-	if b.Container.Resources.Requests == nil {
-		b.Container.Resources.Requests = make(v1.ResourceList)
+	if b.Resources.Requests == nil {
+		b.Resources.Requests = make(v1.ResourceList)
 	}
-	b.Container.Resources.Requests[constant.ResourceNvidiaGPU] = *resource.NewQuantity(amount, resource.DecimalSI)
+	b.Resources.Requests[constant.ResourceNvidiaGPU] = *resource.NewQuantity(amount, resource.DecimalSI)
 	return b
 }
 
 func (b *containerBuilder) WithNvidiaMigRequest(migDevice string, amount int64) *containerBuilder {
-	if b.Container.Resources.Requests == nil {
-		b.Container.Resources.Requests = make(v1.ResourceList)
+	if b.Resources.Requests == nil {
+		b.Resources.Requests = make(v1.ResourceList)
 	}
-	b.Container.Resources.Requests[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
+	b.Resources.Requests[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
 	return b
 }
 
 func (b *containerBuilder) WithNvidiaMigLimit(migDevice string, amount int64) *containerBuilder {
-	if b.Container.Resources.Limits == nil {
-		b.Container.Resources.Limits = make(v1.ResourceList)
+	if b.Resources.Limits == nil {
+		b.Resources.Limits = make(v1.ResourceList)
 	}
-	b.Container.Resources.Limits[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
+	b.Resources.Limits[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
 	return b
 }
 
 func (b *containerBuilder) WithResourceRequest(resourceName v1.ResourceName, quantity resource.Quantity) *containerBuilder {
-	if b.Container.Resources.Requests == nil {
-		b.Container.Resources.Requests = make(v1.ResourceList)
+	if b.Resources.Requests == nil {
+		b.Resources.Requests = make(v1.ResourceList)
 	}
-	b.Container.Resources.Requests[resourceName] = quantity
+	b.Resources.Requests[resourceName] = quantity
 	return b
 }
 

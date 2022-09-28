@@ -56,10 +56,13 @@ func (c *ClusterState) updateNode(node v1.Node, pods []v1.Pod) {
 	// Update nodes
 	nodeInfo := framework.NewNodeInfo()
 	nodeInfo.SetNode(&node)
-	c.nodes[node.Name] = *nodeInfo
 	for _, p := range pods {
-		c.updateUsage(p)
+		p := p
+		if p.Status.Phase == v1.PodRunning {
+			nodeInfo.AddPod(&p)
+		}
 	}
+	c.nodes[node.Name] = *nodeInfo
 
 	// Update Pod lookup table
 	for k, n := range c.bindings {
@@ -102,6 +105,7 @@ func (c *ClusterState) deletePod(namespacedName types.NamespacedName) error {
 			if err := node.RemovePod(pi.Pod); err != nil {
 				return err
 			}
+			c.nodes[nodeName] = node
 			return nil
 		}
 	}
@@ -159,4 +163,6 @@ func (c *ClusterState) updateUsageForKnownPod(cachedNodeName string, pod v1.Pod)
 			_ = nodeInfo.RemovePod(&pod)
 		}
 	}
+
+	c.nodes[pod.Spec.NodeName] = nodeInfo
 }
