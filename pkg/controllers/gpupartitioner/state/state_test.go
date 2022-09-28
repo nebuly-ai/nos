@@ -437,4 +437,161 @@ func TestClusterState_updateUsage(t *testing.T) {
 			assert.Equal(t, tt.expectedBindings, state.bindings)
 		})
 	}
+
+	t.Run("Update usage, unknown pod binding", func(t *testing.T) {
+		// current state
+		nodeOne := factory.BuildNode("node-1").Get()
+		nodeInfoOne := framework.NewNodeInfo()
+		nodeInfoOne.SetNode(&nodeOne)
+		clusterState := ClusterState{
+			nodes: map[string]framework.NodeInfo{
+				"node-1": *nodeInfoOne,
+			},
+			bindings: map[types.NamespacedName]string{
+				types.NamespacedName{Name: "pod-1", Namespace: "ns-1"}: "node-1",
+			},
+		}
+
+		// new pod
+		newPod := factory.BuildPod("ns-1", "pod-2").
+			WithContainer(factory.BuildContainer("test", "test").WithCPUMilliRequest(10).Get()).
+			WithNodeName("node-1").
+			WithPhase(v1.PodRunning).
+			Get()
+
+		// expected
+		expectedNodeInfo := framework.NewNodeInfo()
+		expectedNodeInfo.SetNode(&nodeOne)
+		expectedNodeInfo.AddPod(&newPod)
+		expectedNodes := map[string]framework.NodeInfo{
+			"node-1": *expectedNodeInfo,
+		}
+		expectedBindings := map[types.NamespacedName]string{
+			types.NamespacedName{Name: "pod-1", Namespace: "ns-1"}: "node-1",
+			types.NamespacedName{Name: "pod-2", Namespace: "ns-1"}: "node-1",
+		}
+
+		// Update and check
+		clusterState.updateUsage(newPod)
+		assert.Equal(t, expectedBindings, clusterState.bindings)
+		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
+		for k, n := range expectedNodes {
+			actualNode, ok := clusterState.nodes[k]
+			assert.True(t, ok)
+			assert.Equal(t, n.Node(), actualNode.Node())
+			assert.Equal(t, n.Allocatable, actualNode.Allocatable)
+			assert.Equal(t, n.Pods, actualNode.Pods)
+			assert.Equal(t, n.Requested, actualNode.Requested)
+		}
+	})
+
+	t.Run("update usage, known pod binding, pod changed node", func(t *testing.T) {
+		// current state
+		nodeOne := factory.BuildNode("node-1").Get()
+		nodeTwo := factory.BuildNode("node-2").Get()
+		nodeInfoOne := framework.NewNodeInfo()
+		nodeInfoOne.SetNode(&nodeOne)
+		nodeInfoTwo := framework.NewNodeInfo()
+		nodeInfoTwo.SetNode(&nodeTwo)
+		clusterState := ClusterState{
+			nodes: map[string]framework.NodeInfo{
+				"node-1": *nodeInfoOne,
+				"node-2": *nodeInfoTwo,
+			},
+			bindings: map[types.NamespacedName]string{
+				types.NamespacedName{Name: "pod-1", Namespace: "ns-1"}: "node-1",
+				types.NamespacedName{Name: "pod-2", Namespace: "ns-1"}: "node-1",
+			},
+		}
+
+		// updated pod
+		updatedPod := factory.BuildPod("ns-1", "pod-1").
+			WithContainer(factory.BuildContainer("test", "test").WithCPUMilliRequest(10).Get()).
+			WithUID(util.RandomStringLowercase(10)).
+			WithNodeName("node-2"). // node name is different from the one registered in state bindings
+			WithPhase(v1.PodRunning).
+			Get()
+
+		// expected
+		expectedNodeInfoOne := framework.NewNodeInfo()
+		expectedNodeInfoOne.SetNode(&nodeOne)
+		expectedNodeInfoTwo := framework.NewNodeInfo(&updatedPod)
+		expectedNodeInfoTwo.SetNode(&nodeTwo)
+		expectedNodes := map[string]framework.NodeInfo{
+			"node-1": *expectedNodeInfoOne,
+			"node-2": *expectedNodeInfoTwo,
+		}
+		expectedBindings := map[types.NamespacedName]string{
+			types.NamespacedName{Name: "pod-1", Namespace: "ns-1"}: "node-2",
+			types.NamespacedName{Name: "pod-2", Namespace: "ns-1"}: "node-1",
+		}
+
+		// Update and check
+		clusterState.updateUsage(updatedPod)
+		assert.Equal(t, expectedBindings, clusterState.bindings)
+		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
+		for k, n := range expectedNodes {
+			actualNode, ok := clusterState.nodes[k]
+			assert.True(t, ok)
+			assert.Equal(t, n.Node(), actualNode.Node())
+			assert.Equal(t, n.Allocatable, actualNode.Allocatable)
+			assert.Equal(t, n.Pods, actualNode.Pods)
+			assert.Equal(t, n.Requested, actualNode.Requested)
+		}
+	})
+
+	t.Run("update usage, known pod binding, pod on same node but status changed", func(t *testing.T) {
+		// current state
+		nodeOne := factory.BuildNode("node-1").Get()
+		nodeTwo := factory.BuildNode("node-2").Get()
+		nodeInfoOne := framework.NewNodeInfo()
+		nodeInfoOne.SetNode(&nodeOne)
+		nodeInfoTwo := framework.NewNodeInfo()
+		nodeInfoTwo.SetNode(&nodeTwo)
+		clusterState := ClusterState{
+			nodes: map[string]framework.NodeInfo{
+				"node-1": *nodeInfoOne,
+				"node-2": *nodeInfoTwo,
+			},
+			bindings: map[types.NamespacedName]string{
+				types.NamespacedName{Name: "pod-1", Namespace: "ns-1"}: "node-1",
+				types.NamespacedName{Name: "pod-2", Namespace: "ns-1"}: "node-1",
+			},
+		}
+
+		// updated pod
+		updatedPod := factory.BuildPod("ns-1", "pod-1").
+			WithContainer(factory.BuildContainer("test", "test").WithCPUMilliRequest(10).Get()).
+			WithUID(util.RandomStringLowercase(10)).
+			WithNodeName("node-1").
+			WithPhase(v1.PodSucceeded).
+			Get()
+
+		// expected
+		expectedNodeInfoOne := framework.NewNodeInfo()
+		expectedNodeInfoOne.SetNode(&nodeOne)
+		expectedNodeInfoTwo := framework.NewNodeInfo()
+		expectedNodeInfoTwo.SetNode(&nodeTwo)
+		expectedNodes := map[string]framework.NodeInfo{
+			"node-1": *expectedNodeInfoOne,
+			"node-2": *expectedNodeInfoTwo,
+		}
+		expectedBindings := map[types.NamespacedName]string{
+			types.NamespacedName{Name: "pod-1", Namespace: "ns-1"}: "node-1",
+			types.NamespacedName{Name: "pod-2", Namespace: "ns-1"}: "node-1",
+		}
+
+		// Update and check
+		clusterState.updateUsage(updatedPod)
+		assert.Equal(t, expectedBindings, clusterState.bindings)
+		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
+		for k, n := range expectedNodes {
+			actualNode, ok := clusterState.nodes[k]
+			assert.True(t, ok)
+			assert.Equal(t, n.Node(), actualNode.Node())
+			assert.Equal(t, n.Allocatable, actualNode.Allocatable)
+			assert.Equal(t, n.Pods, actualNode.Pods)
+			assert.Equal(t, n.Requested, actualNode.Requested)
+		}
+	})
 }

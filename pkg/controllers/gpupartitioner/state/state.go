@@ -136,6 +136,7 @@ func (c *ClusterState) updateUsage(pod v1.Pod) {
 	} else {
 		if pod.Status.Phase == v1.PodRunning {
 			nodeInfo.AddPod(&pod)
+			c.nodes[pod.Spec.NodeName] = nodeInfo
 		}
 	}
 
