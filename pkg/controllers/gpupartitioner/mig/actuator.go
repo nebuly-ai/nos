@@ -2,7 +2,7 @@ package mig
 
 import (
 	"context"
-	v1 "k8s.io/api/core/v1"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
 )
 
 type Actuator struct {
@@ -12,7 +12,7 @@ func NewActuator() *Actuator {
 	return nil
 }
 
-func (a Actuator) ApplyPartitioning(ctx context.Context, plan map[string]v1.ResourceList) error {
+func (a Actuator) ApplyPartitioning(ctx context.Context, plan map[string]core.PartitioningPlan) error {
 	//TODO implement me
 	panic("implement me")
 }

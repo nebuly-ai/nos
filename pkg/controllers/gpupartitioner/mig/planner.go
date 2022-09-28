@@ -3,6 +3,7 @@ package mig
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
@@ -15,11 +16,10 @@ import (
 )
 
 type Planner struct {
-	snapshot           state.ClusterSnapshot
 	schedulerFramework framework.Framework
 }
 
-func NewPlanner(kubeClient kubernetes.Interface, clusterSnapshot state.ClusterSnapshot) (*Planner, error) {
+func NewPlanner(kubeClient kubernetes.Interface) (*Planner, error) {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
 	config, err := scheduler_config.Default()
 	if err != nil {
@@ -38,38 +38,38 @@ func NewPlanner(kubeClient kubernetes.Interface, clusterSnapshot state.ClusterSn
 		return nil, fmt.Errorf("couldn't create scheduler framework; %v", err)
 	}
 
-	return &Planner{schedulerFramework: f, snapshot: clusterSnapshot}, nil
+	return &Planner{schedulerFramework: f}, nil
 }
 
-func (p Planner) GetNodesPartitioningPlan(ctx context.Context, pendingCandidates []v1.Pod) (map[string]v1.ResourceList, error) {
-	plan := make(map[string]v1.ResourceList)
-	for _, pod := range pendingCandidates {
-		podLackingMIGs := p.getLackingMIGResources(pod)
+func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (map[string]core.PartitioningPlan, error) {
+	plan := make(map[string]core.PartitioningPlan)
+	for _, pod := range candidates {
+		podLackingMIGs := p.getLackingMIGResources(snapshot, pod)
 		if len(podLackingMIGs) == 0 {
 			continue
 		}
 		nodesWithPartitionedResources := p.getCandidateNodesForPartitioning(podLackingMIGs)
 		for n, scalarResources := range nodesWithPartitionedResources {
-			p.snapshot.Fork()
-			_ = p.snapshot.UpdateAllocatableScalarResources(n, scalarResources)
-			nodeFits, err := p.nodeFits(ctx, n, pod)
+			snapshot.Fork()
+			_ = snapshot.UpdateAllocatableScalarResources(n, scalarResources)
+			podFits, err := p.podFitsNode(ctx, snapshot, n, pod)
 			if err != nil {
 				return nil, err
 			}
-			if !nodeFits {
-				p.snapshot.Revert()
+			if !podFits {
+				snapshot.Revert()
 				continue
 			}
-			_ = p.snapshot.AddPod(n, pod)
-			p.snapshot.Commit()
+			_ = snapshot.AddPod(n, pod)
+			snapshot.Commit()
 		}
 	}
 	return plan, nil
 }
 
-func (p Planner) getLackingMIGResources(pod v1.Pod) v1.ResourceList {
+func (p Planner) getLackingMIGResources(snapshot state.ClusterSnapshot, pod v1.Pod) v1.ResourceList {
 	result := make(v1.ResourceList)
-	for r, q := range p.snapshot.GetLackingScalarResources(pod) {
+	for r, q := range snapshot.GetLackingScalarResources(pod) {
 		if resource.IsNvidiaMigDevice(r) {
 			result[r] = q
 		}
@@ -87,9 +87,9 @@ func (p Planner) getCandidateNodesForPartitioning(requiredMigResources v1.Resour
 	return nil
 }
 
-func (p Planner) nodeFits(ctx context.Context, nodeName string, pod v1.Pod) (bool, error) {
+func (p Planner) podFitsNode(ctx context.Context, snapshot state.ClusterSnapshot, nodeName string, pod v1.Pod) (bool, error) {
 	cycleState := framework.NewCycleState()
-	node, found := p.snapshot.GetNode(nodeName)
+	node, found := snapshot.GetNode(nodeName)
 	if !found {
 		return false, nil
 	}

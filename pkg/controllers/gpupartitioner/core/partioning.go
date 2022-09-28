@@ -2,17 +2,16 @@ package core
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	v1 "k8s.io/api/core/v1"
 )
 
+type PartitioningPlan v1.ResourceList
+
 type Planner interface {
-	GetNodesPartitioningPlan(ctx context.Context, pendingPods []v1.Pod) (map[string]v1.ResourceList, error)
+	GetNodesPartitioningPlan(ctx context.Context, snapshot state.ClusterSnapshot, pendingPods []v1.Pod) (map[string]PartitioningPlan, error)
 }
 
 type Actuator interface {
-	ApplyPartitioning(ctx context.Context, plan map[string]v1.ResourceList) error
-}
-
-type Partitioner interface {
-	RunPartitioning(ctx context.Context, pendingCandidates []v1.Pod) error
+	ApplyPartitioning(ctx context.Context, plan map[string]PartitioningPlan) error
 }

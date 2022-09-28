@@ -4,13 +4,16 @@ import (
 	"flag"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -77,10 +80,19 @@ func main() {
 	}
 
 	// Setup MIG partitioner controller
-	migController := mig.NewController(
+	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
+	migPlanner, err := mig.NewPlanner(k8sClient)
+	if err != nil {
+		setupLog.Error(err, "unable to create MIG planner")
+		os.Exit(1)
+	}
+	migActuator := mig.NewActuator()
+	migController := core.NewController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,
+		migPlanner,
+		migActuator,
 	)
 	if err := migController.SetupWithManager(mgr, constant.MIGPartitionerControllerName); err != nil {
 		setupLog.Error(

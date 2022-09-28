@@ -12,19 +12,17 @@ import (
 
 func TestClusterState_GetNode(t *testing.T) {
 	testCases := []struct {
-		name         string
-		clusterState ClusterState
-		nodeName     string
+		name     string
+		nodes    map[string]framework.NodeInfo
+		nodeName string
 
 		expectedNode  framework.NodeInfo
 		expectedFound bool
 	}{
 		{
 			name: "Node does not exist",
-			clusterState: ClusterState{
-				nodes: map[string]framework.NodeInfo{
-					"node-1": {},
-				},
+			nodes: map[string]framework.NodeInfo{
+				"node-1": {},
 			},
 			nodeName: "node-2",
 
@@ -33,14 +31,12 @@ func TestClusterState_GetNode(t *testing.T) {
 		},
 		{
 			name: "Node exists",
-			clusterState: ClusterState{
-				nodes: map[string]framework.NodeInfo{
-					"node-1": {
-						Generation: 1,
-					},
-					"node-2": {
-						Generation: 2,
-					},
+			nodes: map[string]framework.NodeInfo{
+				"node-1": {
+					Generation: 1,
+				},
+				"node-2": {
+					Generation: 2,
 				},
 			},
 			nodeName: "node-2",
@@ -54,7 +50,8 @@ func TestClusterState_GetNode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			node, found := tt.clusterState.GetNode(tt.nodeName)
+			clusterState := ClusterState{nodes: tt.nodes}
+			node, found := clusterState.GetNode(tt.nodeName)
 			assert.Equal(t, tt.expectedNode, node)
 			assert.Equal(t, tt.expectedFound, found)
 		})
