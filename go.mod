@@ -3,6 +3,7 @@ module github.com/nebuly-ai/nebulnetes
 go 1.18
 
 require (
+	github.com/NVIDIA/go-nvml v0.11.6-0
 	github.com/go-logr/logr v1.2.0
 	github.com/google/go-cmp v0.5.8
 	github.com/onsi/ginkgo/v2 v2.1.6
@@ -17,6 +18,7 @@ require (
 	k8s.io/component-helpers v0.24.4
 	k8s.io/klog/v2 v2.60.1
 	k8s.io/kube-scheduler v0.24.4
+	k8s.io/kubelet v0.0.0
 	k8s.io/kubernetes v1.24.4
 	sigs.k8s.io/controller-runtime v0.12.3
 )
@@ -59,6 +61,7 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
+	github.com/Microsoft/go-winio v0.4.17 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
@@ -126,8 +129,8 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect

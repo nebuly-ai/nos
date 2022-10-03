@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
@@ -85,11 +86,11 @@ func (p Planner) getLackingMIGResource(snapshot state.ClusterSnapshot, pod v1.Po
 	return "", false
 }
 
-func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMIGResource v1.ResourceName) []Node {
-	result := make([]Node, 0)
+func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMIGResource v1.ResourceName) []mig.Node {
+	result := make([]mig.Node, 0)
 
 	for _, n := range snapshot.GetNodes() {
-		migNode := NewNode(n)
+		migNode := mig.NewNode(n)
 		if err := migNode.UpdateGeometryFor(requiredMIGResource); err != nil {
 			result = append(result, migNode)
 		}

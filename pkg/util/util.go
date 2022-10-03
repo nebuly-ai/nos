@@ -5,7 +5,9 @@ import (
 	"golang.org/x/exp/constraints"
 	"k8s.io/apimachinery/pkg/types"
 	"math/rand"
+	"net/url"
 	"os"
+	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 )
@@ -104,4 +106,13 @@ func InSlice[K comparable](item K, slice []K) bool {
 		}
 	}
 	return false
+}
+
+// LocalEndpoint returns the full path to a unix socket at the given endpoint
+func LocalEndpoint(path, file string) (string, error) {
+	u := url.URL{
+		Scheme: "unix",
+		Path:   path,
+	}
+	return filepath.Join(u.String(), file+".sock"), nil
 }
