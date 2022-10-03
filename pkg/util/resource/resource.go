@@ -194,3 +194,15 @@ func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64,
 
 	return res, nil
 }
+
+func GetNvidiaGPUsCount(node v1.Node) int {
+	return 0
+}
+
+func GetNvidiaGPUsModel(node v1.Node) string {
+	return ""
+}
+
+func GetNvidiaGPUsMemoryMb(node v1.Node) int {
+	return 0
+}

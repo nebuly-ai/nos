@@ -6,7 +6,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-type PartitioningPlan v1.ResourceList
+type PartitioningPlan map[string]v1.ResourceList
 
 type Planner interface {
 	GetNodesPartitioningPlan(ctx context.Context, snapshot state.ClusterSnapshot, pendingPods []v1.Pod) (map[string]PartitioningPlan, error)

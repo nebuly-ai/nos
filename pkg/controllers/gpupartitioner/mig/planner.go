@@ -44,15 +44,16 @@ func NewPlanner(kubeClient kubernetes.Interface) (*Planner, error) {
 func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (map[string]core.PartitioningPlan, error) {
 	plan := make(map[string]core.PartitioningPlan)
 	for _, pod := range candidates {
-		podLackingMIGs := p.getLackingMIGResources(snapshot, pod)
-		if len(podLackingMIGs) == 0 {
-			continue
+		lackingMIG, isLacking := p.getLackingMIGResource(snapshot, pod)
+		if !isLacking {
+			return plan, nil
 		}
-		nodesWithPartitionedResources := p.getCandidateNodesForPartitioning(podLackingMIGs)
-		for n, scalarResources := range nodesWithPartitionedResources {
+		candidateNodes := p.getCandidateNodes(snapshot, lackingMIG)
+		for _, n := range candidateNodes {
 			snapshot.Fork()
-			_ = snapshot.UpdateAllocatableScalarResources(n, scalarResources)
-			podFits, err := p.podFitsNode(ctx, snapshot, n, pod)
+			_ = snapshot.UpdateAllocatableScalarResources(n.Name, n.GetAllocatableScalarResources())
+			nodeInfo, _ := snapshot.GetNode(n.Name)
+			podFits, err := p.podFitsNode(ctx, nodeInfo, pod)
 			if err != nil {
 				return nil, err
 			}
@@ -60,39 +61,45 @@ func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.Cl
 				snapshot.Revert()
 				continue
 			}
-			_ = snapshot.AddPod(n, pod)
+			_ = snapshot.AddPod(n.Name, pod)
 			snapshot.Commit()
+			plan[n.Name] = n.GetGPUsGeometry()
 		}
 	}
 	return plan, nil
 }
 
-func (p Planner) getLackingMIGResources(snapshot state.ClusterSnapshot, pod v1.Pod) v1.ResourceList {
-	result := make(v1.ResourceList)
-	for r, q := range snapshot.GetLackingScalarResources(pod) {
+// getLackingMIGResource returns, if any, a MIG resource requested by the Pod but currently not
+// available in the ClusterSnapshot.
+//
+// As described in "Supporting MIG GPUs in Kubernetes" document, it is assumed that
+// Pods request only one MIG device per time and with quantity 1, according to the
+// idea that users should ask for a larger, single instance as opposed to multiple
+// smaller instances.
+func (p Planner) getLackingMIGResource(snapshot state.ClusterSnapshot, pod v1.Pod) (v1.ResourceName, bool) {
+	for r := range snapshot.GetLackingScalarResources(pod) {
 		if resource.IsNvidiaMigDevice(r) {
-			result[r] = q
+			return r, true
 		}
 	}
+	return "", false
+}
+
+func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMIGResource v1.ResourceName) []Node {
+	result := make([]Node, 0)
+
+	for _, n := range snapshot.GetNodes() {
+		migNode := NewNode(n)
+		if err := migNode.UpdateGeometryFor(requiredMIGResource); err != nil {
+			result = append(result, migNode)
+		}
+	}
+
 	return result
 }
 
-func (p Planner) getCandidateNodesForPartitioning(requiredMigResources v1.ResourceList) map[string]v1.ResourceList {
-
-	//for _, n := range p.snapshot.GetNodes() {
-	//	for _, r := range n.Allocatable.ScalarResources {
-	//	}
-	//}
-
-	return nil
-}
-
-func (p Planner) podFitsNode(ctx context.Context, snapshot state.ClusterSnapshot, nodeName string, pod v1.Pod) (bool, error) {
+func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) (bool, error) {
 	cycleState := framework.NewCycleState()
-	node, found := snapshot.GetNode(nodeName)
-	if !found {
-		return false, nil
-	}
 	_, preFilterStatus := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod)
 	if !preFilterStatus.IsSuccess() {
 		return false, fmt.Errorf("error running pre filter plugins for pod %s; %s", pod.Name, preFilterStatus.Message())
