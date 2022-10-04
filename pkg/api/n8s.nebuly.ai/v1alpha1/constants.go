@@ -5,11 +5,18 @@ import v1 "k8s.io/api/core/v1"
 // Resources
 const (
 	// ResourceGPUMemory is the name of the custom resource used by n8s for specifying GPU memory GigaBytes
-	ResourceGPUMemory v1.ResourceName = "nebuly.ai/gpu-memory"
+	ResourceGPUMemory v1.ResourceName = "n8s.nebuly.ai/gpu-memory"
 )
 
 // Labels
 const (
 	// LabelCapacityInfo specifies the status of a Pod in regard to the ElasticQuota it belongs to
 	LabelCapacityInfo = "n8s.nebuly.ai/capacity"
+)
+
+// Annotations
+const (
+	AnnotationGPUStatusPrefix     = "n8s.nebuly.ai/status/gpu"
+	AnnotationUsedMIGStatusFormat = "n8s.nebuly.ai/status/gpu/%d/%s/used"
+	AnnotationFreeMIGStatusFormat = "n8s.nebuly.ai/status/gpu/%d/%s/free"
 )

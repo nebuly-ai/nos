@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -114,7 +115,7 @@ func (r *MIGReporter) ReportMIGStatus(ctx context.Context) error {
 			newNode.Annotations = make(map[string]string)
 		}
 		for k := range newNode.Annotations {
-			if strings.HasPrefix(k, "n8s.nebuly.ai/status/gpu") {
+			if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
 				delete(newNode.Annotations, k)
 			}
 		}
@@ -172,13 +173,13 @@ func getStatusAnnotations(used []mig.Device, free []mig.Device) map[string]strin
 	// Used annotations
 	for _, u := range used {
 		quantity, _ := usedMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf("n8s.nebuly.ai/status/gpu/%d/%s/used", u.GpuIndex, u.ResourceName)
+		key := fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, u.GpuIndex, u.ResourceName)
 		res[key] = fmt.Sprintf("%d", quantity)
 	}
 	// Free annotations
 	for _, u := range free {
 		quantity, _ := freeMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf("n8s.nebuly.ai/status/gpu/%d/%s/free", u.GpuIndex, u.ResourceName)
+		key := fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, u.GpuIndex, u.ResourceName)
 		res[key] = fmt.Sprintf("%d", quantity)
 	}
 
