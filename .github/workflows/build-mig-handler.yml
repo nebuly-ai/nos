@@ -1,0 +1,22 @@
+  on:
+    workflow_dispatch:
+      inputs:
+        docker-image:
+          description: 'The name of the docker image that will be build'
+          required: true
+          default: 'mig-handler:latest'
+          type: string
+
+  jobs:
+    docker:
+      runs-on: ubuntu-22.04
+      steps:
+        - name: Login to DockerHub
+          uses: docker/login-action@v2
+          with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+        - name: Build mig-handler
+          run: make docker-build-mig-partitioner MIG_PARTITIONER_IMG=${{ inputs.docker-image }}
+        - name: Push mig-handler
+          run: make docker-push-mig-partitioner MIG_PARTITIONER_IMG=${{ inputs.docker-image }}

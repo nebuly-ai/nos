@@ -2,7 +2,8 @@
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= controller:latest
 SCHEDULER_IMG ?= scheduler:latest
-GPUPARTITIONER_IMG ?= gpupartitioner:latest
+GPU_PARTITIONER_IMG ?= gpu-partitioner:latest
+MIG_HANDLER_IMG ?= mig-handler:latest
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -80,9 +81,13 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-.PHONY: docker-build-gpupartitioner
-docker-build-gpupartitioner: ## Build docker image with the manager.
-	docker build -t ${GPUPARTITIONER_IMG} -f build/gpupartitioner/Dockerfile .
+.PHONY: docker-build-gpu-partitioner
+docker-build-gpu-partitioner: ## Build docker image with the manager.
+	docker build -t ${GPU_PARTITIONER_IMG} -f build/gpupartitioner/Dockerfile .
+
+.PHONY: docker-build-mig-handler
+docker-build-mig-handler: ## Build docker image with the manager.
+	docker build -t ${MIG_HANDLER_IMG} -f build/mighandler/Dockerfile .
 
 .PHONY: docker-build-controller
 docker-build-controller: ## Build docker image with the manager.
@@ -96,12 +101,16 @@ docker-build-scheduler: ## Build docker image with the scheduler.
 docker-push-controller: ## Build docker image with the manager.
 	docker push ${CONTROLLER_IMG}
 
+.PHONY: docker-push-mig-handler
+docker-push-mig-handler: ## Build docker image with the manager.
+	docker push ${MIG_HANDLER_IMG}
+
 .PHONY: docker-push-scheduler
 docker-push-scheduler: ## Build docker image with the scheduler.
 	docker push ${SCHEDULER_IMG}
 
 .PHONY: docker-build
-docker-build: test docker-build-controller docker-build-scheduler docker-build-gpupartitioner
+docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner
 
 .PHONY: docker-push
 docker-push: docker-push-controller docker-build-scheduler
