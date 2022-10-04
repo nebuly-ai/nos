@@ -2,21 +2,17 @@ package mighandler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	nodeutil "github.com/nebuly-ai/nebulnetes/pkg/util/node"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	informersv1 "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
-	clientretry "k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 	"strings"
@@ -53,7 +49,7 @@ func NewMIGReporter(node string, k8sClient kubernetes.Interface, gpuClient *mig.
 }
 
 func (r *MIGReporter) nodeAdded(_ interface{}) {
-	if err := r.ReportMIGStatus(context.Background()); err != nil {
+	if err := r.ReportMIGResourcesStatus(context.Background()); err != nil {
 		klog.Error("unable to report MIG status", err)
 	}
 }
@@ -62,13 +58,13 @@ func (r *MIGReporter) nodeUpdated(old, newObj interface{}) {
 	oldNode := old.(*v1.Node)
 	newNode := newObj.(*v1.Node)
 	if !equality.Semantic.DeepEqual(oldNode.Status.Allocatable, newNode.Status.Allocatable) {
-		if err := r.ReportMIGStatus(context.Background()); err != nil {
+		if err := r.ReportMIGResourcesStatus(context.Background()); err != nil {
 			klog.Error("unable to report MIG status", err)
 		}
 	}
 }
 
-func (r *MIGReporter) ReportMIGStatus(ctx context.Context) error {
+func (r *MIGReporter) ReportMIGResourcesStatus(ctx context.Context) error {
 	logger := klog.FromContext(ctx)
 
 	// Compute new status annotations
@@ -83,64 +79,31 @@ func (r *MIGReporter) ReportMIGStatus(ctx context.Context) error {
 	statusAnnotations := getStatusAnnotations(usedMIGs, freeMIGs)
 
 	// Update node
-	firstTry := false
-	var backoff = wait.Backoff{
-		Steps:    5,
-		Duration: 100 * time.Millisecond,
-		Jitter:   1.0,
-	}
-	err = clientretry.RetryOnConflict(backoff, func() error {
-		var err error
-		var node *v1.Node
-		// First we try getting node from the API server cache, as it's cheaper. If it fails
-		// we get it from etcd to be sure to have fresh data.
-		// Fetch watched node
-		if firstTry {
-			node, err = r.nodeInformer.Lister().Get(r.node)
-			firstTry = false
-		} else {
-			node, err = r.k8sClient.CoreV1().Nodes().Get(ctx, r.node, metav1.GetOptions{})
-		}
-
-		if err != nil {
-			logger.Error(err, "unable to fetch node instance", "node", r.node)
-		}
-		if err != nil {
-			return err
-		}
-
-		// Make a copy of the node and update the status annotations
-		newNode := node.DeepCopy()
-		if newNode.Annotations == nil {
-			newNode.Annotations = make(map[string]string)
-		}
-		for k := range newNode.Annotations {
+	updateFunc := func(annotations map[string]string) {
+		for k := range annotations {
 			if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
-				delete(newNode.Annotations, k)
+				delete(annotations, k)
 			}
 		}
 		for k, v := range statusAnnotations {
-			newNode.Annotations[k] = v
+			annotations[k] = v
 		}
-
-		// Patch node
-		oldData, err := json.Marshal(node)
-		if err != nil {
-			return fmt.Errorf("failed to marshal the existing node %#v: %v", node, err)
-		}
-		newData, err := json.Marshal(newNode)
-		if err != nil {
-			return fmt.Errorf("failed to marshal the new node %#v: %v", newNode, err)
-		}
-		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, &v1.Node{})
-		if err != nil {
-			return fmt.Errorf("failed to create a two-way merge patch: %v", err)
-		}
-		if _, err := r.k8sClient.CoreV1().Nodes().Patch(context.TODO(), node.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
-			return err
-		}
-		return nil
-	})
+	}
+	nodeProvider := nodeutil.Provider{
+		GetNode: func(ctx context.Context, nodeName string) (*v1.Node, error) {
+			return r.k8sClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		},
+		GetNodeCached: func(_ context.Context, nodeName string) (*v1.Node, error) {
+			return r.nodeInformer.Lister().Get(nodeName)
+		},
+	}
+	err = nodeutil.UpdateNodeAnnotations(
+		ctx,
+		r.k8sClient,
+		nodeProvider,
+		r.node,
+		updateFunc,
+	)
 
 	if err != nil {
 		logger.Error(err, "unable to update node status annotations", "node", r.node)
@@ -202,7 +165,7 @@ func (r *MIGReporter) Start(ctx context.Context) error {
 	go func() {
 		select {
 		case <-ticker.C:
-			if err := r.ReportMIGStatus(ctx); err != nil {
+			if err := r.ReportMIGResourcesStatus(ctx); err != nil {
 				logger.Error(err, "unable to report MIG status")
 			}
 		case <-ctx.Done():
