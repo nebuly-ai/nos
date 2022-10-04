@@ -86,20 +86,8 @@ func (c Client) GetFreeMIGDevices(ctx context.Context) ([]Device, error) {
 		logger.Error(err, "unable to retrieve used MIG devices")
 		return nil, err
 	}
-	usedLookup := make(map[string]Device)
-	for _, u := range used {
-		usedLookup[u.DeviceId] = u
-	}
 
-	// Compute (allocatable - used)
-	res := make([]Device, 0)
-	for _, a := range allocatable {
-		if _, used := usedLookup[a.DeviceId]; !used {
-			res = append(res, a)
-		}
-	}
-
-	return res, nil
+	return getFreeDevices(used, allocatable), nil
 }
 
 func (c Client) GetAllocatableMIGDevices(ctx context.Context) ([]Device, error) {
@@ -197,4 +185,20 @@ func fromListRespToGPUResourceWithDeviceId(listResp *pdrv1.ListPodResourcesRespo
 		}
 	}
 	return result, nil
+}
+
+func getFreeDevices(used []Device, allocatable []Device) []Device {
+	usedLookup := make(map[string]Device)
+	for _, u := range used {
+		usedLookup[u.DeviceId] = u
+	}
+
+	// Compute (allocatable - used)
+	res := make([]Device, 0)
+	for _, a := range allocatable {
+		if _, used := usedLookup[a.DeviceId]; !used {
+			res = append(res, a)
+		}
+	}
+	return res
 }
