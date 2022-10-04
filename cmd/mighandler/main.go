@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/tools/mighandler"
+	"github.com/nebuly-ai/nebulnetes/pkg/components/mighandler"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
@@ -41,6 +41,7 @@ func main() {
 	migReporter := mighandler.NewMIGReporter(
 		nodeName,
 		k8sClient,
+		nil,
 		sharedFactory,
 		podResourcesClient,
 		10*time.Second,
