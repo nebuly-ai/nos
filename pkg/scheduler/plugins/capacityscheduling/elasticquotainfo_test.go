@@ -17,6 +17,7 @@ limitations under the License.
 package capacityscheduling
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
@@ -46,7 +47,7 @@ func TestReserveResource(t *testing.T) {
 					Memory:   200,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 2,
-						constant.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUResourceMemory,
+						v1alpha1.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -63,7 +64,7 @@ func TestReserveResource(t *testing.T) {
 					Memory:   350,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 5,
-						constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory,
+						v1alpha1.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -102,7 +103,7 @@ func TestUnReserveResource(t *testing.T) {
 					Memory:   200,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 5,
-						constant.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory,
+						v1alpha1.ResourceGPUMemory: 5 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -119,7 +120,7 @@ func TestUnReserveResource(t *testing.T) {
 					Memory:   50,
 					ScalarResources: map[v1.ResourceName]int64{
 						constant.ResourceNvidiaGPU: 2,
-						constant.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUResourceMemory,
+						v1alpha1.ResourceGPUMemory: 2 * constant.DefaultNvidiaGPUResourceMemory,
 					},
 				},
 			},
@@ -268,7 +269,7 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU:                5,
-							constant.ResourceGPUMemory:                64,
+							v1alpha1.ResourceGPUMemory:                64,
 							v1.ResourceName("nebuly.ai/new-resource"): 3, // resource present only in eq-1
 						},
 					},
@@ -279,7 +280,7 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						AllowedPodNumber: 5,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU:                0,
-							constant.ResourceGPUMemory:                10,
+							v1alpha1.ResourceGPUMemory:                10,
 							v1.ResourceName("nebuly.ai/new-resource"): 1,
 						},
 					},
@@ -295,7 +296,7 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						AllowedPodNumber: 30,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 3,
-							constant.ResourceGPUMemory: 24,
+							v1alpha1.ResourceGPUMemory: 24,
 						},
 					},
 					Used: &framework.Resource{
@@ -305,7 +306,7 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						AllowedPodNumber: 5,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 0,
-							constant.ResourceGPUMemory: 10,
+							v1alpha1.ResourceGPUMemory: 10,
 						},
 					},
 					MaxEnforced: false,
@@ -337,7 +338,7 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 				ScalarResources: map[v1.ResourceName]int64{
 					v1.ResourceName("nebuly.ai/new-resource"): 2,  // tot. unused overquotas, since "new-resource" is defined only for eq-1
 					constant.ResourceNvidiaGPU:                5,  // math.Floor(5 / (5 + 3) * (Max(0, 5-0) + Max(0, 3-0)))
-					constant.ResourceGPUMemory:                49, // math.Floor(64 / (64 + 24) * (Max(0, 64-10) + Max(0, 24-10)))
+					v1alpha1.ResourceGPUMemory:                49, // math.Floor(64 / (64 + 24) * (Max(0, 64-10) + Max(0, 24-10)))
 				},
 			},
 			errorExpected: false,
@@ -385,7 +386,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						AllowedPodNumber: 30,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 3,
-							constant.ResourceGPUMemory: 24,
+							v1alpha1.ResourceGPUMemory: 24,
 						},
 					},
 				},
@@ -397,7 +398,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 				v1.ResourceMemory:           1,
 				v1.ResourcePods:             1,
 				v1.ResourceEphemeralStorage: 1,
-				constant.ResourceGPUMemory:  1,
+				v1alpha1.ResourceGPUMemory:  1,
 				constant.ResourceNvidiaGPU:  1,
 			},
 		},
@@ -414,7 +415,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						AllowedPodNumber: 30,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 3,
-							constant.ResourceGPUMemory: 24,
+							v1alpha1.ResourceGPUMemory: 24,
 						},
 					},
 				},
@@ -425,7 +426,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 				v1.ResourceMemory:           1,
 				v1.ResourcePods:             1,
 				v1.ResourceEphemeralStorage: 1,
-				constant.ResourceGPUMemory:  1,
+				v1alpha1.ResourceGPUMemory:  1,
 				constant.ResourceNvidiaGPU:  1,
 			},
 		},
@@ -442,7 +443,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						AllowedPodNumber: math.MaxInt64,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: math.MaxInt64,
-							constant.ResourceGPUMemory: math.MaxInt64,
+							v1alpha1.ResourceGPUMemory: math.MaxInt64,
 						},
 					},
 				},
@@ -453,7 +454,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 				v1.ResourceMemory:           1,
 				v1.ResourcePods:             1,
 				v1.ResourceEphemeralStorage: 1,
-				constant.ResourceGPUMemory:  1,
+				v1alpha1.ResourceGPUMemory:  1,
 				constant.ResourceNvidiaGPU:  1,
 			},
 		},
@@ -478,7 +479,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						MilliCPU:         10,
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceGPUMemory: 10,
+							v1alpha1.ResourceGPUMemory: 10,
 						},
 					},
 				},
@@ -505,7 +506,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU:                5,
-							constant.ResourceGPUMemory:                64,
+							v1alpha1.ResourceGPUMemory:                64,
 							v1.ResourceName("nebuly.ai/new-resource"): 3, // resource present only in eq-1
 						},
 					},
@@ -520,7 +521,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						AllowedPodNumber: 30,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 3,
-							constant.ResourceGPUMemory: 24,
+							v1alpha1.ResourceGPUMemory: 24,
 						},
 					},
 				},
@@ -542,7 +543,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 				v1.ResourcePods:                           0.25,
 				v1.ResourceEphemeralStorage:               0,
 				v1.ResourceName("nebuly.ai/new-resource"): 1,
-				constant.ResourceGPUMemory:                float64(64) / float64(64+24),
+				v1alpha1.ResourceGPUMemory:                float64(64) / float64(64+24),
 				constant.ResourceNvidiaGPU:                float64(5) / float64(5+3),
 			},
 		},
@@ -602,7 +603,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 5,
-							constant.ResourceGPUMemory: 5,
+							v1alpha1.ResourceGPUMemory: 5,
 						},
 					},
 					Max: nil,
@@ -613,7 +614,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 						AllowedPodNumber: 0,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 5,
-							constant.ResourceGPUMemory: 0,
+							v1alpha1.ResourceGPUMemory: 0,
 						},
 					},
 				},
@@ -625,7 +626,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 				AllowedPodNumber: 10,
 				ScalarResources: map[v1.ResourceName]int64{
 					constant.ResourceNvidiaGPU: 0,
-					constant.ResourceGPUMemory: 5,
+					v1alpha1.ResourceGPUMemory: 5,
 				},
 			},
 		},
@@ -641,7 +642,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 						AllowedPodNumber: 5,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 5,
-							constant.ResourceGPUMemory: 5,
+							v1alpha1.ResourceGPUMemory: 5,
 						},
 					},
 					Used: &framework.Resource{
@@ -651,7 +652,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 10,
-							constant.ResourceGPUMemory: 10,
+							v1alpha1.ResourceGPUMemory: 10,
 						},
 					},
 				},
@@ -664,7 +665,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 						AllowedPodNumber: 5,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 5,
-							constant.ResourceGPUMemory: 5,
+							v1alpha1.ResourceGPUMemory: 5,
 						},
 					},
 					Used: &framework.Resource{
@@ -674,7 +675,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 						AllowedPodNumber: 0,
 						ScalarResources: map[v1.ResourceName]int64{
 							constant.ResourceNvidiaGPU: 0,
-							constant.ResourceGPUMemory: 0,
+							v1alpha1.ResourceGPUMemory: 0,
 						},
 					},
 				},
@@ -707,7 +708,7 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 				AllowedPodNumber: 0 + 5 + 5,
 				ScalarResources: map[v1.ResourceName]int64{
 					constant.ResourceNvidiaGPU: 0 + 5 + 4,
-					constant.ResourceGPUMemory: 0 + 5 + 0,
+					v1alpha1.ResourceGPUMemory: 0 + 5 + 0,
 				},
 			},
 		},

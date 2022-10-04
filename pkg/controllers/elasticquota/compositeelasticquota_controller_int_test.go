@@ -129,7 +129,7 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 			)
 			expectedUsedResourceList := v1.ResourceList{
 				v1.ResourceCPU:             expectedCPUQuantity,
-				constant.ResourceGPUMemory: expectedGPUMemoryQuantity,
+				v1alpha1.ResourceGPUMemory: expectedGPUMemoryQuantity,
 			}
 			previousInstance := instance
 			Eventually(func() v1alpha1.CompositeElasticQuota {
@@ -147,12 +147,12 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 			Eventually(func(g Gomega) {
 				lookupKey := types.NamespacedName{Name: podOne.Name, Namespace: podOne.Namespace}
 				g.Expect(k8sClient.Get(ctx, lookupKey, &podInstance)).To(Succeed())
-				g.Expect(podInstance.Labels).To(HaveKeyWithValue(constant.LabelCapacityInfo, string(constant.CapacityInfoInQuota)))
+				g.Expect(podInstance.Labels).To(HaveKeyWithValue(v1alpha1.LabelCapacityInfo, string(constant.CapacityInfoInQuota)))
 			}, timeout, interval).Should(Succeed())
 			Eventually(func(g Gomega) {
 				lookupKey := types.NamespacedName{Name: podTwo.Name, Namespace: podTwo.Namespace}
 				g.Expect(k8sClient.Get(ctx, lookupKey, &podInstance)).To(Succeed())
-				g.Expect(podInstance.Labels).To(HaveKeyWithValue(constant.LabelCapacityInfo, string(constant.CapacityInfoInQuota)))
+				g.Expect(podInstance.Labels).To(HaveKeyWithValue(v1alpha1.LabelCapacityInfo, string(constant.CapacityInfoInQuota)))
 			}, timeout, interval).Should(Succeed())
 		})
 	})
@@ -210,7 +210,7 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 			Eventually(func(g Gomega) {
 				lookupKey := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
 				g.Expect(k8sClient.Get(ctx, lookupKey, &podInstance)).To(Succeed())
-				g.Expect(podInstance.Labels).To(HaveKeyWithValue(constant.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)))
+				g.Expect(podInstance.Labels).To(HaveKeyWithValue(v1alpha1.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)))
 			}, timeout, interval).Should(Succeed())
 		})
 	})
@@ -269,7 +269,7 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 			Eventually(func(g Gomega) {
 				lookupKey := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
 				g.Expect(k8sClient.Get(ctx, lookupKey, &podInstance)).To(Succeed())
-				g.Expect(podInstance.Labels).To(HaveKeyWithValue(constant.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)))
+				g.Expect(podInstance.Labels).To(HaveKeyWithValue(v1alpha1.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)))
 			}, timeout, interval).Should(Succeed())
 		})
 	})

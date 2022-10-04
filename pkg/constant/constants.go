@@ -18,12 +18,6 @@ const (
 	MIGPartitionerControllerName        = "mig-partitioner-controller"
 )
 
-// Labels
-const (
-	// LabelCapacityInfo specifies the status of a Pod in regard to the ElasticQuota it belongs to
-	LabelCapacityInfo = "n8s.nebuly.ai/capacity"
-)
-
 // Error messages
 const (
 	// InternalErrorMsg todo
@@ -39,8 +33,6 @@ const (
 
 // Resource names
 const (
-	// ResourceGPUMemory is the name of the custom resource used by n8s for specifying GPU memory GigaBytes
-	ResourceGPUMemory v1.ResourceName = "nebuly.ai/gpu-memory"
 	// ResourceNvidiaGPU is the name of the GPU resource exposed by the NVIDIA device plugin
 	ResourceNvidiaGPU v1.ResourceName = "nvidia.com/gpu"
 )

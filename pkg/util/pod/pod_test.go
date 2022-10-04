@@ -1,6 +1,7 @@
 package pod
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +18,14 @@ func TestIsPodOverQuota(t *testing.T) {
 		{
 			name: "Pod with label with value overquota",
 			pod: factory.BuildPod("ns-1", "pd-1").
-				WithLabel(constant.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)).
+				WithLabel(v1alpha1.LabelCapacityInfo, string(constant.CapacityInfoOverQuota)).
 				Get(),
 			expected: true,
 		},
 		{
 			name: "Pod with label with value inquota",
 			pod: factory.BuildPod("ns-1", "pd-1").
-				WithLabel(constant.LabelCapacityInfo, string(constant.CapacityInfoInQuota)).
+				WithLabel(v1alpha1.LabelCapacityInfo, string(constant.CapacityInfoInQuota)).
 				Get(),
 			expected: false,
 		},

@@ -8,6 +8,10 @@ import (
 	"testing"
 )
 
+const (
+	customResourceName v1.ResourceName = "nebuly.ai/custom-resource"
+)
+
 func TestSum(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -29,7 +33,7 @@ func TestSum(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					constant.ResourceNvidiaGPU: 1,
 				},
 			},
 			r2: framework.Resource{},
@@ -39,7 +43,7 @@ func TestSum(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					constant.ResourceNvidiaGPU: 1,
 				},
 			},
 		},
@@ -51,7 +55,7 @@ func TestSum(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					customResourceName: 1,
 				},
 			},
 			r2: framework.Resource{
@@ -60,7 +64,7 @@ func TestSum(t *testing.T) {
 				EphemeralStorage: 15,
 				AllowedPodNumber: 1,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					customResourceName:         1,
 					constant.ResourceNvidiaGPU: 3,
 				},
 			},
@@ -70,7 +74,7 @@ func TestSum(t *testing.T) {
 				EphemeralStorage: 25,
 				AllowedPodNumber: 6,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 2,
+					customResourceName:         2,
 					constant.ResourceNvidiaGPU: 3,
 				},
 			},
@@ -107,7 +111,7 @@ func TestSubtract(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					customResourceName: 1,
 				},
 			},
 			expected: framework.Resource{
@@ -116,7 +120,7 @@ func TestSubtract(t *testing.T) {
 				EphemeralStorage: -10,
 				AllowedPodNumber: -5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: -1,
+					customResourceName: -1,
 				},
 			},
 		},
@@ -128,7 +132,7 @@ func TestSubtract(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 6,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 3,
+					customResourceName: 3,
 				},
 			},
 			r2: framework.Resource{
@@ -137,7 +141,7 @@ func TestSubtract(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					customResourceName:         1,
 					constant.ResourceNvidiaGPU: 5,
 				},
 			},
@@ -147,7 +151,7 @@ func TestSubtract(t *testing.T) {
 				EphemeralStorage: 0,
 				AllowedPodNumber: 1,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 2,
+					customResourceName:         2,
 					constant.ResourceNvidiaGPU: -5,
 				},
 			},
@@ -184,7 +188,7 @@ func TestSubtractNonNegative(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					customResourceName: 1,
 				},
 			},
 			expected: framework.Resource{
@@ -193,7 +197,7 @@ func TestSubtractNonNegative(t *testing.T) {
 				EphemeralStorage: 0,
 				AllowedPodNumber: 0,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 0,
+					customResourceName: 0,
 				},
 			},
 		},
@@ -205,7 +209,7 @@ func TestSubtractNonNegative(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 6,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 3,
+					customResourceName: 3,
 				},
 			},
 			r2: framework.Resource{
@@ -214,7 +218,7 @@ func TestSubtractNonNegative(t *testing.T) {
 				EphemeralStorage: 10,
 				AllowedPodNumber: 5,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 1,
+					customResourceName:         1,
 					constant.ResourceNvidiaGPU: 5,
 				},
 			},
@@ -224,7 +228,7 @@ func TestSubtractNonNegative(t *testing.T) {
 				EphemeralStorage: 0,
 				AllowedPodNumber: 1,
 				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceGPUMemory: 2,
+					customResourceName:         2,
 					constant.ResourceNvidiaGPU: 0,
 				},
 			},

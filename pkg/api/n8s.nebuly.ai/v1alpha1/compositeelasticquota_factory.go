@@ -1,7 +1,6 @@
 package v1alpha1
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,7 +29,7 @@ func (e *compositeEqBuilder) WithMinGPUMemory(gpuMemory int64) *compositeEqBuild
 	if e.CompositeElasticQuota.Spec.Min == nil {
 		e.CompositeElasticQuota.Spec.Min = make(v1.ResourceList)
 	}
-	e.CompositeElasticQuota.Spec.Min[constant.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	e.CompositeElasticQuota.Spec.Min[ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 	return e
 }
 
@@ -38,7 +37,7 @@ func (e *compositeEqBuilder) WithMaxGPUMemory(gpuMemory int64) *compositeEqBuild
 	if e.CompositeElasticQuota.Spec.Max == nil {
 		e.CompositeElasticQuota.Spec.Max = make(v1.ResourceList)
 	}
-	e.CompositeElasticQuota.Spec.Max[constant.ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
+	e.CompositeElasticQuota.Spec.Max[ResourceGPUMemory] = *resource.NewQuantity(gpuMemory, resource.DecimalSI)
 	return e
 }
 

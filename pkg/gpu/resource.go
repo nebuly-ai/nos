@@ -1,6 +1,7 @@
 package gpu
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
@@ -45,7 +46,7 @@ func (r Calculator) ComputePodRequest(pod v1.Pod) v1.ResourceList {
 
 	// add required GPU memory resource
 	gpuMemory := r.ComputeRequiredGPUMemoryGB(res)
-	res[constant.ResourceGPUMemory] = *resource2.NewQuantity(gpuMemory, resource2.DecimalSI)
+	res[v1alpha1.ResourceGPUMemory] = *resource2.NewQuantity(gpuMemory, resource2.DecimalSI)
 
 	return res
 }

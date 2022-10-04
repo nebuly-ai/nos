@@ -18,6 +18,7 @@ package capacityscheduling
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
@@ -105,15 +106,15 @@ func TestPreFilter(t *testing.T) {
 					Namespaces: sets.NewString("ns1"),
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 6 * nvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 4 * nvidiaGPUResourceMemory},
 					},
 				},
 			},
@@ -135,18 +136,18 @@ func TestPreFilter(t *testing.T) {
 					Namespaces: sets.NewString("ns1"),
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          300,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 4 * nvidiaGPUResourceMemory},
 					},
 				},
 				"ns2": {
 					Namespaces: sets.NewString("ns2"),
 					Min: &framework.Resource{
 						Memory:          5000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 6 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 6 * nvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{},
 				},
@@ -168,30 +169,30 @@ func TestPreFilter(t *testing.T) {
 					Namespaces: sets.NewString("ns1"),
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 5 * nvidiaGPUResourceMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 100 * nvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          1800,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 4 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 4 * nvidiaGPUResourceMemory},
 					},
 				},
 				"ns2": {
 					Namespaces: sets.NewString("ns2"),
 					Min: &framework.Resource{
 						Memory:          1000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 1 * nvidiaGPUResourceMemory},
 					},
 					Max: &framework.Resource{
 						Memory:          2000,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 100 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 100 * nvidiaGPUResourceMemory},
 					},
 					Used: &framework.Resource{
 						Memory:          200,
-						ScalarResources: map[v1.ResourceName]int64{constant.ResourceGPUMemory: 1 * nvidiaGPUResourceMemory},
+						ScalarResources: map[v1.ResourceName]int64{v1alpha1.ResourceGPUMemory: 1 * nvidiaGPUResourceMemory},
 					},
 				},
 			},
@@ -548,9 +549,9 @@ func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuRe
 	}
 
 	if overquota == true {
-		pod.Labels[constant.LabelCapacityInfo] = string(constant.CapacityInfoOverQuota)
+		pod.Labels[v1alpha1.LabelCapacityInfo] = string(constant.CapacityInfoOverQuota)
 	} else {
-		pod.Labels[constant.LabelCapacityInfo] = string(constant.CapacityInfoInQuota)
+		pod.Labels[v1alpha1.LabelCapacityInfo] = string(constant.CapacityInfoInQuota)
 	}
 
 	return pod

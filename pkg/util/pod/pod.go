@@ -1,6 +1,7 @@
 package pod
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -12,7 +13,7 @@ import (
 // A pod is considered over-quota if it is subject to an ElasticQuota, and it is using resources borrowed from another
 // ElasticQuota.
 func IsOverQuota(pod v1.Pod) bool {
-	if val, ok := pod.Labels[constant.LabelCapacityInfo]; ok {
+	if val, ok := pod.Labels[v1alpha1.LabelCapacityInfo]; ok {
 		return val == string(constant.CapacityInfoOverQuota)
 	}
 	return false

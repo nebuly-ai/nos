@@ -3,6 +3,7 @@ package elasticquota
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
@@ -109,20 +110,20 @@ func (r *elasticQuotaPodsReconciler) patchCapacityInfoIfDifferent(ctx context.Co
 	if pod.Labels == nil {
 		pod.Labels = make(map[string]string)
 	}
-	if pod.Labels[constant.LabelCapacityInfo] != desiredAsString {
+	if pod.Labels[v1alpha1.LabelCapacityInfo] != desiredAsString {
 		logger.V(1).Info(
 			"updating Pod capacity info label",
 			"currentValue",
-			pod.Labels[constant.LabelCapacityInfo],
+			pod.Labels[v1alpha1.LabelCapacityInfo],
 			"desiredValue",
 			desiredAsString,
 			"Pod",
 			pod,
 		)
 		original := pod.DeepCopy()
-		pod.Labels[constant.LabelCapacityInfo] = desiredAsString
+		pod.Labels[v1alpha1.LabelCapacityInfo] = desiredAsString
 		if err := r.c.Patch(ctx, pod, client.MergeFrom(original)); err != nil {
-			msg := fmt.Sprintf("unable to update label %q with value %q", constant.LabelCapacityInfo, desiredAsString)
+			msg := fmt.Sprintf("unable to update label %q with value %q", v1alpha1.LabelCapacityInfo, desiredAsString)
 			logger.Error(err, msg, "pod", original)
 			return false, err
 		}
