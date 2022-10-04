@@ -1,33 +1,14 @@
-package gpu
+package mig
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
-	resourceutil "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-type resourceWithDeviceId struct {
-	resourceName v1.ResourceName
-	deviceId     string
-}
-
-func (r resourceWithDeviceId) isMIGDevice() bool {
-	return resourceutil.IsNvidiaMigDevice(r.resourceName)
-}
-
 type Device struct {
-	// ResourceName is the name of the resource exposed to k8s
-	// (e.g. nvidia.com/gpu, nvidia.com/mig-2g10gb, etc.)
-	ResourceName v1.ResourceName
-	// DeviceId is the actual ID of the underlying device
-	// (e.g. ID of the GPU, ID of the MIG device, etc.)
-	DeviceId string
-}
-
-type MIGDevice struct {
-	Device
+	resource.Device
 	// GpuId is the Index of the parent GPU to which the MIG device belongs to
 	GpuIndex int
 }
@@ -35,7 +16,7 @@ type MIGDevice struct {
 // FullResourceName returns the full resource name of the MIG device, including
 // the name of the resource corresponding to the MIG profile and the index
 // of the GPU to which it belongs to.
-func (m MIGDevice) FullResourceName() string {
+func (m Device) FullResourceName() string {
 	return fmt.Sprintf("%d/%s", m.GpuIndex, m.ResourceName)
 }
 
@@ -70,11 +51,11 @@ func getGPUs(node v1.Node) []GPU {
 		return result
 	}
 	for i := 0; i < resource.GetNvidiaGPUsCount(node); i++ {
-		//gpu := GPU{
-		//	modelCode: gpuModel,
-		//	memoryMb:  resource.GetNvidiaGPUsMemoryMb(node),
-		//}
-		//result = append(result, gpu)
+		gpu := GPU{
+			//modelCode: gpuModel,
+			//memoryMb:  resource.GetNvidiaGPUsMemoryMb(node),
+		}
+		result = append(result, gpu)
 	}
 	return result
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	quota "k8s.io/apiserver/pkg/quota/v1"
@@ -15,7 +15,7 @@ import (
 
 type elasticQuotaPodsReconciler struct {
 	c                  client.Client
-	resourceCalculator *resource2.Calculator
+	resourceCalculator *gpu.Calculator
 }
 
 func (r *elasticQuotaPodsReconciler) PatchPodsAndComputeUsedQuota(ctx context.Context,

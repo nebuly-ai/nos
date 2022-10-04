@@ -18,6 +18,7 @@ package capacityscheduling
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -69,7 +70,7 @@ func TestReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := resource2.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := gpu.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
@@ -125,7 +126,7 @@ func TestUnReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := resource2.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := gpu.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before

@@ -19,6 +19,7 @@ package capacityscheduling
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -219,7 +220,7 @@ func TestPreFilter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			resourceCalculator := resource2.Calculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
+			resourceCalculator := gpu.Calculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
 			cs := &CapacityScheduling{
 				elasticQuotaInfos:  tt.elasticQuotas,
 				fh:                 fwk,
@@ -437,7 +438,7 @@ func TestDryRunPreemption(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := resource2.Calculator{
+	resourceCalculator := gpu.Calculator{
 		NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory,
 	}
 	for _, tt := range tests {

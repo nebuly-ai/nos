@@ -1,21 +1,31 @@
-package gpu
+package mig
 
 import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 	"strings"
 )
 
+type resourceWithDeviceId struct {
+	resourceName v1.ResourceName
+	deviceId     string
+}
+
+func (r resourceWithDeviceId) isMIGDevice() bool {
+	return IsNvidiaMigDevice(r.resourceName)
+}
+
 type Client struct {
 	lister     pdrv1.PodResourcesListerClient
 	nvmlClient nvml.Client
 }
 
-func (c Client) GetUsedMIGDevices(ctx context.Context) ([]MIGDevice, error) {
+func (c Client) GetUsedMIGDevices(ctx context.Context) ([]Device, error) {
 	logger := klog.FromContext(ctx)
 
 	// List Pods Resources
@@ -41,15 +51,15 @@ func (c Client) GetUsedMIGDevices(ctx context.Context) ([]MIGDevice, error) {
 	}
 
 	// Retrieve MIG device ID and GPU index
-	migDevices := make([]MIGDevice, 0)
+	migDevices := make([]Device, 0)
 	for _, r := range migResources {
 		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
 		if err != nil {
 			logger.Error(err, "unable to fetch GPU index of MIG resource %s", r.resourceName)
 			return nil, err
 		}
-		migDevice := MIGDevice{
-			Device: Device{
+		migDevice := Device{
+			Device: resource.Device{
 				ResourceName: r.resourceName,
 				DeviceId:     r.deviceId,
 			},
@@ -61,7 +71,7 @@ func (c Client) GetUsedMIGDevices(ctx context.Context) ([]MIGDevice, error) {
 	return migDevices, nil
 }
 
-func (c Client) GetFreeMIGDevices(ctx context.Context) ([]MIGDevice, error) {
+func (c Client) GetFreeMIGDevices(ctx context.Context) ([]Device, error) {
 	logger := klog.FromContext(ctx)
 
 	// Get allocatable
@@ -76,13 +86,13 @@ func (c Client) GetFreeMIGDevices(ctx context.Context) ([]MIGDevice, error) {
 		logger.Error(err, "unable to retrieve used MIG devices")
 		return nil, err
 	}
-	usedLookup := make(map[string]MIGDevice)
+	usedLookup := make(map[string]Device)
 	for _, u := range used {
 		usedLookup[u.DeviceId] = u
 	}
 
 	// Compute (allocatable - used)
-	res := make([]MIGDevice, 0)
+	res := make([]Device, 0)
 	for _, a := range allocatable {
 		if _, used := usedLookup[a.DeviceId]; !used {
 			res = append(res, a)
@@ -92,7 +102,7 @@ func (c Client) GetFreeMIGDevices(ctx context.Context) ([]MIGDevice, error) {
 	return res, nil
 }
 
-func (c Client) GetAllocatableMIGDevices(ctx context.Context) ([]MIGDevice, error) {
+func (c Client) GetAllocatableMIGDevices(ctx context.Context) ([]Device, error) {
 	logger := klog.FromContext(ctx)
 
 	// List Allocatable Resources
@@ -128,7 +138,7 @@ func (c Client) GetAllocatableMIGDevices(ctx context.Context) ([]MIGDevice, erro
 	return c.extractMIGDevices(ctx, resources)
 }
 
-func (c Client) extractMIGDevices(ctx context.Context, resources []resourceWithDeviceId) ([]MIGDevice, error) {
+func (c Client) extractMIGDevices(ctx context.Context, resources []resourceWithDeviceId) ([]Device, error) {
 	logger := klog.FromContext(ctx)
 
 	// Extract MIG devices
@@ -140,15 +150,15 @@ func (c Client) extractMIGDevices(ctx context.Context, resources []resourceWithD
 	}
 
 	// Retrieve MIG device ID and GPU index
-	migDevices := make([]MIGDevice, 0)
+	migDevices := make([]Device, 0)
 	for _, r := range migResources {
 		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
 		if err != nil {
 			logger.Error(err, "unable to fetch GPU index of MIG resource %s", r.resourceName)
 			return nil, err
 		}
-		migDevice := MIGDevice{
-			Device: Device{
+		migDevice := Device{
+			Device: resource.Device{
 				ResourceName: r.resourceName,
 				DeviceId:     r.deviceId,
 			},

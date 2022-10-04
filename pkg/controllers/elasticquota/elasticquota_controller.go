@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,12 +24,12 @@ import (
 type ElasticQuotaReconciler struct {
 	client.Client
 	Scheme             *runtime.Scheme
-	resourceCalculator *resource.Calculator
+	resourceCalculator *gpu.Calculator
 	podsReconciler     *elasticQuotaPodsReconciler
 }
 
 func NewElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGPUResourceMemoryGB int64) ElasticQuotaReconciler {
-	resourceCalculator := resource.Calculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB}
+	resourceCalculator := gpu.Calculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB}
 	return ElasticQuotaReconciler{
 		Client:             client,
 		Scheme:             scheme,

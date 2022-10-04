@@ -1,4 +1,4 @@
-package gpu
+package mig
 
 var GPUModels = map[string]GPUModel{
 	"A30": {

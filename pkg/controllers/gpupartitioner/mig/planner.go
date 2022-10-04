@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -79,18 +78,18 @@ func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.Cl
 // smaller instances.
 func (p Planner) getLackingMIGResource(snapshot state.ClusterSnapshot, pod v1.Pod) (v1.ResourceName, bool) {
 	for r := range snapshot.GetLackingScalarResources(pod) {
-		if resource.IsNvidiaMigDevice(r) {
+		if mig.IsNvidiaMigDevice(r) {
 			return r, true
 		}
 	}
 	return "", false
 }
 
-func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMIGResource v1.ResourceName) []gpu.Node {
-	result := make([]gpu.Node, 0)
+func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMIGResource v1.ResourceName) []mig.Node {
+	result := make([]mig.Node, 0)
 
 	for _, n := range snapshot.GetNodes() {
-		migNode := gpu.NewNode(n)
+		migNode := mig.NewNode(n)
 		if err := migNode.UpdateGeometryFor(requiredMIGResource); err != nil {
 			result = append(result, migNode)
 		}

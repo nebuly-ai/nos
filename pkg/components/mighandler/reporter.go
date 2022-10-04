@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +24,7 @@ import (
 
 type MIGReporter struct {
 	k8sClient kubernetes.Interface
-	gpuClient *gpu.Client
+	gpuClient *mig.Client
 
 	nodeInformer             informersv1.NodeInformer
 	node                     string
@@ -32,7 +32,7 @@ type MIGReporter struct {
 	refreshInterval          time.Duration
 }
 
-func NewMIGReporter(node string, k8sClient kubernetes.Interface, gpuClient *gpu.Client, sharedFactory informers.SharedInformerFactory, client pdrv1.PodResourcesListerClient, refreshInterval time.Duration) MIGReporter {
+func NewMIGReporter(node string, k8sClient kubernetes.Interface, gpuClient *mig.Client, sharedFactory informers.SharedInformerFactory, client pdrv1.PodResourcesListerClient, refreshInterval time.Duration) MIGReporter {
 	nodeInformer := sharedFactory.Core().V1().Nodes()
 	reporter := MIGReporter{
 		k8sClient:                k8sClient,
@@ -149,7 +149,7 @@ func (r *MIGReporter) ReportMIGStatus(ctx context.Context) error {
 	return nil
 }
 
-func getStatusAnnotations(used []gpu.MIGDevice, free []gpu.MIGDevice) map[string]string {
+func getStatusAnnotations(used []mig.Device, free []mig.Device) map[string]string {
 	res := make(map[string]string)
 
 	// Compute used MIG devices quantities

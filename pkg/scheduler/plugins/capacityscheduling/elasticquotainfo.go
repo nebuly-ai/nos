@@ -18,6 +18,7 @@ package capacityscheduling
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"k8s.io/api/core/v1"
@@ -183,7 +184,7 @@ type ElasticQuotaInfo struct {
 	Max                *framework.Resource
 	Used               *framework.Resource
 	MaxEnforced        bool
-	resourceCalculator *resource.Calculator
+	resourceCalculator *gpu.Calculator
 }
 
 func (e *ElasticQuotaInfo) reserveResource(request framework.Resource) {

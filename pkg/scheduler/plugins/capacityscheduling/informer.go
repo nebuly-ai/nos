@@ -3,8 +3,8 @@ package capacityscheduling
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,7 +38,7 @@ var unstructuredFilter filterFunc = func(obj interface{}) bool {
 	}
 }
 
-func NewElasticQuotaInfoInformer(kubeConfig *restclient.Config, resourceCalculator *resource.Calculator) (*ElasticQuotaInfoInformer, error) {
+func NewElasticQuotaInfoInformer(kubeConfig *restclient.Config, resourceCalculator *gpu.Calculator) (*ElasticQuotaInfoInformer, error) {
 	dynamicClient, err := dynamic.NewForConfig(kubeConfig)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ type ElasticQuotaInfoInformer struct {
 	compositeElasticQuotaInformer informers.GenericInformer
 	elasticQuotaInformer          informers.GenericInformer
 	sharedInformerFactory         dynamicinformer.DynamicSharedInformerFactory
-	resourceCalculator            *resource.Calculator
+	resourceCalculator            *gpu.Calculator
 }
 
 func (i ElasticQuotaInfoInformer) Start(stopCh <-chan struct{}) {
