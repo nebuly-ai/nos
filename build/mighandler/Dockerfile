@@ -10,17 +10,17 @@ COPY ../../go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY cmd/migmanager/main.go main.go
+COPY cmd/mighandler/main.go main.go
 COPY ../../pkg pkg/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o migmanager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o mig-hanlder main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/migmanager .
+COPY --from=builder /workspace/mig-handler .
 USER 65532:65532
 
-ENTRYPOINT ["/migmanager"]
+ENTRYPOINT ["/mig-handler"]
