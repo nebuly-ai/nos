@@ -28,6 +28,9 @@
             username: ${{ github.actor }}
             password: ${{ secrets.GITHUB_TOKEN }}
 
+        - name: Print pwd
+          run: pwd
+
         - name: Build mig-handler
           run: make docker-build-mig-handler MIG_PARTITIONER_IMG=${{ env.IMAGE_NAME }}
 
