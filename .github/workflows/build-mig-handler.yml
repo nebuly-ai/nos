@@ -7,16 +7,29 @@
           default: 'mig-handler:latest'
           type: string
 
+  env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: "${{ github.repository }}-mig-handler"
+
   jobs:
     docker:
       runs-on: ubuntu-22.04
+      permissions:
+        contents: read
+        packages: write
       steps:
+        - name: Checkout repository
+          uses: actions/checkout@v3
+
         - name: Login to DockerHub
           uses: docker/login-action@v2
           with:
-            username: ${{ secrets.DOCKERHUB_USERNAME }}
-            password: ${{ secrets.DOCKERHUB_TOKEN }}
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
         - name: Build mig-handler
-          run: make docker-build-mig-partitioner MIG_PARTITIONER_IMG=${{ inputs.docker-image }}
+          run: make docker-build-mig-partitioner MIG_PARTITIONER_IMG=${{ env.IMAGE_NAME }}
+
         - name: Push mig-handler
-          run: make docker-push-mig-partitioner MIG_PARTITIONER_IMG=${{ inputs.docker-image }}
+          run: make docker-push-mig-partitioner MIG_PARTITIONER_IMG=${{ env.IMAGE_NAME }}
