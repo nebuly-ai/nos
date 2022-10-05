@@ -1,9 +1,13 @@
+//go:build nvml
+
 package main
 
 import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/components/mighandler"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
@@ -38,12 +42,12 @@ func main() {
 
 	// Init MIG Reporter
 	podResourcesClient, err := newPodResourcesListerClient()
+	migClient := mig.NewClient(podResourcesClient, nvml.NewClient())
 	migReporter := mighandler.NewMIGReporter(
 		nodeName,
 		k8sClient,
-		nil,
+		migClient,
 		sharedFactory,
-		podResourcesClient,
 		10*time.Second,
 	)
 

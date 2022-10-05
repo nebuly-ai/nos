@@ -25,6 +25,10 @@ type Client struct {
 	nvmlClient nvml.Client
 }
 
+func NewClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Client {
+	return Client{lister: lister, nvmlClient: nvmlClient}
+}
+
 func (c Client) GetUsedMIGDevices(ctx context.Context) ([]Device, error) {
 	logger := klog.FromContext(ctx)
 

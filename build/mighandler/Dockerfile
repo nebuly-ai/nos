@@ -14,7 +14,7 @@ COPY cmd/mighandler/main.go main.go
 COPY ../../pkg pkg/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o mig-hanlder main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o mig-handler -tags nvml main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details

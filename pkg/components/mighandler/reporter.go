@@ -14,30 +14,27 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
-	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 	"strings"
 	"time"
 )
 
 type MIGReporter struct {
 	k8sClient kubernetes.Interface
-	gpuClient *mig.Client
+	migClient *mig.Client
 
-	nodeInformer             informersv1.NodeInformer
-	node                     string
-	podResourcesListerClient pdrv1.PodResourcesListerClient
-	refreshInterval          time.Duration
+	nodeInformer    informersv1.NodeInformer
+	node            string
+	refreshInterval time.Duration
 }
 
-func NewMIGReporter(node string, k8sClient kubernetes.Interface, gpuClient *mig.Client, sharedFactory informers.SharedInformerFactory, client pdrv1.PodResourcesListerClient, refreshInterval time.Duration) MIGReporter {
+func NewMIGReporter(node string, k8sClient kubernetes.Interface, migClient *mig.Client, sharedFactory informers.SharedInformerFactory, refreshInterval time.Duration) MIGReporter {
 	nodeInformer := sharedFactory.Core().V1().Nodes()
 	reporter := MIGReporter{
-		k8sClient:                k8sClient,
-		gpuClient:                gpuClient,
-		nodeInformer:             nodeInformer,
-		podResourcesListerClient: client,
-		refreshInterval:          refreshInterval,
-		node:                     node,
+		k8sClient:       k8sClient,
+		migClient:       migClient,
+		nodeInformer:    nodeInformer,
+		refreshInterval: refreshInterval,
+		node:            node,
 	}
 	nodeInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
@@ -68,11 +65,11 @@ func (r *MIGReporter) ReportMIGResourcesStatus(ctx context.Context) error {
 	logger := klog.FromContext(ctx)
 
 	// Compute new status annotations
-	usedMIGs, err := r.gpuClient.GetUsedMIGDevices(ctx)
+	usedMIGs, err := r.migClient.GetUsedMIGDevices(ctx)
 	if err != nil {
 		return err
 	}
-	freeMIGs, err := r.gpuClient.GetFreeMIGDevices(ctx)
+	freeMIGs, err := r.migClient.GetFreeMIGDevices(ctx)
 	if err != nil {
 		return err
 	}
