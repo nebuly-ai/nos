@@ -42,11 +42,16 @@ func main() {
 
 	// Init MIG Reporter
 	podResourcesClient, err := newPodResourcesListerClient()
-	migClient := mig.NewClient(podResourcesClient, nvml.NewClient())
+	nvmlClient, err := nvml.NewClient()
+	if err != nil {
+		logger.Error(err, "unable to init nvml client")
+		os.Exit(1)
+	}
+	migClient := mig.NewClient(podResourcesClient, nvmlClient)
 	migReporter := mighandler.NewMIGReporter(
 		nodeName,
 		k8sClient,
-		migClient,
+		&migClient,
 		sharedFactory,
 		10*time.Second,
 	)
