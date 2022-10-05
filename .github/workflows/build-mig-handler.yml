@@ -9,7 +9,7 @@
 
   env:
     REGISTRY: ghcr.io
-    IMAGE_NAME: "${{ github.repository }}-mig-handler"
+    IMAGE_NAME: "${{ github.repository }}-mig-handler:latest"
 
   jobs:
     docker:
@@ -28,11 +28,10 @@
             username: ${{ github.actor }}
             password: ${{ secrets.GITHUB_TOKEN }}
 
-        - name: Print pwd
-          run: pwd
-
-        - name: Build mig-handler
-          run: make docker-build-mig-handler MIG_PARTITIONER_IMG=${{ env.IMAGE_NAME }}
-
-        - name: Push mig-handler
-          run: make docker-push-mig-handler MIG_PARTITIONER_IMG=${{ env.IMAGE_NAME }}
+        - name: Build and push
+          uses: docker/build-push-action@v3
+          with:
+            context: .
+            push: true
+            file: build/mighandler/Dockerfile
+            tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
