@@ -139,7 +139,7 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 								Name: "container-1",
 								Devices: []*pdrv1.ContainerDevices{
 									{
-										ResourceName: "nvidia.com/mig-2g10gb",
+										ResourceName: "nvidia.com/mig-2g.10gb",
 										DeviceIds:    []string{"1"},
 									},
 								},
@@ -172,7 +172,7 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 								Name: "container-2",
 								Devices: []*pdrv1.ContainerDevices{
 									{
-										ResourceName: "nvidia.com/mig-2g10gb",
+										ResourceName: "nvidia.com/mig-2g.10gb",
 										DeviceIds:    []string{"mig-device-1"},
 									},
 									{
@@ -191,11 +191,11 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 								Name: "container-2",
 								Devices: []*pdrv1.ContainerDevices{
 									{
-										ResourceName: "nvidia.com/mig-2g20gb",
+										ResourceName: "nvidia.com/mig-2g.20gb",
 										DeviceIds:    []string{"mig-device-2"},
 									},
 									{
-										ResourceName: "nvidia.com/mig-2g20gb",
+										ResourceName: "nvidia.com/mig-2g.20gb",
 										DeviceIds:    []string{"mig-device-3"},
 									},
 									{
@@ -216,21 +216,21 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 			expectedDevices: []Device{
 				{
 					Device: resource.Device{
-						ResourceName: "nvidia.com/mig-2g10gb",
+						ResourceName: "nvidia.com/mig-2g.10gb",
 						DeviceId:     "mig-device-1",
 					},
 					GpuIndex: 1,
 				},
 				{
 					Device: resource.Device{
-						ResourceName: "nvidia.com/mig-2g20gb",
+						ResourceName: "nvidia.com/mig-2g.20gb",
 						DeviceId:     "mig-device-2",
 					},
 					GpuIndex: 2,
 				},
 				{
 					Device: resource.Device{
-						ResourceName: "nvidia.com/mig-2g20gb",
+						ResourceName: "nvidia.com/mig-2g.20gb",
 						DeviceId:     "mig-device-3",
 					},
 					GpuIndex: 2,
@@ -305,7 +305,7 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 			allocatableResourcesResp: pdrv1.AllocatableResourcesResponse{
 				Devices: []*pdrv1.ContainerDevices{
 					{
-						ResourceName: "nvidia.com/mig-2g10gb",
+						ResourceName: "nvidia.com/mig-2g.10gb",
 						DeviceIds:    []string{"1"},
 					},
 				},
@@ -330,15 +330,15 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 						DeviceIds:    []string{"2"},
 					},
 					{
-						ResourceName: "nvidia.com/mig-1g20gb",
+						ResourceName: "nvidia.com/mig-1g.20gb",
 						DeviceIds:    []string{"mig-1"},
 					},
 					{
-						ResourceName: "nvidia.com/mig-1g20gb",
+						ResourceName: "nvidia.com/mig-1g.20gb",
 						DeviceIds:    []string{"mig-2"},
 					},
 					{
-						ResourceName: "nvidia.com/mig-1g10gb",
+						ResourceName: "nvidia.com/mig-1g.10gb",
 						DeviceIds:    []string{"mig-3"},
 					},
 				},
@@ -351,21 +351,21 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 			expectedDevices: []Device{
 				{
 					Device: resource.Device{
-						ResourceName: "nvidia.com/mig-1g20gb",
+						ResourceName: "nvidia.com/mig-1g.20gb",
 						DeviceId:     "mig-1",
 					},
 					GpuIndex: 1,
 				},
 				{
 					Device: resource.Device{
-						ResourceName: "nvidia.com/mig-1g20gb",
+						ResourceName: "nvidia.com/mig-1g.20gb",
 						DeviceId:     "mig-2",
 					},
 					GpuIndex: 1,
 				},
 				{
 					Device: resource.Device{
-						ResourceName: "nvidia.com/mig-1g10gb",
+						ResourceName: "nvidia.com/mig-1g.10gb",
 						DeviceId:     "mig-3",
 					},
 					GpuIndex: 2,

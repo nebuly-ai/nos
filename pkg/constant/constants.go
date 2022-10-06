@@ -27,7 +27,7 @@ const (
 // Common RegEx
 const (
 	// RegexNvidiaMigDevice is a regex matching the name of the MIG devices exposed by the NVIDIA device plugin
-	RegexNvidiaMigDevice       = `nvidia\.com\/mig-\d+g\d+gb`
+	RegexNvidiaMigDevice       = `nvidia\.com\/mig-\d+g\.\d+gb`
 	RegexNvidiaMigFormatMemory = `\d+gb`
 )
 

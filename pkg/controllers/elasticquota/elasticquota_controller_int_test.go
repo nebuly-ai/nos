@@ -54,7 +54,7 @@ var _ = Describe("ElasticQuota controller", func() {
 				containerTwoNvidiaMigMemory = 1
 			)
 			var containerTwoNvidiaMigResource = v1.ResourceName(
-				fmt.Sprintf("nvidia.com/mig-1g%dgb", containerTwoNvidiaMigMemory),
+				fmt.Sprintf("nvidia.com/mig-1g.%dgb", containerTwoNvidiaMigMemory),
 			)
 
 			By("Creating an ElasticQuota successfully")

@@ -52,7 +52,7 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 				containerTwoNvidiaMigMemory = 1
 			)
 			var containerTwoNvidiaMigResource = v1.ResourceName(
-				fmt.Sprintf("nvidia.com/mig-1g%dgb", containerTwoNvidiaMigMemory),
+				fmt.Sprintf("nvidia.com/mig-1g.%dgb", containerTwoNvidiaMigMemory),
 			)
 
 			By("Creating namespaces successfully")

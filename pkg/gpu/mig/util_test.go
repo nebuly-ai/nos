@@ -29,7 +29,7 @@ func TestIsNvidiaMigDevice(t *testing.T) {
 		},
 		{
 			name:         "Valid NVIDIA MIG",
-			resourceName: "nvidia.com/mig-1g1gb",
+			resourceName: "nvidia.com/mig-1g.1gb",
 			expected:     true,
 		},
 	}
@@ -65,12 +65,12 @@ func TestExtractMemoryGBFromMigDevice(t *testing.T) {
 		},
 		{
 			name:          "Malformed NVIDIA MIG - multiple occurrences",
-			resourceName:  "nvidia.com/mig-1g1gb15gb",
+			resourceName:  "nvidia.com/mig-1g.1gb15gb",
 			errorExpected: true,
 		},
 		{
 			name:          "Valid NVIDIA MIG",
-			resourceName:  "nvidia.com/mig-1g16gb",
+			resourceName:  "nvidia.com/mig-1g.16gb",
 			errorExpected: false,
 			expected:      16,
 		},

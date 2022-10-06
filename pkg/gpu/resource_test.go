@@ -35,9 +35,9 @@ func TestResourceCalculator_ComputeRequiredGPUMemoryGB(t *testing.T) {
 		{
 			name: "Resource list contains NVIDIA GPU resource, MIG and MIG-like resources. Only NVIDIA GPU + MIG are considered",
 			resourceList: v1.ResourceList{
-				constant.ResourceNvidiaGPU:               *resource.NewQuantity(2, resource.DecimalSI),
-				v1.ResourceName("foo/1g32gb"):            *resource.NewQuantity(2, resource.DecimalSI),
-				v1.ResourceName("nvidia.com/mig-2g32gb"): *resource.NewQuantity(3, resource.DecimalSI),
+				constant.ResourceNvidiaGPU:                *resource.NewQuantity(2, resource.DecimalSI),
+				v1.ResourceName("foo/1g32gb"):             *resource.NewQuantity(2, resource.DecimalSI),
+				v1.ResourceName("nvidia.com/mig-2g.32gb"): *resource.NewQuantity(3, resource.DecimalSI),
 			},
 			expected: nvidiaDeviceGPUMemoryGB*2 + 32*3,
 		},
