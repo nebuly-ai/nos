@@ -16,7 +16,7 @@ const (
 
 // Annotations
 const (
-	AnnotationGPUStatusPrefix     = "n8s.nebuly.ai/status/gpu"
-	AnnotationUsedMIGStatusFormat = "n8s.nebuly.ai/status/gpu/%d/%s/used"
-	AnnotationFreeMIGStatusFormat = "n8s.nebuly.ai/status/gpu/%d/%s/free"
+	AnnotationGPUStatusPrefix     = "n8s.nebuly.ai/status-gpu"
+	AnnotationUsedMIGStatusFormat = "n8s.nebuly.ai/status-gpu-%d-%s-used"
+	AnnotationFreeMIGStatusFormat = "n8s.nebuly.ai/status-gpu-%d-%s-free"
 )
