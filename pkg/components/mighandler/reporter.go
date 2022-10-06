@@ -14,13 +14,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
+	"reflect"
 	"strings"
 	"time"
 )
 
 type MIGReporter struct {
-	k8sClient kubernetes.Interface
-	migClient *mig.Client
+	k8sClient    kubernetes.Interface
+	migClient    *mig.Client
+	nodeProvider nodeutil.Provider
 
 	nodeInformer    informersv1.NodeInformer
 	node            string
@@ -42,6 +44,14 @@ func NewMIGReporter(node string, k8sClient kubernetes.Interface, migClient *mig.
 			UpdateFunc: reporter.nodeUpdated,
 		},
 	)
+	reporter.nodeProvider = nodeutil.Provider{
+		GetNode: func(ctx context.Context, nodeName string) (*v1.Node, error) {
+			return reporter.k8sClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		},
+		GetNodeCached: func(_ context.Context, nodeName string) (*v1.Node, error) {
+			return reporter.nodeInformer.Lister().Get(nodeName)
+		},
+	}
 	return reporter
 }
 
@@ -63,54 +73,75 @@ func (r *MIGReporter) nodeUpdated(old, newObj interface{}) {
 
 func (r *MIGReporter) ReportMIGResourcesStatus(ctx context.Context) error {
 	logger := klog.FromContext(ctx)
+	logger.Info("Reporting MIG resources status", "node", r.node)
 
 	// Compute new status annotations
 	usedMIGs, err := r.migClient.GetUsedMIGDevices(ctx)
+	logger.V(3).Info("Loaded used MIG devices", "usedMIGs", usedMIGs)
 	if err != nil {
 		return err
 	}
 	freeMIGs, err := r.migClient.GetFreeMIGDevices(ctx)
+	logger.V(3).Info("Loaded free MIG devices", "freeMIGs", usedMIGs)
 	if err != nil {
 		return err
 	}
-	statusAnnotations := getStatusAnnotations(usedMIGs, freeMIGs)
+	newStatusAnnotations := computeStatusAnnotations(usedMIGs, freeMIGs)
+
+	// Get current status annotations and compare with new ones
+	oldStatusAnnotations, err := r.readCurrentStatusAnnotations()
+	if err != nil {
+		logger.Error(err, "Unable to read current status annotations from node")
+		return err
+	}
+	if reflect.DeepEqual(newStatusAnnotations, oldStatusAnnotations) {
+		logger.Info("Current status is equal to last reported status, nothing to do")
+		return nil
+	}
 
 	// Update node
+	logger.Info("Status changed - reporting it by updating node annotations")
 	updateFunc := func(annotations map[string]string) {
 		for k := range annotations {
 			if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
 				delete(annotations, k)
 			}
 		}
-		for k, v := range statusAnnotations {
+		for k, v := range newStatusAnnotations {
 			annotations[k] = v
 		}
-	}
-	nodeProvider := nodeutil.Provider{
-		GetNode: func(ctx context.Context, nodeName string) (*v1.Node, error) {
-			return r.k8sClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
-		},
-		GetNodeCached: func(_ context.Context, nodeName string) (*v1.Node, error) {
-			return r.nodeInformer.Lister().Get(nodeName)
-		},
 	}
 	err = nodeutil.UpdateNodeAnnotations(
 		ctx,
 		r.k8sClient,
-		nodeProvider,
+		r.nodeProvider,
 		r.node,
 		updateFunc,
 	)
-
 	if err != nil {
-		logger.Error(err, "unable to update node status annotations", "node", r.node)
+		logger.Error(err, "unable to update node status annotations")
 		return err
 	}
+	logger.Info("Updated status reported - node annotations updated successfully")
 
 	return nil
 }
 
-func getStatusAnnotations(used []mig.Device, free []mig.Device) map[string]string {
+func (r *MIGReporter) readCurrentStatusAnnotations() (map[string]string, error) {
+	node, err := r.nodeInformer.Lister().Get(r.node)
+	if err != nil {
+		return nil, err
+	}
+	res := make(map[string]string)
+	for k, v := range node.Annotations {
+		if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
+			res[k] = v
+		}
+	}
+	return res, nil
+}
+
+func computeStatusAnnotations(used []mig.Device, free []mig.Device) map[string]string {
 	res := make(map[string]string)
 
 	// Compute used MIG devices quantities
@@ -166,9 +197,9 @@ func (r *MIGReporter) Start(ctx context.Context) error {
 				logger.Error(err, "unable to report MIG status")
 			}
 		case <-ctx.Done():
+			ticker.Stop()
 			return
 		}
 	}()
-
 	return nil
 }

@@ -29,6 +29,7 @@ const (
 
 func main() {
 	ctx := context.Background()
+	klog.InitFlags(nil)
 	logger := klog.FromContext(ctx).WithName("setup")
 	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
 
@@ -42,6 +43,7 @@ func main() {
 
 	// Init MIG Reporter
 	podResourcesClient, err := newPodResourcesListerClient()
+	logger.Info("Initializing NVML client")
 	nvmlClient, err := nvml.NewClient()
 	if err != nil {
 		logger.Error(err, "unable to init nvml client")
