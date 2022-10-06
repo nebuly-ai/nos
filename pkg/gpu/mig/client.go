@@ -59,7 +59,12 @@ func (c Client) GetUsedMIGDevices(ctx context.Context) ([]Device, error) {
 	for _, r := range migResources {
 		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
 		if err != nil {
-			logger.Error(err, "unable to fetch GPU index of MIG resource %s", r.resourceName)
+			logger.Error(
+				err,
+				"unable to fetch GPU index of MIG resource",
+				"resourceName",
+				r.resourceName,
+			)
 			return nil, err
 		}
 		migDevice := Device{
