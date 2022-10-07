@@ -5,6 +5,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"strings"
 )
 
 type Device struct {
@@ -18,6 +19,16 @@ type Device struct {
 // of the GPU to which it belongs to.
 func (m Device) FullResourceName() string {
 	return fmt.Sprintf("%d/%s", m.GpuIndex, m.ResourceName)
+}
+
+// GetMIGProfileName returns the name of the MIG profile associated to the device
+//
+// Example:
+//
+//	Resource name: nvidia.com/mig-1g.10gb
+//	GetMIGProfileName() -> 1g.10gb
+func (m Device) GetMIGProfileName() string {
+	return strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-")
 }
 
 type Profile struct {
