@@ -11,13 +11,6 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-var nonScalarResources = []v1.ResourceName{
-	v1.ResourceCPU,
-	v1.ResourceMemory,
-	v1.ResourcePods,
-	v1.ResourceEphemeralStorage,
-}
-
 type Device struct {
 	// ResourceName is the name of the resource exposed to k8s
 	// (e.g. nvidia.com/gpu, nvidia.com/mig-2g10gb, etc.)
