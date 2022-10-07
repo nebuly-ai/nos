@@ -4,12 +4,12 @@
         docker-image:
           description: 'The name of the docker image that will be build'
           required: true
-          default: 'mig-handler:latest'
+          default: 'mighandler:latest'
           type: string
 
   env:
     REGISTRY: ghcr.io
-    IMAGE_NAME: "${{ github.repository }}-mig-handler:latest"
+    IMAGE_NAME: "${{ github.repository }}-mighandler:latest"
 
   jobs:
     docker:

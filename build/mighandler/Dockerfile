@@ -14,11 +14,11 @@ COPY cmd/mighandler/main.go main.go
 COPY ../../pkg pkg/
 
 # Build
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o mig-handler -tags nvml main.go
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o mighandler -tags nvml main.go
 
 FROM nvidia/cuda:11.6.2-base-ubuntu20.04
 WORKDIR /
-COPY --from=builder /workspace/mig-handler .
+COPY --from=builder /workspace/mighandler .
 #USER 65532:65532 TODO: Run as non-root
 
-ENTRYPOINT ["/mig-handler"]
+ENTRYPOINT ["/mighandler"]

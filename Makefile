@@ -3,7 +3,7 @@
 CONTROLLER_IMG ?= controller:latest
 SCHEDULER_IMG ?= scheduler:latest
 GPU_PARTITIONER_IMG ?= gpu-partitioner:latest
-MIG_HANDLER_IMG ?= mig-handler:latest
+MIGHANLDER_IMG ?= mighandler:latest
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -85,9 +85,9 @@ run: manifests generate fmt vet ## Run a controller from your host.
 docker-build-gpu-partitioner: ## Build docker image with the manager.
 	docker build -t ${GPU_PARTITIONER_IMG} -f build/gpupartitioner/Dockerfile .
 
-.PHONY: docker-build-mig-handler
-docker-build-mig-handler: ## Build docker image with the manager.
-	docker buildx build --platform linux/amd64 -t ${MIG_HANDLER_IMG} -f build/mighandler/Dockerfile .
+.PHONY: docker-build-mighandler
+docker-build-mighandler: ## Build docker image with the manager.
+	docker buildx build --platform linux/amd64 -t ${MIGHANLDER_IMG} -f build/mighandler/Dockerfile .
 
 .PHONY: docker-build-controller
 docker-build-controller: ## Build docker image with the manager.
@@ -101,9 +101,9 @@ docker-build-scheduler: ## Build docker image with the scheduler.
 docker-push-controller: ## Build docker image with the manager.
 	docker push ${CONTROLLER_IMG}
 
-.PHONY: docker-push-mig-handler
-docker-push-mig-handler: ## Build docker image with the manager.
-	docker push ${MIG_HANDLER_IMG}
+.PHONY: docker-push-mighandler
+docker-push-mighandler: ## Build docker image with the manager.
+	docker push ${MIGHANLDER_IMG}
 
 .PHONY: docker-push-scheduler
 docker-push-scheduler: ## Build docker image with the scheduler.
@@ -136,6 +136,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}
 	cd config/scheduler && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
+	cd config/mighandler && $(KUSTOMIZE) edit set image mighandler=${MIGHANDLER_IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy

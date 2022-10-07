@@ -1,0 +1,13 @@
+resources:
+- rbac.yaml
+- serviceaccount.yaml
+- daemonset.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: mighandler
+  newName: telemaco019/test
+  newTag: latest
