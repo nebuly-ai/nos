@@ -50,7 +50,7 @@ spec:
               mountPropagation: HostToContainer
           # TODO: add probes
       terminationGracePeriodSeconds: 30
-      serviceAccountName: controller-manager
+      serviceAccountName: mighandler
       volumes:
         - name: device-plugin
           hostPath:

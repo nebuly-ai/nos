@@ -18,5 +18,5 @@ roleRef:
   name: scheduler-role
 subjects:
   - kind: ServiceAccount
-    name: scheduler
+    name: mighandler
     namespace: system
