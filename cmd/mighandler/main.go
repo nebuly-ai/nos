@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/components/mighandler"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
@@ -30,6 +31,7 @@ const (
 func main() {
 	ctx := context.Background()
 	klog.InitFlags(nil)
+	flag.Parse()
 	logger := klog.FromContext(ctx).WithName("setup")
 	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
 
