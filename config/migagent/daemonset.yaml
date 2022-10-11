@@ -60,7 +60,6 @@ spec:
             - name: run-nvidia
               mountPath: /run/nvidia
               mountPropagation: HostToContainer
-          # TODO: add probes
       terminationGracePeriodSeconds: 30
       serviceAccountName: migagent
       volumes:

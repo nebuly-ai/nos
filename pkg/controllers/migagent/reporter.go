@@ -88,6 +88,7 @@ func (r *MIGReporter) SetupWithManager(mgr ctrl.Manager, controllerName string, 
 			&source.Kind{Type: &v1.Node{}},
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(
+				excludeDeletePredicate{},
 				matchingNamePredicate{Name: nodeName},
 				nodeResourcesChangedPredicate{},
 			),

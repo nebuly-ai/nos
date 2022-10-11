@@ -7,6 +7,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+// matchingNamePredicate
 type matchingNamePredicate struct {
 	Name string
 }
@@ -37,5 +38,23 @@ func (p nodeResourcesChangedPredicate) Update(updateEvent event.UpdateEvent) boo
 	if !reflect.DeepEqual(newNode.Status.Allocatable, oldNode.Status.Allocatable) {
 		return false
 	}
-	return reflect.DeepEqual(newNode.Status.Capacity, oldNode.Status.Capacity)
+	return !reflect.DeepEqual(newNode.Status.Capacity, oldNode.Status.Capacity)
+}
+
+// annotationsChangedPredicate
+type annotationsChangedPredicate struct {
+	predicate.Funcs
+}
+
+func (p annotationsChangedPredicate) Update(updateEvent event.UpdateEvent) bool {
+	return !reflect.DeepEqual(updateEvent.ObjectOld.GetAnnotations(), updateEvent.ObjectNew.GetAnnotations())
+}
+
+// excludeDeletePredicate
+type excludeDeletePredicate struct {
+	predicate.Funcs
+}
+
+func (p excludeDeletePredicate) Delete(deleteEvent event.DeleteEvent) bool {
+	return false
 }
