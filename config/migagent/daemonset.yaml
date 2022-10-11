@@ -34,10 +34,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+          args:
+            - "--config=migagent_config.yaml"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
-              drop: ["ALL"]
+              drop: [ "ALL" ]
           livenessProbe:
             httpGet:
               path: /healthz
@@ -60,6 +62,9 @@ spec:
             - name: run-nvidia
               mountPath: /run/nvidia
               mountPropagation: HostToContainer
+            - name: migagent-config
+              mountPath: /migagent_config.yaml
+              subPath: migagent_config.yaml
       terminationGracePeriodSeconds: 30
       serviceAccountName: migagent
       volumes:
@@ -70,3 +75,6 @@ spec:
           hostPath:
             path: /run/nvidia
             type: Directory
+        - name: migagent-config
+          configMap:
+            name: migagent-config

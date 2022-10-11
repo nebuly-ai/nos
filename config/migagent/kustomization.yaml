@@ -1,13 +1,19 @@
 resources:
-- rbac.yaml
-- serviceaccount.yaml
-- daemonset.yaml
+  - rbac.yaml
+  - serviceaccount.yaml
+  - daemonset.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
+
+configMapGenerator:
+  - files:
+      - migagent_config.yaml
+    name: migagent-config
+
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-- name: migagent
-  newName: telemaco019/test
-  newTag: latest
+  - name: migagent
+    newName: telemaco019/test
+    newTag: latest
