@@ -56,18 +56,23 @@ func NewMIGReporter(node string, k8sClient kubernetes.Interface, migClient *mig.
 }
 
 func (r *MIGReporter) nodeAdded(_ interface{}) {
+	klog.V(3).Info("node added")
 	if err := r.ReportMIGResourcesStatus(context.Background()); err != nil {
 		klog.Error("unable to report MIG status", err)
 	}
 }
 
 func (r *MIGReporter) nodeUpdated(old, newObj interface{}) {
+	klog.V(3).Info("node updated")
 	oldNode := old.(*v1.Node)
 	newNode := newObj.(*v1.Node)
-	if !equality.Semantic.DeepEqual(oldNode.Status.Allocatable, newNode.Status.Allocatable) {
-		if err := r.ReportMIGResourcesStatus(context.Background()); err != nil {
-			klog.Error("unable to report MIG status", err)
-		}
+	if equality.Semantic.DeepEqual(oldNode.Status.Allocatable, newNode.Status.Allocatable) {
+		klog.V(3).Info("allocatable resources unchanged, nothing to do")
+		return
+	}
+	klog.V(3).Info("allocatable resources changed")
+	if err := r.ReportMIGResourcesStatus(context.Background()); err != nil {
+		klog.Error("unable to report MIG status", err)
 	}
 }
 
