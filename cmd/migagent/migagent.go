@@ -4,15 +4,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
 	"os"
@@ -97,16 +93,6 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-func newSharedFactoryForNode(k8sClient *kubernetes.Clientset, nodeName string) informers.SharedInformerFactory {
-	return informers.NewSharedInformerFactoryWithOptions(
-		k8sClient,
-		0,
-		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-			options.FieldSelector = fmt.Sprintf("metadata.name=%s", nodeName)
-		}),
-	)
 }
 
 func newPodResourcesListerClient() (pdrv1.PodResourcesListerClient, error) {
