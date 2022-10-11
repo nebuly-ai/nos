@@ -6,7 +6,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/components/mighandler"
+	"github.com/nebuly-ai/nebulnetes/pkg/components/migagent"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
@@ -52,7 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 	migClient := mig.NewClient(podResourcesClient, nvmlClient)
-	migReporter := mighandler.NewMIGReporter(
+	migReporter := migagent.NewMIGReporter(
 		nodeName,
 		k8sClient,
 		&migClient,

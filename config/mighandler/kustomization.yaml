@@ -8,6 +8,6 @@ generatorOptions:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-- name: mighandler
+- name: migagent
   newName: telemaco019/test
   newTag: latest

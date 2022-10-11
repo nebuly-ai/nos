@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mighandler-role
+  name: migagent-role
 rules:
   - apiGroups: [""]
     resources: ["nodes"]
@@ -11,12 +11,12 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: mighandler-rolebinding
+  name: migagent-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: scheduler-role
 subjects:
   - kind: ServiceAccount
-    name: mighandler
+    name: migagent
     namespace: system

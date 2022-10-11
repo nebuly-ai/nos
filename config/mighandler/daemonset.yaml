@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: mighandler
+  name: migagent
 spec:
   selector:
     matchLabels:
-      name: mighandler
+      name: migagent
   template:
     metadata:
       labels:
-        name: mighandler
+        name: migagent
     spec:
       nodeSelector:
         nvidia.com/mig.strategy: mixed
@@ -28,7 +28,7 @@ spec:
       priorityClassName: "system-node-critical"
       containers:
         - name: manager
-          image: mighandler:latest
+          image: migagent:latest
           env:
             - name: NODE_NAME
               valueFrom:
@@ -50,7 +50,7 @@ spec:
               mountPropagation: HostToContainer
           # TODO: add probes
       terminationGracePeriodSeconds: 30
-      serviceAccountName: mighandler
+      serviceAccountName: migagent
       volumes:
         - name: device-plugin
           hostPath:

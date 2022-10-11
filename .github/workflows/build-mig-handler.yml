@@ -4,12 +4,12 @@
         docker-image:
           description: 'The name of the docker image that will be build'
           required: true
-          default: 'mighandler:latest'
+          default: 'migagent:latest'
           type: string
 
   env:
     REGISTRY: ghcr.io
-    IMAGE_NAME: "${{ github.repository }}-mighandler:latest"
+    IMAGE_NAME: "${{ github.repository }}-migagent:latest"
 
   jobs:
     docker:
@@ -33,5 +33,5 @@
           with:
             context: .
             push: true
-            file: build/mighandler/Dockerfile
+            file: build/migagent/Dockerfile
             tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}

@@ -15,4 +15,4 @@ kind: Kustomization
 images:
 - name: scheduler
   newName: scheduler
-  newTag: 0.0.1
+  newTag: latest

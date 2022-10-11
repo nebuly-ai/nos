@@ -1,4 +1,4 @@
-package mighandler
+package migagent
 
 import (
 	"context"
