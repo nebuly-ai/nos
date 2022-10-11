@@ -87,7 +87,7 @@ docker-build-gpu-partitioner: ## Build docker image with the manager.
 
 .PHONY: docker-build-mighandler
 docker-build-mighandler: ## Build docker image with the manager.
-	docker buildx build --platform linux/amd64 -t ${MIGHANLDER_IMG} -f build/mighandler/Dockerfile .
+	docker buildx build --platform linux/amd64 -t ${MIGHANDLER_IMG} -f build/mighandler/Dockerfile .
 
 .PHONY: docker-build-controller
 docker-build-controller: ## Build docker image with the manager.
