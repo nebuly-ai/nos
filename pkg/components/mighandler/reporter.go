@@ -27,6 +27,8 @@ type MIGReporter struct {
 	nodeInformer    informersv1.NodeInformer
 	node            string
 	refreshInterval time.Duration
+
+	logger klog.Logger
 }
 
 func NewMIGReporter(node string, k8sClient kubernetes.Interface, migClient *mig.Client, sharedFactory informers.SharedInformerFactory, refreshInterval time.Duration) MIGReporter {
@@ -37,6 +39,7 @@ func NewMIGReporter(node string, k8sClient kubernetes.Interface, migClient *mig.
 		nodeInformer:    nodeInformer,
 		refreshInterval: refreshInterval,
 		node:            node,
+		logger:          klog.NewKlogr().WithName("reporter"),
 	}
 	nodeInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
@@ -56,38 +59,37 @@ func NewMIGReporter(node string, k8sClient kubernetes.Interface, migClient *mig.
 }
 
 func (r *MIGReporter) nodeAdded(_ interface{}) {
-	klog.V(3).Info("node added")
+	r.logger.Info("node added")
 	if err := r.ReportMIGResourcesStatus(context.Background()); err != nil {
 		klog.Error("unable to report MIG status", err)
 	}
 }
 
 func (r *MIGReporter) nodeUpdated(old, newObj interface{}) {
-	klog.V(3).Info("node updated")
+	r.logger.Info("node updated")
 	oldNode := old.(*v1.Node)
 	newNode := newObj.(*v1.Node)
 	if equality.Semantic.DeepEqual(oldNode.Status.Allocatable, newNode.Status.Allocatable) {
-		klog.V(3).Info("allocatable resources unchanged, nothing to do")
+		klog.Info("allocatable resources unchanged, nothing to do")
 		return
 	}
-	klog.V(3).Info("allocatable resources changed")
+	klog.Info("allocatable resources changed")
 	if err := r.ReportMIGResourcesStatus(context.Background()); err != nil {
 		klog.Error("unable to report MIG status", err)
 	}
 }
 
 func (r *MIGReporter) ReportMIGResourcesStatus(ctx context.Context) error {
-	logger := klog.FromContext(ctx)
-	logger.Info("Reporting MIG resources status", "node", r.node)
+	r.logger.Info("Reporting MIG resources status", "node", r.node)
 
 	// Compute new status annotations
 	usedMIGs, err := r.migClient.GetUsedMIGDevices(ctx)
-	logger.V(3).Info("Loaded used MIG devices", "usedMIGs", usedMIGs)
+	r.logger.V(3).Info("Loaded used MIG devices", "usedMIGs", usedMIGs)
 	if err != nil {
 		return err
 	}
 	freeMIGs, err := r.migClient.GetFreeMIGDevices(ctx)
-	logger.V(3).Info("Loaded free MIG devices", "freeMIGs", usedMIGs)
+	r.logger.V(3).Info("Loaded free MIG devices", "freeMIGs", usedMIGs)
 	if err != nil {
 		return err
 	}
@@ -96,16 +98,16 @@ func (r *MIGReporter) ReportMIGResourcesStatus(ctx context.Context) error {
 	// Get current status annotations and compare with new ones
 	oldStatusAnnotations, err := r.readCurrentStatusAnnotations()
 	if err != nil {
-		logger.Error(err, "Unable to read current status annotations from node")
+		r.logger.Error(err, "Unable to read current status annotations from node")
 		return err
 	}
 	if reflect.DeepEqual(newStatusAnnotations, oldStatusAnnotations) {
-		logger.Info("Current status is equal to last reported status, nothing to do")
+		r.logger.Info("Current status is equal to last reported status, nothing to do")
 		return nil
 	}
 
 	// Update node
-	logger.Info("Status changed - reporting it by updating node annotations")
+	r.logger.Info("Status changed - reporting it by updating node annotations")
 	updateFunc := func(annotations map[string]string) {
 		for k := range annotations {
 			if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
@@ -124,10 +126,10 @@ func (r *MIGReporter) ReportMIGResourcesStatus(ctx context.Context) error {
 		updateFunc,
 	)
 	if err != nil {
-		logger.Error(err, "unable to update node status annotations")
+		r.logger.Error(err, "unable to update node status annotations")
 		return err
 	}
-	logger.Info("Updated status reported - node annotations updated successfully")
+	r.logger.Info("Updated status reported - node annotations updated successfully")
 
 	return nil
 }
@@ -137,63 +139,19 @@ func (r *MIGReporter) readCurrentStatusAnnotations() (map[string]string, error) 
 	if err != nil {
 		return nil, err
 	}
-	res := make(map[string]string)
-	for k, v := range node.Annotations {
-		if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
-			res[k] = v
-		}
-	}
-	return res, nil
-}
-
-func computeStatusAnnotations(used []mig.Device, free []mig.Device) map[string]string {
-	res := make(map[string]string)
-
-	// Compute used MIG devices quantities
-	usedMigToQuantity := make(map[string]int)
-	for _, u := range used {
-		key := u.FullResourceName()
-		currentCount, _ := usedMigToQuantity[key]
-		currentCount++
-		usedMigToQuantity[key] = currentCount
-	}
-	// Compute free MIG devices quantities
-	freeMigToQuantity := make(map[string]int)
-	for _, u := range free {
-		key := u.FullResourceName()
-		currentCount, _ := freeMigToQuantity[key]
-		currentCount++
-		freeMigToQuantity[key] = currentCount
-	}
-
-	// Used annotations
-	for _, u := range used {
-		quantity, _ := usedMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, u.GpuIndex, u.GetMIGProfileName())
-		res[key] = fmt.Sprintf("%d", quantity)
-	}
-	// Free annotations
-	for _, u := range free {
-		quantity, _ := freeMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, u.GpuIndex, u.GetMIGProfileName())
-		res[key] = fmt.Sprintf("%d", quantity)
-	}
-
-	return res
+	return getStatusAnnotations(node), nil
 }
 
 // Start starts running the MIGReporter. The reporter will stop running
 // when the context is closed. Start blocks until the context is closed.
 func (r *MIGReporter) Start(ctx context.Context) error {
-	logger := klog.FromContext(ctx)
-
 	// Start informers
 	go r.nodeInformer.Informer().Run(ctx.Done())
-	logger.Info("Waiting for shared informer cached sync...")
+	r.logger.Info("Waiting for shared informer cached sync...")
 	if !cache.WaitForCacheSync(ctx.Done(), r.nodeInformer.Informer().HasSynced) {
 		return fmt.Errorf("timed out waiting for caches to sync")
 	}
-	logger.Info("Informer cache synced")
+	r.logger.Info("Informer cache synced")
 
 	// Schedule refresh
 	ticker := time.NewTicker(r.refreshInterval)
@@ -201,10 +159,10 @@ func (r *MIGReporter) Start(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			if err := r.ReportMIGResourcesStatus(ctx); err != nil {
-				logger.Error(err, "unable to report MIG status")
+				r.logger.Error(err, "unable to report MIG status")
 			}
 		case <-ctx.Done():
-			logger.V(3).Info("ctx done: stop reporting MIG resources status")
+			r.logger.V(3).Info("ctx done: stop reporting MIG resources status")
 			return nil
 		}
 	}

@@ -16,6 +16,11 @@ func (b *nodeBuilder) Get() v1.Node {
 	return b.Node
 }
 
+func (b *nodeBuilder) WithAnnotations(annotations map[string]string) *nodeBuilder {
+	b.Node.Annotations = annotations
+	return b
+}
+
 func BuildNode(name string) *nodeBuilder {
 	node := v1.Node{
 		TypeMeta: metav1.TypeMeta{
