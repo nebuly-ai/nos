@@ -177,6 +177,8 @@ func computeStatusAnnotations(used []mig.Device, free []mig.Device) map[string]s
 	return res
 }
 
+// Start starts running the MIGReporter. The reporter will stop running
+// when the context is closed. Start blocks until the context is closed.
 func (r *MIGReporter) Start(ctx context.Context) error {
 	logger := klog.FromContext(ctx)
 
@@ -190,16 +192,15 @@ func (r *MIGReporter) Start(ctx context.Context) error {
 
 	// Schedule refresh
 	ticker := time.NewTicker(r.refreshInterval)
-	go func() {
+	for {
 		select {
 		case <-ticker.C:
 			if err := r.ReportMIGResourcesStatus(ctx); err != nil {
 				logger.Error(err, "unable to report MIG status")
 			}
 		case <-ctx.Done():
-			ticker.Stop()
-			return
+			logger.V(3).Info("ctx done: stop reporting MIG resources status")
+			return nil
 		}
-	}()
-	return nil
+	}
 }

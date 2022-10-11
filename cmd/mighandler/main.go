@@ -65,8 +65,6 @@ func main() {
 		logger.Error(err, "unable to start MIG Reporter", "node", nodeName)
 		os.Exit(1)
 	}
-
-	<-ctx.Done()
 }
 
 func newSharedFactoryForNode(k8sClient *kubernetes.Clientset, nodeName string) informers.SharedInformerFactory {

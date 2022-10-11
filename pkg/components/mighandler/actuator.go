@@ -1,4 +1,4 @@
 package mighandler
 
-type MIGGeometryActuator struct {
+type MIGActuator struct {
 }
