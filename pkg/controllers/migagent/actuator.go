@@ -33,9 +33,13 @@ func (a *MIGActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, err
 	}
 
-	//if specMatchesStatusAnnotations() {
-	//
-	//}
+	// Check if status already matches spec
+	if specMatchesStatusAnnotations(instance) {
+		logger.Info("Status matches desired MIG geometry, nothing to do")
+		return ctrl.Result{}, nil
+	}
+
+	getStatusAnnotations(instance)
 
 	return ctrl.Result{}, nil
 }

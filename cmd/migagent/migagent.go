@@ -97,6 +97,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Setup MIG Actuator
+	migActuator := migagent.NewActuator(
+		mgr.GetClient(),
+		&migClient,
+	)
+	if err := migActuator.SetupWithManager(mgr, "MIGActuator", nodeName); err != nil {
+		setupLog.Error(err, "unable to create MIG Actuator")
+		os.Exit(1)
+	}
+
 	// Add health check endpoints to manager
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
