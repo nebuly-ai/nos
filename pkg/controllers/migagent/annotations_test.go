@@ -68,7 +68,7 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 				annotations[k] = v
 			}
 			node := factory.BuildNode("test").WithAnnotations(annotations).Get()
-			matches := specMatchesStatusAnnotations(&node)
+			matches := specMatchesStatusAnnotations(node)
 			assert.Equal(t, tt.expected, matches)
 		})
 	}

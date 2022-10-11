@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func getStatusAnnotations(node *v1.Node) map[string]string {
+func getStatusAnnotations(node v1.Node) map[string]string {
 	res := make(map[string]string)
 	for k, v := range node.Annotations {
 		if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
@@ -20,7 +20,7 @@ func getStatusAnnotations(node *v1.Node) map[string]string {
 	return res
 }
 
-func getSpecAnnotations(node *v1.Node) map[string]string {
+func getSpecAnnotations(node v1.Node) map[string]string {
 	res := make(map[string]string)
 	for k, v := range node.Annotations {
 		if strings.HasPrefix(k, v1alpha1.AnnotationGPUSpecPrefix) {
@@ -30,7 +30,7 @@ func getSpecAnnotations(node *v1.Node) map[string]string {
 	return res
 }
 
-func specMatchesStatusAnnotations(node *v1.Node) bool {
+func specMatchesStatusAnnotations(node v1.Node) bool {
 	specAnnotations := getSpecAnnotations(node)
 	statusAnnotations := getStatusAnnotations(node)
 

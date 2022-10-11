@@ -3,22 +3,28 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/components/migagent"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog/v2"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"time"
+)
+
+var (
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 )
 
 const (
@@ -29,40 +35,66 @@ const (
 )
 
 func main() {
-	ctx := context.Background()
-	klog.InitFlags(nil)
+	// Setup options
+	opts := zap.Options{
+		Development: true,
+	}
+	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
-	logger := klog.FromContext(ctx).WithName("setup")
-	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	// Init shared factory
+	// Get node name
 	nodeName, err := util.GetEnvOrError("NODE_NAME")
 	if err != nil {
-		logger.Error(err, "missing required env variable")
+		setupLog.Error(err, "missing required env variable")
 		os.Exit(1)
 	}
-	sharedFactory := newSharedFactoryForNode(k8sClient, nodeName)
 
-	// Init MIG Reporter
+	// Setup controller manager
+	options := ctrl.Options{
+		Scheme: scheme,
+	}
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
+	if err != nil {
+		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	// Init MIG client
 	podResourcesClient, err := newPodResourcesListerClient()
-	logger.Info("Initializing NVML client")
+	setupLog.Info("Initializing NVML client")
 	nvmlClient, err := nvml.NewClient()
 	if err != nil {
-		logger.Error(err, "unable to init nvml client")
+		setupLog.Error(err, "unable to init nvml client")
 		os.Exit(1)
 	}
 	migClient := mig.NewClient(podResourcesClient, nvmlClient)
-	migReporter := migagent.NewMIGReporter(
-		nodeName,
-		k8sClient,
+
+	// Setup MIG Reporter
+	migReporter := migagent.NewReporter(
+		mgr.GetClient(),
 		&migClient,
-		sharedFactory,
 		10*time.Second,
 	)
+	if err := migReporter.SetupWithManager(mgr, "MIGReporter", nodeName); err != nil {
+		setupLog.Error(err, "unable to create MIG Reporter")
+		os.Exit(1)
+	}
 
-	// Start MIG Reporter
-	if err := migReporter.Start(ctx); err != nil {
-		logger.Error(err, "unable to start MIG Reporter", "node", nodeName)
+	// Add health check endpoints to manager
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
+	// Start manager
+	setupLog.Info("starting manager")
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }

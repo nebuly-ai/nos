@@ -29,7 +29,7 @@ func init() {
 }
 
 func main() {
-	// Setup logging
+	// Setup options
 	opts := zap.Options{
 		Development: true,
 	}
