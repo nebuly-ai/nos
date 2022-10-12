@@ -2,6 +2,7 @@ package migagent
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,14 +34,23 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, err
 	}
 
-	// Check if status already matches spec
-	if specMatchesStatusAnnotations(instance) {
-		logger.Info("Status matches desired MIG config, nothing to do")
+	// Check if reported status already matches spec
+	statusAnnotations, specAnnotations := v1alpha1.GetGPUAnnotationsFromNode(instance)
+	if specMatchesStatus(specAnnotations, statusAnnotations) {
+		logger.Info("Reported status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
 	}
 
-	getStatusAnnotations(instance)
-	getSpecAnnotations(instance)
+	// Check if actual status already matches spec
+	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
+	if err != nil {
+		logger.Error(err, "unable to get MIG device resources")
+		return ctrl.Result{}, nil
+	}
+	if specMatchesResources(specAnnotations, migDeviceResources) {
+		logger.Info("Actual status matches desired MIG config, nothing to do")
+		return ctrl.Result{}, nil
+	}
 
 	return ctrl.Result{}, nil
 }

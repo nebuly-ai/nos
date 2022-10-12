@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	v1 "k8s.io/api/core/v1"
-	"strings"
 )
 
 // Resources
@@ -16,30 +15,3 @@ const (
 	// LabelCapacityInfo specifies the status of a Pod in regard to the ElasticQuota it belongs to
 	LabelCapacityInfo = "n8s.nebuly.ai/capacity"
 )
-
-// Annotations
-const (
-	AnnotationGPUSpecPrefix = "n8s.nebuly.ai/spec-gpu"
-	AnnotationGPUSpecFormat = "n8s.nebuly.ai/spec-gpu-%d-%s"
-
-	AnnotationGPUStatusPrefix     = "n8s.nebuly.ai/status-gpu"
-	AnnotationUsedMigStatusFormat = "n8s.nebuly.ai/status-gpu-%d-%s-used"
-	AnnotationFreeMigStatusFormat = "n8s.nebuly.ai/status-gpu-%d-%s-free"
-)
-
-type GPUSpecAnnotation string
-
-func (a GPUSpecAnnotation) GetGPUIndexWithMigProfile() string {
-	result := strings.TrimPrefix(string(a), AnnotationGPUSpecPrefix)
-	return strings.TrimPrefix(result, "-")
-}
-
-type GPUStatusAnnotation string
-
-func (a GPUStatusAnnotation) GetGPUIndexWithMigProfile() string {
-	result := strings.TrimPrefix(string(a), AnnotationGPUStatusPrefix)
-	result = strings.TrimSuffix(result, "-used")
-	result = strings.TrimSuffix(result, "-free")
-	result = strings.TrimPrefix(result, "-")
-	return result
-}

@@ -3,7 +3,6 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -60,15 +59,19 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotations := make(map[string]string)
+			specAnnotations := make([]v1alpha1.GPUSpecAnnotation, len(tt.spec))
 			for k, v := range tt.spec {
-				annotations[k] = v
+				a, _ := v1alpha1.NewGPUSpecAnnotation(k, v)
+				specAnnotations = append(specAnnotations, a)
 			}
+
+			statusAnnotations := make([]v1alpha1.GPUStatusAnnotation, len(tt.status))
 			for k, v := range tt.status {
-				annotations[k] = v
+				a, _ := v1alpha1.NewGPUStatusAnnotation(k, v)
+				statusAnnotations = append(statusAnnotations, a)
 			}
-			node := factory.BuildNode("test").WithAnnotations(annotations).Get()
-			matches := specMatchesStatusAnnotations(node)
+
+			matches := specMatchesStatus(specAnnotations, statusAnnotations)
 			assert.Equal(t, tt.expected, matches)
 		})
 	}

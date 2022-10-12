@@ -61,7 +61,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	newStatusAnnotations := computeStatusAnnotations(usedMigs, freeMigs)
 
 	// Get current status annotations and compare with new ones
-	oldStatusAnnotations := getStatusAnnotations(instance)
+	oldStatusAnnotations, _ := v1alpha1.GetGPUAnnotationsFromNode(instance)
 	if reflect.DeepEqual(newStatusAnnotations, oldStatusAnnotations) {
 		logger.Info("Current status is equal to last reported status, nothing to do")
 		return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
@@ -75,8 +75,8 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 			delete(updated.Annotations, k)
 		}
 	}
-	for k, v := range newStatusAnnotations {
-		updated.Annotations[k] = v
+	for _, a := range newStatusAnnotations {
+		updated.Annotations[a.Name] = a.Value()
 	}
 	if err := r.Client.Patch(ctx, updated, client.MergeFrom(&instance)); err != nil {
 		logger.Error(err, "unable to update node status annotations")
