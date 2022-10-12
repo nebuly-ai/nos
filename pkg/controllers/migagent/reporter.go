@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	"reflect"
@@ -14,14 +16,14 @@ import (
 	"time"
 )
 
-type MIGReporter struct {
+type MigReporter struct {
 	client.Client
 	migClient       *mig.Client
 	refreshInterval time.Duration
 }
 
-func NewReporter(client client.Client, migClient *mig.Client, refreshInterval time.Duration) MIGReporter {
-	reporter := MIGReporter{
+func NewReporter(client client.Client, migClient *mig.Client, refreshInterval time.Duration) MigReporter {
+	reporter := MigReporter{
 		Client:          client,
 		migClient:       migClient,
 		refreshInterval: refreshInterval,
@@ -29,7 +31,7 @@ func NewReporter(client client.Client, migClient *mig.Client, refreshInterval ti
 	return reporter
 }
 
-func (r *MIGReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := klog.FromContext(ctx)
 	logger.Info("Reporting MIG resources status")
 
@@ -39,19 +41,24 @@ func (r *MIGReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 
 	// Compute new status annotations
-	usedMIGs, err := r.migClient.GetUsedMIGDevices(ctx)
+	migResources, err := r.migClient.GetMigDeviceResources(ctx)
 	if err != nil {
-		logger.Error(err, "unable to get used MIG devices")
+		logger.Error(err, "unable to get MIG device resources")
 		return ctrl.Result{}, err
 	}
-	freeMIGs, err := r.migClient.GetFreeMIGDevices(ctx)
-	if err != nil {
-		logger.Error(err, "unable to get free MIG devices")
-		return ctrl.Result{}, err
+	usedMigs := make([]types.MigDeviceResource, 0)
+	freeMigs := make([]types.MigDeviceResource, 0)
+	for _, r := range migResources {
+		if r.Status == resource.StatusUsed {
+			usedMigs = append(usedMigs, r)
+		}
+		if r.Status == resource.StatusFree {
+			freeMigs = append(freeMigs, r)
+		}
 	}
-	logger.V(3).Info("Loaded free MIG devices", "freeMIGs", usedMIGs)
-	logger.V(3).Info("Loaded used MIG devices", "usedMIGs", usedMIGs)
-	newStatusAnnotations := computeStatusAnnotations(usedMIGs, freeMIGs)
+	logger.V(3).Info("Loaded free MIG devices", "freeMIGs", freeMigs)
+	logger.V(3).Info("Loaded used MIG devices", "usedMIGs", usedMigs)
+	newStatusAnnotations := computeStatusAnnotations(usedMigs, freeMigs)
 
 	// Get current status annotations and compare with new ones
 	oldStatusAnnotations := getStatusAnnotations(instance)
@@ -80,7 +87,7 @@ func (r *MIGReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 }
 
-func (r *MIGReporter) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {
+func (r *MigReporter) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&v1.Node{},

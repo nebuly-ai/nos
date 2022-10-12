@@ -30,7 +30,7 @@ func (c ClientImpl) GetGpuIndex(migDeviceId string) (int, error) {
 	klog.V(1).InfoS("retrieving GPU index of MIG device", "MIGDeviceUUID", migDeviceId)
 	var result int
 	var found bool
-	err := c.visitMIGDevices(func(gpuIndex, migDeviceIndex int, migDevice nvml.Device) (bool, error) {
+	err := c.visitMigDevices(func(gpuIndex, migDeviceIndex int, migDevice nvml.Device) (bool, error) {
 		uuid, ret := migDevice.GetUUID()
 		if ret != nvml.SUCCESS {
 			return false, fmt.Errorf(
@@ -67,7 +67,7 @@ func (c ClientImpl) GetGpuIndex(migDeviceId string) (int, error) {
 	return result, nil
 }
 
-func (c ClientImpl) visitMIGDevices(visit func(gpuIndex, migDeviceIndex int, migDevice nvml.Device) (bool, error)) error {
+func (c ClientImpl) visitMigDevices(visit func(gpuIndex, migDeviceIndex int, migDevice nvml.Device) (bool, error)) error {
 	count, ret := nvml.DeviceGetCount()
 	if ret != nvml.SUCCESS {
 		return fmt.Errorf("error getting GPU device count: %v", nvml.ErrorString(ret))
@@ -78,7 +78,7 @@ func (c ClientImpl) visitMIGDevices(visit func(gpuIndex, migDeviceIndex int, mig
 		if ret != nvml.SUCCESS {
 			return fmt.Errorf("error getting device handle for GPU with index %d: %v", i, nvml.ErrorString(ret))
 		}
-		continueVisiting, err := device{d}.visitMIGDevices(func(migDeviceIndex int, migDevice nvml.Device) (bool, error) {
+		continueVisiting, err := device{d}.visitMigDevices(func(migDeviceIndex int, migDevice nvml.Device) (bool, error) {
 			return visit(i, migDeviceIndex, migDevice)
 		})
 		if err != nil {
@@ -91,7 +91,7 @@ func (c ClientImpl) visitMIGDevices(visit func(gpuIndex, migDeviceIndex int, mig
 	return nil
 }
 
-func (d device) visitMIGDevices(visit func(migDeviceIndex int, migDevice nvml.Device) (bool, error)) (bool, error) {
+func (d device) visitMigDevices(visit func(migDeviceIndex int, migDevice nvml.Device) (bool, error)) (bool, error) {
 	count, ret := d.GetMaxMigDeviceCount()
 	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("error getting max MIG device count: %v", nvml.ErrorString(ret))

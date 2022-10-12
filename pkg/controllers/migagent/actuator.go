@@ -10,22 +10,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type MIGActuator struct {
+type MigActuator struct {
 	client.Client
 	migClient *mig.Client
 }
 
-func NewActuator(client client.Client, migClient *mig.Client) MIGActuator {
-	reporter := MIGActuator{
+func NewActuator(client client.Client, migClient *mig.Client) MigActuator {
+	reporter := MigActuator{
 		Client:    client,
 		migClient: migClient,
 	}
 	return reporter
 }
 
-func (a *MIGActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx).WithName("Actuator")
-	logger.Info("Actuating desired MIG geometry")
+	logger.Info("Actuating desired MIG config")
 
 	// Retrieve instance
 	var instance v1.Node
@@ -35,16 +35,17 @@ func (a *MIGActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 
 	// Check if status already matches spec
 	if specMatchesStatusAnnotations(instance) {
-		logger.Info("Status matches desired MIG geometry, nothing to do")
+		logger.Info("Status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
 	}
 
 	getStatusAnnotations(instance)
+	getSpecAnnotations(instance)
 
 	return ctrl.Result{}, nil
 }
 
-func (a *MIGActuator) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {
+func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&v1.Node{},

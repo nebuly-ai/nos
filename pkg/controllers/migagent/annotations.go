@@ -3,7 +3,7 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	v1 "k8s.io/api/core/v1"
 	"reflect"
 	"strconv"
@@ -34,21 +34,21 @@ func specMatchesStatusAnnotations(node v1.Node) bool {
 	specAnnotations := getSpecAnnotations(node)
 	statusAnnotations := getStatusAnnotations(node)
 
-	specMIGProfilesWithQuantity := make(map[string]int)
-	statusMIGProfilesWithQuantity := make(map[string]int)
+	specMigProfilesWithQuantity := make(map[string]int)
+	statusMigProfilesWithQuantity := make(map[string]int)
 	for k, v := range specAnnotations {
 		quantity, _ := strconv.Atoi(v)
-		specMIGProfilesWithQuantity[v1alpha1.GPUSpecAnnotation(k).GetGPUIndexWithMIGProfile()] += quantity
+		specMigProfilesWithQuantity[v1alpha1.GPUSpecAnnotation(k).GetGPUIndexWithMigProfile()] += quantity
 	}
 	for k, v := range statusAnnotations {
 		quantity, _ := strconv.Atoi(v)
-		statusMIGProfilesWithQuantity[v1alpha1.GPUStatusAnnotation(k).GetGPUIndexWithMIGProfile()] += quantity
+		statusMigProfilesWithQuantity[v1alpha1.GPUStatusAnnotation(k).GetGPUIndexWithMigProfile()] += quantity
 	}
 
-	return reflect.DeepEqual(specMIGProfilesWithQuantity, statusMIGProfilesWithQuantity)
+	return reflect.DeepEqual(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func computeStatusAnnotations(used []mig.Device, free []mig.Device) map[string]string {
+func computeStatusAnnotations(used []types.MigDeviceResource, free []types.MigDeviceResource) map[string]string {
 	res := make(map[string]string)
 
 	// Compute used MIG devices quantities
@@ -71,13 +71,13 @@ func computeStatusAnnotations(used []mig.Device, free []mig.Device) map[string]s
 	// Used annotations
 	for _, u := range used {
 		quantity, _ := usedMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, u.GpuIndex, u.GetMIGProfileName())
+		key := fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
 		res[key] = fmt.Sprintf("%d", quantity)
 	}
 	// Free annotations
 	for _, u := range free {
 		quantity, _ := freeMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, u.GpuIndex, u.GetMIGProfileName())
+		key := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
 		res[key] = fmt.Sprintf("%d", quantity)
 	}
 

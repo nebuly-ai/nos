@@ -3,6 +3,7 @@ package mig
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,7 @@ func (c MockedPodResourcesListerClient) GetAllocatableResources(
 	return &c.GetAllocatableResp, c.GetAllocatableError
 }
 
-func TestClient_GetUsedMIGDevices(t *testing.T) {
+func TestClient_GetUsedMigDevices(t *testing.T) {
 	testCases := []struct {
 		name                 string
 		listPodResourcesResp pdrv1.ListPodResourcesResponse
@@ -40,13 +41,13 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 		deviceIdToGPUIndex   map[string]int
 
 		expectedError   bool
-		expectedDevices []Device
+		expectedDevices []types.MigDeviceResource
 	}{
 		{
 			name:                 "Empty list pod resources resp",
 			listPodResourcesResp: pdrv1.ListPodResourcesResponse{},
 			expectedError:        false,
-			expectedDevices:      make([]Device, 0),
+			expectedDevices:      make([]types.MigDeviceResource, 0),
 		},
 		{
 			name:                 "List pod resources returns error",
@@ -125,10 +126,10 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 				},
 			},
 			expectedError:   false,
-			expectedDevices: make([]Device, 0),
+			expectedDevices: make([]types.MigDeviceResource, 0),
 		},
 		{
-			name: "Error fetching MIG device GPU index",
+			name: "Error fetching Mig device GPU index",
 			listPodResourcesResp: pdrv1.ListPodResourcesResponse{
 				PodResources: []*pdrv1.PodResources{
 					{
@@ -213,11 +214,12 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 				"mig-device-2": 2,
 				"mig-device-3": 2,
 			},
-			expectedDevices: []Device{
+			expectedDevices: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-2g.10gb",
 						DeviceId:     "mig-device-1",
+						Status:       resource.StatusUsed,
 					},
 					GpuIndex: 1,
 				},
@@ -225,6 +227,7 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-2g.20gb",
 						DeviceId:     "mig-device-2",
+						Status:       resource.StatusUsed,
 					},
 					GpuIndex: 2,
 				},
@@ -232,6 +235,7 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-2g.20gb",
 						DeviceId:     "mig-device-3",
+						Status:       resource.StatusUsed,
 					},
 					GpuIndex: 2,
 				},
@@ -254,7 +258,7 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 				nvmlClient: nvmlClient,
 			}
 
-			usedDevices, err := client.GetUsedMIGDevices(context.TODO())
+			usedDevices, err := client.getUsedMigDeviceResources(context.TODO())
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -265,7 +269,7 @@ func TestClient_GetUsedMIGDevices(t *testing.T) {
 	}
 }
 
-func TestClient_GetAllocatableMIGDevices(t *testing.T) {
+func TestClient_GetAllocatableMigDevices(t *testing.T) {
 	testCases := []struct {
 		name                     string
 		allocatableResourcesResp pdrv1.AllocatableResourcesResponse
@@ -274,13 +278,13 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 		deviceIdToGPUIndex       map[string]int
 
 		expectedError   bool
-		expectedDevices []Device
+		expectedDevices []types.MigDeviceResource
 	}{
 		{
 			name:                     "Empty allocatable resources resp",
 			allocatableResourcesResp: pdrv1.AllocatableResourcesResponse{},
 			expectedError:            false,
-			expectedDevices:          make([]Device, 0),
+			expectedDevices:          make([]types.MigDeviceResource, 0),
 		},
 		{
 			name:                     "Allocatable resources returns error",
@@ -348,11 +352,12 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 				"mig-2": 1,
 				"mig-3": 2,
 			},
-			expectedDevices: []Device{
+			expectedDevices: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.20gb",
 						DeviceId:     "mig-1",
+						Status:       resource.StatusUnknown,
 					},
 					GpuIndex: 1,
 				},
@@ -360,6 +365,7 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.20gb",
 						DeviceId:     "mig-2",
+						Status:       resource.StatusUnknown,
 					},
 					GpuIndex: 1,
 				},
@@ -367,6 +373,7 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.10gb",
 						DeviceId:     "mig-3",
+						Status:       resource.StatusUnknown,
 					},
 					GpuIndex: 2,
 				},
@@ -389,7 +396,7 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 				nvmlClient: nvmlClient,
 			}
 
-			usedDevices, err := client.GetAllocatableMIGDevices(context.TODO())
+			usedDevices, err := client.getAllocatableMigDeviceResources(context.TODO())
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -400,22 +407,22 @@ func TestClient_GetAllocatableMIGDevices(t *testing.T) {
 	}
 }
 
-func TestGetFreeDevices(t *testing.T) {
+func TestComputeFreeDevicesAndUpdateStatus(t *testing.T) {
 	testCases := []struct {
 		name        string
-		used        []Device
-		allocatable []Device
-		expected    []Device
+		used        []types.MigDeviceResource
+		allocatable []types.MigDeviceResource
+		expected    []types.MigDeviceResource
 	}{
 		{
 			name:        "empty used, empty allocatable",
-			used:        make([]Device, 0),
-			allocatable: make([]Device, 0),
-			expected:    make([]Device, 0),
+			used:        make([]types.MigDeviceResource, 0),
+			allocatable: make([]types.MigDeviceResource, 0),
+			expected:    make([]types.MigDeviceResource, 0),
 		},
 		{
 			name: "Used devices, empty allocatable",
-			used: []Device{
+			used: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -424,13 +431,13 @@ func TestGetFreeDevices(t *testing.T) {
 					GpuIndex: 0,
 				},
 			},
-			allocatable: make([]Device, 0),
-			expected:    make([]Device, 0),
+			allocatable: make([]types.MigDeviceResource, 0),
+			expected:    make([]types.MigDeviceResource, 0),
 		},
 		{
 			name: "Allocatable devices, empty used",
-			used: []Device{},
-			allocatable: []Device{
+			used: []types.MigDeviceResource{},
+			allocatable: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -446,11 +453,12 @@ func TestGetFreeDevices(t *testing.T) {
 					GpuIndex: 1,
 				},
 			},
-			expected: []Device{
+			expected: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
 						DeviceId:     "0",
+						Status:       resource.StatusFree,
 					},
 					GpuIndex: 0,
 				},
@@ -458,6 +466,7 @@ func TestGetFreeDevices(t *testing.T) {
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
 						DeviceId:     "1",
+						Status:       resource.StatusFree,
 					},
 					GpuIndex: 1,
 				},
@@ -465,7 +474,7 @@ func TestGetFreeDevices(t *testing.T) {
 		},
 		{
 			name: "Multiple used, multiple allocatable",
-			used: []Device{
+			used: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -474,7 +483,7 @@ func TestGetFreeDevices(t *testing.T) {
 					GpuIndex: 0,
 				},
 			},
-			allocatable: []Device{
+			allocatable: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -490,11 +499,12 @@ func TestGetFreeDevices(t *testing.T) {
 					GpuIndex: 1,
 				},
 			},
-			expected: []Device{
+			expected: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
 						DeviceId:     "1",
+						Status:       resource.StatusFree,
 					},
 					GpuIndex: 1,
 				},
@@ -504,7 +514,7 @@ func TestGetFreeDevices(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			devices := getFreeDevices(tt.used, tt.allocatable)
+			devices := computeFreeDevicesAndUpdateStatus(tt.used, tt.allocatable)
 			assert.ElementsMatch(t, tt.expected, devices)
 		})
 	}

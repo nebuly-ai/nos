@@ -15,7 +15,7 @@ const (
 	CompositeElasticQuotaControllerName = "composite-elasticquota-controller"
 	ClusterStateNodeControllerName      = "clusterstate-node-controller"
 	ClusterStatePodControllerName       = "clusterstate-pod-controller"
-	MIGPartitionerControllerName        = "mig-partitioner-controller"
+	MigPartitionerControllerName        = "mig-partitioner-controller"
 )
 
 // Error messages

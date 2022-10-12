@@ -94,12 +94,12 @@ func main() {
 		migPlanner,
 		migActuator,
 	)
-	if err := migController.SetupWithManager(mgr, constant.MIGPartitionerControllerName); err != nil {
+	if err := migController.SetupWithManager(mgr, constant.MigPartitionerControllerName); err != nil {
 		setupLog.Error(
 			err,
 			"unable to create controller",
 			"controller",
-			constant.MIGPartitionerControllerName,
+			constant.MigPartitionerControllerName,
 		)
 		os.Exit(1)
 	}

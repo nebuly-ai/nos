@@ -11,15 +11,6 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-type Device struct {
-	// ResourceName is the name of the resource exposed to k8s
-	// (e.g. nvidia.com/gpu, nvidia.com/mig-2g10gb, etc.)
-	ResourceName v1.ResourceName
-	// DeviceId is the actual ID of the underlying device
-	// (e.g. ID of the GPU, ID of the MIG device, etc.)
-	DeviceId string
-}
-
 // FromFrameworkToList
 func FromFrameworkToList(r framework.Resource) v1.ResourceList {
 	result := v1.ResourceList{

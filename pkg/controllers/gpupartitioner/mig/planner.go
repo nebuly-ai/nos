@@ -44,14 +44,14 @@ func NewPlanner(kubeClient kubernetes.Interface) (*Planner, error) {
 func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (map[string]core.PartitioningPlan, error) {
 	plan := make(map[string]core.PartitioningPlan)
 	for _, pod := range candidates {
-		lackingMIG, isLacking := p.getLackingMIGResource(snapshot, pod)
+		lackingMig, isLacking := p.getLackingMigResource(snapshot, pod)
 		if !isLacking {
 			return plan, nil
 		}
-		candidateNodes := p.getCandidateNodes(snapshot, lackingMIG)
+		candidateNodes := p.getCandidateNodes(snapshot, lackingMig)
 		for _, n := range candidateNodes {
 			snapshot.Fork()
-			_ = snapshot.UpdateAllocatableScalarResources(n.Name, n.GetAllocatableScalarResources())
+			//_ = snapshot.UpdateAllocatableScalarResources(n.Name, n.GetAllocatableScalarResources())
 			nodeInfo, _ := snapshot.GetNode(n.Name)
 			podFits, err := p.podFitsNode(ctx, nodeInfo, pod)
 			if err != nil {
@@ -69,14 +69,14 @@ func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.Cl
 	return plan, nil
 }
 
-// getLackingMIGResource returns, if any, a MIG resource requested by the Pod but currently not
+// getLackingMigResource returns, if any, a Mig resource requested by the Pod but currently not
 // available in the ClusterSnapshot.
 //
 // As described in "Supporting MIG GPUs in Kubernetes" document, it is assumed that
 // Pods request only one MIG device per time and with quantity 1, according to the
 // idea that users should ask for a larger, single instance as opposed to multiple
 // smaller instances.
-func (p Planner) getLackingMIGResource(snapshot state.ClusterSnapshot, pod v1.Pod) (v1.ResourceName, bool) {
+func (p Planner) getLackingMigResource(snapshot state.ClusterSnapshot, pod v1.Pod) (v1.ResourceName, bool) {
 	for r := range snapshot.GetLackingScalarResources(pod) {
 		if mig.IsNvidiaMigDevice(r) {
 			return r, true
@@ -85,12 +85,12 @@ func (p Planner) getLackingMIGResource(snapshot state.ClusterSnapshot, pod v1.Po
 	return "", false
 }
 
-func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMIGResource v1.ResourceName) []mig.Node {
+func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMigResource v1.ResourceName) []mig.Node {
 	result := make([]mig.Node, 0)
 
 	for _, n := range snapshot.GetNodes() {
 		migNode := mig.NewNode(n)
-		if err := migNode.UpdateGeometryFor(requiredMIGResource); err != nil {
+		if err := migNode.UpdateGeometryFor(requiredMigResource); err != nil {
 			result = append(result, migNode)
 		}
 	}

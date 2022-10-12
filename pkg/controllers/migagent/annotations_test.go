@@ -24,12 +24,12 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		{
 			name: "Matches",
 			status: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
 			},
 			spec: map[string]string{
 				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 0, "1g.10gb"): "2",
@@ -41,12 +41,12 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		{
 			name: "Do not matches",
 			status: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMIGStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMIGStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
 			},
 			spec: map[string]string{
 				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 0, "1g.10gb"): "2",
