@@ -75,10 +75,9 @@ func TestExtractMemoryGBFromMigDevice(t *testing.T) {
 			expected:      16,
 		},
 		{
-			name:          "Valid NVIDIA MIG-like format",
+			name:          "Invalid NVIDIA MIG-like format",
 			resourceName:  "foo/1g2gb",
-			errorExpected: false,
-			expected:      2,
+			errorExpected: true,
 		},
 	}
 

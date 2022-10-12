@@ -3,9 +3,16 @@ package types
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
+	"regexp"
 	"strconv"
 	"strings"
+)
+
+var (
+	numberBeginningLineRegex = regexp.MustCompile("^\\d+")
+	migProfileRegex          = regexp.MustCompile(constant.RegexNvidiaMigProfile)
 )
 
 type GPUSpecAnnotation struct {
@@ -15,7 +22,7 @@ type GPUSpecAnnotation struct {
 
 func NewGPUSpecAnnotation(key, value string) (GPUSpecAnnotation, error) {
 	if !strings.HasPrefix(key, v1alpha1.AnnotationGPUSpecPrefix) {
-		err := fmt.Errorf("GPUSpecAnnotation prefix is %q, got %q", v1alpha1.AnnotationGPUMigSpecFormat, key)
+		err := fmt.Errorf("GPUSpecAnnotation prefix is %q, got %q", v1alpha1.AnnotationGPUSpecPrefix, key)
 		return GPUSpecAnnotation{}, err
 	}
 	quantity, err := strconv.Atoi(value)
@@ -29,6 +36,17 @@ func (a GPUSpecAnnotation) Value() string {
 	return fmt.Sprintf("%d", a.Quantity)
 }
 
+func (a GPUSpecAnnotation) GetGPUIndex() int {
+	trimmed := strings.TrimPrefix(a.Name, v1alpha1.AnnotationGPUSpecPrefix+"-")
+	indexStr := numberBeginningLineRegex.FindString(trimmed)
+	index, _ := strconv.Atoi(indexStr)
+	return index
+}
+
+func (a GPUSpecAnnotation) GetMigProfile() string {
+	return migProfileRegex.FindString(a.Name)
+}
+
 // GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the
 // respective MIG profile. Example:
 //
@@ -40,8 +58,7 @@ func (a GPUSpecAnnotation) Value() string {
 //
 //	"0-1g.10gb"
 func (a GPUSpecAnnotation) GetGPUIndexWithMigProfile() string {
-	result := strings.TrimPrefix(a.Name, v1alpha1.AnnotationGPUSpecPrefix)
-	return strings.TrimPrefix(result, "-")
+	return fmt.Sprintf("%d-%s", a.GetGPUIndex(), a.GetMigProfile())
 }
 
 type GPUStatusAnnotation struct {
