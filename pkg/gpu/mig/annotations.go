@@ -20,28 +20,21 @@ func SpecMatchesStatus(specAnnotations []types.GPUSpecAnnotation, statusAnnotati
 	return reflect.DeepEqual(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-type profileWithGpuIndex struct {
-	gpuIndex   int
-	migProfile string
-}
-
 func SpecMatchesResources(specAnnotations []types.GPUSpecAnnotation, resources []types.MigDeviceResource) bool {
-	resourceGpuIndexWithMigProfileQuantities := make(map[profileWithGpuIndex]int)
+	getKey := func(migProfile string, gpuIndex int) string {
+		return fmt.Sprintf("%d-%s", gpuIndex, migProfile)
+	}
+
+	resourceGpuIndexWithMigProfileQuantities := make(map[string]int)
 	for _, r := range resources {
 		migProfile, _ := ExtractMigProfile(r.ResourceName)
-		key := profileWithGpuIndex{
-			gpuIndex:   r.GpuIndex,
-			migProfile: migProfile,
-		}
+		key := getKey(migProfile, r.GpuIndex)
 		resourceGpuIndexWithMigProfileQuantities[key]++
 	}
 
-	specGpuIndexWithMigProfileQuantities := make(map[profileWithGpuIndex]int)
+	specGpuIndexWithMigProfileQuantities := make(map[string]int)
 	for _, a := range specAnnotations {
-		key := profileWithGpuIndex{
-			gpuIndex:   a.GetGPUIndex(),
-			migProfile: a.GetMigProfile(),
-		}
+		key := getKey(a.GetMigProfile(), a.GetGPUIndex())
 		specGpuIndexWithMigProfileQuantities[key] += a.Quantity
 	}
 
