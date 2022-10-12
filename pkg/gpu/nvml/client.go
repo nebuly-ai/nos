@@ -19,10 +19,28 @@ func NewClient() Client {
 	return clientImpl{}
 }
 
+func initNvml() error {
+	if ret := nvml.Init(); ret != nvml.SUCCESS {
+		return fmt.Errorf("unable to initialize NVML: %s", nvml.ErrorString(ret))
+	}
+	return nil
+}
+
+func shutdownNvml() {
+	if ret := nvml.Shutdown(); ret != nvml.SUCCESS {
+		klog.Errorf("unable to shut down NVML: %s", nvml.ErrorString(ret))
+	}
+}
+
 // GetGpuIndex returns the index of the GPU associated to the
 // MIG device provided as arg. Returns err if the device
 // is not found or any error occurs while retrieving it.
 func (c clientImpl) GetGpuIndex(migDeviceId string) (int, error) {
+	if err := initNvml(); err != nil {
+		return 0, err
+	}
+	defer shutdownNvml()
+
 	klog.V(1).InfoS("retrieving GPU index of MIG device", "MIGDeviceUUID", migDeviceId)
 	var result int
 	var found bool
@@ -61,6 +79,10 @@ func (c clientImpl) GetGpuIndex(migDeviceId string) (int, error) {
 	}
 
 	return result, nil
+}
+
+func (c clientImpl) DeleteMigDevice(id string) error {
+	return nil
 }
 
 func (c clientImpl) visitMigDevices(visit func(gpuIndex, migDeviceIndex int, migDevice nvml.Device) (bool, error)) error {

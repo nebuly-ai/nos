@@ -19,12 +19,12 @@ func (m MigDeviceResource) FullResourceName() string {
 	return fmt.Sprintf("%d/%s", m.GpuIndex, m.ResourceName)
 }
 
-// GetMigProfileName returns the name of the Mig profile associated to the device
+// GetMigProfile returns the name of the Mig profile associated to the device
 //
 // Example:
 //
 //	Resource name: nvidia.com/mig-1g.10gb
-//	GetMigProfileName() -> 1g.10gb
-func (m MigDeviceResource) GetMigProfileName() string {
+//	GetMigProfile() -> 1g.10gb
+func (m MigDeviceResource) GetMigProfile() string {
 	return strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-")
 }

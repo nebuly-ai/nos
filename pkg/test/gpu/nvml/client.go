@@ -8,3 +8,7 @@ type MockedNvmlClient struct {
 func (c MockedNvmlClient) GetGpuIndex(migDeviceId string) (int, error) {
 	return c.MigDeviceIdToGPUIndex[migDeviceId], c.ReturnedError
 }
+
+func (c MockedNvmlClient) DeleteMigDevice(_ string) error {
+	return c.ReturnedError
+}

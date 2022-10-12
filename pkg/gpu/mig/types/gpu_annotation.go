@@ -15,6 +15,24 @@ var (
 	migProfileRegex          = regexp.MustCompile(constant.RegexNvidiaMigProfile)
 )
 
+type GPUAnnotationList []GPUAnnotation
+
+func (l GPUAnnotationList) ContainsMigProfile(migProfile string) bool {
+	for _, a := range l {
+		if a.GetMigProfile() == migProfile {
+			return true
+		}
+	}
+	return false
+}
+
+type GPUAnnotation interface {
+	GetValue() string
+	GetGPUIndex() int
+	GetMigProfile() string
+	GetGPUIndexWithMigProfile() string
+}
+
 type GPUSpecAnnotation struct {
 	Name     string
 	Quantity int
@@ -32,7 +50,7 @@ func NewGPUSpecAnnotation(key, value string) (GPUSpecAnnotation, error) {
 	return GPUSpecAnnotation{Name: key, Quantity: quantity}, nil
 }
 
-func (a GPUSpecAnnotation) Value() string {
+func (a GPUSpecAnnotation) GetValue() string {
 	return fmt.Sprintf("%d", a.Quantity)
 }
 
@@ -78,8 +96,19 @@ func NewGPUStatusAnnotation(key, value string) (GPUStatusAnnotation, error) {
 	return GPUStatusAnnotation{Name: key, Quantity: quantity}, nil
 }
 
-func (a GPUStatusAnnotation) Value() string {
+func (a GPUStatusAnnotation) GetValue() string {
 	return fmt.Sprintf("%d", a.Quantity)
+}
+
+func (a GPUStatusAnnotation) GetGPUIndex() int {
+	trimmed := strings.TrimPrefix(a.Name, v1alpha1.AnnotationGPUStatusPrefix+"-")
+	indexStr := numberBeginningLineRegex.FindString(trimmed)
+	index, _ := strconv.Atoi(indexStr)
+	return index
+}
+
+func (a GPUStatusAnnotation) GetMigProfile() string {
+	return migProfileRegex.FindString(a.Name)
 }
 
 // GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the

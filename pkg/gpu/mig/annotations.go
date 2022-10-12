@@ -60,13 +60,13 @@ func ComputeStatusAnnotations(used []types.MigDeviceResource, free []types.MigDe
 	// Used annotations
 	for _, u := range used {
 		quantity, _ := usedMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
+		key := fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, u.GpuIndex, u.GetMigProfile())
 		annotationToQuantity[key] = quantity
 	}
 	// Free annotations
 	for _, u := range free {
 		quantity, _ := freeMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
+		key := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, u.GpuIndex, u.GetMigProfile())
 		annotationToQuantity[key] = quantity
 	}
 

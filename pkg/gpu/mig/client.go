@@ -23,6 +23,7 @@ func (r resourceWithDeviceId) isMigDevice() bool {
 
 type Client interface {
 	GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error)
+	DeleteMigResource(ctx context.Context, resource types.MigDeviceResource) error
 }
 
 type nvmlMigClient struct {
@@ -32,6 +33,10 @@ type nvmlMigClient struct {
 
 func NewNvmlMigClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Client {
 	return &nvmlMigClient{lister: lister, nvmlClient: nvmlClient}
+}
+
+func (c nvmlMigClient) DeleteMigResource(_ context.Context, resource types.MigDeviceResource) error {
+	return c.nvmlClient.DeleteMigDevice(resource.DeviceId)
 }
 
 func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
