@@ -1,4 +1,4 @@
-package migagent
+package mig
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func specMatchesStatus(specAnnotations []v1alpha1.GPUSpecAnnotation, statusAnnotations []v1alpha1.GPUStatusAnnotation) bool {
+func SpecMatchesStatus(specAnnotations []types.GPUSpecAnnotation, statusAnnotations []types.GPUStatusAnnotation) bool {
 	specMigProfilesWithQuantity := make(map[string]int)
 	statusMigProfilesWithQuantity := make(map[string]int)
 	for _, a := range specAnnotations {
@@ -20,7 +20,7 @@ func specMatchesStatus(specAnnotations []v1alpha1.GPUSpecAnnotation, statusAnnot
 	return reflect.DeepEqual(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func specMatchesResources(specAnnotations []v1alpha1.GPUSpecAnnotation, resources []types.MigDeviceResource) bool {
+func SpecMatchesResources(specAnnotations []types.GPUSpecAnnotation, resources []types.MigDeviceResource) bool {
 	resourceNameWithQuantity := make(map[string]int)
 	for _, r := range resources {
 		resourceNameWithQuantity[string(r.ResourceName)]++
@@ -28,7 +28,7 @@ func specMatchesResources(specAnnotations []v1alpha1.GPUSpecAnnotation, resource
 	return false
 }
 
-func computeStatusAnnotations(used []types.MigDeviceResource, free []types.MigDeviceResource) []v1alpha1.GPUStatusAnnotation {
+func ComputeStatusAnnotations(used []types.MigDeviceResource, free []types.MigDeviceResource) []types.GPUStatusAnnotation {
 	annotationToQuantity := make(map[string]int)
 
 	// Compute used MIG devices quantities
@@ -57,9 +57,9 @@ func computeStatusAnnotations(used []types.MigDeviceResource, free []types.MigDe
 		annotationToQuantity[key] = quantity
 	}
 
-	res := make([]v1alpha1.GPUStatusAnnotation, len(annotationToQuantity))
+	res := make([]types.GPUStatusAnnotation, len(annotationToQuantity))
 	for k, v := range annotationToQuantity {
-		if a, err := v1alpha1.NewGPUStatusAnnotation(k, fmt.Sprintf("%d", v)); err == nil {
+		if a, err := types.NewGPUStatusAnnotation(k, fmt.Sprintf("%d", v)); err == nil {
 			res = append(res, a)
 		}
 	}

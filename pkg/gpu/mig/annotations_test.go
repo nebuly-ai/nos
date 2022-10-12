@@ -1,8 +1,9 @@
-package migagent
+package mig
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -31,9 +32,9 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
 			},
 			expected: true,
 		},
@@ -48,10 +49,10 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 1, "1g.20gb"): "4",
-				fmt.Sprintf(v1alpha1.AnnotationGPUSpecFormat, 1, "4g.40gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "4g.40gb"): "1",
 			},
 			expected: false,
 		},
@@ -59,19 +60,19 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			specAnnotations := make([]v1alpha1.GPUSpecAnnotation, len(tt.spec))
+			specAnnotations := make([]types.GPUSpecAnnotation, len(tt.spec))
 			for k, v := range tt.spec {
-				a, _ := v1alpha1.NewGPUSpecAnnotation(k, v)
+				a, _ := types.NewGPUSpecAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 
-			statusAnnotations := make([]v1alpha1.GPUStatusAnnotation, len(tt.status))
+			statusAnnotations := make([]types.GPUStatusAnnotation, len(tt.status))
 			for k, v := range tt.status {
-				a, _ := v1alpha1.NewGPUStatusAnnotation(k, v)
+				a, _ := types.NewGPUStatusAnnotation(k, v)
 				statusAnnotations = append(statusAnnotations, a)
 			}
 
-			matches := specMatchesStatus(specAnnotations, statusAnnotations)
+			matches := SpecMatchesStatus(specAnnotations, statusAnnotations)
 			assert.Equal(t, tt.expected, matches)
 		})
 	}

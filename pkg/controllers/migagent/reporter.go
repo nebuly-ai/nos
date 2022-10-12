@@ -58,10 +58,10 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 	logger.V(3).Info("Loaded free MIG devices", "freeMIGs", freeMigs)
 	logger.V(3).Info("Loaded used MIG devices", "usedMIGs", usedMigs)
-	newStatusAnnotations := computeStatusAnnotations(usedMigs, freeMigs)
+	newStatusAnnotations := mig.ComputeStatusAnnotations(usedMigs, freeMigs)
 
 	// Get current status annotations and compare with new ones
-	oldStatusAnnotations, _ := v1alpha1.GetGPUAnnotationsFromNode(instance)
+	oldStatusAnnotations, _ := types.GetGPUAnnotationsFromNode(instance)
 	if reflect.DeepEqual(newStatusAnnotations, oldStatusAnnotations) {
 		logger.Info("Current status is equal to last reported status, nothing to do")
 		return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
