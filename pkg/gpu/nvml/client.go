@@ -12,21 +12,17 @@ type device struct {
 	nvml.Device
 }
 
-type ClientImpl struct {
+type clientImpl struct {
 }
 
-func NewClient() (ClientImpl, error) {
-	ret := nvml.Init()
-	if ret != nvml.SUCCESS {
-		return ClientImpl{}, fmt.Errorf("unable to initialize NVML: %s", nvml.ErrorString(ret))
-	}
-	return ClientImpl{}, nil
+func NewClient() Client {
+	return clientImpl{}
 }
 
 // GetGpuIndex returns the index of the GPU associated to the
 // MIG device provided as arg. Returns err if the device
 // is not found or any error occurs while retrieving it.
-func (c ClientImpl) GetGpuIndex(migDeviceId string) (int, error) {
+func (c clientImpl) GetGpuIndex(migDeviceId string) (int, error) {
 	klog.V(1).InfoS("retrieving GPU index of MIG device", "MIGDeviceUUID", migDeviceId)
 	var result int
 	var found bool
@@ -67,7 +63,7 @@ func (c ClientImpl) GetGpuIndex(migDeviceId string) (int, error) {
 	return result, nil
 }
 
-func (c ClientImpl) visitMigDevices(visit func(gpuIndex, migDeviceIndex int, migDevice nvml.Device) (bool, error)) error {
+func (c clientImpl) visitMigDevices(visit func(gpuIndex, migDeviceIndex int, migDevice nvml.Device) (bool, error)) error {
 	count, ret := nvml.DeviceGetCount()
 	if ret != nvml.SUCCESS {
 		return fmt.Errorf("error getting GPU device count: %v", nvml.ErrorString(ret))

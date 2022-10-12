@@ -21,16 +21,20 @@ func (r resourceWithDeviceId) isMigDevice() bool {
 	return IsNvidiaMigDevice(r.resourceName)
 }
 
-type Client struct {
+type Client interface {
+	GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error)
+}
+
+type nvmlMigClient struct {
 	lister     pdrv1.PodResourcesListerClient
 	nvmlClient nvml.Client
 }
 
-func NewClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Client {
-	return Client{lister: lister, nvmlClient: nvmlClient}
+func NewNvmlMigClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Client {
+	return &nvmlMigClient{lister: lister, nvmlClient: nvmlClient}
 }
 
-func (c Client) GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
 	logger := klog.FromContext(ctx)
 
 	// Get used
@@ -47,10 +51,11 @@ func (c Client) GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceRes
 	}
 	// Get free
 	free := computeFreeDevicesAndUpdateStatus(used, allocatable)
+
 	return append(used, free...), nil
 }
 
-func (c Client) getUsedMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) getUsedMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
 	logger := klog.FromContext(ctx)
 
 	// List Pods Resources
@@ -102,26 +107,7 @@ func (c Client) getUsedMigDeviceResources(ctx context.Context) ([]types.MigDevic
 	return migDevices, nil
 }
 
-func (c Client) getFreeMigDevices(ctx context.Context) ([]types.MigDeviceResource, error) {
-	logger := klog.FromContext(ctx)
-
-	// Get allocatable
-	allocatable, err := c.getAllocatableMigDeviceResources(ctx)
-	if err != nil {
-		logger.Error(err, "unable to retrieve allocatable MIG devices")
-		return nil, err
-	}
-	// Get used
-	used, err := c.getUsedMigDeviceResources(ctx)
-	if err != nil {
-		logger.Error(err, "unable to retrieve used MIG devices")
-		return nil, err
-	}
-
-	return computeFreeDevicesAndUpdateStatus(used, allocatable), nil
-}
-
-func (c Client) getAllocatableMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) getAllocatableMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
 	logger := klog.FromContext(ctx)
 
 	// List Allocatable Resources
@@ -157,7 +143,7 @@ func (c Client) getAllocatableMigDeviceResources(ctx context.Context) ([]types.M
 	return c.extractMigDevices(ctx, resources)
 }
 
-func (c Client) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]types.MigDeviceResource, error) {
 	logger := klog.FromContext(ctx)
 
 	// Extract MIG devices

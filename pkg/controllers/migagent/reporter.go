@@ -18,11 +18,11 @@ import (
 
 type MigReporter struct {
 	client.Client
-	migClient       *mig.Client
+	migClient       mig.Client
 	refreshInterval time.Duration
 }
 
-func NewReporter(client client.Client, migClient *mig.Client, refreshInterval time.Duration) MigReporter {
+func NewReporter(client client.Client, migClient mig.Client, refreshInterval time.Duration) MigReporter {
 	reporter := MigReporter{
 		Client:          client,
 		migClient:       migClient,

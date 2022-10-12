@@ -253,7 +253,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 				ListResp:  tt.listPodResourcesResp,
 				ListError: tt.listPodResourcesErr,
 			}
-			client := Client{
+			client := nvmlMigClient{
 				lister:     podResourcesListerClient,
 				nvmlClient: nvmlClient,
 			}
@@ -391,7 +391,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 				GetAllocatableResp:  tt.allocatableResourcesResp,
 				GetAllocatableError: tt.allocatableResourcesErr,
 			}
-			client := Client{
+			client := nvmlMigClient{
 				lister:     podResourcesListerClient,
 				nvmlClient: nvmlClient,
 			}

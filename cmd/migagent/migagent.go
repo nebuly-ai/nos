@@ -79,17 +79,13 @@ func main() {
 	// Init MIG client
 	podResourcesClient, err := newPodResourcesListerClient()
 	setupLog.Info("Initializing NVML client")
-	nvmlClient, err := nvml.NewClient()
-	if err != nil {
-		setupLog.Error(err, "unable to init nvml client")
-		os.Exit(1)
-	}
-	migClient := mig.NewClient(podResourcesClient, nvmlClient)
+	nvmlClient := nvml.NewClient()
+	migClient := mig.NewNvmlMigClient(podResourcesClient, nvmlClient)
 
 	// Setup MIG Reporter
 	migReporter := migagent.NewReporter(
 		mgr.GetClient(),
-		&migClient,
+		migClient,
 		10*time.Second,
 	)
 	if err := migReporter.SetupWithManager(mgr, "MIGReporter", nodeName); err != nil {
@@ -100,7 +96,7 @@ func main() {
 	// Setup MIG Actuator
 	migActuator := migagent.NewActuator(
 		mgr.GetClient(),
-		&migClient,
+		migClient,
 	)
 	if err := migActuator.SetupWithManager(mgr, "MIGActuator", nodeName); err != nil {
 		setupLog.Error(err, "unable to create MIG Actuator")

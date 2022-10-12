@@ -12,10 +12,10 @@ import (
 
 type MigActuator struct {
 	client.Client
-	migClient *mig.Client
+	migClient mig.Client
 }
 
-func NewActuator(client client.Client, migClient *mig.Client) MigActuator {
+func NewActuator(client client.Client, migClient mig.Client) MigActuator {
 	reporter := MigActuator{
 		Client:    client,
 		migClient: migClient,
