@@ -1,6 +1,10 @@
 package migagent
 
-import "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+import (
+	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
+)
 
 type migProfilePlan struct {
 	migProfile      string
@@ -12,7 +16,22 @@ type migProfilePlan struct {
 type migConfigPlan []migProfilePlan
 
 func (p migConfigPlan) summary() string {
-	return ""
+	toCreate := make([]types.MigProfile, 0)
+	toDelete := make([]types.MigProfile, 0)
+	for _, plan := range p {
+		diff := plan.desiredQuantity - len(plan.actualResources)
+		if diff > 0 {
+			for i := 0; i < diff; i++ {
+				toCreate = append(toCreate, types.MigProfile{Name: plan.migProfile, GpuIndex: plan.gpuIndex})
+			}
+		}
+		if diff < 0 {
+			for i := 0; i < util.Abs(diff); i++ {
+				toDelete = append(toDelete, types.MigProfile{Name: plan.migProfile, GpuIndex: plan.gpuIndex})
+			}
+		}
+	}
+	return fmt.Sprintf("MIG profiles to create: %v MIG profiles to delete: %v", toCreate, toDelete)
 }
 
 func (p migConfigPlan) isEmpty() bool {
@@ -40,13 +59,21 @@ func computePlan(state types.MigState, desired types.GPUSpecAnnotationList) migC
 		for _, a := range annotations {
 			totalDesiredQuantity += a.Quantity
 		}
-		p := migProfilePlan{
-			migProfile:      migProfile.Name,
-			gpuIndex:        migProfile.GpuIndex,
-			desiredQuantity: totalDesiredQuantity,
-			actualResources: stateResources[migProfile],
+
+		actualResources := stateResources[migProfile]
+		if actualResources == nil {
+			actualResources = make(types.MigDeviceResourceList, 0)
 		}
-		plan = append(plan, p)
+
+		plan = append(
+			plan,
+			migProfilePlan{
+				migProfile:      migProfile.Name,
+				gpuIndex:        migProfile.GpuIndex,
+				desiredQuantity: totalDesiredQuantity,
+				actualResources: actualResources,
+			},
+		)
 	}
 
 	return plan
