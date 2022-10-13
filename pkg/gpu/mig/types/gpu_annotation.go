@@ -162,11 +162,11 @@ func GetGPUAnnotationsFromNode(node v1.Node) ([]GPUStatusAnnotation, []GPUSpecAn
 	statusAnnotations := make([]GPUStatusAnnotation, 0)
 	specAnnotations := make([]GPUSpecAnnotation, 0)
 	for k, v := range node.Annotations {
-		if specAnnotation, err := NewGPUSpecAnnotation(k, v); err != nil {
+		if specAnnotation, err := NewGPUSpecAnnotation(k, v); err == nil {
 			specAnnotations = append(specAnnotations, specAnnotation)
 			continue
 		}
-		if statusAnnotation, err := NewGPUStatusAnnotation(k, v); err != nil {
+		if statusAnnotation, err := NewGPUStatusAnnotation(k, v); err == nil {
 			statusAnnotations = append(statusAnnotations, statusAnnotation)
 			continue
 		}
