@@ -27,21 +27,13 @@ func NewActuator(client client.Client, migClient mig.Client) MigActuator {
 	return reporter
 }
 
-type migProfilePlan struct {
-	gpuIndex        int
-	migProfile      string
-	desiredQuantity int
-	actualResources []types.MigDeviceResource
+func (a *MigActuator) newLogger(ctx context.Context) klog.Logger {
+	return log.FromContext(ctx).WithName("Actuator")
 }
 
-type migConfigPlan []migProfilePlan
-
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var err error
-	var res ctrl.Result
-
-	logger := log.FromContext(ctx).WithName("Actuator")
-	logger.Info("Actuating desired MIG config")
+	logger := a.newLogger(ctx)
+	logger.Info("actuating desired MIG config")
 
 	// Retrieve instance
 	var instance v1.Node
@@ -52,40 +44,54 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	// Check if reported status already matches spec
 	statusAnnotations, specAnnotations := types.GetGPUAnnotationsFromNode(instance)
 	if mig.SpecMatchesStatus(specAnnotations, statusAnnotations) {
-		logger.Info("Reported status matches desired MIG config, nothing to do")
+		logger.Info("reported status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
 	}
+
+	// Compute MIG config plan
+	plan, err := a.plan(ctx, specAnnotations)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if plan.isEmpty() {
+		logger.Info("MIG config plan is empty, nothing to do")
+		return ctrl.Result{}, nil
+	}
+
+	// Apply MIG config plan
+	logger.Info("applying MIG config plan", "plan", plan.summary())
+	return a.apply(plan)
+}
+
+func (a *MigActuator) plan(ctx context.Context, specAnnotations types.GPUSpecAnnotationList) (migConfigPlan, error) {
+	logger := a.newLogger(ctx)
 
 	// Compute current state
 	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
 	if err != nil {
 		logger.Error(err, "unable to get MIG device resources")
-		return ctrl.Result{}, nil
+		return nil, err
 	}
 	state := types.NewMigState(migDeviceResources)
 
 	// Check if actual state already matches spec
 	if state.Matches(specAnnotations) {
-		logger.Info("Actual status matches desired MIG config, nothing to do")
-		return ctrl.Result{}, nil
+		logger.Info("actual state matches desired MIG config")
+		return migConfigPlan{}, nil
 	}
 
-	// MIG resources which MIG profile is not present in spec annotations must be deleted
-	//toDelete := getResourcesToDelete(specAnnotations, state)
-	//logger.V(1).Info("MIG resources to delete", "resources", toDelete)
+	// Compute MIG config plan
+	return computePlan(state, specAnnotations), nil
+}
 
-	//res, err = a.deleteMigResources(ctx, toDelete)
-	//
-	// Create MIG resources
-	// todo
-
-	return res, err
+func (a *MigActuator) apply(plan migConfigPlan) (ctrl.Result, error) {
+	return ctrl.Result{}, nil
 }
 
 func (a *MigActuator) deleteMigResources(ctx context.Context, toDelete []types.MigDeviceResource) (ctrl.Result, error) {
 	var err error
 	var res ctrl.Result
-	logger := klog.FromContext(ctx)
+	logger := a.newLogger(ctx)
 
 	for _, r := range toDelete {
 		// consider only free resources
@@ -120,41 +126,6 @@ func (a *MigActuator) deleteMigResources(ctx context.Context, toDelete []types.M
 	}
 
 	return res, err
-}
-
-func plan(state types.MigState, desired []types.GPUSpecAnnotation) migConfigPlan {
-	result := make(migConfigPlan, 0)
-
-	//resources := getResourcesNotIncludedInSpec(state, desired)
-	//groupedByGpuIndexAndProfile := make(map[string][]types.MigDeviceResource)
-	//for _, r := range resources {
-	//	groupedByGpuIndexAndProfile[]
-	//}
-
-	return result
-}
-
-func getResourcesNotIncludedInSpec(state types.MigState, specAnnotations []types.GPUSpecAnnotation) []types.MigDeviceResource {
-	// Group by GPU index
-	lookup := make(map[int]types.GPUAnnotationList)
-	for _, annotation := range specAnnotations {
-		gpuIndex := annotation.GetGPUIndex()
-		if lookup[gpuIndex] == nil {
-			lookup[gpuIndex] = make(types.GPUAnnotationList, 0)
-		}
-		lookup[gpuIndex] = append(lookup[gpuIndex], annotation)
-	}
-
-	updatedState := state
-	for gpuIndex, annotations := range lookup {
-		migProfiles := make([]string, 0)
-		for _, a := range annotations {
-			migProfiles = append(migProfiles, a.GetMigProfile())
-		}
-		updatedState = updatedState.WithoutMigProfiles(gpuIndex, migProfiles)
-	}
-
-	return updatedState.Flatten()
 }
 
 func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {

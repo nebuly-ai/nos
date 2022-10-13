@@ -19,7 +19,7 @@ type GPUAnnotationList []GPUAnnotation
 
 func (l GPUAnnotationList) ContainsMigProfile(migProfile string) bool {
 	for _, a := range l {
-		if a.GetMigProfile() == migProfile {
+		if a.GetMigProfileName() == migProfile {
 			return true
 		}
 	}
@@ -29,8 +29,37 @@ func (l GPUAnnotationList) ContainsMigProfile(migProfile string) bool {
 type GPUAnnotation interface {
 	GetValue() string
 	GetGPUIndex() int
-	GetMigProfile() string
+	GetMigProfileName() string
 	GetGPUIndexWithMigProfile() string
+}
+
+type GPUSpecAnnotationList []GPUSpecAnnotation
+
+func (l GPUSpecAnnotationList) GroupByGpuIndex() map[int]GPUSpecAnnotationList {
+	result := make(map[int]GPUSpecAnnotationList)
+	for _, r := range l {
+		key := r.GetGPUIndex()
+		if result[key] == nil {
+			result[key] = make(GPUSpecAnnotationList, 0)
+		}
+		result[key] = append(result[key], r)
+	}
+	return result
+}
+
+func (l GPUSpecAnnotationList) GroupByMigProfile() map[MigProfile]GPUSpecAnnotationList {
+	result := make(map[MigProfile]GPUSpecAnnotationList)
+	for _, a := range l {
+		key := MigProfile{
+			GpuIndex: a.GetGPUIndex(),
+			Name:     a.GetMigProfileName(),
+		}
+		if result[key] == nil {
+			result[key] = make(GPUSpecAnnotationList, 0)
+		}
+		result[key] = append(result[key], a)
+	}
+	return result
 }
 
 type GPUSpecAnnotation struct {
@@ -61,7 +90,7 @@ func (a GPUSpecAnnotation) GetGPUIndex() int {
 	return index
 }
 
-func (a GPUSpecAnnotation) GetMigProfile() string {
+func (a GPUSpecAnnotation) GetMigProfileName() string {
 	return migProfileRegex.FindString(a.Name)
 }
 
@@ -76,7 +105,7 @@ func (a GPUSpecAnnotation) GetMigProfile() string {
 //
 //	"0-1g.10gb"
 func (a GPUSpecAnnotation) GetGPUIndexWithMigProfile() string {
-	return fmt.Sprintf("%d-%s", a.GetGPUIndex(), a.GetMigProfile())
+	return fmt.Sprintf("%d-%s", a.GetGPUIndex(), a.GetMigProfileName())
 }
 
 type GPUStatusAnnotation struct {
@@ -107,7 +136,7 @@ func (a GPUStatusAnnotation) GetGPUIndex() int {
 	return index
 }
 
-func (a GPUStatusAnnotation) GetMigProfile() string {
+func (a GPUStatusAnnotation) GetMigProfileName() string {
 	return migProfileRegex.FindString(a.Name)
 }
 

@@ -46,7 +46,7 @@ func TestGPUSpecAnnotation_GetMigProfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			annotation, err := NewGPUSpecAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
-			assert.Equal(t, tt.expected, annotation.GetMigProfile())
+			assert.Equal(t, tt.expected, annotation.GetMigProfileName())
 		})
 	}
 }

@@ -19,13 +19,13 @@ func (m MigDeviceResource) FullResourceName() string {
 	return fmt.Sprintf("%d/%s", m.GpuIndex, m.ResourceName)
 }
 
-// GetMigProfile returns the name of the Mig profile associated to the device
+// GetMigProfileName returns the name of the Mig profile associated to the device
 //
 // Example:
 //
 //	Resource name: nvidia.com/mig-1g.10gb
-//	GetMigProfile() -> 1g.10gb
-func (m MigDeviceResource) GetMigProfile() string {
+//	GetMigProfileName() -> 1g.10gb
+func (m MigDeviceResource) GetMigProfileName() string {
 	return strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-")
 }
 
@@ -35,6 +35,21 @@ func (l MigDeviceResourceList) GroupBy(keyFunc func(resource MigDeviceResource) 
 	result := make(map[string]MigDeviceResourceList)
 	for _, r := range l {
 		key := keyFunc(r)
+		if result[key] == nil {
+			result[key] = make(MigDeviceResourceList, 0)
+		}
+		result[key] = append(result[key], r)
+	}
+	return result
+}
+
+func (l MigDeviceResourceList) GroupByMigProfile() map[MigProfile]MigDeviceResourceList {
+	result := make(map[MigProfile]MigDeviceResourceList)
+	for _, r := range l {
+		key := MigProfile{
+			GpuIndex: r.GpuIndex,
+			Name:     r.GetMigProfileName(),
+		}
 		if result[key] == nil {
 			result[key] = make(MigDeviceResourceList, 0)
 		}

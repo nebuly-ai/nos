@@ -28,13 +28,13 @@ func (s MigState) Matches(specAnnotations []GPUSpecAnnotation) bool {
 
 	specGpuIndexWithMigProfileQuantities := make(map[string]int)
 	for _, a := range specAnnotations {
-		key := getKey(a.GetMigProfile(), a.GetGPUIndex())
+		key := getKey(a.GetMigProfileName(), a.GetGPUIndex())
 		specGpuIndexWithMigProfileQuantities[key] += a.Quantity
 	}
 
 	stateGpuIndexWithMigProfileQuantities := make(map[string]int)
 	groupedBy := s.Flatten().GroupBy(func(r MigDeviceResource) string {
-		return getKey(r.GetMigProfile(), r.GpuIndex)
+		return getKey(r.GetMigProfileName(), r.GpuIndex)
 	})
 	for k, v := range groupedBy {
 		stateGpuIndexWithMigProfileQuantities[k] = len(v)
@@ -61,7 +61,7 @@ func (s MigState) WithoutMigProfiles(gpuIndex int, migProfiles []string) MigStat
 	res := s.DeepCopy()
 	res[gpuIndex] = make([]MigDeviceResource, 0)
 	for _, r := range s[gpuIndex] {
-		if !util.InSlice(r.GetMigProfile(), migProfiles) {
+		if !util.InSlice(r.GetMigProfileName(), migProfiles) {
 			res[gpuIndex] = append(res[gpuIndex], r)
 		}
 	}
