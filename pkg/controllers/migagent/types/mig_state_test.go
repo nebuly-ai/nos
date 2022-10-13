@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -12,19 +13,19 @@ import (
 func TestMigState_Matches(t *testing.T) {
 	testCases := []struct {
 		name           string
-		stateResources []MigDeviceResource
+		stateResources []types.MigDeviceResource
 		spec           map[string]string
 		expected       bool
 	}{
 		{
 			name:           "Empty",
 			spec:           make(map[string]string),
-			stateResources: make([]MigDeviceResource, 0),
+			stateResources: make([]types.MigDeviceResource, 0),
 			expected:       true,
 		},
 		{
 			name: "Matches",
-			stateResources: []MigDeviceResource{
+			stateResources: []types.MigDeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: v1.ResourceName("nvidia.com/mig-1g.10gb"),

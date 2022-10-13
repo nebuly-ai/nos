@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	v1 "k8s.io/api/core/v1"
 	"regexp"
 	"strconv"
@@ -47,10 +48,10 @@ func (l GPUSpecAnnotationList) GroupByGpuIndex() map[int]GPUSpecAnnotationList {
 	return result
 }
 
-func (l GPUSpecAnnotationList) GroupByMigProfile() map[MigProfile]GPUSpecAnnotationList {
-	result := make(map[MigProfile]GPUSpecAnnotationList)
+func (l GPUSpecAnnotationList) GroupByMigProfile() map[types.MigProfile]GPUSpecAnnotationList {
+	result := make(map[types.MigProfile]GPUSpecAnnotationList)
 	for _, a := range l {
-		key := MigProfile{
+		key := types.MigProfile{
 			GpuIndex: a.GetGPUIndex(),
 			Name:     a.GetMigProfileName(),
 		}

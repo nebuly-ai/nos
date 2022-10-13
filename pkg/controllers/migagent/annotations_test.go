@@ -1,9 +1,9 @@
-package mig
+package migagent
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -72,7 +72,7 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 				statusAnnotations = append(statusAnnotations, a)
 			}
 
-			matches := SpecMatchesStatus(specAnnotations, statusAnnotations)
+			matches := specMatchesStatus(specAnnotations, statusAnnotations)
 			assert.Equal(t, tt.expected, matches)
 		})
 	}

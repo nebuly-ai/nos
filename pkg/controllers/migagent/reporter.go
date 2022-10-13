@@ -3,8 +3,9 @@ package migagent
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -46,8 +47,8 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		logger.Error(err, "unable to get MIG device resources")
 		return ctrl.Result{}, err
 	}
-	usedMigs := make([]types.MigDeviceResource, 0)
-	freeMigs := make([]types.MigDeviceResource, 0)
+	usedMigs := make([]migtypes.MigDeviceResource, 0)
+	freeMigs := make([]migtypes.MigDeviceResource, 0)
 	for _, r := range migResources {
 		if r.Status == resource.StatusUsed {
 			usedMigs = append(usedMigs, r)
@@ -58,7 +59,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 	logger.V(3).Info("loaded free MIG devices", "freeMIGs", freeMigs)
 	logger.V(3).Info("loaded used MIG devices", "usedMIGs", usedMigs)
-	newStatusAnnotations := mig.ComputeStatusAnnotations(usedMigs, freeMigs)
+	newStatusAnnotations := computeStatusAnnotations(usedMigs, freeMigs)
 
 	// Get current status annotations and compare with new ones
 	oldStatusAnnotations, _ := types.GetGPUAnnotationsFromNode(instance)

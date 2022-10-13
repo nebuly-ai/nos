@@ -2,19 +2,20 @@ package types
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"reflect"
 )
 
 // MigState represents the current state in terms of MIG resources of each GPU (which index is stored as key
 // in the map)
-type MigState map[int]MigDeviceResourceList
+type MigState map[int]types.MigDeviceResourceList
 
-func NewMigState(resources []MigDeviceResource) MigState {
+func NewMigState(resources []types.MigDeviceResource) MigState {
 	res := make(MigState)
 	for _, r := range resources {
 		if res[r.GpuIndex] == nil {
-			res[r.GpuIndex] = make([]MigDeviceResource, 0)
+			res[r.GpuIndex] = make([]types.MigDeviceResource, 0)
 		}
 		res[r.GpuIndex] = append(res[r.GpuIndex], r)
 	}
@@ -33,7 +34,7 @@ func (s MigState) Matches(specAnnotations []GPUSpecAnnotation) bool {
 	}
 
 	stateGpuIndexWithMigProfileQuantities := make(map[string]int)
-	groupedBy := s.Flatten().GroupBy(func(r MigDeviceResource) string {
+	groupedBy := s.Flatten().GroupBy(func(r types.MigDeviceResource) string {
 		return getKey(r.GetMigProfileName(), r.GpuIndex)
 	})
 	for k, v := range groupedBy {
@@ -43,8 +44,8 @@ func (s MigState) Matches(specAnnotations []GPUSpecAnnotation) bool {
 	return reflect.DeepEqual(specGpuIndexWithMigProfileQuantities, stateGpuIndexWithMigProfileQuantities)
 }
 
-func (s MigState) Flatten() MigDeviceResourceList {
-	allResources := make(MigDeviceResourceList, 0)
+func (s MigState) Flatten() types.MigDeviceResourceList {
+	allResources := make(types.MigDeviceResourceList, 0)
 	for _, r := range s {
 		allResources = append(allResources, r...)
 	}
@@ -59,7 +60,7 @@ func (s MigState) DeepCopy() MigState {
 // on the GPU index provided as inputs
 func (s MigState) WithoutMigProfiles(gpuIndex int, migProfiles []string) MigState {
 	res := s.DeepCopy()
-	res[gpuIndex] = make([]MigDeviceResource, 0)
+	res[gpuIndex] = make([]types.MigDeviceResource, 0)
 	for _, r := range s[gpuIndex] {
 		if !util.InSlice(r.GetMigProfileName(), migProfiles) {
 			res[gpuIndex] = append(res[gpuIndex], r)

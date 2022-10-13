@@ -2,7 +2,8 @@ package migagent
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
+	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
 
@@ -10,24 +11,24 @@ type migProfilePlan struct {
 	migProfile      string
 	gpuIndex        int
 	desiredQuantity int
-	actualResources []types.MigDeviceResource
+	actualResources []migtypes.MigDeviceResource
 }
 
 type migConfigPlan []migProfilePlan
 
 func (p migConfigPlan) summary() string {
-	toCreate := make([]types.MigProfile, 0)
-	toDelete := make([]types.MigProfile, 0)
+	toCreate := make([]migtypes.MigProfile, 0)
+	toDelete := make([]migtypes.MigProfile, 0)
 	for _, plan := range p {
 		diff := plan.desiredQuantity - len(plan.actualResources)
 		if diff > 0 {
 			for i := 0; i < diff; i++ {
-				toCreate = append(toCreate, types.MigProfile{Name: plan.migProfile, GpuIndex: plan.gpuIndex})
+				toCreate = append(toCreate, migtypes.MigProfile{Name: plan.migProfile, GpuIndex: plan.gpuIndex})
 			}
 		}
 		if diff < 0 {
 			for i := 0; i < util.Abs(diff); i++ {
-				toDelete = append(toDelete, types.MigProfile{Name: plan.migProfile, GpuIndex: plan.gpuIndex})
+				toDelete = append(toDelete, migtypes.MigProfile{Name: plan.migProfile, GpuIndex: plan.gpuIndex})
 			}
 		}
 	}
@@ -62,7 +63,7 @@ func computePlan(state types.MigState, desired types.GPUSpecAnnotationList) migC
 
 		actualResources := stateResources[migProfile]
 		if actualResources == nil {
-			actualResources = make(types.MigDeviceResourceList, 0)
+			actualResources = make(migtypes.MigDeviceResourceList, 0)
 		}
 
 		plan = append(
@@ -79,7 +80,7 @@ func computePlan(state types.MigState, desired types.GPUSpecAnnotationList) migC
 	return plan
 }
 
-func getResourcesNotIncludedInSpec(state types.MigState, specAnnotations types.GPUSpecAnnotationList) types.MigDeviceResourceList {
+func getResourcesNotIncludedInSpec(state types.MigState, specAnnotations types.GPUSpecAnnotationList) migtypes.MigDeviceResourceList {
 	lookup := specAnnotations.GroupByGpuIndex()
 
 	updatedState := state

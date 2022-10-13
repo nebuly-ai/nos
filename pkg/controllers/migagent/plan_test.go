@@ -3,7 +3,8 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
+	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -18,7 +19,7 @@ func TestComputePlan(t *testing.T) {
 	}{
 		{
 			name:  "Empty state",
-			state: map[int]types.MigDeviceResourceList{},
+			state: map[int]migtypes.MigDeviceResourceList{},
 			specAnnotations: map[string]string{
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.20gb"): "1",
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
@@ -29,25 +30,25 @@ func TestComputePlan(t *testing.T) {
 					migProfile:      "1g.20gb",
 					gpuIndex:        0,
 					desiredQuantity: 1,
-					actualResources: []types.MigDeviceResource{},
+					actualResources: []migtypes.MigDeviceResource{},
 				},
 				{
 					migProfile:      "4g.20gb",
 					gpuIndex:        0,
 					desiredQuantity: 1,
-					actualResources: []types.MigDeviceResource{},
+					actualResources: []migtypes.MigDeviceResource{},
 				},
 				{
 					migProfile:      "1g.10gb",
 					gpuIndex:        1,
 					desiredQuantity: 2,
-					actualResources: []types.MigDeviceResource{},
+					actualResources: []migtypes.MigDeviceResource{},
 				},
 			},
 		},
 		{
 			name: "Empty spec annotations",
-			state: map[int]types.MigDeviceResourceList{
+			state: map[int]migtypes.MigDeviceResourceList{
 				0: {
 					{
 						Device: resource.Device{
@@ -83,7 +84,7 @@ func TestComputePlan(t *testing.T) {
 					migProfile:      "1g.10gb",
 					gpuIndex:        0,
 					desiredQuantity: 0,
-					actualResources: []types.MigDeviceResource{
+					actualResources: []migtypes.MigDeviceResource{
 						{
 							Device: resource.Device{
 								ResourceName: "nvidia.com/mig-1g.10gb",
@@ -106,7 +107,7 @@ func TestComputePlan(t *testing.T) {
 					migProfile:      "2g.20gb",
 					gpuIndex:        1,
 					desiredQuantity: 0,
-					actualResources: []types.MigDeviceResource{
+					actualResources: []migtypes.MigDeviceResource{
 						{
 							Device: resource.Device{
 								ResourceName: "nvidia.com/mig-2g.20gb",
