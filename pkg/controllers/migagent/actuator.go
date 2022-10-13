@@ -27,6 +27,15 @@ func NewActuator(client client.Client, migClient mig.Client) MigActuator {
 	return reporter
 }
 
+type migProfilePlan struct {
+	gpuIndex        int
+	migProfile      string
+	desiredQuantity int
+	actualResources []types.MigDeviceResource
+}
+
+type migConfigPlan []migProfilePlan
+
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var err error
 	var res ctrl.Result
@@ -47,22 +56,26 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, nil
 	}
 
-	// Check if actual status already matches spec
+	// Compute current state
 	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
 	if err != nil {
 		logger.Error(err, "unable to get MIG device resources")
 		return ctrl.Result{}, nil
 	}
-	if mig.SpecMatchesResources(specAnnotations, migDeviceResources) {
+	state := types.NewMigState(migDeviceResources)
+
+	// Check if actual state already matches spec
+	if state.Matches(specAnnotations) {
 		logger.Info("Actual status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
 	}
 
-	// Delete MIG resources not present in spec annotations
-	toDelete := computeResourcesToDelete(specAnnotations, migDeviceResources)
-	logger.V(1).Info("Computed MIG resources to delete", "resources", toDelete)
-	res, err = a.deleteMigResources(ctx, toDelete)
+	// MIG resources which MIG profile is not present in spec annotations must be deleted
+	//toDelete := getResourcesToDelete(specAnnotations, state)
+	//logger.V(1).Info("MIG resources to delete", "resources", toDelete)
 
+	//res, err = a.deleteMigResources(ctx, toDelete)
+	//
 	// Create MIG resources
 	// todo
 
@@ -109,9 +122,19 @@ func (a *MigActuator) deleteMigResources(ctx context.Context, toDelete []types.M
 	return res, err
 }
 
-func computeResourcesToDelete(specAnnotations []types.GPUSpecAnnotation, currentResources []types.MigDeviceResource) []types.MigDeviceResource {
-	resourcesToDelete := make([]types.MigDeviceResource, 0)
+func plan(state types.MigState, desired []types.GPUSpecAnnotation) migConfigPlan {
+	result := make(migConfigPlan, 0)
 
+	//resources := getResourcesNotIncludedInSpec(state, desired)
+	//groupedByGpuIndexAndProfile := make(map[string][]types.MigDeviceResource)
+	//for _, r := range resources {
+	//	groupedByGpuIndexAndProfile[]
+	//}
+
+	return result
+}
+
+func getResourcesNotIncludedInSpec(state types.MigState, specAnnotations []types.GPUSpecAnnotation) []types.MigDeviceResource {
 	// Group by GPU index
 	lookup := make(map[int]types.GPUAnnotationList)
 	for _, annotation := range specAnnotations {
@@ -122,14 +145,16 @@ func computeResourcesToDelete(specAnnotations []types.GPUSpecAnnotation, current
 		lookup[gpuIndex] = append(lookup[gpuIndex], annotation)
 	}
 
-	// Get all resources that are not contained in spec annotations
-	for _, r := range currentResources {
-		if !lookup[r.GpuIndex].ContainsMigProfile(r.GetMigProfile()) {
-			resourcesToDelete = append(resourcesToDelete, r)
+	updatedState := state
+	for gpuIndex, annotations := range lookup {
+		migProfiles := make([]string, 0)
+		for _, a := range annotations {
+			migProfiles = append(migProfiles, a.GetMigProfile())
 		}
+		updatedState = updatedState.WithoutMigProfiles(gpuIndex, migProfiles)
 	}
 
-	return resourcesToDelete
+	return updatedState.Flatten()
 }
 
 func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {

@@ -28,3 +28,17 @@ func (m MigDeviceResource) FullResourceName() string {
 func (m MigDeviceResource) GetMigProfile() string {
 	return strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-")
 }
+
+type MigDeviceResourceList []MigDeviceResource
+
+func (l MigDeviceResourceList) GroupBy(keyFunc func(resource MigDeviceResource) string) map[string]MigDeviceResourceList {
+	result := make(map[string]MigDeviceResourceList)
+	for _, r := range l {
+		key := keyFunc(r)
+		if result[key] == nil {
+			result[key] = make(MigDeviceResourceList, 0)
+		}
+		result[key] = append(result[key], r)
+	}
+	return result
+}
