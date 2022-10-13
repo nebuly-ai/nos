@@ -33,7 +33,7 @@ func (a *MigActuator) newLogger(ctx context.Context) klog.Logger {
 
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := a.newLogger(ctx)
-	logger.Info("actuating desired MIG config")
+	logger.Info("running reconcile loop")
 
 	// Retrieve instance
 	var instance v1.Node
@@ -59,8 +59,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 
 	// Apply MIG config plan
-	logger.Info("applying MIG config plan", "plan", plan.summary())
-	return a.apply(plan)
+	return a.apply(ctx, plan)
 }
 
 func (a *MigActuator) plan(ctx context.Context, specAnnotations types.GPUSpecAnnotationList) (migConfigPlan, error) {
@@ -84,7 +83,9 @@ func (a *MigActuator) plan(ctx context.Context, specAnnotations types.GPUSpecAnn
 	return computePlan(state, specAnnotations), nil
 }
 
-func (a *MigActuator) apply(plan migConfigPlan) (ctrl.Result, error) {
+func (a *MigActuator) apply(ctx context.Context, plan migConfigPlan) (ctrl.Result, error) {
+	logger := a.newLogger(ctx)
+	logger.Info("applying MIG config plan", "plan", plan.summary())
 	return ctrl.Result{}, nil
 }
 

@@ -32,8 +32,8 @@ func NewReporter(client client.Client, migClient mig.Client, refreshInterval tim
 }
 
 func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := klog.FromContext(ctx)
-	logger.Info("Reporting MIG resources status")
+	logger := klog.FromContext(ctx).WithName("Reporter")
+	logger.Info("reporting MIG resources status")
 
 	var instance v1.Node
 	if err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
@@ -56,19 +56,19 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 			freeMigs = append(freeMigs, r)
 		}
 	}
-	logger.V(3).Info("Loaded free MIG devices", "freeMIGs", freeMigs)
-	logger.V(3).Info("Loaded used MIG devices", "usedMIGs", usedMigs)
+	logger.V(3).Info("loaded free MIG devices", "freeMIGs", freeMigs)
+	logger.V(3).Info("loaded used MIG devices", "usedMIGs", usedMigs)
 	newStatusAnnotations := mig.ComputeStatusAnnotations(usedMigs, freeMigs)
 
 	// Get current status annotations and compare with new ones
 	oldStatusAnnotations, _ := types.GetGPUAnnotationsFromNode(instance)
 	if reflect.DeepEqual(newStatusAnnotations, oldStatusAnnotations) {
-		logger.Info("Current status is equal to last reported status, nothing to do")
+		logger.Info("current status is equal to last reported status, nothing to do")
 		return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 	}
 
 	// Update node
-	logger.Info("Status changed - reporting it by updating node annotations")
+	logger.Info("status changed - reporting it by updating node annotations")
 	updated := instance.DeepCopy()
 	for k := range updated.Annotations {
 		if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
@@ -83,7 +83,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, err
 	}
 
-	logger.Info("Updated reported status - node annotations updated successfully")
+	logger.Info("updated reported status - node annotations updated successfully")
 	return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 }
 
