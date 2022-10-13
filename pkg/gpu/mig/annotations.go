@@ -49,7 +49,7 @@ func ComputeStatusAnnotations(used []types.MigDeviceResource, free []types.MigDe
 		annotationToQuantity[key] = quantity
 	}
 
-	res := make([]types.GPUStatusAnnotation, len(annotationToQuantity))
+	res := make([]types.GPUStatusAnnotation, 0)
 	for k, v := range annotationToQuantity {
 		if a, err := types.NewGPUStatusAnnotation(k, fmt.Sprintf("%d", v)); err == nil {
 			res = append(res, a)
