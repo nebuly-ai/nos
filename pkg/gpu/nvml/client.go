@@ -113,8 +113,10 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 		return err
 	}
 
-	return visitGpuInstances(device, func(gi nvml.GpuInstance, giProfileId int, giProfileInfo nvml.GpuInstanceProfileInfo) error {
+	var numVisitedCi uint8
+	err = visitGpuInstances(device, func(gi nvml.GpuInstance, giProfileId int, giProfileInfo nvml.GpuInstanceProfileInfo) error {
 		err := visitComputeInstances(gi, func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error {
+			numVisitedCi++
 			klog.V(1).InfoS(
 				"deleting compute instance",
 				"parentGpuInstance",
@@ -140,6 +142,14 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 		)
 		return gi.Destroy()
 	})
+	if numVisitedCi == 0 {
+		return fmt.Errorf(
+			"cannot delete MIG device %s: the device does not have any compute instance associated",
+			id,
+		)
+	}
+
+	return err
 }
 
 func visitGpuInstances(device nvlib.Device, f func(gi nvml.GpuInstance, giProfileId int, giProfileInfo nvml.GpuInstanceProfileInfo) error) error {
