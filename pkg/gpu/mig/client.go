@@ -45,18 +45,14 @@ func (c nvmlMigClient) DeleteMigResource(_ context.Context, resource types.MigDe
 }
 
 func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) (types.MigDeviceResourceList, error) {
-	logger := klog.FromContext(ctx)
-
 	// Get used
 	used, err := c.getUsedMigDeviceResources(ctx)
 	if err != nil {
-		logger.Error(err, "unable to retrieve used MIG devices")
 		return nil, err
 	}
 	// Get allocatable
 	allocatable, err := c.getAllocatableMigDeviceResources(ctx)
 	if err != nil {
-		logger.Error(err, "unable to retrieve allocatable MIG devices")
 		return nil, err
 	}
 	// Get free

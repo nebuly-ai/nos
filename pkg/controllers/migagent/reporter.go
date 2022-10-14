@@ -34,7 +34,6 @@ func NewReporter(client client.Client, migClient mig.Client, refreshInterval tim
 
 func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := klog.FromContext(ctx).WithName("Reporter")
-	logger.Info("reporting MIG resources status")
 
 	var instance v1.Node
 	if err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {

@@ -33,7 +33,6 @@ func (a *MigActuator) newLogger(ctx context.Context) klog.Logger {
 
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := a.newLogger(ctx)
-	logger.Info("running reconcile loop")
 
 	// Retrieve instance
 	var instance v1.Node
