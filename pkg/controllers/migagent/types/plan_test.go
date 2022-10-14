@@ -1,21 +1,21 @@
-package migagent
+package types
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestComputePlan(t *testing.T) {
+func TestNewMigConfigPlan(t *testing.T) {
 	testCases := []struct {
-		name            string
-		state           types.MigState
-		specAnnotations map[string]string
-		expected        migConfigPlan
+		name              string
+		state             MigState
+		specAnnotations   map[string]string
+		expectedCreateOps []CreateOperation
+		expectedDeleteOps []DeleteOperation
 	}{
 		{
 			name:  "Empty state",
@@ -25,24 +25,28 @@ func TestComputePlan(t *testing.T) {
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "2",
 			},
-			expected: migConfigPlan{
+			expectedDeleteOps: []DeleteOperation{},
+			expectedCreateOps: []CreateOperation{
 				{
-					migProfile:      "1g.20gb",
-					gpuIndex:        0,
-					desiredQuantity: 1,
-					actualResources: []migtypes.MigDeviceResource{},
+					MigProfile: migtypes.MigProfile{
+						GpuIndex: 0,
+						Name:     "1g.20gb",
+					},
+					Quantity: 1,
 				},
 				{
-					migProfile:      "4g.20gb",
-					gpuIndex:        0,
-					desiredQuantity: 1,
-					actualResources: []migtypes.MigDeviceResource{},
+					MigProfile: migtypes.MigProfile{
+						GpuIndex: 0,
+						Name:     "4g.20gb",
+					},
+					Quantity: 1,
 				},
 				{
-					migProfile:      "1g.10gb",
-					gpuIndex:        1,
-					desiredQuantity: 2,
-					actualResources: []migtypes.MigDeviceResource{},
+					MigProfile: migtypes.MigProfile{
+						GpuIndex: 1,
+						Name:     "1g.10gb",
+					},
+					Quantity: 2,
 				},
 			},
 		},
@@ -79,12 +83,13 @@ func TestComputePlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{},
-			expected: migConfigPlan{
+			expectedDeleteOps: []DeleteOperation{
 				{
-					migProfile:      "1g.10gb",
-					gpuIndex:        0,
-					desiredQuantity: 0,
-					actualResources: []migtypes.MigDeviceResource{
+					MigProfile: migtypes.MigProfile{
+						GpuIndex: 0,
+						Name:     "1g.10gb",
+					},
+					Resources: []migtypes.MigDeviceResource{
 						{
 							Device: resource.Device{
 								ResourceName: "nvidia.com/mig-1g.10gb",
@@ -102,12 +107,14 @@ func TestComputePlan(t *testing.T) {
 							GpuIndex: 0,
 						},
 					},
+					Quantity: 2,
 				},
 				{
-					migProfile:      "2g.20gb",
-					gpuIndex:        1,
-					desiredQuantity: 0,
-					actualResources: []migtypes.MigDeviceResource{
+					MigProfile: migtypes.MigProfile{
+						GpuIndex: 1,
+						Name:     "2g.20gb",
+					},
+					Resources: []migtypes.MigDeviceResource{
 						{
 							Device: resource.Device{
 								ResourceName: "nvidia.com/mig-2g.20gb",
@@ -117,27 +124,31 @@ func TestComputePlan(t *testing.T) {
 							GpuIndex: 1,
 						},
 					},
+					Quantity: 1,
 				},
 			},
+			expectedCreateOps: []CreateOperation{},
 		},
 		{
-			name:            "Empty state, empty spec annotations",
-			state:           types.MigState{},
-			specAnnotations: map[string]string{},
-			expected:        make(migConfigPlan, 0),
+			name:              "Empty state, empty spec annotations",
+			state:             MigState{},
+			specAnnotations:   map[string]string{},
+			expectedCreateOps: []CreateOperation{},
+			expectedDeleteOps: []DeleteOperation{},
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotations := make(types.GPUSpecAnnotationList, 0)
+			annotations := make(GPUSpecAnnotationList, 0)
 			for k, v := range tt.specAnnotations {
-				a, err := types.NewGPUSpecAnnotation(k, v)
+				a, err := NewGPUSpecAnnotation(k, v)
 				assert.NoError(t, err)
 				annotations = append(annotations, a)
 			}
-			plan := computePlan(tt.state, annotations)
-			assert.ElementsMatch(t, tt.expected, plan)
+			plan := NewMigConfigPlan(tt.state, annotations)
+			assert.ElementsMatch(t, tt.expectedDeleteOps, plan.DeleteOperations)
+			assert.ElementsMatch(t, tt.expectedCreateOps, plan.CreateOperations)
 		})
 	}
 }
