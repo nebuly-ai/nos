@@ -149,34 +149,6 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 	return gi.Destroy()
 }
 
-func visitGpuInstances(device nvlib.Device, f func(gi nvml.GpuInstance, giProfileId int, giProfileInfo nvml.GpuInstanceProfileInfo) error) error {
-	for i := 0; i < nvml.GPU_INSTANCE_PROFILE_COUNT; i++ {
-		giProfileInfo, ret := device.GetGpuInstanceProfileInfo(i)
-		if ret == nvml.ERROR_NOT_SUPPORTED {
-			continue
-		}
-		if ret == nvml.ERROR_INVALID_ARGUMENT {
-			continue
-		}
-		if ret != nvml.SUCCESS {
-			return fmt.Errorf("error getting GPU instance profile info for %d: %s", i, ret.Error())
-		}
-
-		gis, ret := device.GetGpuInstances(&giProfileInfo)
-		if ret != nvml.SUCCESS {
-			return fmt.Errorf("error getting GPU instances for profile %d: %s", i, ret.Error())
-		}
-
-		for _, gi := range gis {
-			err := f(gi, i, giProfileInfo)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func visitComputeInstances(
 	gpuInstance nvml.GpuInstance,
 	f func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error,
