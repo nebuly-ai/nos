@@ -21,11 +21,10 @@ type MigActuator struct {
 }
 
 func NewActuator(client client.Client, migClient mig.Client) MigActuator {
-	reporter := MigActuator{
+	return MigActuator{
 		Client:    client,
 		migClient: migClient,
 	}
-	return reporter
 }
 
 func (a *MigActuator) newLogger(ctx context.Context) klog.Logger {

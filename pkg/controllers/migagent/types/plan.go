@@ -12,8 +12,9 @@ type CreateOperation struct {
 
 type DeleteOperation struct {
 	MigProfile migtypes.MigProfile
-	Resources  []migtypes.MigDeviceResource
-	Quantity   uint8
+	Resources  migtypes.MigDeviceResourceList
+	// Quantity is the amount of resources that need to be deleted
+	Quantity uint8
 }
 
 type MigConfigPlan struct {

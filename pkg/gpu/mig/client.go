@@ -22,7 +22,7 @@ func (r resourceWithDeviceId) isMigDevice() bool {
 }
 
 type Client interface {
-	GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error)
+	GetMigDeviceResources(ctx context.Context) (types.MigDeviceResourceList, error)
 	CreateMigResource(ctx context.Context, profile types.MigProfile) (types.MigDeviceResource, error)
 	DeleteMigResource(ctx context.Context, resource types.MigDeviceResource) error
 }
@@ -44,7 +44,7 @@ func (c nvmlMigClient) DeleteMigResource(_ context.Context, resource types.MigDe
 	return c.nvmlClient.DeleteMigDevice(resource.DeviceId)
 }
 
-func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) (types.MigDeviceResourceList, error) {
 	logger := klog.FromContext(ctx)
 
 	// Get used
