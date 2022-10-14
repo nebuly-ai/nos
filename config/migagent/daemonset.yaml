@@ -37,7 +37,7 @@ spec:
           args:
             - "--config=migagent_config.yaml"
           securityContext:
-            allowPrivilegeEscalation: false
+            privileged: true
             capabilities:
               drop: [ "ALL" ]
           livenessProbe:
