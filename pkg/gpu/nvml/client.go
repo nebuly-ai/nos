@@ -109,22 +109,22 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 	}
 
 	// Fetch GPU Instance and Compute Instances
-	device, err := c.nvlibClient.NewDevice(d)
-	if err != nil {
-		return err
-	}
-	giId, ret := device.GetGpuInstanceId()
+	giId, ret := d.GetGpuInstanceId()
 	if ret != nvml.SUCCESS {
 		return fmt.Errorf("error getting GPU Instance ID: %s", ret.Error())
 	}
-	gi, ret := device.GetGpuInstanceById(giId)
+	parentGpu, ret := d.GetDeviceHandleFromMigDeviceHandle()
+	if ret != nvml.SUCCESS {
+		return ret
+	}
+	gi, ret := parentGpu.GetGpuInstanceById(giId)
 	if ret != nvml.SUCCESS {
 		return fmt.Errorf("error getting GPU Instance %d: %s", giId, ret.Error())
 	}
 
 	// Delete Compute Instances
 	var numVisitedCi uint8
-	err = visitComputeInstances(gi, func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error {
+	err := visitComputeInstances(gi, func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error {
 		numVisitedCi++
 		klog.V(1).InfoS(
 			"deleting compute instance",
