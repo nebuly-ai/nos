@@ -108,48 +108,45 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 		return fmt.Errorf("device with UUID %s is not a MIG device", id)
 	}
 
+	// Fetch GPU Instance and Compute Instances
 	device, err := c.nvlibClient.NewDevice(d)
 	if err != nil {
 		return err
 	}
+	giId, ret := device.GetGpuInstanceId()
+	if ret != nvml.SUCCESS {
+		return fmt.Errorf("error getting GPU Instance ID: %s", ret.Error())
+	}
+	gi, ret := device.GetGpuInstanceById(giId)
+	if ret != nvml.SUCCESS {
+		return fmt.Errorf("error getting GPU Instance %d: %s", giId, ret.Error())
+	}
 
+	// Delete Compute Instances
 	var numVisitedCi uint8
-	err = visitGpuInstances(device, func(gi nvml.GpuInstance, giProfileId int, giProfileInfo nvml.GpuInstanceProfileInfo) error {
-		err := visitComputeInstances(gi, func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error {
-			numVisitedCi++
-			klog.V(1).InfoS(
-				"deleting compute instance",
-				"parentGpuInstance",
-				giProfileInfo,
-				"profileInfo",
-				ciProfileInfo,
-				"profileID",
-				ciProfileId,
-				"engProfileId",
-				ciEngProfileId,
-			)
-			return gi.Destroy()
-		})
-		if err != nil {
-			return fmt.Errorf("error destroying compute instances: %s", err)
-		}
+	err = visitComputeInstances(gi, func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error {
+		numVisitedCi++
 		klog.V(1).InfoS(
-			"deleting GPU instance",
+			"deleting compute instance",
 			"profileInfo",
-			giProfileInfo,
+			ciProfileInfo,
 			"profileID",
-			giProfileId,
+			ciProfileId,
+			"engProfileId",
+			ciEngProfileId,
 		)
 		return gi.Destroy()
 	})
+	if err != nil {
+		return fmt.Errorf("error destroying compute instances: %s", err)
+	}
 	if numVisitedCi == 0 {
-		return fmt.Errorf(
-			"cannot delete MIG device %s: the device does not have any compute instance associated",
-			id,
-		)
+		return fmt.Errorf("cannot delete %s: the device does not have any compute instance associated", id)
 	}
 
-	return err
+	// Delete GPU Instance
+	klog.V(1).InfoS("deleting GPU instance")
+	return gi.Destroy()
 }
 
 func visitGpuInstances(device nvlib.Device, f func(gi nvml.GpuInstance, giProfileId int, giProfileInfo nvml.GpuInstanceProfileInfo) error) error {
