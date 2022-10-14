@@ -3,12 +3,12 @@ module github.com/nebuly-ai/nebulnetes
 go 1.18
 
 require (
-	github.com/NVIDIA/go-nvml v0.11.6-0
 	github.com/go-logr/logr v1.2.0
 	github.com/google/go-cmp v0.5.8
 	github.com/onsi/ginkgo/v2 v2.1.6
 	github.com/onsi/gomega v1.20.2
 	github.com/stretchr/testify v1.8.0
+	gitlab.com/nvidia/cloud-native/go-nvlib v0.0.0-20220922133427-1049a7fa76a9
 	golang.org/x/exp v0.0.0-20220915210609-840b3808d824
 	google.golang.org/grpc v1.40.0
 	k8s.io/api v0.24.7
@@ -63,6 +63,7 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/Microsoft/go-winio v0.4.17 // indirect
+	github.com/NVIDIA/go-nvml v0.11.6-0.0.20220823120812-7e2082095e82 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
