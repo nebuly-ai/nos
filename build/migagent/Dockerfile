@@ -20,4 +20,9 @@ FROM nvidia/cuda:11.6.2-base-ubuntu20.04
 WORKDIR /
 COPY --from=builder /workspace/migagent .
 
+ENV NVIDIA_DISABLE_REQUIRE="true"
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_MIG_CONFIG_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=utility
+
 ENTRYPOINT ["/migagent"]
