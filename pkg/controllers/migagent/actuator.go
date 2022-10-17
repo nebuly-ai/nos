@@ -163,12 +163,12 @@ func (a *MigActuator) applyCreateOp(ctx context.Context, op types.CreateOperatio
 	var nCreated uint8
 	var i uint8
 	for i = 0; i < op.Quantity; i++ {
-		createdResource, err := a.migClient.CreateMigResource(ctx, op.MigProfile)
+		err := a.migClient.CreateMigResource(ctx, op.MigProfile)
 		if err != nil {
 			logger.Error(err, "unable to create MIG resource", "migProfile", op.MigProfile)
 			continue
 		}
-		logger.Info("created MIG resource", "migResource", createdResource)
+		logger.Info("created MIG resource", "migProfile", op.MigProfile)
 		nCreated++
 	}
 

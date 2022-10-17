@@ -23,7 +23,7 @@ func (r resourceWithDeviceId) isMigDevice() bool {
 
 type Client interface {
 	GetMigDeviceResources(ctx context.Context) (types.MigDeviceResourceList, error)
-	CreateMigResource(ctx context.Context, profile types.MigProfile) (types.MigDeviceResource, error)
+	CreateMigResource(ctx context.Context, profile types.MigProfile) error
 	DeleteMigResource(ctx context.Context, resource types.MigDeviceResource) error
 }
 
@@ -36,8 +36,8 @@ func NewNvmlMigClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Cli
 	return &nvmlMigClient{lister: lister, nvmlClient: nvmlClient}
 }
 
-func (c nvmlMigClient) CreateMigResource(ctx context.Context, profile types.MigProfile) (types.MigDeviceResource, error) {
-	return types.MigDeviceResource{}, c.nvmlClient.CreateMigDevice(profile.Name, profile.GpuIndex)
+func (c nvmlMigClient) CreateMigResource(_ context.Context, profile types.MigProfile) error {
+	return c.nvmlClient.CreateMigDevice(profile.Name, profile.GpuIndex)
 }
 
 func (c nvmlMigClient) DeleteMigResource(_ context.Context, resource types.MigDeviceResource) error {

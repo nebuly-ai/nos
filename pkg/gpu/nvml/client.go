@@ -136,7 +136,7 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 			"engProfileId",
 			ciEngProfileId,
 		)
-		return gi.Destroy()
+		return ci.Destroy()
 	})
 	if err != nil {
 		return fmt.Errorf("error destroying compute instances: %s", err)
