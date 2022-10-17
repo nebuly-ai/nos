@@ -3,6 +3,7 @@ package migagent
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
@@ -13,17 +14,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
 
 type MigActuator struct {
 	client.Client
 	migClient mig.Client
+	nodeName  string
 }
 
-func NewActuator(client client.Client, migClient mig.Client) MigActuator {
+func NewActuator(client client.Client, migClient mig.Client, nodeName string) MigActuator {
 	return MigActuator{
 		Client:    client,
 		migClient: migClient,
+		nodeName:  nodeName,
 	}
 }
 
@@ -109,7 +113,79 @@ func (a *MigActuator) apply(ctx context.Context, plan types.MigConfigPlan) (ctrl
 		}
 	}
 
+	// Restart nvidia device plugin to expose updated resources to k8s
+	if err = a.restartNvidiaDevicePlugin(ctx); err != nil {
+		logger.Error(err, "unable to restart nvidia device plugin")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, err
+}
+
+// restartNvidiaDevicePlugin deletes the Nvidia Device Plugin pod and blocks until it is successfully recreated by
+// its daemonset
+func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
+	logger := a.newLogger(ctx)
+	logger.Info("restarting nvidia device plugin")
+
+	// delete pod on the current node
+	var podList v1.PodList
+	if err := a.Client.List(
+		ctx,
+		&v1.PodList{},
+		client.MatchingLabels{"app": "nvidia-device-plugin-daemonset"},
+		client.MatchingFields{constant.PodNodeNameKey: a.nodeName},
+	); err != nil {
+		return err
+	}
+	if len(podList.Items) != 1 {
+		return fmt.Errorf("error getting nvidia device plugin pod: expected exactly 1 but got %d", len(podList.Items))
+	}
+	if err := a.Client.Delete(ctx, &podList.Items[0]); err != nil {
+		return fmt.Errorf("error deleting nvidia device plugin pod: %s", err.Error())
+	}
+	logger.V(1).Info("deleted nvidia device plugin pod")
+
+	// Wait for Pod to be recreated
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+	isPodRecreated := func() (bool, error) {
+		if err := a.Client.List(
+			ctx,
+			&podList,
+			client.MatchingLabels{"app": "nvidia-device-plugin-daemonset"},
+			client.MatchingFields{constant.PodNodeNameKey: a.nodeName},
+		); err != nil {
+			return false, err
+		}
+		if len(podList.Items) != 1 {
+			return false, nil
+		}
+		pod := podList.Items[0]
+		if pod.DeletionTimestamp != nil {
+			return false, nil
+		}
+		return true, nil
+	}
+
+	for {
+		logger.V(1).Info("waiting for nvidia device plugin Pod to be recreated")
+		recreated, err := isPodRecreated()
+		if err != nil {
+			return err
+		}
+		if recreated {
+			logger.V(1).Info("nvidia device plugin Pod recreated")
+			break
+		}
+		if ctx.Err() != nil {
+			return fmt.Errorf("error waiting for nvidia-device-plugin Pod on node %s: timeout", a.nodeName)
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	logger.Info("nvidia device plugin restarted")
+	return nil
 }
 
 func (a *MigActuator) applyDeleteOp(ctx context.Context, op types.DeleteOperation) error {

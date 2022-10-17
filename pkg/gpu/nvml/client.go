@@ -136,8 +136,7 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 			"engProfileId",
 			ciEngProfileId,
 		)
-		r := ci.Destroy()
-		if r != nvlibNvml.SUCCESS {
+		if r := ci.Destroy(); r != nvlibNvml.SUCCESS {
 			return fmt.Errorf("error deleting compute instance: %s", r.Error())
 		}
 		return nil
@@ -151,7 +150,11 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 
 	// Delete GPU Instance
 	klog.V(1).InfoS("deleting GPU instance")
-	return gi.Destroy()
+	if ret = gi.Destroy(); ret != nvlibNvml.SUCCESS {
+		return fmt.Errorf("error deleting GPU instance: %s", ret.Error())
+	}
+
+	return nil
 }
 
 func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) error {

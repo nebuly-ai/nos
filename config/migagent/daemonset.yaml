@@ -52,8 +52,8 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 10m
-              memory: 64Mi
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: device-plugin
               mountPath: /var/lib/kubelet/pod-resources/kubelet.sock
