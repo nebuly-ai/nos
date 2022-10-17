@@ -38,8 +38,6 @@ spec:
             - "--config=migagent_config.yaml"
           securityContext:
             privileged: true
-            capabilities:
-              drop: [ "ALL" ]
           livenessProbe:
             httpGet:
               path: /healthz
