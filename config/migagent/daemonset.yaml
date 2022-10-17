@@ -12,7 +12,7 @@ spec:
         name: migagent
     spec:
       nodeSelector:
-        nvidia.com/mig.strategy: mixed
+        n8s.nebuly.ai/auto-mig-enabled: "true"
       tolerations:
         - key: "kubernetes.azure.com/scalesetpriority"
           operator: "Equal"
