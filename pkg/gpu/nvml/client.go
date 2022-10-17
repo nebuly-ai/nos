@@ -178,6 +178,11 @@ func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) error 
 	// Todo: from now on we have to work with github.com/NVIDIA/go-nvml/pkg/nvml types because
 	// at the moment the types from nvlib does not provide methods for creating GPU instances.
 	// This won't be necessary anymore when the missing methods will be added to nvlib.
+	r := nvml.Init()
+	if r != nvml.SUCCESS {
+		return fmt.Errorf("error initializing nvml client: %s", nvml.ErrorString(r))
+	}
+	defer nvml.Shutdown()
 	nvmlDevice, r := nvml.DeviceGetHandleByIndex(gpuIndex)
 	if r != nvml.SUCCESS {
 		return fmt.Errorf(nvml.ErrorString(r))
