@@ -136,7 +136,11 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 			"engProfileId",
 			ciEngProfileId,
 		)
-		return ci.Destroy()
+		r := ci.Destroy()
+		if r != nvlibNvml.SUCCESS {
+			return fmt.Errorf("error deleting compute instance: %s", r.Error())
+		}
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("error destroying compute instances: %s", err)
