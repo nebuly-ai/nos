@@ -4,33 +4,34 @@ package nvml
 
 import (
 	"fmt"
-	nvlib "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvlib/device"
-	"gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
+	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	nvlibdevice "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvlib/device"
+	nvlibNvml "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 	"k8s.io/klog/v2"
 )
 
 type clientImpl struct {
-	nvmlClient  nvml.Interface
-	nvlibClient nvlib.Interface
+	nvmlClient  nvlibNvml.Interface
+	nvlibClient nvlibdevice.Interface
 }
 
 func NewClient() Client {
-	nvmlClient := nvml.New()
+	nvmlClient := nvlibNvml.New()
 	return &clientImpl{
 		nvmlClient:  nvmlClient,
-		nvlibClient: nvlib.New(nvlib.WithNvml(nvmlClient)),
+		nvlibClient: nvlibdevice.New(nvlibdevice.WithNvml(nvmlClient)),
 	}
 }
 
 func (c *clientImpl) init() error {
-	if ret := c.nvmlClient.Init(); ret != nvml.SUCCESS {
+	if ret := c.nvmlClient.Init(); ret != nvlibNvml.SUCCESS {
 		return fmt.Errorf("unable to initialize NVML: %s", ret.Error())
 	}
 	return nil
 }
 
 func (c *clientImpl) shutdown() {
-	if ret := c.nvmlClient.Shutdown(); ret != nvml.SUCCESS {
+	if ret := c.nvmlClient.Shutdown(); ret != nvlibNvml.SUCCESS {
 		klog.Errorf("unable to shut down NVML: %s", ret.Error())
 	}
 }
@@ -48,12 +49,12 @@ func (c *clientImpl) GetGpuIndex(migDeviceId string) (int, error) {
 	var result int
 	var err error
 	var found bool
-	err = c.nvlibClient.VisitMigDevices(func(gpuIndex int, _ nvlib.Device, migIndex int, m nvlib.MigDevice) error {
+	err = c.nvlibClient.VisitMigDevices(func(gpuIndex int, _ nvlibdevice.Device, migIndex int, m nvlibdevice.MigDevice) error {
 		if found {
 			return nil
 		}
 		uuid, ret := m.GetUUID()
-		if ret != nvml.SUCCESS {
+		if ret != nvlibNvml.SUCCESS {
 			return fmt.Errorf(
 				"error getting UUID of MIG device with index %d on GPU %v: %s",
 				migIndex,
@@ -93,11 +94,11 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 
 	// Fetch MIG device handle
 	d, ret := c.nvmlClient.DeviceGetHandleByUUID(id)
-	if ret != nvml.SUCCESS {
+	if ret != nvlibNvml.SUCCESS {
 		return fmt.Errorf("error getting MIG device with UUID %s: %s", id, ret.Error())
 	}
 	isMig, ret := d.IsMigDeviceHandle()
-	if ret != nvml.SUCCESS {
+	if ret != nvlibNvml.SUCCESS {
 		return fmt.Errorf(
 			"error determining whether the device with UUID %s is a MIG device: %s",
 			id,
@@ -110,21 +111,21 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 
 	// Fetch GPU Instance and Compute Instances
 	giId, ret := d.GetGpuInstanceId()
-	if ret != nvml.SUCCESS {
+	if ret != nvlibNvml.SUCCESS {
 		return fmt.Errorf("error getting GPU Instance ID: %s", ret.Error())
 	}
 	parentGpu, ret := d.GetDeviceHandleFromMigDeviceHandle()
-	if ret != nvml.SUCCESS {
-		return ret
+	if ret != nvlibNvml.SUCCESS {
+		return fmt.Errorf("error getting device handle from MIG device: %s", ret.Error())
 	}
 	gi, ret := parentGpu.GetGpuInstanceById(giId)
-	if ret != nvml.SUCCESS {
+	if ret != nvlibNvml.SUCCESS {
 		return fmt.Errorf("error getting GPU Instance %d: %s", giId, ret.Error())
 	}
 
 	// Delete Compute Instances
 	var numVisitedCi uint8
-	err := visitComputeInstances(gi, func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error {
+	err := visitComputeInstances(gi, func(ci nvlibNvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvlibNvml.ComputeInstanceProfileInfo) error {
 		numVisitedCi++
 		klog.V(1).InfoS(
 			"deleting compute instance",
@@ -149,25 +150,81 @@ func (c *clientImpl) DeleteMigDevice(id string) error {
 	return gi.Destroy()
 }
 
+func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) error {
+	// Parse MIG profile
+	mp, err := c.nvlibClient.ParseMigProfile(migProfileName)
+	if err != nil {
+		return fmt.Errorf("invalid MIG profile: %s", err.Error())
+	}
+
+	// Check if GPU is MIG-enabled
+	d, ret := c.nvmlClient.DeviceGetHandleByIndex(gpuIndex)
+	if ret != nvlibNvml.SUCCESS {
+		return fmt.Errorf("error getting GPU with index %d: %s", gpuIndex, ret.Error())
+	}
+	device, err := c.nvlibClient.NewDevice(d)
+	if err != nil {
+		return fmt.Errorf("error getting GPU with index %d: %s", gpuIndex, ret.Error())
+	}
+	isMigCapable, err := device.IsMigCapable()
+	if err != nil {
+		return err
+	}
+	if !isMigCapable {
+		return fmt.Errorf("MIG is not enabled on GPU with index %d", gpuIndex)
+	}
+
+	// Fetch nvml Device
+	// Todo: from now on we have to work with github.com/NVIDIA/go-nvml/pkg/nvml types because
+	// at the moment the types from nvlib does not provide methods for creating GPU instances.
+	// This won't be necessary anymore when the missing methods will be added to nvlib.
+	nvmlDevice, r := nvml.DeviceGetHandleByIndex(gpuIndex)
+	if r != nvml.SUCCESS {
+		return fmt.Errorf(nvml.ErrorString(r))
+	}
+
+	// Create GPU Instance
+	giProfileInfo, err := device.GetGpuInstanceProfileInfo(mp.GetInfo().GIProfileID)
+	if err != nil {
+		return fmt.Errorf("error getting GPU instance profile info: %s", err.Error())
+	}
+	gi, r := nvmlDevice.CreateGpuInstance((*nvml.GpuInstanceProfileInfo)(&giProfileInfo))
+	if r != nvml.SUCCESS {
+		return fmt.Errorf("error creating GPU instance: %s", nvml.ErrorString(r))
+	}
+
+	// Create Compute Instance
+	ciProfileInfo, r := gi.GetComputeInstanceProfileInfo(mp.GetInfo().CIProfileID, mp.GetInfo().CIEngProfileID)
+	if r != nvml.SUCCESS {
+		return fmt.Errorf("error getting Compute Instance profile info: %s", nvml.ErrorString(r))
+	}
+	_, r = gi.CreateComputeInstance(&ciProfileInfo)
+	if r != nvml.SUCCESS {
+		return fmt.Errorf("error creating Compute Instance: %s", nvml.ErrorString(r))
+	}
+
+	return nil
+}
+
 func visitComputeInstances(
-	gpuInstance nvml.GpuInstance,
-	f func(ci nvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvml.ComputeInstanceProfileInfo) error,
+	gpuInstance nvlibNvml.GpuInstance,
+	f func(ci nvlibNvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvlibNvml.ComputeInstanceProfileInfo) error,
 ) error {
-	for j := 0; j < nvml.COMPUTE_INSTANCE_PROFILE_COUNT; j++ {
-		for k := 0; k < nvml.COMPUTE_INSTANCE_ENGINE_PROFILE_COUNT; k++ {
+	for j := 0; j < nvlibNvml.COMPUTE_INSTANCE_PROFILE_COUNT; j++ {
+		for k := 0; k < nvlibNvml.COMPUTE_INSTANCE_ENGINE_PROFILE_COUNT; k++ {
 			ciProfileInfo, ret := gpuInstance.GetComputeInstanceProfileInfo(j, k)
-			if ret == nvml.ERROR_NOT_SUPPORTED {
+			if ret == nvlibNvml.ERROR_NOT_SUPPORTED {
 				continue
 			}
-			if ret == nvml.ERROR_INVALID_ARGUMENT {
+			if ret == nvlibNvml.ERROR_INVALID_ARGUMENT {
 				continue
 			}
-			if ret != nvml.SUCCESS {
+			if ret != nvlibNvml.SUCCESS {
 				return fmt.Errorf("error getting Compute instance profile info for (%d, %d): %s", j, k, ret.Error())
 			}
 
 			cis, ret := gpuInstance.GetComputeInstances(&ciProfileInfo)
-			if ret != nvml.SUCCESS {
+			if ret != nvlibNvml.SUCCESS {
 				return fmt.Errorf("error getting Compute instances for profile (%d, %d): %s", j, k, ret.Error())
 			}
 
