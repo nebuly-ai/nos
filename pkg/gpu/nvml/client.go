@@ -198,20 +198,31 @@ func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) error 
 	if r != nvml.SUCCESS {
 		return fmt.Errorf("error creating GPU instance: %s", nvml.ErrorString(r))
 	}
+	klog.V(1).InfoS("created GPU instance", "giProfileInfo", giProfileInfo)
 
 	// Create Compute Instance
 	ciProfileInfo, r := gi.GetComputeInstanceProfileInfo(mp.GetInfo().CIProfileID, mp.GetInfo().CIEngProfileID)
 	if r != nvml.SUCCESS {
 		// Cleanup created GPU instance
+		klog.V(1).InfoS("error getting GPU instance profile info, destroying previously created GPU instance")
+		r := gi.Destroy()
+		if r != nvml.SUCCESS {
+			klog.Errorf("error destroying GPU instance: %v", gi)
+		}
 		gi.Destroy()
 		return fmt.Errorf("error getting Compute Instance profile info: %s", nvml.ErrorString(r))
 	}
 	_, r = gi.CreateComputeInstance(&ciProfileInfo)
 	if r != nvml.SUCCESS {
 		// Cleanup created GPU instance
-		gi.Destroy()
+		klog.V(1).InfoS("error creating Compute Instance, destroying previously created GPU instance")
+		r := gi.Destroy()
+		if r != nvml.SUCCESS {
+			klog.Errorf("error destroying GPU instance: %v", gi)
+		}
 		return fmt.Errorf("error creating Compute Instance: %s", nvml.ErrorString(r))
 	}
+	klog.V(1).InfoS("created compute instance", "ciProfileInfo", ciProfileInfo)
 
 	return nil
 }
