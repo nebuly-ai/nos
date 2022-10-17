@@ -202,10 +202,14 @@ func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) error 
 	// Create Compute Instance
 	ciProfileInfo, r := gi.GetComputeInstanceProfileInfo(mp.GetInfo().CIProfileID, mp.GetInfo().CIEngProfileID)
 	if r != nvml.SUCCESS {
+		// Cleanup created GPU instance
+		gi.Destroy()
 		return fmt.Errorf("error getting Compute Instance profile info: %s", nvml.ErrorString(r))
 	}
 	_, r = gi.CreateComputeInstance(&ciProfileInfo)
 	if r != nvml.SUCCESS {
+		// Cleanup created GPU instance
+		gi.Destroy()
 		return fmt.Errorf("error creating Compute Instance: %s", nvml.ErrorString(r))
 	}
 
