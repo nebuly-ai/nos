@@ -12,3 +12,7 @@ func (c MockedNvmlClient) GetGpuIndex(migDeviceId string) (int, error) {
 func (c MockedNvmlClient) DeleteMigDevice(_ string) error {
 	return c.ReturnedError
 }
+
+func (c MockedNvmlClient) CreateMigDevice(_ string, _ int) error {
+	return c.ReturnedError
+}

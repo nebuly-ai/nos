@@ -17,8 +17,9 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		op                  types.DeleteOperation
 		clientReturnedError error
 
-		expectedDeleteCalls uint
-		errorExpected       bool
+		expectedDeleteCalls      uint
+		errorExpected            bool
+		atLeastOneDeleteExpected bool
 	}{
 		{
 			name: "Empty delete operation",
@@ -30,9 +31,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				Resources: make(migtypes.MigDeviceResourceList, 0),
 				Quantity:  0,
 			},
-			clientReturnedError: nil,
-			expectedDeleteCalls: 0,
-			errorExpected:       false,
+			clientReturnedError:      nil,
+			expectedDeleteCalls:      0,
+			errorExpected:            false,
+			atLeastOneDeleteExpected: false,
 		},
 		{
 			name: "Delete op does not have enough candidates",
@@ -69,9 +71,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				},
 				Quantity: 2,
 			},
-			clientReturnedError: nil,
-			expectedDeleteCalls: 1,
-			errorExpected:       true,
+			clientReturnedError:      nil,
+			expectedDeleteCalls:      1,
+			errorExpected:            true,
+			atLeastOneDeleteExpected: true,
 		},
 		{
 			name: "More candidates than required, the op should delete only Quantity resources",
@@ -108,9 +111,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				},
 				Quantity: 2,
 			},
-			clientReturnedError: nil,
-			expectedDeleteCalls: 2,
-			errorExpected:       false,
+			clientReturnedError:      nil,
+			expectedDeleteCalls:      2,
+			atLeastOneDeleteExpected: true,
+			errorExpected:            false,
 		},
 		{
 			name: "MIG client returns error",
@@ -131,9 +135,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				},
 				Quantity: 1,
 			},
-			clientReturnedError: fmt.Errorf("an error"),
-			expectedDeleteCalls: 1,
-			errorExpected:       true,
+			clientReturnedError:      fmt.Errorf("an error"),
+			expectedDeleteCalls:      1,
+			errorExpected:            true,
+			atLeastOneDeleteExpected: false,
 		},
 	}
 
@@ -144,13 +149,14 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		migClient.Reset()
 		migClient.ReturnedError = tt.clientReturnedError
 		t.Run(tt.name, func(t *testing.T) {
-			err := actuator.applyDeleteOp(context.TODO(), tt.op)
+			atLeastOneDelete, err := actuator.applyDeleteOp(context.TODO(), tt.op)
 			if tt.errorExpected {
 				assert.Error(t, err)
 			}
 			if !tt.errorExpected {
 				assert.NoError(t, err)
 			}
+			assert.Equal(t, tt.atLeastOneDeleteExpected, atLeastOneDelete)
 			assert.Equal(t, tt.expectedDeleteCalls, migClient.NumCallsDeleteMigResource)
 		})
 	}
@@ -162,8 +168,9 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		op                  types.CreateOperation
 		clientReturnedError error
 
-		expectedCreateCalls uint
-		errorExpected       bool
+		expectedCreateCalls      uint
+		errorExpected            bool
+		atLeastOneCreateExpected bool
 	}{
 		{
 			name: "Empty create operation",
@@ -174,9 +181,10 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 				},
 				Quantity: 0,
 			},
-			clientReturnedError: nil,
-			expectedCreateCalls: 0,
-			errorExpected:       false,
+			clientReturnedError:      nil,
+			expectedCreateCalls:      0,
+			errorExpected:            false,
+			atLeastOneCreateExpected: false,
 		},
 		{
 			name: "MIG client returns error",
@@ -187,9 +195,10 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 				},
 				Quantity: 1,
 			},
-			clientReturnedError: fmt.Errorf("an error"),
-			expectedCreateCalls: 1,
-			errorExpected:       true,
+			clientReturnedError:      fmt.Errorf("an error"),
+			expectedCreateCalls:      1,
+			errorExpected:            true,
+			atLeastOneCreateExpected: false,
 		},
 		{
 			name: "Create success, quantity > 1",
@@ -200,9 +209,10 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 				},
 				Quantity: 4,
 			},
-			clientReturnedError: nil,
-			expectedCreateCalls: 4,
-			errorExpected:       false,
+			clientReturnedError:      nil,
+			expectedCreateCalls:      4,
+			errorExpected:            false,
+			atLeastOneCreateExpected: true,
 		},
 	}
 
@@ -213,13 +223,14 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		migClient.Reset()
 		migClient.ReturnedError = tt.clientReturnedError
 		t.Run(tt.name, func(t *testing.T) {
-			err := actuator.applyCreateOp(context.TODO(), tt.op)
+			atLeastOneCreate, err := actuator.applyCreateOp(context.TODO(), tt.op)
 			if tt.errorExpected {
 				assert.Error(t, err)
 			}
 			if !tt.errorExpected {
 				assert.NoError(t, err)
 			}
+			assert.Equal(t, tt.atLeastOneCreateExpected, atLeastOneCreate)
 			assert.Equal(t, tt.expectedCreateCalls, migClient.NumCallsCreateMigResource)
 		})
 	}

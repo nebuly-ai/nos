@@ -26,9 +26,9 @@ func (m *MockedMigClient) GetMigDeviceResources(_ context.Context) (types.MigDev
 	return m.ReturnedMigDeviceResources, m.ReturnedError
 }
 
-func (m *MockedMigClient) CreateMigResource(_ context.Context, _ types.MigProfile) (types.MigDeviceResource, error) {
+func (m *MockedMigClient) CreateMigResource(_ context.Context, _ types.MigProfile) error {
 	m.NumCallsCreateMigResource++
-	return m.ReturnedMigDeviceResource, m.ReturnedError
+	return m.ReturnedError
 }
 
 func (m *MockedMigClient) DeleteMigResource(_ context.Context, _ types.MigDeviceResource) error {
