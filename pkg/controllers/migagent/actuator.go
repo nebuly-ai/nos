@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sync"
 	"time"
 )
 
@@ -21,13 +22,15 @@ type MigActuator struct {
 	client.Client
 	migClient mig.Client
 	nodeName  string
+	mutex     sync.Locker
 }
 
-func NewActuator(client client.Client, migClient mig.Client, nodeName string) MigActuator {
+func NewActuator(client client.Client, migClient mig.Client, mutex sync.Locker, nodeName string) MigActuator {
 	return MigActuator{
 		Client:    client,
 		migClient: migClient,
 		nodeName:  nodeName,
+		mutex:     mutex,
 	}
 }
 
@@ -37,6 +40,9 @@ func (a *MigActuator) newLogger(ctx context.Context) klog.Logger {
 
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := a.newLogger(ctx)
+
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
 
 	// Retrieve instance
 	var instance v1.Node

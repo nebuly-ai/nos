@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sync"
 	"time"
 )
 
@@ -90,6 +91,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	// mutex for reporter/actuator synchronization
+	var mutex sync.Mutex
+
 	// Init MIG client
 	podResourcesClient, err := newPodResourcesListerClient()
 	setupLog.Info("Initializing NVML client")
@@ -100,6 +104,7 @@ func main() {
 	migReporter := migagent.NewReporter(
 		mgr.GetClient(),
 		migClient,
+		&mutex,
 		10*time.Second,
 	)
 	if err := migReporter.SetupWithManager(mgr, "MIGReporter", nodeName); err != nil {
@@ -111,6 +116,7 @@ func main() {
 	migActuator := migagent.NewActuator(
 		mgr.GetClient(),
 		migClient,
+		&mutex,
 		nodeName,
 	)
 	if err := migActuator.SetupWithManager(mgr, "MIGActuator", nodeName); err != nil {
