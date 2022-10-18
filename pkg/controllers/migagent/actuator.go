@@ -103,9 +103,12 @@ func (a *MigActuator) apply(ctx context.Context, plan types.MigConfigPlan) (ctrl
 		plan.DeleteOperations,
 	)
 
+	var atLeastOneDelete bool
+	var atLeastOneCreate bool
+
 	// Apply delete operations first
 	for _, op := range plan.DeleteOperations {
-		err = a.applyDeleteOp(ctx, op)
+		atLeastOneDelete, err = a.applyDeleteOp(ctx, op)
 		if err != nil {
 			logger.Error(err, "unable to fulfill delete operation", "op", op)
 		}
@@ -113,16 +116,18 @@ func (a *MigActuator) apply(ctx context.Context, plan types.MigConfigPlan) (ctrl
 
 	// Apply create operations
 	for _, op := range plan.CreateOperations {
-		err = a.applyCreateOp(ctx, op)
+		atLeastOneCreate, err = a.applyCreateOp(ctx, op)
 		if err != nil {
 			logger.Error(err, "unable to fulfill create operation", "op", op)
 		}
 	}
 
 	// Restart nvidia device plugin to expose updated resources to k8s
-	if err = a.restartNvidiaDevicePlugin(ctx); err != nil {
-		logger.Error(err, "unable to restart nvidia device plugin")
-		return ctrl.Result{}, err
+	if atLeastOneCreate || atLeastOneDelete {
+		if err = a.restartNvidiaDevicePlugin(ctx); err != nil {
+			logger.Error(err, "unable to restart nvidia device plugin")
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, err
@@ -209,7 +214,7 @@ func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context) erro
 	return nil
 }
 
-func (a *MigActuator) applyDeleteOp(ctx context.Context, op types.DeleteOperation) error {
+func (a *MigActuator) applyDeleteOp(ctx context.Context, op types.DeleteOperation) (bool, error) {
 	logger := a.newLogger(ctx)
 	logger.Info("applying delete operation for MigProfile", "migProfile", op.MigProfile)
 
@@ -245,15 +250,17 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op types.DeleteOperatio
 		}
 	}
 
+	atLeastOneDelete := nDeleted > 0
+
 	// Return error if we couldn't delete the amount of resources specified by the Delete Operation
 	if nDeleted < op.Quantity {
-		return fmt.Errorf("could delete only %d out of %d MIG resources", nDeleted, op.Quantity)
+		return atLeastOneDelete, fmt.Errorf("could delete only %d out of %d MIG resources", nDeleted, op.Quantity)
 	}
 
-	return nil
+	return atLeastOneDelete, nil
 }
 
-func (a *MigActuator) applyCreateOp(ctx context.Context, op types.CreateOperation) error {
+func (a *MigActuator) applyCreateOp(ctx context.Context, op types.CreateOperation) (bool, error) {
 	logger := a.newLogger(ctx)
 	logger.Info("applying create operation for MigProfile", "migProfile", op.MigProfile)
 
@@ -269,11 +276,13 @@ func (a *MigActuator) applyCreateOp(ctx context.Context, op types.CreateOperatio
 		nCreated++
 	}
 
+	atLeastOneCreate := nCreated > 0
+
 	if nCreated < op.Quantity {
-		return fmt.Errorf("could create only %d out of %d MIG resources", nCreated, op.Quantity)
+		return atLeastOneCreate, fmt.Errorf("could create only %d out of %d MIG resources", nCreated, op.Quantity)
 	}
 
-	return nil
+	return atLeastOneCreate, nil
 }
 
 func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {
