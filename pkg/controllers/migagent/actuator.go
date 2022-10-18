@@ -132,7 +132,7 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 	var podList v1.PodList
 	if err := a.Client.List(
 		ctx,
-		&v1.PodList{},
+		&podList,
 		client.MatchingLabels{"app": "nvidia-device-plugin-daemonset"},
 		client.MatchingFields{constant.PodNodeNameKey: a.nodeName},
 	); err != nil {
@@ -146,10 +146,23 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 	}
 	logger.V(1).Info("deleted nvidia device plugin pod")
 
-	// Wait for Pod to be recreated
+	// wait for pod to restart
+	if err := a.waitNvidiaDevicePluginPodRestart(ctx); err != nil {
+		return err
+	}
+	logger.Info("nvidia device plugin restarted")
+
+	return nil
+}
+
+func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context) error {
+	logger := a.newLogger(ctx)
+
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
-	isPodRecreated := func() (bool, error) {
+
+	var podList v1.PodList
+	checkPodRecreated := func() (bool, error) {
 		if err := a.Client.List(
 			ctx,
 			&podList,
@@ -165,12 +178,15 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 		if pod.DeletionTimestamp != nil {
 			return false, nil
 		}
+		if pod.Status.Phase != v1.PodRunning {
+			return false, nil
+		}
 		return true, nil
 	}
 
 	for {
 		logger.V(1).Info("waiting for nvidia device plugin Pod to be recreated")
-		recreated, err := isPodRecreated()
+		recreated, err := checkPodRecreated()
 		if err != nil {
 			return err
 		}
@@ -181,10 +197,9 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 		if ctx.Err() != nil {
 			return fmt.Errorf("error waiting for nvidia-device-plugin Pod on node %s: timeout", a.nodeName)
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 	}
 
-	logger.Info("nvidia device plugin restarted")
 	return nil
 }
 
