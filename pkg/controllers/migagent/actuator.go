@@ -285,13 +285,13 @@ func (a *MigActuator) applyCreateOp(ctx context.Context, op types.CreateOperatio
 	return atLeastOneCreate, nil
 }
 
-func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string, nodeName string) error {
+func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
 			&v1.Node{},
 			builder.WithPredicates(
 				excludeDeletePredicate{},
-				matchingNamePredicate{Name: nodeName},
+				matchingNamePredicate{Name: a.nodeName},
 				annotationsChangedPredicate{},
 			),
 		).

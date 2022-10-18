@@ -119,7 +119,7 @@ func main() {
 		&mutex,
 		nodeName,
 	)
-	if err := migActuator.SetupWithManager(mgr, "MIGActuator", nodeName); err != nil {
+	if err := migActuator.SetupWithManager(mgr, "MIGActuator"); err != nil {
 		setupLog.Error(err, "unable to create MIG Actuator")
 		os.Exit(1)
 	}

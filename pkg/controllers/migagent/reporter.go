@@ -54,12 +54,12 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 	usedMigs := make([]migtypes.MigDeviceResource, 0)
 	freeMigs := make([]migtypes.MigDeviceResource, 0)
-	for _, r := range migResources {
-		if r.Status == resource.StatusUsed {
-			usedMigs = append(usedMigs, r)
+	for _, res := range migResources {
+		if res.Status == resource.StatusUsed {
+			usedMigs = append(usedMigs, res)
 		}
-		if r.Status == resource.StatusFree {
-			freeMigs = append(freeMigs, r)
+		if res.Status == resource.StatusFree {
+			freeMigs = append(freeMigs, res)
 		}
 	}
 	logger.V(3).Info("loaded free MIG devices", "freeMIGs", freeMigs)
@@ -76,6 +76,9 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	// Update node
 	logger.Info("status changed - reporting it by updating node annotations")
 	updated := instance.DeepCopy()
+	if updated.Annotations == nil {
+		updated.Annotations = make(map[string]string)
+	}
 	for k := range updated.Annotations {
 		if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
 			delete(updated.Annotations, k)
