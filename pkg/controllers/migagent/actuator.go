@@ -122,7 +122,7 @@ func (a *MigActuator) apply(ctx context.Context, plan types.MigConfigPlan) (ctrl
 		}
 	}
 
-	// Restart nvidia device plugin to expose updated resources to k8s
+	// If any MIG profile has been created/deleted, restart the device plugin to advertise the new resources
 	if atLeastOneCreate || atLeastOneDelete {
 		if err = a.restartNvidiaDevicePlugin(ctx); err != nil {
 			logger.Error(err, "unable to restart nvidia device plugin")
@@ -158,7 +158,7 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 	logger.V(1).Info("deleted nvidia device plugin pod")
 
 	// wait for pod to restart
-	if err := a.waitNvidiaDevicePluginPodRestart(ctx); err != nil {
+	if err := a.waitNvidiaDevicePluginPodRestart(ctx, 1*time.Minute); err != nil {
 		return err
 	}
 	logger.Info("nvidia device plugin restarted")
@@ -166,10 +166,10 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 	return nil
 }
 
-func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context) error {
+func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, timeout time.Duration) error {
 	logger := a.newLogger(ctx)
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	var podList v1.PodList
