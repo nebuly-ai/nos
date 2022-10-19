@@ -5,6 +5,8 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -30,8 +32,6 @@ var _ = Describe("MigAgent - Actuator", func() {
 		updated := node.DeepCopy()
 		updated.Annotations = map[string]string{}
 		Expect(k8sClient.Patch(ctx, updated, client.MergeFrom(&node))).To(Succeed())
-
-		fmt.Println("************ before each executed **************")
 	})
 
 	AfterEach(func() {
@@ -111,6 +111,66 @@ var _ = Describe("MigAgent - Actuator", func() {
 			}, 5*time.Second).Should(Succeed())
 
 			By("Do not calling the delete method on the MIG client")
+			Expect(actuatorMigClient.NumCallsDeleteMigResource).To(BeZero())
+
+			By("Do not calling the create method on the MIG client")
+			Expect(actuatorMigClient.NumCallsCreateMigResource).To(BeZero())
+		})
+	})
+	When("The node annotation gets updated reducing MIG resource number, but all the MIG resources are being used", func() {
+		It("Should do nothing", func() {
+			By("Fetching the node")
+			var node v1.Node
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: actuatorNodeName, Namespace: ""}, &node)).To(Succeed())
+
+			By("Fetching the nvidia-device-plugin pod")
+			var nvidiaDevicePluginPod v1.Pod
+			Expect(
+				k8sClient.Get(
+					ctx,
+					types.NamespacedName{Name: actuatorNvidiaDevicePluginPodName, Namespace: nvidiaDevicePluginPodNamespace},
+					&nvidiaDevicePluginPod),
+			).To(Succeed())
+
+			actuatorMigClient.ReturnedMigDeviceResources = migtypes.MigDeviceResourceList{
+				migtypes.MigDeviceResource{
+					Device: resource.Device{
+						ResourceName: "nvidia.com/mig-1g.10gb",
+						DeviceId:     "id-1",
+						Status:       resource.StatusUsed,
+					},
+					GpuIndex: 0,
+				},
+				migtypes.MigDeviceResource{
+					Device: resource.Device{
+						ResourceName: "nvidia.com/mig-2g.20gb",
+						DeviceId:     "id-2",
+						Status:       resource.StatusUsed,
+					},
+					GpuIndex: 0,
+				},
+			}
+
+			By("Updating the node annotations")
+			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb")
+			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.20gb")
+			updatedNode := node.DeepCopy()
+			updatedNode.Annotations = map[string]string{
+				specAnnotation:   "0",
+				statusAnnotation: "0",
+			}
+			Expect(k8sClient.Patch(ctx, updatedNode, client.MergeFrom(&node)))
+
+			By("Do not deleting nvidia-device-plugin pod")
+			Consistently(func() error {
+				return k8sClient.Get(
+					ctx,
+					types.NamespacedName{Name: actuatorNvidiaDevicePluginPodName, Namespace: nvidiaDevicePluginPodNamespace},
+					&v1.Pod{},
+				)
+			}, 5*time.Second).Should(Succeed())
+
+			By("Do no calling the delete method on the MIG client")
 			Expect(actuatorMigClient.NumCallsDeleteMigResource).To(BeZero())
 
 			By("Do not calling the create method on the MIG client")
