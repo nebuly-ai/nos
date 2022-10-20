@@ -110,8 +110,8 @@ docker-push-scheduler: ## Build docker image with the scheduler.
 	docker push ${SCHEDULER_IMG}
 
 .PHONY: docker-push-gpu-partitioner
-docker-push-scheduler: ## Build docker image with the gpu-partitioner.
-	docker push ${SCHEDULER_IMG}
+docker-push-gpu-partitioner: ## Build docker image with the gpu-partitioner.
+	docker push ${GPU_PARTITIONER_IMG}
 
 .PHONY: docker-build
 docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner
