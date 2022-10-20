@@ -109,11 +109,15 @@ docker-push-migagent: ## Build docker image with the manager.
 docker-push-scheduler: ## Build docker image with the scheduler.
 	docker push ${SCHEDULER_IMG}
 
+.PHONY: docker-push-gpu-partitioner
+docker-push-scheduler: ## Build docker image with the gpu-partitioner.
+	docker push ${SCHEDULER_IMG}
+
 .PHONY: docker-build
 docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner
 
 .PHONY: docker-push
-docker-push: docker-push-controller docker-build-scheduler
+docker-push: docker-push-controller docker-push-scheduler docker-push-migagent docker-push-gpu-partitioner
 
 ##@ Deployment
 
