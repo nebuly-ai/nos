@@ -1,9 +1,9 @@
 
 # Image URL to use all building/pushing image targets
-CONTROLLER_IMG ?= controller:latest
-SCHEDULER_IMG ?= scheduler:latest
-GPU_PARTITIONER_IMG ?= gpu-partitioner:latest
-MIGAGENT_IMG ?= migagent:latest
+CONTROLLER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-controller:latest
+SCHEDULER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-scheduler:latest
+GPU_PARTITIONER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner:latest
+MIGAGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-migagent:latest
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -136,7 +136,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}
 	cd config/scheduler && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
-	cd config/migagent && $(KUSTOMIZE) edit set image migagent=${migagent_IMG}
+	cd config/migagent && $(KUSTOMIZE) edit set image migagent=${MIGAGENT_IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
