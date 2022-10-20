@@ -1,15 +1,8 @@
   on:
     workflow_dispatch:
-      inputs:
-        docker-image:
-          description: 'The name of the docker image that will be build'
-          required: true
-          default: 'migagent:latest'
-          type: string
 
   env:
     REGISTRY: ghcr.io
-    #    IMAGE_NAME: "${{ github.repository }}-migagent:latest"
     CONTROLLER_IMG: "${{ github.repository }}-controller:latest"
     SCHEDULER_IMG: "${{ github.repository }}-scheduler:latest"
     MIGAGENT_IMG: "${{ github.repository }}-migagent:latest"
@@ -37,9 +30,3 @@
 
         - name: Push images
           run: make docker-push
-  #          uses: docker/build-push-action@v3
-  #          with:
-  #            context: .
-  #            push: true
-  #            file: build/migagent/Dockerfile
-  #            tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
