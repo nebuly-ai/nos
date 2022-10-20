@@ -3,10 +3,10 @@
 
   env:
     REGISTRY: ghcr.io
-    CONTROLLER_IMG: "${{ github.repository }}-controller:latest"
-    SCHEDULER_IMG: "${{ github.repository }}-scheduler:latest"
-    MIGAGENT_IMG: "${{ github.repository }}-migagent:latest"
-    GPU_PARTITIONER_IMG: "${{ github.repository }}-gpu-partitioner:latest"
+    CONTROLLER_IMG: "ghcr.io/${{ github.repository }}-controller:latest"
+    SCHEDULER_IMG: "ghcr.io/${{ github.repository }}-scheduler:latest"
+    MIGAGENT_IMG: "ghcr.io/${{ github.repository }}-migagent:latest"
+    GPU_PARTITIONER_IMG: "ghcr.io/${{ github.repository }}-gpu-partitioner:latest"
 
   jobs:
     docker-build:
@@ -18,7 +18,7 @@
         - name: Checkout repository
           uses: actions/checkout@v3
 
-        - name: Login to DockerHub
+        - name: Login to GitHub container registry
           uses: docker/login-action@v2
           with:
             registry: ${{ env.REGISTRY }}
