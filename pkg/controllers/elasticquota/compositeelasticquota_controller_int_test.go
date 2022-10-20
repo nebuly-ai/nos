@@ -131,16 +131,14 @@ var _ = Describe("CompositeElasticQuota controller", func() {
 				v1.ResourceCPU:             expectedCPUQuantity,
 				v1alpha1.ResourceGPUMemory: expectedGPUMemoryQuantity,
 			}
-			previousInstance := instance
-			Eventually(func() v1alpha1.CompositeElasticQuota {
+			Eventually(func() v1.ResourceList {
 				lookupKey := types.NamespacedName{
 					Name:      compositeElasticQuota.Name,
 					Namespace: compositeElasticQuota.Namespace,
 				}
 				_ = k8sClient.Get(ctx, lookupKey, &instance)
-				return instance
-			}, timeout, interval).ShouldNot(Equal(previousInstance))
-			Expect(instance.Status.Used).To(Equal(expectedUsedResourceList))
+				return instance.Status.Used
+			}, timeout, interval).ShouldNot(Equal(expectedUsedResourceList))
 
 			By("Checking the Pods' capacity-info label shows that the Pods are in-quota")
 			var podInstance v1.Pod
