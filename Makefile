@@ -114,7 +114,7 @@ docker-push-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 	docker push ${GPU_PARTITIONER_IMG}
 
 .PHONY: docker-build
-docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner
+docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner docker-build-migagent
 
 .PHONY: docker-push
 docker-push: docker-push-controller docker-push-scheduler docker-push-migagent docker-push-gpu-partitioner
