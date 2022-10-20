@@ -71,7 +71,7 @@ func (e ElasticQuotaInfos) AggregatedUsedOverMinWith(podRequest framework.Resour
 	min := e.getAggregatedMin()
 	used := e.getAggregatedUsed()
 	used.Add(resource.FromFrameworkToList(podRequest))
-	return cmp(used, min)
+	return greaterThan(used, min)
 }
 
 func (e ElasticQuotaInfos) GetGuaranteedOverquotas(elasticQuota string) (*framework.Resource, error) {
@@ -82,14 +82,14 @@ func (e ElasticQuotaInfos) GetGuaranteedOverquotas(elasticQuota string) (*framew
 
 	var result = framework.NewResource(nil)
 	percentages := e.getGuaranteedOverquotasPercentages(eqInfo)
-	aggregatedUnused := e.getAggregatedOverquotas()
+	aggregatedOverquotas := e.getAggregatedOverquotas()
 
-	result.MilliCPU = int64(math.Floor(float64(aggregatedUnused.MilliCPU) * percentages[v1.ResourceCPU]))
-	result.Memory = int64(math.Floor(float64(aggregatedUnused.Memory) * percentages[v1.ResourceMemory]))
-	result.AllowedPodNumber = int(math.Floor(float64(aggregatedUnused.AllowedPodNumber) * percentages[v1.ResourcePods]))
-	result.EphemeralStorage = int64(math.Floor(float64(aggregatedUnused.EphemeralStorage) * percentages[v1.ResourceEphemeralStorage]))
+	result.MilliCPU = int64(math.Floor(float64(aggregatedOverquotas.MilliCPU) * percentages[v1.ResourceCPU]))
+	result.Memory = int64(math.Floor(float64(aggregatedOverquotas.Memory) * percentages[v1.ResourceMemory]))
+	result.AllowedPodNumber = int(math.Floor(float64(aggregatedOverquotas.AllowedPodNumber) * percentages[v1.ResourcePods]))
+	result.EphemeralStorage = int64(math.Floor(float64(aggregatedOverquotas.EphemeralStorage) * percentages[v1.ResourceEphemeralStorage]))
 
-	for r, v := range aggregatedUnused.ScalarResources {
+	for r, v := range aggregatedOverquotas.ScalarResources {
 		result.SetScalar(r, int64(math.Floor(float64(v)*percentages[r])))
 	}
 
@@ -221,17 +221,17 @@ func (e *ElasticQuotaInfo) usedOverMin() bool {
 
 // usedOver returns true if used > resource
 func (e *ElasticQuotaInfo) usedOver(resource *framework.Resource) bool {
-	return cmp(e.Used, resource)
+	return greaterThan(e.Used, resource)
 }
 
-// usedOverWith returns true if used > resource + podRequest
+// usedOverWith returns true if used + podRequest > resource
 func (e *ElasticQuotaInfo) usedOverWith(resource *framework.Resource, podRequest *framework.Resource) bool {
-	return cmp2(podRequest, e.Used, resource)
+	return sumGreaterThan(podRequest, e.Used, resource)
 }
 
-// usedLteWith returns true if used <= resource + podRequest
+// usedLteWith returns true if used + podRequest <= resource
 func (e *ElasticQuotaInfo) usedLteWith(resource *framework.Resource, podRequest *framework.Resource) bool {
-	return !cmp2(podRequest, e.Used, resource)
+	return !sumLessThanEqual(podRequest, e.Used, resource)
 }
 
 func (e *ElasticQuotaInfo) clone() *ElasticQuotaInfo {
@@ -305,11 +305,11 @@ func (e *ElasticQuotaInfo) deletePodIfPresent(pod *v1.Pod) error {
 	return nil
 }
 
-func cmp(x, y *framework.Resource) bool {
-	return cmp2(x, &framework.Resource{}, y)
+func greaterThan(x, y *framework.Resource) bool {
+	return sumGreaterThan(x, &framework.Resource{}, y)
 }
 
-func cmp2(x1, x2, y *framework.Resource) bool {
+func sumGreaterThan(x1, x2, y *framework.Resource) bool {
 	if x1.MilliCPU+x2.MilliCPU > y.MilliCPU {
 		return true
 	}
@@ -323,6 +323,24 @@ func cmp2(x1, x2, y *framework.Resource) bool {
 			if rQuant+x2.ScalarResources[rName] > y.ScalarResources[rName] {
 				return true
 			}
+		}
+	}
+
+	return false
+}
+
+func sumLessThanEqual(x1, x2, y *framework.Resource) bool {
+	if x1.MilliCPU+x2.MilliCPU <= y.MilliCPU {
+		return true
+	}
+
+	if x1.Memory+x2.Memory <= y.Memory {
+		return true
+	}
+
+	for rName, rQuant := range x1.ScalarResources {
+		if rQuant+x2.ScalarResources[rName] > y.ScalarResources[rName] {
+			return true
 		}
 	}
 

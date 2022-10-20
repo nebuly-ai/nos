@@ -731,3 +731,45 @@ func TestElasticQuotaInfos_getAggregatedOverquotas(t *testing.T) {
 		})
 	}
 }
+
+func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
+	testCases := []struct {
+		name       string
+		eqi        ElasticQuotaInfo
+		resource   framework.Resource
+		podRequest framework.Resource
+		expected   bool
+	}{
+		{
+			name: "Used + PodRequest contain resources not defined in Resource",
+			eqi: ElasticQuotaInfo{
+				ResourceName:      "eq-1",
+				ResourceNamespace: "ns-1",
+				Namespaces:        sets.NewString("ns-1"),
+				Used: &framework.Resource{
+					ScalarResources: map[v1.ResourceName]int64{
+						v1alpha1.ResourceGPUMemory:                20,
+						v1.ResourceName("nvidia.com/mig-1g.10gb"): 2,
+					},
+				},
+			},
+			resource: framework.Resource{
+				ScalarResources: map[v1.ResourceName]int64{
+					v1alpha1.ResourceGPUMemory: 40,
+				},
+			},
+			podRequest: framework.Resource{
+				ScalarResources: map[v1.ResourceName]int64{
+					v1.ResourceName("nvidia.com/mig-1g.10gb"): 1,
+				},
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.eqi.usedLteWith(&tt.resource, &tt.podRequest)
+			assert.Equal(t, tt.expected, res)
+		})
+	}
+}
