@@ -236,11 +236,12 @@ func (e *ElasticQuotaInfo) usedLteWith(resource *framework.Resource, podRequest 
 
 func (e *ElasticQuotaInfo) clone() *ElasticQuotaInfo {
 	newEQInfo := &ElasticQuotaInfo{
-		ResourceName:      e.ResourceName,
-		ResourceNamespace: e.ResourceNamespace,
-		pods:              sets.NewString(),
-		Namespaces:        sets.NewString(),
-		MaxEnforced:       e.MaxEnforced,
+		ResourceName:       e.ResourceName,
+		ResourceNamespace:  e.ResourceNamespace,
+		pods:               sets.NewString(),
+		Namespaces:         sets.NewString(),
+		MaxEnforced:        e.MaxEnforced,
+		resourceCalculator: e.resourceCalculator,
 	}
 
 	if e.Min != nil {
