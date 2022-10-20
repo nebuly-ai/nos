@@ -132,13 +132,11 @@ var _ = Describe("ElasticQuota controller", func() {
 				v1.ResourceCPU:             expectedCPUQuantity,
 				v1alpha1.ResourceGPUMemory: expectedGPUMemoryQuantity,
 			}
-			previousInstance := instance
-			Eventually(func() v1alpha1.ElasticQuota {
+			Eventually(func() v1.ResourceList {
 				lookupKey := types.NamespacedName{Name: elasticQuota.Name, Namespace: elasticQuota.Namespace}
 				_ = k8sClient.Get(ctx, lookupKey, &instance)
-				return instance
-			}, timeout, interval).ShouldNot(Equal(previousInstance))
-			Expect(instance.Status.Used).To(Equal(expectedUsedResourceList))
+				return instance.Status.Used
+			}, timeout, interval).Should(Equal(expectedUsedResourceList))
 
 			By("Checking the Pod's capacity-info label shows that the Pod is in in-quota")
 			assertPodHasLabel(
