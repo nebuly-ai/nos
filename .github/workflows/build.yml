@@ -1,32 +1,34 @@
-  on:
-    workflow_dispatch:
+name: Build docker images
 
-  env:
-    REGISTRY: ghcr.io
-    CONTROLLER_IMG: "ghcr.io/${{ github.repository }}-controller:latest"
-    SCHEDULER_IMG: "ghcr.io/${{ github.repository }}-scheduler:latest"
-    MIGAGENT_IMG: "ghcr.io/${{ github.repository }}-migagent:latest"
-    GPU_PARTITIONER_IMG: "ghcr.io/${{ github.repository }}-gpu-partitioner:latest"
+on:
+  workflow_dispatch:
 
-  jobs:
-    docker-build:
-      runs-on: ubuntu-22.04
-      permissions:
-        contents: read
-        packages: write
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@v3
+env:
+  REGISTRY: ghcr.io
+  CONTROLLER_IMG: "ghcr.io/${{ github.repository }}-controller:latest"
+  SCHEDULER_IMG: "ghcr.io/${{ github.repository }}-scheduler:latest"
+  MIGAGENT_IMG: "ghcr.io/${{ github.repository }}-migagent:latest"
+  GPU_PARTITIONER_IMG: "ghcr.io/${{ github.repository }}-gpu-partitioner:latest"
 
-        - name: Login to GitHub container registry
-          uses: docker/login-action@v2
-          with:
-            registry: ${{ env.REGISTRY }}
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  docker-build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-        - name: Build images
-          run: make docker-build
+      - name: Login to GitHub container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-        - name: Push images
-          run: make docker-push
+      - name: Build images
+        run: make docker-build
+
+      - name: Push images
+        run: make docker-push
