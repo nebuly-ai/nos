@@ -5,12 +5,8 @@ metadata:
   namespace: namespace-a
 spec:
   namespaces:
-    - namespace-a
-    - namespace-b
-    - namespace-c
+    - team-a
+    - team-b
+    - team-c
   min:
-    cpu: 2m
-    memory: 10m
-  max:
     cpu: 10m
-    memory: 100m

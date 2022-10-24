@@ -6,7 +6,8 @@ metadata:
 spec:
   min:
     cpu: 2m
-    nebuly.ai/gpu-memory: 64
+  max:
+    cpu: 3m
 
 ---
 
