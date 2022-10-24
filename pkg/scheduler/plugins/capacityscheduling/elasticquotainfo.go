@@ -310,7 +310,8 @@ func greaterThan(x, y *framework.Resource) bool {
 	return sumGreaterThan(x, &framework.Resource{}, y)
 }
 
-// sumGreaterThan returns true if any resource of (x1 + x2) is > of the respective resource of y.
+// sumGreaterThan returns true if any resource of (x1 + x2) that is also present in y is > of the
+// respective resource of y.
 func sumGreaterThan(x1, x2, y *framework.Resource) bool {
 	if x1.MilliCPU+x2.MilliCPU > y.MilliCPU {
 		return true
@@ -320,9 +321,10 @@ func sumGreaterThan(x1, x2, y *framework.Resource) bool {
 		return true
 	}
 
-	for rName, rQuant := range x1.ScalarResources {
+	allScalars := util.GetKeys(x1.ScalarResources, x2.ScalarResources, y.ScalarResources)
+	for _, rName := range allScalars {
 		if _, ok := y.ScalarResources[rName]; ok {
-			if rQuant+x2.ScalarResources[rName] > y.ScalarResources[rName] {
+			if x1.ScalarResources[rName]+x2.ScalarResources[rName] > y.ScalarResources[rName] {
 				return true
 			}
 		}
