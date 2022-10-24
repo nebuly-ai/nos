@@ -24,6 +24,8 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      imagePullSecrets: # todo: remove me
+        - name: ghcr
       securityContext:
         runAsNonRoot: true
         # TODO(user): For common cases that do not require escalating privileges

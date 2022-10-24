@@ -16,16 +16,18 @@ spec:
         app.kubernetes.io/component: scheduler
     spec:
       serviceAccountName: scheduler
+      imagePullSecrets:
+        - name: ghcr # todo: remove me
       containers:
-      - args: [
-        "--config",
-        "/etc/kubernetes/scheduler_config.yaml",
-        "--leader-elect",
-        "--v",
-        "1" # debug
+        - args: [
+          "--config",
+          "/etc/kubernetes/scheduler_config.yaml",
+          "--leader-elect",
+          "--v",
+          "1" # debug
         ]
-        image: scheduler:latest
-        livenessProbe:
+          image: scheduler:latest
+          livenessProbe:
           httpGet:
             path: /healthz
             port: 10259

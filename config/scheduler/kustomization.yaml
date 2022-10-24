@@ -14,5 +14,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: scheduler
-  newName: scheduler
+  newName: ghcr.io/nebuly-ai/nebulnetes-scheduler
   newTag: latest
