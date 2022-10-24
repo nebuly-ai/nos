@@ -607,9 +607,11 @@ func (p *preemptor) SelectVictimsOnNode(
 	// after removing all the lower priority pods,
 	// we are almost done and this node is not suitable for preemption.
 	if preemptorWithElasticQuota {
-		if preemptorElasticQuotaInfo.usedOverMaxWith(&podReq) ||
-			elasticQuotaInfos.AggregatedUsedOverMinWith(podReq) {
-			return nil, 0, framework.NewStatus(framework.Unschedulable, "global quota max exceeded")
+		if preemptorElasticQuotaInfo.usedOverMaxWith(&podReq) {
+			return nil, 0, framework.NewStatus(framework.Unschedulable, "max quota exceeded")
+		}
+		if elasticQuotaInfos.AggregatedUsedOverMinWith(podReq) {
+			return nil, 0, framework.NewStatus(framework.Unschedulable, "total min quota exceeded")
 		}
 	}
 
