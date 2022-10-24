@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-var _ = Describe("MigAgent - Actuator", func() {
+var _ = Describe("MigAgent - Reporter", func() {
 
 	const (
 		timeout  = time.Second * 10

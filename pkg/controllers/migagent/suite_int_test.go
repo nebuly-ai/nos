@@ -99,17 +99,16 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient.Create(ctx, &reporterNvidiaDevicePluginPod)).To(Succeed())
 
 	// Create Reporter and Actuator
-	mutext := sync.Mutex{}
 	actuatorMigClient = &testmig.MockedMigClient{}
 	reporterMigClient = &testmig.MockedMigClient{}
 
 	// Setup Reporter
-	reporter := NewReporter(k8sClient, reporterMigClient, &mutext, 1*time.Minute)
+	reporter := NewReporter(k8sClient, reporterMigClient, &sync.Mutex{}, 3*time.Second)
 	err = reporter.SetupWithManager(k8sManager, "MIGReporter", reporterNodeName)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup Actuator
-	actuator := NewActuator(k8sClient, actuatorMigClient, &mutext, actuatorNodeName)
+	actuator := NewActuator(k8sClient, actuatorMigClient, &sync.Mutex{}, actuatorNodeName)
 	err = actuator.SetupWithManager(k8sManager, "MIGActuator")
 	Expect(err).ToNot(HaveOccurred())
 
