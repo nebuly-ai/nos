@@ -231,7 +231,7 @@ func (e *ElasticQuotaInfo) usedOverWith(resource *framework.Resource, podRequest
 
 // usedLteWith returns true if used + podRequest <= resource
 func (e *ElasticQuotaInfo) usedLteWith(resource *framework.Resource, podRequest *framework.Resource) bool {
-	return !sumLessThanEqual(podRequest, e.Used, resource)
+	return sumLessThanEqual(podRequest, e.Used, resource)
 }
 
 func (e *ElasticQuotaInfo) clone() *ElasticQuotaInfo {
@@ -305,10 +305,12 @@ func (e *ElasticQuotaInfo) deletePodIfPresent(pod *v1.Pod) error {
 	return nil
 }
 
+// greaterThan returns true if any resource x is > of the respective resource of y.
 func greaterThan(x, y *framework.Resource) bool {
 	return sumGreaterThan(x, &framework.Resource{}, y)
 }
 
+// sumGreaterThan returns true if any resource of (x1 + x2) is > of the respective resource of y.
 func sumGreaterThan(x1, x2, y *framework.Resource) bool {
 	if x1.MilliCPU+x2.MilliCPU > y.MilliCPU {
 		return true
@@ -329,6 +331,8 @@ func sumGreaterThan(x1, x2, y *framework.Resource) bool {
 	return false
 }
 
+// sumLessThanEqual returns true if all the resources of (x1 + x2) are less than or equal than the respective resource
+// of y, and returns false if any resource of (x1 + x2) is > y.
 func sumLessThanEqual(x1, x2, y *framework.Resource) bool {
 	if x1.MilliCPU+x2.MilliCPU <= y.MilliCPU {
 		return true
@@ -338,11 +342,12 @@ func sumLessThanEqual(x1, x2, y *framework.Resource) bool {
 		return true
 	}
 
-	for rName, rQuant := range x1.ScalarResources {
-		if rQuant+x2.ScalarResources[rName] > y.ScalarResources[rName] {
-			return true
+	allScalar := util.GetKeys(x1.ScalarResources, x2.ScalarResources, y.ScalarResources)
+	for _, rName := range allScalar {
+		if x1.ScalarResources[rName]+x2.ScalarResources[rName] > y.ScalarResources[rName] {
+			return false
 		}
 	}
 
-	return false
+	return true
 }

@@ -539,7 +539,6 @@ func (p *preemptor) SelectVictimsOnNode(
 							return nil, 0, framework.AsStatus(err)
 						}
 					}
-					continue
 				}
 
 				// If Request + Quota.Used > Quota.Min + GuaranteedOverquotas:

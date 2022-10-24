@@ -736,8 +736,8 @@ func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
 	testCases := []struct {
 		name       string
 		eqi        ElasticQuotaInfo
-		resource   framework.Resource
 		podRequest framework.Resource
+		resource   framework.Resource
 		expected   bool
 	}{
 		{
@@ -753,16 +753,17 @@ func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
 					},
 				},
 			},
-			resource: framework.Resource{
-				ScalarResources: map[v1.ResourceName]int64{
-					v1alpha1.ResourceGPUMemory: 40,
-				},
-			},
 			podRequest: framework.Resource{
 				ScalarResources: map[v1.ResourceName]int64{
 					v1.ResourceName("nvidia.com/mig-1g.10gb"): 1,
 				},
 			},
+			resource: framework.Resource{
+				ScalarResources: map[v1.ResourceName]int64{
+					v1alpha1.ResourceGPUMemory: 40,
+				},
+			},
+			expected: true,
 		},
 	}
 
