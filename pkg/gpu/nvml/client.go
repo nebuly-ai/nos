@@ -199,7 +199,7 @@ func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) error 
 	// Create GPU Instance
 	giProfileInfo, ret := device.GetGpuInstanceProfileInfo(mp.GetInfo().GIProfileID)
 	if ret != nvlibNvml.SUCCESS {
-		return fmt.Errorf("error getting GPU instance profile info: %s", err.Error())
+		return fmt.Errorf("error getting GPU instance profile info: %s", ret.Error())
 	}
 	gi, r := nvmlDevice.CreateGpuInstance((*nvml.GpuInstanceProfileInfo)(&giProfileInfo))
 	if r != nvml.SUCCESS {
