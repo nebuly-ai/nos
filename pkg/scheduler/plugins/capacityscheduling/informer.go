@@ -257,7 +257,7 @@ func (i ElasticQuotaInfoInformer) fromUnstructuredEqToElasticQuotaInfo(u *unstru
 		pods:               sets.NewString(),
 		Min:                framework.NewResource(eq.Spec.Min),
 		Max:                framework.NewResource(eq.Spec.Max),
-		Used:               &framework.Resource{}, // used is calculated by the scheduler plugin afterwards
+		Used:               framework.NewResource(nil), // used is calculated by the scheduler plugin afterwards
 		MaxEnforced:        eq.Spec.Max != nil,
 		resourceCalculator: i.resourceCalculator,
 	}, nil
@@ -277,7 +277,7 @@ func (i ElasticQuotaInfoInformer) fromUnstructuredCompositeEqToElasticQuotaInfo(
 		pods:               sets.NewString(),
 		Min:                framework.NewResource(compositeEq.Spec.Min),
 		Max:                framework.NewResource(compositeEq.Spec.Max),
-		Used:               &framework.Resource{}, // used is calculated by the scheduler plugin afterwards
+		Used:               framework.NewResource(nil), // used is calculated by the scheduler plugin afterwards
 		MaxEnforced:        compositeEq.Spec.Max != nil,
 		resourceCalculator: i.resourceCalculator,
 	}, nil
