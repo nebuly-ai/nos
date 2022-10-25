@@ -774,3 +774,80 @@ func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
 		})
 	}
 }
+
+func TestElasticQuotaInfos_AggregatedUsedOverMinWith(t *testing.T) {
+	calculator := &gpu.Calculator{}
+
+	testCases := []struct {
+		name              string
+		elasticQuotaInfos ElasticQuotaInfos
+		podRequest        framework.Resource
+		expected          bool
+	}{
+		{
+			name: "Aggregated used is over min",
+			elasticQuotaInfos: ElasticQuotaInfos{
+				"eq-1": {
+					ResourceName:      "eq-1",
+					ResourceNamespace: "ns-1",
+					Namespaces:        sets.NewString("ns-1"),
+					Min: &framework.Resource{
+						MilliCPU: 20,
+					},
+					Max: nil,
+					Used: &framework.Resource{
+						ScalarResources: map[v1.ResourceName]int64{
+							v1alpha1.ResourceGPUMemory: 0,
+						},
+					},
+					resourceCalculator: calculator,
+				},
+				"eq-2": {
+					ResourceName:      "eq-2",
+					ResourceNamespace: "ns-2",
+					Namespaces:        sets.NewString("ns-2"),
+					Min: &framework.Resource{
+						MilliCPU: 10,
+					},
+					Max: nil,
+					Used: &framework.Resource{
+						MilliCPU: 40,
+						ScalarResources: map[v1.ResourceName]int64{
+							v1alpha1.ResourceGPUMemory: 0,
+						},
+					},
+					resourceCalculator: calculator,
+				},
+				"eq-3": {
+					ResourceName:      "eq-3",
+					ResourceNamespace: "ns-3",
+					Namespaces:        sets.NewString("ns-3"),
+					Min: &framework.Resource{
+						MilliCPU: 10,
+					},
+					Max: nil,
+					Used: &framework.Resource{
+						ScalarResources: map[v1.ResourceName]int64{
+							v1alpha1.ResourceGPUMemory: 0,
+						},
+					},
+					resourceCalculator: calculator,
+				},
+			},
+			podRequest: framework.Resource{
+				MilliCPU: 10,
+				ScalarResources: map[v1.ResourceName]int64{
+					v1alpha1.ResourceGPUMemory: 0,
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.elasticQuotaInfos.AggregatedUsedOverMinWith(tt.podRequest)
+			assert.Equal(t, tt.expected, res)
+		})
+	}
+}
