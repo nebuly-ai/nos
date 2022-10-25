@@ -51,6 +51,10 @@ func (e ElasticQuotaInfos) Delete(eqInfo *ElasticQuotaInfo) {
 func (e ElasticQuotaInfos) Update(oldEqInfo, newEqInfo *ElasticQuotaInfo) {
 	// Set new EqInfo to specified namespaces
 	for _, ns := range newEqInfo.Namespaces.List() {
+		if old, ok := e[ns]; ok && old != nil {
+			newEqInfo.pods = old.pods
+			newEqInfo.Used = old.Used
+		}
 		e[ns] = newEqInfo
 	}
 	// Delete possible old namespaces not specified by new EqInfo
