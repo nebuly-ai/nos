@@ -539,9 +539,12 @@ func (p *preemptor) SelectVictimsOnNode(
 
 				// If pod_namespace != potential_victim_namespace than we check
 				// whether the preemptor EQ has guaranteed overquotas available,
-				// and we select as potential victims pods in other namespaces where
+				// and we select as potential victims over-quota pods in other namespaces where
 				// UsedOverquotas > GuaranteedOverquotas
 				if pvPi.Pod.Namespace == pod.Namespace {
+					continue
+				}
+				if !podutil.IsOverQuota(*pvPi.Pod) {
 					continue
 				}
 				guaranteeedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pod.Namespace)
