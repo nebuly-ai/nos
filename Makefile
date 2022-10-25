@@ -70,7 +70,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 ##@ Build
 
 .PHONY: cluster
-cluster: kind
+cluster: kind ## Create a KIND cluster for development
 	kind create cluster --config hack/kind/cluster.yaml
 
 .PHONY: build
