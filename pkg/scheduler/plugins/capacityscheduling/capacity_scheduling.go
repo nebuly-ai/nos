@@ -524,10 +524,26 @@ func (p *preemptor) SelectVictimsOnNode(
 			}
 			// Preemptor.Request + Quota.Used > Quota.Min  => overquota
 			if moreThanMinWithPreemptor {
-				// If Request + Quota.Used <= Quota.Min + GuaranteedOverquotas:
-				// it means that the preemptor EQ has overquotas available,
-				// so we select pods in other namespaces where
+
+				// If pod_namespace == potential_victim_namespace than we select the pods
+				// subject to the same quota(namespace) with the lower priority than the
+				// preemptor's priority as potential victims in a node.
+				if pvPi.Pod.Namespace == pod.Namespace {
+					if corev1helpers.PodPriority(pvPi.Pod) < podPriority {
+						potentialVictims = append(potentialVictims, pvPi)
+						if err := removePod(pvPi); err != nil {
+							return nil, 0, framework.AsStatus(err)
+						}
+					}
+				}
+
+				// If pod_namespace != potential_victim_namespace than we check
+				// whether the preemptor EQ has guaranteed overquotas available,
+				// and we select as potential victims pods in other namespaces where
 				// UsedOverquotas > GuaranteedOverquotas
+				if pvPi.Pod.Namespace == pod.Namespace {
+					continue
+				}
 				guaranteeedOverquotas, _ := elasticQuotaInfos.GetGuaranteedOverquotas(pod.Namespace)
 				minPlusGuaranteeedOverquotas := resource.Sum(*guaranteeedOverquotas, *preemptorElasticQuotaInfo.Min)
 				if preemptorElasticQuotaInfo.usedLteWith(&minPlusGuaranteeedOverquotas, &nominatedPodsReqInEQWithPodReq) {
@@ -538,19 +554,6 @@ func (p *preemptor) SelectVictimsOnNode(
 						if err := removePod(pvPi); err != nil {
 							return nil, 0, framework.AsStatus(err)
 						}
-					}
-				}
-
-				// If Request + Quota.Used > Quota.Min + GuaranteedOverquotas:
-				// It means that the preemptor EQ does not have enough overquotas
-				// available for hosting the preemptor,
-				// so we will select the pods which subject to the
-				// same quota(namespace) with the lower priority than the
-				// preemptor's priority as potential victims in a node.
-				if pvPi.Pod.Namespace == pod.Namespace && corev1helpers.PodPriority(pvPi.Pod) < podPriority {
-					potentialVictims = append(potentialVictims, pvPi)
-					if err := removePod(pvPi); err != nil {
-						return nil, 0, framework.AsStatus(err)
 					}
 				}
 
