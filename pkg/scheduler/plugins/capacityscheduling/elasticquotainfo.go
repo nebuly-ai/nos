@@ -340,12 +340,12 @@ func sumGreaterThan(x1, x2, y *framework.Resource) bool {
 // sumLessThanEqual returns true if all the resources of (x1 + x2) are less than or equal than the respective resource
 // of y, and returns false if any resource of (x1 + x2) is > y.
 func sumLessThanEqual(x1, x2, y *framework.Resource) bool {
-	if x1.MilliCPU+x2.MilliCPU <= y.MilliCPU {
-		return true
+	if x1.MilliCPU+x2.MilliCPU > y.MilliCPU {
+		return false
 	}
 
-	if x1.Memory+x2.Memory <= y.Memory {
-		return true
+	if x1.Memory+x2.Memory > y.Memory {
+		return false
 	}
 
 	allScalar := util.GetKeys(x1.ScalarResources, x2.ScalarResources, y.ScalarResources)

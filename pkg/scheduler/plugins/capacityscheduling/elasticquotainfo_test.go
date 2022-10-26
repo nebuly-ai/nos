@@ -741,7 +741,7 @@ func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
 		expected   bool
 	}{
 		{
-			name: "Used + PodRequest contain resources not defined in Resource",
+			name: "Used + PodRequest contains resources not defined in Resource",
 			eqi: ElasticQuotaInfo{
 				ResourceName:      "eq-1",
 				ResourceNamespace: "ns-1",
@@ -764,6 +764,33 @@ func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
 				},
 			},
 			expected: true,
+		},
+		{
+			name: "foo",
+			eqi: ElasticQuotaInfo{
+				ResourceName:      "eq-1",
+				ResourceNamespace: "ns-1",
+				Namespaces:        sets.NewString("ns-1"),
+				Used: &framework.Resource{
+					ScalarResources: map[v1.ResourceName]int64{
+						v1alpha1.ResourceGPUMemory:                20,
+						v1.ResourceName("nvidia.com/mig-1g.10gb"): 2,
+					},
+				},
+			},
+			podRequest: framework.Resource{
+				ScalarResources: map[v1.ResourceName]int64{
+					v1alpha1.ResourceGPUMemory:                20,
+					v1.ResourceName("nvidia.com/mig-1g.10gb"): 1,
+				},
+			},
+			resource: framework.Resource{
+				ScalarResources: map[v1.ResourceName]int64{
+					v1alpha1.ResourceGPUMemory:                25,
+					v1.ResourceName("nvidia.com/mig-1g.10gb"): 0,
+				},
+			},
+			expected: false,
 		},
 	}
 
