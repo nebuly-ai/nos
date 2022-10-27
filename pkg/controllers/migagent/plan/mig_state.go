@@ -1,7 +1,8 @@
-package types
+package plan
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"reflect"
@@ -22,7 +23,7 @@ func NewMigState(resources []types.MigDeviceResource) MigState {
 	return res
 }
 
-func (s MigState) Matches(specAnnotations []GPUSpecAnnotation) bool {
+func (s MigState) Matches(specAnnotations []annotation.GPUSpecAnnotation) bool {
 	getKey := func(migProfile string, gpuIndex int) string {
 		return fmt.Sprintf("%d-%s", gpuIndex, migProfile)
 	}

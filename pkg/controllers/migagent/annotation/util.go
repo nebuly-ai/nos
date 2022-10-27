@@ -1,14 +1,13 @@
-package migagent
+package annotation
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"reflect"
 )
 
-func specMatchesStatus(specAnnotations []types.GPUSpecAnnotation, statusAnnotations []types.GPUStatusAnnotation) bool {
+func SpecMatchesStatus(specAnnotations []GPUSpecAnnotation, statusAnnotations []GPUStatusAnnotation) bool {
 	specMigProfilesWithQuantity := make(map[string]int)
 	statusMigProfilesWithQuantity := make(map[string]int)
 	for _, a := range specAnnotations {
@@ -21,7 +20,7 @@ func specMatchesStatus(specAnnotations []types.GPUSpecAnnotation, statusAnnotati
 	return reflect.DeepEqual(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func computeStatusAnnotations(used []migtypes.MigDeviceResource, free []migtypes.MigDeviceResource) []types.GPUStatusAnnotation {
+func ComputeStatusAnnotations(used []migtypes.MigDeviceResource, free []migtypes.MigDeviceResource) []GPUStatusAnnotation {
 	annotationToQuantity := make(map[string]int)
 
 	// Compute used MIG devices quantities
@@ -50,9 +49,9 @@ func computeStatusAnnotations(used []migtypes.MigDeviceResource, free []migtypes
 		annotationToQuantity[key] = quantity
 	}
 
-	res := make([]types.GPUStatusAnnotation, 0)
+	res := make([]GPUStatusAnnotation, 0)
 	for k, v := range annotationToQuantity {
-		if a, err := types.NewGPUStatusAnnotation(k, fmt.Sprintf("%d", v)); err == nil {
+		if a, err := NewGPUStatusAnnotation(k, fmt.Sprintf("%d", v)); err == nil {
 			res = append(res, a)
 		}
 	}

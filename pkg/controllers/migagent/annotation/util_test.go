@@ -1,9 +1,8 @@
-package migagent
+package annotation
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -60,19 +59,19 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			specAnnotations := make([]types.GPUSpecAnnotation, 0)
+			specAnnotations := make([]GPUSpecAnnotation, 0)
 			for k, v := range tt.spec {
-				a, _ := types.NewGPUSpecAnnotation(k, v)
+				a, _ := NewGPUSpecAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 
-			statusAnnotations := make([]types.GPUStatusAnnotation, 0)
+			statusAnnotations := make([]GPUStatusAnnotation, 0)
 			for k, v := range tt.status {
-				a, _ := types.NewGPUStatusAnnotation(k, v)
+				a, _ := NewGPUStatusAnnotation(k, v)
 				statusAnnotations = append(statusAnnotations, a)
 			}
 
-			matches := specMatchesStatus(specAnnotations, statusAnnotations)
+			matches := SpecMatchesStatus(specAnnotations, statusAnnotations)
 			assert.Equal(t, tt.expected, matches)
 		})
 	}

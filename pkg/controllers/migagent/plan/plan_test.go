@@ -1,8 +1,9 @@
-package types
+package plan
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
@@ -140,9 +141,9 @@ func TestNewMigConfigPlan(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotations := make(GPUSpecAnnotationList, 0)
+			annotations := make(annotation.GPUSpecAnnotationList, 0)
 			for k, v := range tt.specAnnotations {
-				a, err := NewGPUSpecAnnotation(k, v)
+				a, err := annotation.NewGPUSpecAnnotation(k, v)
 				assert.NoError(t, err)
 				annotations = append(annotations, a)
 			}

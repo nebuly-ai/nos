@@ -3,7 +3,7 @@ package migagent
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/plan"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
@@ -14,7 +14,7 @@ import (
 func TestMigActuator_applyDeleteOp(t *testing.T) {
 	testCases := []struct {
 		name                string
-		op                  types.DeleteOperation
+		op                  plan.DeleteOperation
 		clientReturnedError error
 
 		expectedDeleteCalls      uint
@@ -23,7 +23,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 	}{
 		{
 			name: "Empty delete operation",
-			op: types.DeleteOperation{
+			op: plan.DeleteOperation{
 				MigProfile: migtypes.MigProfile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
@@ -38,7 +38,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		},
 		{
 			name: "Delete op does not have enough candidates",
-			op: types.DeleteOperation{
+			op: plan.DeleteOperation{
 				MigProfile: migtypes.MigProfile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
@@ -78,7 +78,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		},
 		{
 			name: "More candidates than required, the op should delete only Quantity resources",
-			op: types.DeleteOperation{
+			op: plan.DeleteOperation{
 				MigProfile: migtypes.MigProfile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
@@ -118,7 +118,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		},
 		{
 			name: "MIG client returns error",
-			op: types.DeleteOperation{
+			op: plan.DeleteOperation{
 				MigProfile: migtypes.MigProfile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
@@ -165,7 +165,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 func TestMigActuator_applyCreateOp(t *testing.T) {
 	testCases := []struct {
 		name                string
-		op                  types.CreateOperation
+		op                  plan.CreateOperation
 		clientReturnedError error
 
 		expectedCreateCalls      uint
@@ -174,7 +174,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 	}{
 		{
 			name: "Empty create operation",
-			op: types.CreateOperation{
+			op: plan.CreateOperation{
 				MigProfile: migtypes.MigProfile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
@@ -188,7 +188,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		},
 		{
 			name: "MIG client returns error",
-			op: types.CreateOperation{
+			op: plan.CreateOperation{
 				MigProfile: migtypes.MigProfile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
@@ -202,7 +202,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		},
 		{
 			name: "Create success, quantity > 1",
-			op: types.CreateOperation{
+			op: plan.CreateOperation{
 				MigProfile: migtypes.MigProfile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",

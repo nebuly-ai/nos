@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
+	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
@@ -51,48 +52,48 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 
 	// Check if reported status already matches spec
-	statusAnnotations, specAnnotations := types.GetGPUAnnotationsFromNode(instance)
-	if specMatchesStatus(specAnnotations, statusAnnotations) {
+	statusAnnotations, specAnnotations := annotation.GetGPUAnnotationsFromNode(instance)
+	if annotation.SpecMatchesStatus(specAnnotations, statusAnnotations) {
 		logger.Info("reported status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
 	}
 
 	// Compute MIG config plan
-	plan, err := a.plan(ctx, specAnnotations)
+	configPlan, err := a.plan(ctx, specAnnotations)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if plan.IsEmpty() {
+	if configPlan.IsEmpty() {
 		logger.Info("MIG config plan is empty, nothing to do")
 		return ctrl.Result{}, nil
 	}
 
 	// Apply MIG config plan
-	return a.apply(ctx, plan)
+	return a.apply(ctx, configPlan)
 }
 
-func (a *MigActuator) plan(ctx context.Context, specAnnotations types.GPUSpecAnnotationList) (types.MigConfigPlan, error) {
+func (a *MigActuator) plan(ctx context.Context, specAnnotations annotation.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
 	logger := a.newLogger(ctx)
 
 	// Compute current state
 	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
 	if err != nil {
 		logger.Error(err, "unable to get MIG device resources")
-		return types.MigConfigPlan{}, err
+		return plan.MigConfigPlan{}, err
 	}
-	state := types.NewMigState(migDeviceResources)
+	state := plan.NewMigState(migDeviceResources)
 
 	// Check if actual state already matches spec
 	if state.Matches(specAnnotations) {
 		logger.Info("actual state matches desired MIG config")
-		return types.MigConfigPlan{}, nil
+		return plan.MigConfigPlan{}, nil
 	}
 
 	// Compute MIG config plan
-	return types.NewMigConfigPlan(state, specAnnotations), nil
+	return plan.NewMigConfigPlan(state, specAnnotations), nil
 }
 
-func (a *MigActuator) apply(ctx context.Context, plan types.MigConfigPlan) (ctrl.Result, error) {
+func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.Result, error) {
 	var err error
 	logger := a.newLogger(ctx)
 	logger.Info(
@@ -214,7 +215,7 @@ func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, time
 	return nil
 }
 
-func (a *MigActuator) applyDeleteOp(ctx context.Context, op types.DeleteOperation) (bool, error) {
+func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) (bool, error) {
 	logger := a.newLogger(ctx)
 	logger.Info("applying delete operation for MigProfile", "migProfile", op.MigProfile)
 
@@ -260,7 +261,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op types.DeleteOperatio
 	return atLeastOneDelete, nil
 }
 
-func (a *MigActuator) applyCreateOp(ctx context.Context, op types.CreateOperation) (bool, error) {
+func (a *MigActuator) applyCreateOp(ctx context.Context, op plan.CreateOperation) (bool, error) {
 	logger := a.newLogger(ctx)
 	logger.Info("applying create operation for MigProfile", "migProfile", op.MigProfile)
 
