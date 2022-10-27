@@ -6,22 +6,6 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-//type Profile struct {
-//	GPUIndex int
-//	Name     string
-//
-//	MemoryGB           int
-//	NumSM              int
-//	AvailableInstances int
-//}
-
-//type GPUModel struct {
-//	Name          string
-//	TotalSM       int
-//	TotalMemoryGB int
-//	MIGProfiles   []Profile
-//}
-
 type GPU struct {
 }
 

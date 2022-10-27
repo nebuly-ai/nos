@@ -24,7 +24,7 @@ func NewMigState(resources []mig.DeviceResource) MigState {
 }
 
 func (s MigState) Matches(specAnnotations []annotation.GPUSpecAnnotation) bool {
-	getKey := func(migProfile string, gpuIndex int) string {
+	getKey := func(migProfile mig.ProfileName, gpuIndex int) string {
 		return fmt.Sprintf("%d-%s", gpuIndex, migProfile)
 	}
 
@@ -59,7 +59,7 @@ func (s MigState) DeepCopy() MigState {
 
 // WithoutMigProfiles returns the state obtained after removing all the resources matching the MIG profiles
 // on the GPU index provided as inputs
-func (s MigState) WithoutMigProfiles(gpuIndex int, migProfiles []string) MigState {
+func (s MigState) WithoutMigProfiles(gpuIndex int, migProfiles []mig.ProfileName) MigState {
 	res := s.DeepCopy()
 	res[gpuIndex] = make([]mig.DeviceResource, 0)
 	for _, r := range s[gpuIndex] {

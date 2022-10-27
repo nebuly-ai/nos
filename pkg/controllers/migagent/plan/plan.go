@@ -87,7 +87,7 @@ func getResourcesNotIncludedInSpec(state MigState, specAnnotations annotation.GP
 
 	updatedState := state
 	for gpuIndex, annotations := range lookup {
-		migProfiles := make([]string, 0)
+		migProfiles := make([]mig.ProfileName, 0)
 		for _, a := range annotations {
 			migProfiles = append(migProfiles, a.GetMigProfileName())
 		}

@@ -91,8 +91,8 @@ func (a GPUSpecAnnotation) GetGPUIndex() int {
 	return index
 }
 
-func (a GPUSpecAnnotation) GetMigProfileName() string {
-	return migProfileRegex.FindString(a.Name)
+func (a GPUSpecAnnotation) GetMigProfileName() mig.ProfileName {
+	return mig.ProfileName(migProfileRegex.FindString(a.Name))
 }
 
 // GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the

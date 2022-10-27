@@ -36,7 +36,7 @@ func NewNvmlMigClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Cli
 }
 
 func (c nvmlMigClient) CreateMigResource(_ context.Context, profile Profile) error {
-	return c.nvmlClient.CreateMigDevice(profile.Name, profile.GpuIndex)
+	return c.nvmlClient.CreateMigDevice(profile.Name.AsString(), profile.GpuIndex)
 }
 
 func (c nvmlMigClient) DeleteMigResource(_ context.Context, resource DeviceResource) error {

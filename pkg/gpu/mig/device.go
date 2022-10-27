@@ -25,8 +25,8 @@ func (m DeviceResource) FullResourceName() string {
 //
 //	Resource name: nvidia.com/mig-1g.10gb
 //	GetMigProfileName() -> 1g.10gb
-func (m DeviceResource) GetMigProfileName() string {
-	return strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-")
+func (m DeviceResource) GetMigProfileName() ProfileName {
+	return ProfileName(strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-"))
 }
 
 type DeviceResourceList []DeviceResource

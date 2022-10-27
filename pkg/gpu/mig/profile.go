@@ -15,6 +15,10 @@ func (p ProfileName) isValid() bool {
 	return migProfileRegex.MatchString(string(p))
 }
 
+func (p ProfileName) AsString() string {
+	return string(p)
+}
+
 func getMemorySlices() uint8 {
 	return 0
 }
@@ -25,5 +29,5 @@ func getGiSlices() uint8 {
 
 type Profile struct {
 	GpuIndex int
-	Name     string
+	Name     ProfileName
 }

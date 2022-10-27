@@ -3,6 +3,7 @@ package annotation
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -35,7 +36,7 @@ func TestGPUSpecAnnotation_GetMigProfile(t *testing.T) {
 	testCases := []struct {
 		name       string
 		annotation string
-		expected   string
+		expected   mig.ProfileName
 	}{
 		{
 			name:       "Get MIG profile",
