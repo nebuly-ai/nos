@@ -6,9 +6,6 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-type GPU struct {
-}
-
 func NewNode(n framework.NodeInfo) Node {
 	return Node{
 		Name: n.Node().Name,
@@ -16,14 +13,14 @@ func NewNode(n framework.NodeInfo) Node {
 	}
 }
 
-func getGPUs(node v1.Node) []GPU {
-	result := make([]GPU, 0)
+func getGPUs(node v1.Node) []Gpu {
+	result := make([]Gpu, 0)
 	gpuModel := resource.GetNvidiaGPUsModel(node)
 	if gpuModel == "" {
 		return result
 	}
 	for i := 0; i < resource.GetNvidiaGPUsCount(node); i++ {
-		gpu := GPU{
+		gpu := A30{
 			//modelCode: gpuModel,
 			//memoryMb:  resource.GetNvidiaGPUsMemoryMb(node),
 		}
@@ -34,7 +31,7 @@ func getGPUs(node v1.Node) []GPU {
 
 type Node struct {
 	Name string
-	gpus []GPU
+	gpus []Gpu
 }
 
 func (n *Node) GetAllocatableScalarResources() v1.ResourceList {
