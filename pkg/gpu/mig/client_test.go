@@ -3,7 +3,6 @@ package mig
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
@@ -41,13 +40,13 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 		deviceIdToGPUIndex   map[string]int
 
 		expectedError   bool
-		expectedDevices []types.MigDeviceResource
+		expectedDevices []DeviceResource
 	}{
 		{
 			name:                 "Empty list pod resources resp",
 			listPodResourcesResp: pdrv1.ListPodResourcesResponse{},
 			expectedError:        false,
-			expectedDevices:      make([]types.MigDeviceResource, 0),
+			expectedDevices:      make([]DeviceResource, 0),
 		},
 		{
 			name:                 "List pod resources returns error",
@@ -126,7 +125,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 				},
 			},
 			expectedError:   false,
-			expectedDevices: make([]types.MigDeviceResource, 0),
+			expectedDevices: make([]DeviceResource, 0),
 		},
 		{
 			name: "Error fetching Mig device GPU index",
@@ -214,7 +213,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 				"mig-device-2": 2,
 				"mig-device-3": 2,
 			},
-			expectedDevices: []types.MigDeviceResource{
+			expectedDevices: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-2g.10gb",
@@ -278,13 +277,13 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 		deviceIdToGPUIndex       map[string]int
 
 		expectedError   bool
-		expectedDevices []types.MigDeviceResource
+		expectedDevices []DeviceResource
 	}{
 		{
 			name:                     "Empty allocatable resources resp",
 			allocatableResourcesResp: pdrv1.AllocatableResourcesResponse{},
 			expectedError:            false,
-			expectedDevices:          make([]types.MigDeviceResource, 0),
+			expectedDevices:          make([]DeviceResource, 0),
 		},
 		{
 			name:                     "Allocatable resources returns error",
@@ -352,7 +351,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 				"mig-2": 1,
 				"mig-3": 2,
 			},
-			expectedDevices: []types.MigDeviceResource{
+			expectedDevices: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.20gb",
@@ -410,19 +409,19 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 func TestComputeFreeDevicesAndUpdateStatus(t *testing.T) {
 	testCases := []struct {
 		name        string
-		used        []types.MigDeviceResource
-		allocatable []types.MigDeviceResource
-		expected    []types.MigDeviceResource
+		used        []DeviceResource
+		allocatable []DeviceResource
+		expected    []DeviceResource
 	}{
 		{
 			name:        "empty used, empty allocatable",
-			used:        make([]types.MigDeviceResource, 0),
-			allocatable: make([]types.MigDeviceResource, 0),
-			expected:    make([]types.MigDeviceResource, 0),
+			used:        make([]DeviceResource, 0),
+			allocatable: make([]DeviceResource, 0),
+			expected:    make([]DeviceResource, 0),
 		},
 		{
 			name: "Used devices, empty allocatable",
-			used: []types.MigDeviceResource{
+			used: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -431,13 +430,13 @@ func TestComputeFreeDevicesAndUpdateStatus(t *testing.T) {
 					GpuIndex: 0,
 				},
 			},
-			allocatable: make([]types.MigDeviceResource, 0),
-			expected:    make([]types.MigDeviceResource, 0),
+			allocatable: make([]DeviceResource, 0),
+			expected:    make([]DeviceResource, 0),
 		},
 		{
 			name: "Allocatable devices, empty used",
-			used: []types.MigDeviceResource{},
-			allocatable: []types.MigDeviceResource{
+			used: []DeviceResource{},
+			allocatable: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -453,7 +452,7 @@ func TestComputeFreeDevicesAndUpdateStatus(t *testing.T) {
 					GpuIndex: 1,
 				},
 			},
-			expected: []types.MigDeviceResource{
+			expected: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -474,7 +473,7 @@ func TestComputeFreeDevicesAndUpdateStatus(t *testing.T) {
 		},
 		{
 			name: "Multiple used, multiple allocatable",
-			used: []types.MigDeviceResource{
+			used: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -483,7 +482,7 @@ func TestComputeFreeDevicesAndUpdateStatus(t *testing.T) {
 					GpuIndex: 0,
 				},
 			},
-			allocatable: []types.MigDeviceResource{
+			allocatable: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",
@@ -499,7 +498,7 @@ func TestComputeFreeDevicesAndUpdateStatus(t *testing.T) {
 					GpuIndex: 1,
 				},
 			},
-			expected: []types.MigDeviceResource{
+			expected: []DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/gpu",

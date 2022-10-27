@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -14,19 +14,19 @@ import (
 func TestMigState_Matches(t *testing.T) {
 	testCases := []struct {
 		name           string
-		stateResources []types.MigDeviceResource
+		stateResources []mig.DeviceResource
 		spec           map[string]string
 		expected       bool
 	}{
 		{
 			name:           "Empty",
 			spec:           make(map[string]string),
-			stateResources: make([]types.MigDeviceResource, 0),
+			stateResources: make([]mig.DeviceResource, 0),
 			expected:       true,
 		},
 		{
 			name: "Matches",
-			stateResources: []types.MigDeviceResource{
+			stateResources: []mig.DeviceResource{
 				{
 					Device: resource.Device{
 						ResourceName: v1.ResourceName("nvidia.com/mig-1g.10gb"),

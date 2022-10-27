@@ -3,7 +3,6 @@ package mig
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
@@ -22,9 +21,9 @@ func (r resourceWithDeviceId) isMigDevice() bool {
 }
 
 type Client interface {
-	GetMigDeviceResources(ctx context.Context) (types.MigDeviceResourceList, error)
-	CreateMigResource(ctx context.Context, profile types.MigProfile) error
-	DeleteMigResource(ctx context.Context, resource types.MigDeviceResource) error
+	GetMigDeviceResources(ctx context.Context) (DeviceResourceList, error)
+	CreateMigResource(ctx context.Context, profile Profile) error
+	DeleteMigResource(ctx context.Context, resource DeviceResource) error
 }
 
 type nvmlMigClient struct {
@@ -36,15 +35,15 @@ func NewNvmlMigClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Cli
 	return &nvmlMigClient{lister: lister, nvmlClient: nvmlClient}
 }
 
-func (c nvmlMigClient) CreateMigResource(_ context.Context, profile types.MigProfile) error {
+func (c nvmlMigClient) CreateMigResource(_ context.Context, profile Profile) error {
 	return c.nvmlClient.CreateMigDevice(profile.Name, profile.GpuIndex)
 }
 
-func (c nvmlMigClient) DeleteMigResource(_ context.Context, resource types.MigDeviceResource) error {
+func (c nvmlMigClient) DeleteMigResource(_ context.Context, resource DeviceResource) error {
 	return c.nvmlClient.DeleteMigDevice(resource.DeviceId)
 }
 
-func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) (types.MigDeviceResourceList, error) {
+func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) (DeviceResourceList, error) {
 	// Get used
 	used, err := c.getUsedMigDeviceResources(ctx)
 	if err != nil {
@@ -61,7 +60,7 @@ func (c nvmlMigClient) GetMigDeviceResources(ctx context.Context) (types.MigDevi
 	return append(used, free...), nil
 }
 
-func (c nvmlMigClient) getUsedMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) getUsedMigDeviceResources(ctx context.Context) ([]DeviceResource, error) {
 	logger := klog.FromContext(ctx)
 
 	// List Pods Resources
@@ -87,7 +86,7 @@ func (c nvmlMigClient) getUsedMigDeviceResources(ctx context.Context) ([]types.M
 	}
 
 	// Retrieve MIG device ID and GPU index
-	migDevices := make([]types.MigDeviceResource, 0)
+	migDevices := make([]DeviceResource, 0)
 	for _, r := range migResources {
 		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
 		if err != nil {
@@ -99,7 +98,7 @@ func (c nvmlMigClient) getUsedMigDeviceResources(ctx context.Context) ([]types.M
 			)
 			return nil, err
 		}
-		migDevice := types.MigDeviceResource{
+		migDevice := DeviceResource{
 			Device: resource.Device{
 				ResourceName: r.resourceName,
 				DeviceId:     r.deviceId,
@@ -113,7 +112,7 @@ func (c nvmlMigClient) getUsedMigDeviceResources(ctx context.Context) ([]types.M
 	return migDevices, nil
 }
 
-func (c nvmlMigClient) getAllocatableMigDeviceResources(ctx context.Context) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) getAllocatableMigDeviceResources(ctx context.Context) ([]DeviceResource, error) {
 	logger := klog.FromContext(ctx)
 
 	// List Allocatable Resources
@@ -149,7 +148,7 @@ func (c nvmlMigClient) getAllocatableMigDeviceResources(ctx context.Context) ([]
 	return c.extractMigDevices(ctx, resources)
 }
 
-func (c nvmlMigClient) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]types.MigDeviceResource, error) {
+func (c nvmlMigClient) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]DeviceResource, error) {
 	logger := klog.FromContext(ctx)
 
 	// Extract MIG devices
@@ -161,7 +160,7 @@ func (c nvmlMigClient) extractMigDevices(ctx context.Context, resources []resour
 	}
 
 	// Retrieve MIG device ID and GPU index
-	migDevices := make([]types.MigDeviceResource, 0)
+	migDevices := make([]DeviceResource, 0)
 	for _, r := range migResources {
 		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
 		if err != nil {
@@ -175,7 +174,7 @@ func (c nvmlMigClient) extractMigDevices(ctx context.Context, resources []resour
 			)
 			return nil, err
 		}
-		migDevice := types.MigDeviceResource{
+		migDevice := DeviceResource{
 			Device: resource.Device{
 				ResourceName: r.resourceName,
 				DeviceId:     r.deviceId,
@@ -218,14 +217,14 @@ func fromListRespToGPUResourceWithDeviceId(listResp *pdrv1.ListPodResourcesRespo
 	return result, nil
 }
 
-func computeFreeDevicesAndUpdateStatus(used []types.MigDeviceResource, allocatable []types.MigDeviceResource) []types.MigDeviceResource {
-	usedLookup := make(map[string]types.MigDeviceResource)
+func computeFreeDevicesAndUpdateStatus(used []DeviceResource, allocatable []DeviceResource) []DeviceResource {
+	usedLookup := make(map[string]DeviceResource)
 	for _, u := range used {
 		usedLookup[u.DeviceId] = u
 	}
 
 	// Compute (allocatable - used)
-	res := make([]types.MigDeviceResource, 0)
+	res := make([]DeviceResource, 0)
 	for _, a := range allocatable {
 		if _, used := usedLookup[a.DeviceId]; !used {
 			a.Status = resource.StatusFree

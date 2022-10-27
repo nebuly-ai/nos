@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/plan"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
@@ -24,11 +24,11 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "Empty delete operation",
 			op: plan.DeleteOperation{
-				MigProfile: migtypes.MigProfile{
+				MigProfile: mig.Profile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
 				},
-				Resources: make(migtypes.MigDeviceResourceList, 0),
+				Resources: make(mig.DeviceResourceList, 0),
 				Quantity:  0,
 			},
 			clientReturnedError:      nil,
@@ -39,11 +39,11 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "Delete op does not have enough candidates",
 			op: plan.DeleteOperation{
-				MigProfile: migtypes.MigProfile{
+				MigProfile: mig.Profile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
 				},
-				Resources: migtypes.MigDeviceResourceList{
+				Resources: mig.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: "nvidia.com/mig-1g.10gb",
@@ -79,11 +79,11 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "More candidates than required, the op should delete only Quantity resources",
 			op: plan.DeleteOperation{
-				MigProfile: migtypes.MigProfile{
+				MigProfile: mig.Profile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
 				},
-				Resources: migtypes.MigDeviceResourceList{
+				Resources: mig.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: "nvidia.com/mig-1g.10gb",
@@ -119,11 +119,11 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "MIG client returns error",
 			op: plan.DeleteOperation{
-				MigProfile: migtypes.MigProfile{
+				MigProfile: mig.Profile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
 				},
-				Resources: migtypes.MigDeviceResourceList{
+				Resources: mig.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: "nvidia.com/mig-1g.10gb",
@@ -175,7 +175,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		{
 			name: "Empty create operation",
 			op: plan.CreateOperation{
-				MigProfile: migtypes.MigProfile{
+				MigProfile: mig.Profile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
 				},
@@ -189,7 +189,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		{
 			name: "MIG client returns error",
 			op: plan.CreateOperation{
-				MigProfile: migtypes.MigProfile{
+				MigProfile: mig.Profile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
 				},
@@ -203,7 +203,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		{
 			name: "Create success, quantity > 1",
 			op: plan.CreateOperation{
-				MigProfile: migtypes.MigProfile{
+				MigProfile: mig.Profile{
 					GpuIndex: 0,
 					Name:     "1g.10gb",
 				},

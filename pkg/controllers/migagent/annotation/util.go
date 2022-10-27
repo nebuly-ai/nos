@@ -3,7 +3,7 @@ package annotation
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"reflect"
 )
 
@@ -20,7 +20,7 @@ func SpecMatchesStatus(specAnnotations []GPUSpecAnnotation, statusAnnotations []
 	return reflect.DeepEqual(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func ComputeStatusAnnotations(used []migtypes.MigDeviceResource, free []migtypes.MigDeviceResource) []GPUStatusAnnotation {
+func ComputeStatusAnnotations(used []migtypes.DeviceResource, free []migtypes.DeviceResource) []GPUStatusAnnotation {
 	annotationToQuantity := make(map[string]int)
 
 	// Compute used MIG devices quantities

@@ -5,7 +5,7 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -132,8 +132,8 @@ var _ = Describe("MigAgent - Actuator", func() {
 					&nvidiaDevicePluginPod),
 			).To(Succeed())
 
-			actuatorMigClient.ReturnedMigDeviceResources = migtypes.MigDeviceResourceList{
-				migtypes.MigDeviceResource{
+			actuatorMigClient.ReturnedMigDeviceResources = migtypes.DeviceResourceList{
+				migtypes.DeviceResource{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.10gb",
 						DeviceId:     "id-1",
@@ -141,7 +141,7 @@ var _ = Describe("MigAgent - Actuator", func() {
 					},
 					GpuIndex: 0,
 				},
-				migtypes.MigDeviceResource{
+				migtypes.DeviceResource{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-2g.20gb",
 						DeviceId:     "id-2",

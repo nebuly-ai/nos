@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -20,7 +20,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 	}{
 		{
 			name:  "Empty state",
-			state: map[int]migtypes.MigDeviceResourceList{},
+			state: map[int]mig.DeviceResourceList{},
 			specAnnotations: map[string]string{
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.20gb"): "1",
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
@@ -29,21 +29,21 @@ func TestNewMigConfigPlan(t *testing.T) {
 			expectedDeleteOps: []DeleteOperation{},
 			expectedCreateOps: []CreateOperation{
 				{
-					MigProfile: migtypes.MigProfile{
+					MigProfile: mig.Profile{
 						GpuIndex: 0,
 						Name:     "1g.20gb",
 					},
 					Quantity: 1,
 				},
 				{
-					MigProfile: migtypes.MigProfile{
+					MigProfile: mig.Profile{
 						GpuIndex: 0,
 						Name:     "4g.20gb",
 					},
 					Quantity: 1,
 				},
 				{
-					MigProfile: migtypes.MigProfile{
+					MigProfile: mig.Profile{
 						GpuIndex: 1,
 						Name:     "1g.10gb",
 					},
@@ -53,7 +53,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 		},
 		{
 			name: "Empty spec annotations",
-			state: map[int]migtypes.MigDeviceResourceList{
+			state: map[int]mig.DeviceResourceList{
 				0: {
 					{
 						Device: resource.Device{
@@ -86,11 +86,11 @@ func TestNewMigConfigPlan(t *testing.T) {
 			specAnnotations: map[string]string{},
 			expectedDeleteOps: []DeleteOperation{
 				{
-					MigProfile: migtypes.MigProfile{
+					MigProfile: mig.Profile{
 						GpuIndex: 0,
 						Name:     "1g.10gb",
 					},
-					Resources: []migtypes.MigDeviceResource{
+					Resources: []mig.DeviceResource{
 						{
 							Device: resource.Device{
 								ResourceName: "nvidia.com/mig-1g.10gb",
@@ -111,11 +111,11 @@ func TestNewMigConfigPlan(t *testing.T) {
 					Quantity: 2,
 				},
 				{
-					MigProfile: migtypes.MigProfile{
+					MigProfile: mig.Profile{
 						GpuIndex: 1,
 						Name:     "2g.20gb",
 					},
-					Resources: []migtypes.MigDeviceResource{
+					Resources: []mig.DeviceResource{
 						{
 							Device: resource.Device{
 								ResourceName: "nvidia.com/mig-2g.20gb",

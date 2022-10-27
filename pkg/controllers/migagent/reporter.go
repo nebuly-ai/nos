@@ -5,7 +5,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -52,8 +51,8 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		logger.Error(err, "unable to get MIG device resources")
 		return ctrl.Result{}, err
 	}
-	usedMigs := make([]migtypes.MigDeviceResource, 0)
-	freeMigs := make([]migtypes.MigDeviceResource, 0)
+	usedMigs := make([]mig.DeviceResource, 0)
+	freeMigs := make([]mig.DeviceResource, 0)
 	for _, res := range migResources {
 		if res.Status == resource.StatusUsed {
 			usedMigs = append(usedMigs, res)

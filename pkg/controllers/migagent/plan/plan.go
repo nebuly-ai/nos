@@ -2,18 +2,18 @@ package plan
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
 
 type CreateOperation struct {
-	MigProfile migtypes.MigProfile
+	MigProfile mig.Profile
 	Quantity   uint8
 }
 
 type DeleteOperation struct {
-	MigProfile migtypes.MigProfile
-	Resources  migtypes.MigDeviceResourceList
+	MigProfile mig.Profile
+	Resources  mig.DeviceResourceList
 	// Quantity is the amount of resources that need to be deleted
 	Quantity uint8
 }
@@ -46,7 +46,7 @@ func NewMigConfigPlan(state MigState, desired annotation.GPUSpecAnnotationList) 
 
 		actualResources := stateResources[migProfile]
 		if actualResources == nil {
-			actualResources = make(migtypes.MigDeviceResourceList, 0)
+			actualResources = make(mig.DeviceResourceList, 0)
 		}
 
 		diff := totalDesiredQuantity - len(actualResources)
@@ -82,7 +82,7 @@ func (p *MigConfigPlan) IsEmpty() bool {
 	return len(p.DeleteOperations) == 0 && len(p.CreateOperations) == 0
 }
 
-func getResourcesNotIncludedInSpec(state MigState, specAnnotations annotation.GPUSpecAnnotationList) migtypes.MigDeviceResourceList {
+func getResourcesNotIncludedInSpec(state MigState, specAnnotations annotation.GPUSpecAnnotationList) mig.DeviceResourceList {
 	lookup := specAnnotations.GroupByGpuIndex()
 
 	updatedState := state

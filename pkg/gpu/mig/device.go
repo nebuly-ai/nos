@@ -1,4 +1,4 @@
-package types
+package mig
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type MigDeviceResource struct {
+type DeviceResource struct {
 	resource.Device
 	// GpuId is the Index of the parent GPU to which the MIG device belongs to
 	GpuIndex int
@@ -15,7 +15,7 @@ type MigDeviceResource struct {
 // FullResourceName returns the full resource name of the MIG device, including
 // the name of the resource corresponding to the MIG profile and the index
 // of the GPU to which it belongs to.
-func (m MigDeviceResource) FullResourceName() string {
+func (m DeviceResource) FullResourceName() string {
 	return fmt.Sprintf("%d/%s", m.GpuIndex, m.ResourceName)
 }
 
@@ -25,33 +25,33 @@ func (m MigDeviceResource) FullResourceName() string {
 //
 //	Resource name: nvidia.com/mig-1g.10gb
 //	GetMigProfileName() -> 1g.10gb
-func (m MigDeviceResource) GetMigProfileName() string {
+func (m DeviceResource) GetMigProfileName() string {
 	return strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-")
 }
 
-type MigDeviceResourceList []MigDeviceResource
+type DeviceResourceList []DeviceResource
 
-func (l MigDeviceResourceList) GroupBy(keyFunc func(resource MigDeviceResource) string) map[string]MigDeviceResourceList {
-	result := make(map[string]MigDeviceResourceList)
+func (l DeviceResourceList) GroupBy(keyFunc func(resource DeviceResource) string) map[string]DeviceResourceList {
+	result := make(map[string]DeviceResourceList)
 	for _, r := range l {
 		key := keyFunc(r)
 		if result[key] == nil {
-			result[key] = make(MigDeviceResourceList, 0)
+			result[key] = make(DeviceResourceList, 0)
 		}
 		result[key] = append(result[key], r)
 	}
 	return result
 }
 
-func (l MigDeviceResourceList) GroupByMigProfile() map[MigProfile]MigDeviceResourceList {
-	result := make(map[MigProfile]MigDeviceResourceList)
+func (l DeviceResourceList) GroupByMigProfile() map[Profile]DeviceResourceList {
+	result := make(map[Profile]DeviceResourceList)
 	for _, r := range l {
-		key := MigProfile{
+		key := Profile{
 			GpuIndex: r.GpuIndex,
 			Name:     r.GetMigProfileName(),
 		}
 		if result[key] == nil {
-			result[key] = make(MigDeviceResourceList, 0)
+			result[key] = make(DeviceResourceList, 0)
 		}
 		result[key] = append(result[key], r)
 	}

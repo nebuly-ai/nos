@@ -2,7 +2,7 @@ package mig
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"sync"
 )
 
@@ -11,7 +11,7 @@ type MockedMigClient struct {
 	NumCallsCreateMigResource     uint
 	NumCallsGetMigDeviceResources uint
 
-	ReturnedMigDeviceResources types.MigDeviceResourceList
+	ReturnedMigDeviceResources mig.DeviceResourceList
 	ReturnedError              error
 
 	lockReset                 sync.Mutex
@@ -28,21 +28,21 @@ func (m *MockedMigClient) Reset() {
 	m.NumCallsGetMigDeviceResources = 0
 }
 
-func (m *MockedMigClient) GetMigDeviceResources(_ context.Context) (types.MigDeviceResourceList, error) {
+func (m *MockedMigClient) GetMigDeviceResources(_ context.Context) (mig.DeviceResourceList, error) {
 	m.lockGetMigDeviceResources.Lock()
 	defer m.lockGetMigDeviceResources.Unlock()
 	m.NumCallsGetMigDeviceResources++
 	return m.ReturnedMigDeviceResources, m.ReturnedError
 }
 
-func (m *MockedMigClient) CreateMigResource(_ context.Context, _ types.MigProfile) error {
+func (m *MockedMigClient) CreateMigResource(_ context.Context, _ mig.Profile) error {
 	m.lockCreateMigResource.Lock()
 	defer m.lockCreateMigResource.Unlock()
 	m.NumCallsCreateMigResource++
 	return m.ReturnedError
 }
 
-func (m *MockedMigClient) DeleteMigResource(_ context.Context, _ types.MigDeviceResource) error {
+func (m *MockedMigClient) DeleteMigResource(_ context.Context, _ mig.DeviceResource) error {
 	m.lockDeleteMigResource.Lock()
 	defer m.lockDeleteMigResource.Unlock()
 	m.NumCallsDeleteMigResource++

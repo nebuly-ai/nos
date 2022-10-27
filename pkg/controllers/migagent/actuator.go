@@ -7,7 +7,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig/types"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -220,7 +219,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 	logger.Info("applying delete operation for MigProfile", "migProfile", op.MigProfile)
 
 	// Get resources candidate to be deleted
-	candidateResources := make([]migtypes.MigDeviceResource, 0)
+	candidateResources := make([]mig.DeviceResource, 0)
 	for _, r := range op.Resources {
 		if r.Status == resource.StatusFree {
 			logger.Info("resource added to delete candidates", "resource", r)
