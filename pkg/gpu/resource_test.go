@@ -43,7 +43,7 @@ func TestResourceCalculator_ComputeRequiredGPUMemoryGB(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := Calculator{
+	resourceCalculator := ResourceCalculator{
 		NvidiaGPUDeviceMemoryGB: nvidiaDeviceGPUMemoryGB,
 	}
 	for _, tt := range tests {

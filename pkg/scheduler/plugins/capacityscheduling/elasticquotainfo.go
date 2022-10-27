@@ -188,7 +188,7 @@ type ElasticQuotaInfo struct {
 	Max                *framework.Resource
 	Used               *framework.Resource
 	MaxEnforced        bool
-	resourceCalculator *gpu.Calculator
+	resourceCalculator *gpu.ResourceCalculator
 }
 
 func (e *ElasticQuotaInfo) reserveResource(request framework.Resource) {

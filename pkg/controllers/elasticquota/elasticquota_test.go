@@ -100,7 +100,7 @@ func TestElasticQuotaPodsReconciler_sortPodListForFindingOverQuotaPods(t *testin
 	}
 
 	r := elasticQuotaPodsReconciler{
-		resourceCalculator: &gpu.Calculator{
+		resourceCalculator: &gpu.ResourceCalculator{
 			NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
 		},
 	}

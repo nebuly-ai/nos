@@ -9,7 +9,7 @@ import (
 	resource2 "k8s.io/apimachinery/pkg/api/resource"
 )
 
-type Calculator struct {
+type ResourceCalculator struct {
 	NvidiaGPUDeviceMemoryGB int64
 }
 
@@ -41,7 +41,7 @@ type Calculator struct {
 //	    Memory: 1G
 //
 // Result: CPU: 3, Memory: 3G
-func (r Calculator) ComputePodRequest(pod v1.Pod) v1.ResourceList {
+func (r ResourceCalculator) ComputePodRequest(pod v1.Pod) v1.ResourceList {
 	res := resource.ComputePodRequest(pod)
 
 	// add required GPU memory resource
@@ -51,7 +51,7 @@ func (r Calculator) ComputePodRequest(pod v1.Pod) v1.ResourceList {
 	return res
 }
 
-func (r Calculator) ComputeRequiredGPUMemoryGB(resourceList v1.ResourceList) int64 {
+func (r ResourceCalculator) ComputeRequiredGPUMemoryGB(resourceList v1.ResourceList) int64 {
 	var totalRequiredGB int64
 
 	for resourceName, quantity := range resourceList {

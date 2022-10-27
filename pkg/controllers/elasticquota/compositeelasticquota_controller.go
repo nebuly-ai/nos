@@ -25,12 +25,12 @@ import (
 type CompositeElasticQuotaReconciler struct {
 	client.Client
 	Scheme             *runtime.Scheme
-	resourceCalculator *gpu.Calculator
+	resourceCalculator *gpu.ResourceCalculator
 	podsReconciler     *elasticQuotaPodsReconciler
 }
 
 func NewCompositeElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGPUResourceMemoryGB int64) CompositeElasticQuotaReconciler {
-	resourceCalculator := gpu.Calculator{
+	resourceCalculator := gpu.ResourceCalculator{
 		NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB,
 	}
 	return CompositeElasticQuotaReconciler{

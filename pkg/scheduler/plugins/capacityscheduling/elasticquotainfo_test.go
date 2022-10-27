@@ -71,7 +71,7 @@ func TestReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := gpu.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := gpu.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
@@ -127,7 +127,7 @@ func TestUnReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := gpu.Calculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := gpu.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
@@ -803,7 +803,7 @@ func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
 }
 
 func TestElasticQuotaInfos_AggregatedUsedOverMinWith(t *testing.T) {
-	calculator := &gpu.Calculator{}
+	calculator := &gpu.ResourceCalculator{}
 
 	testCases := []struct {
 		name              string

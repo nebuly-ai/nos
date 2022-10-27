@@ -38,7 +38,7 @@ var unstructuredFilter filterFunc = func(obj interface{}) bool {
 	}
 }
 
-func NewElasticQuotaInfoInformer(kubeConfig *restclient.Config, resourceCalculator *gpu.Calculator) (*ElasticQuotaInfoInformer, error) {
+func NewElasticQuotaInfoInformer(kubeConfig *restclient.Config, resourceCalculator *gpu.ResourceCalculator) (*ElasticQuotaInfoInformer, error) {
 	dynamicClient, err := dynamic.NewForConfig(kubeConfig)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ type ElasticQuotaInfoInformer struct {
 	compositeElasticQuotaInformer informers.GenericInformer
 	elasticQuotaInformer          informers.GenericInformer
 	sharedInformerFactory         dynamicinformer.DynamicSharedInformerFactory
-	resourceCalculator            *gpu.Calculator
+	resourceCalculator            *gpu.ResourceCalculator
 }
 
 func (i ElasticQuotaInfoInformer) Start(stopCh <-chan struct{}) {

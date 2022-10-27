@@ -16,7 +16,7 @@ import (
 
 type elasticQuotaPodsReconciler struct {
 	c                  client.Client
-	resourceCalculator *gpu.Calculator
+	resourceCalculator *gpu.ResourceCalculator
 }
 
 func (r *elasticQuotaPodsReconciler) PatchPodsAndComputeUsedQuota(ctx context.Context,

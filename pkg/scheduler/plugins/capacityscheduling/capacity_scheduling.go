@@ -54,7 +54,7 @@ type CapacityScheduling struct {
 	podLister                corelisters.PodLister
 	pdbLister                policylisters.PodDisruptionBudgetLister
 	elasticQuotaInfos        ElasticQuotaInfos
-	resourceCalculator       *gpu.Calculator
+	resourceCalculator       *gpu.ResourceCalculator
 	elasticQuotaInfoInformer *ElasticQuotaInfoInformer
 }
 
@@ -124,7 +124,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		elasticQuotaInfos: NewElasticQuotaInfos(),
 		podLister:         handle.SharedInformerFactory().Core().V1().Pods().Lister(),
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
-		resourceCalculator: &gpu.Calculator{
+		resourceCalculator: &gpu.ResourceCalculator{
 			NvidiaGPUDeviceMemoryGB: args.NvidiaGPUResourceMemoryGB,
 		},
 	}

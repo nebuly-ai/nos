@@ -221,7 +221,7 @@ func TestPreFilter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			resourceCalculator := gpu.Calculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
+			resourceCalculator := gpu.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
 			cs := &CapacityScheduling{
 				elasticQuotaInfos:  tt.elasticQuotas,
 				fh:                 fwk,
@@ -439,7 +439,7 @@ func TestDryRunPreemption(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := gpu.Calculator{
+	resourceCalculator := gpu.ResourceCalculator{
 		NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory,
 	}
 	for _, tt := range tests {
