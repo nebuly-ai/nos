@@ -67,6 +67,10 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -tags integration ./... -coverprofile cover.out
 
+.PHONY: lint
+lint: golangci-lint
+	$(GOLANGCI_LINT) run ./... -v
+
 ##@ Build
 
 .PHONY: cluster
@@ -162,11 +166,13 @@ CONVERSION_GEN ?= $(LOCALBIN)/conversion-gen
 CODE_GEN ?= $(LOCALBIN)/code-generator
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 KIND ?= $(LOCALBIN)/kind
+GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v4.5.5
 CONTROLLER_TOOLS_VERSION ?= v0.9.2
 CODE_GENERATOR_VERSION ?= v0.24.3
+GOLANGCI_LINT_VERSION ?= 1.50.1
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -197,5 +203,10 @@ $(ENVTEST): $(LOCALBIN)
 .PHONY: kind
 kind: $(KIND)
 $(KIND): $(LOCALBIN)
-	kind create cluster --config hack/kind/cluster.yaml || GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@latest
+	test -s $(LOCALBIN)/kind || GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@latest
+
+.PHONY: golangci-lint
+golangci-lint: $(GOLANGCI_LINT)
+$(GOLANGCI_LINT): $(LOCALBIN)
+	test -s $(LOCALBIN)/golanci-lint || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI_LINT_VERSION}
 
