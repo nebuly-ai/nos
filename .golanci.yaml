@@ -1,0 +1,6 @@
+# Golang CI configuration
+# Reference: https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 3m
+  issues-exit-code: 0

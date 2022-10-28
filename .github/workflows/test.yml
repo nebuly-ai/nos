@@ -30,7 +30,5 @@ jobs:
 
       - name: Lint
         uses: golangci/golangci-lint-action@v3
-        with:
-          args: --issues-exit-code=0 --timeout=3m
 
 
