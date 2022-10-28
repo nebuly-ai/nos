@@ -12,7 +12,7 @@ import (
 var (
 	resourceRegexp        = regexp.MustCompile(constant.RegexNvidiaMigResource)
 	migDeviceMemoryRegexp = regexp.MustCompile(constant.RegexNvidiaMigFormatMemory)
-	numberRegexp          = regexp.MustCompile("\\d+")
+	numberRegexp          = regexp.MustCompile(`\d+`)
 )
 
 func IsNvidiaMigDevice(resourceName v1.ResourceName) bool {

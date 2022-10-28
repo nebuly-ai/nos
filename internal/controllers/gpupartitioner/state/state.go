@@ -146,7 +146,7 @@ func (c *ClusterState) updateUsage(pod v1.Pod) {
 
 func (c *ClusterState) updateUsageForKnownPod(cachedNodeName string, pod v1.Pod) {
 	namespacedName := util.GetNamespacedName(&pod)
-	nodeInfo, _ := c.nodes[pod.Spec.NodeName]
+	nodeInfo := c.nodes[pod.Spec.NodeName]
 
 	if pod.Spec.NodeName != cachedNodeName {
 		// pod changed node, update old and new nodes

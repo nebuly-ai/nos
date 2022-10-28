@@ -32,6 +32,7 @@ func TestKnownGeometries(t *testing.T) {
 			var geometryTotalMemory uint8
 			var geometryTotalGi uint8
 			for profile, quantity := range geometryList {
+				assert.True(t, profile.isValid())
 				geometryTotalMemory += profile.getMemorySlices() * quantity
 				geometryTotalGi += profile.getGiSlices() * quantity
 			}

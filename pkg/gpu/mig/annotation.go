@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	numberBeginningLineRegex = regexp.MustCompile("^\\d+")
+	numberBeginningLineRegex = regexp.MustCompile(`\d+`)
 )
 
 type GPUSpecAnnotationList []GPUSpecAnnotation
@@ -121,7 +121,7 @@ func (l GPUStatusAnnotationList) GroupByGpuIndex() map[int]GPUStatusAnnotationLi
 func (l GPUStatusAnnotationList) Filter(filteringFunc func(annotation GPUStatusAnnotation) bool) GPUStatusAnnotationList {
 	result := make(GPUStatusAnnotationList, 0)
 	for _, a := range l {
-		if filteringFunc(a) == true {
+		if filteringFunc(a) {
 			result = append(result, a)
 		}
 	}
@@ -249,13 +249,13 @@ func ComputeStatusAnnotations(used []DeviceResource, free []DeviceResource) []GP
 
 	// Used annotations
 	for _, u := range used {
-		quantity, _ := usedMigToQuantity[u.FullResourceName()]
+		quantity := usedMigToQuantity[u.FullResourceName()]
 		key := fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
 		annotationToQuantity[key] = quantity
 	}
 	// Free annotations
 	for _, u := range free {
-		quantity, _ := freeMigToQuantity[u.FullResourceName()]
+		quantity := freeMigToQuantity[u.FullResourceName()]
 		key := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
 		annotationToQuantity[key] = quantity
 	}

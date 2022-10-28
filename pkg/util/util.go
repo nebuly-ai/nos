@@ -17,14 +17,12 @@ const (
 )
 
 func BoolAddr(b bool) *bool {
-	var boolVar bool
-	boolVar = b
+	var boolVar = b
 	return &boolVar
 }
 
 func StringAddr(s string) *string {
-	var stringVar string
-	stringVar = s
+	var stringVar = s
 	return &stringVar
 }
 
