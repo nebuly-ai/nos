@@ -117,7 +117,8 @@ func TestNewNode(t *testing.T) {
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
-				assert.Equal(t, tt.expectedNode, node)
+				assert.Equal(t, tt.expectedNode.Name, node.Name)
+				assert.ElementsMatch(t, tt.expectedNode.GetGPUsGeometry(), node.GetGPUsGeometry())
 				assert.NoError(t, err)
 			}
 		})
