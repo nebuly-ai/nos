@@ -1,13 +1,13 @@
 package mig
 
 const (
-	Model_A100_SMX4_40GB = "A100-SMX4-40GB"
-	Model_A30            = "A30"
+	GPUModel_A100_SMX4_40GB GPUModel = "A100-SMX4-40GB"
+	GPUModel_A30            GPUModel = "A30"
 )
 
 var (
 	gpuModelToAllowedMigGeometries = map[GPUModel][]Geometry{
-		Model_A30: {
+		GPUModel_A30: {
 			{
 				profile4g24gb: 1,
 			},
@@ -22,7 +22,7 @@ var (
 				profile1g6gb: 4,
 			},
 		},
-		Model_A100_SMX4_40GB: {
+		GPUModel_A100_SMX4_40GB: {
 			{
 				profile7g40gb: 1,
 			},

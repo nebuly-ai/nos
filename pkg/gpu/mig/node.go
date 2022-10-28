@@ -7,37 +7,47 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-// Node is a k8s node with MIG GPUs
 type Node struct {
 	Name string
 	gpus []GPU
 }
 
 func NewNode(n framework.NodeInfo) (Node, error) {
+	if n.Node() == nil {
+		return Node{}, fmt.Errorf("cannot create Node from a nil v1.Node")
+	}
 	gpusModel, err := getGPUsModel(*n.Node())
 	if err != nil {
-		return Node{}, err
+		return Node{Name: n.Node().Name, gpus: make([]GPU, 0)}, nil
 	}
-	gpus, err := getNodeGPUs(n, gpusModel)
+	gpus, err := extractGPUs(n, gpusModel)
 	if err != nil {
 		return Node{}, err
 	}
 	return Node{Name: n.Node().Name, gpus: gpus}, nil
 }
 
-func getNodeGPUs(nodeInfo framework.NodeInfo, gpusModel GPUModel) ([]GPU, error) {
+func extractGPUs(nodeInfo framework.NodeInfo, gpusModel GPUModel) ([]GPU, error) {
 	result := make([]GPU, 0)
 
-	//statusAnnotations, _ := GetGPUAnnotationsFromNode(*nodeInfo.Node())
-	//for _, a := range statusAnnotations {
-	//	gpu, err := NewGPU(gpusModel, a.GetGPUIndex())
-	//}
-
-	//for resourceName, quantity := range nodeInfo.Requested.ScalarResources {
-	//	if IsNvidiaMigDevice(resourceName) {
-	//
-	//	}
-	//}
+	statusAnnotations, _ := GetGPUAnnotationsFromNode(*nodeInfo.Node())
+	for gpuIndex, gpuAnnotations := range statusAnnotations.GroupByGpuIndex() {
+		usedMigDevices := make(map[ProfileName]int)
+		freeMigDevices := make(map[ProfileName]int)
+		for _, a := range gpuAnnotations {
+			if a.IsUsed() {
+				usedMigDevices[a.GetMigProfileName()] = a.Quantity
+			}
+			if a.IsFree() {
+				freeMigDevices[a.GetMigProfileName()] = a.Quantity
+			}
+		}
+		gpu, err := NewGPU(gpusModel, gpuIndex, usedMigDevices, freeMigDevices)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, gpu)
+	}
 
 	return result, nil
 }

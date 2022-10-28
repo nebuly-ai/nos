@@ -14,13 +14,13 @@ func TestKnownGeometries(t *testing.T) {
 	}{
 		{
 			name:      "A100-40GB",
-			gpuModel:  Model_A100_SMX4_40GB,
+			gpuModel:  GPUModel_A100_SMX4_40GB,
 			maxMemory: 40,
 			maxGi:     7,
 		},
 		{
 			name:      "A30",
-			gpuModel:  Model_A30,
+			gpuModel:  GPUModel_A30,
 			maxMemory: 24,
 			maxGi:     7,
 		},

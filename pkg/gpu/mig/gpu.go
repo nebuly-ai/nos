@@ -14,6 +14,8 @@ type GPU struct {
 	index                int
 	model                GPUModel
 	allowedMigGeometries []Geometry
+	usedMigDevices       map[ProfileName]int
+	freeMigDevices       map[ProfileName]int
 }
 
 func (g GPU) GetIndex() int {
@@ -32,10 +34,16 @@ func (g GPU) GetAllowedMigGeometries() []Geometry {
 	return g.allowedMigGeometries
 }
 
-func NewGPU(model GPUModel, index int) (GPU, error) {
+func NewGPU(model GPUModel, index int, usedMigDevices, freeMigDevices map[ProfileName]int) (GPU, error) {
 	allowedGeometries, ok := gpuModelToAllowedMigGeometries[model]
 	if !ok {
 		return GPU{}, fmt.Errorf("model %q is not associated with any known GPU", model)
 	}
-	return GPU{index: index, model: model, allowedMigGeometries: allowedGeometries}, nil
+	return GPU{
+		index:                index,
+		model:                model,
+		allowedMigGeometries: allowedGeometries,
+		usedMigDevices:       usedMigDevices,
+		freeMigDevices:       freeMigDevices,
+	}, nil
 }

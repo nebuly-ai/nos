@@ -1,11 +1,18 @@
 package v1alpha1
 
-// Annotations
-const (
-	AnnotationGPUSpecPrefix    = "n8s.nebuly.ai/spec-gpu"
-	AnnotationGPUMigSpecFormat = "n8s.nebuly.ai/spec-gpu-%d-%s"
+import (
+	"fmt"
+)
 
+const (
+	AnnotationGPUSpecPrefix       = "n8s.nebuly.ai/spec-gpu"
+	AnnotationGPUMigSpecFormat    = "n8s.nebuly.ai/spec-gpu-%d-%s"
 	AnnotationGPUStatusPrefix     = "n8s.nebuly.ai/status-gpu"
-	AnnotationUsedMigStatusFormat = "n8s.nebuly.ai/status-gpu-%d-%s-used"
-	AnnotationFreeMigStatusFormat = "n8s.nebuly.ai/status-gpu-%d-%s-free"
+	AnnotationGPUStatusFreeSuffix = "free"
+	AnnotationGPUStatusUsedSuffix = "used"
+)
+
+var (
+	AnnotationUsedMigStatusFormat = fmt.Sprintf("%s-%%d-%%s-%s", AnnotationGPUStatusPrefix, AnnotationGPUStatusUsedSuffix)
+	AnnotationFreeMigStatusFormat = fmt.Sprintf("%s-%%d-%%s-%s", AnnotationGPUStatusPrefix, AnnotationGPUStatusFreeSuffix)
 )

@@ -104,7 +104,7 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMigRe
 			)
 			continue
 		}
-		if err := migNode.UpdateGeometryFor(requiredMigResource); err != nil {
+		if err = migNode.UpdateGeometryFor(requiredMigResource); err != nil {
 			result = append(result, migNode)
 		}
 	}
