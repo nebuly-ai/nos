@@ -2,8 +2,8 @@ package core
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/pod"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"

@@ -12,6 +12,7 @@ RUN go mod download
 # Copy the go source
 COPY cmd/migagent/migagent.go migagent.go
 COPY pkg pkg/
+COPY internal internal/
 
 # Build
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o migagent -tags nvml migagent.go

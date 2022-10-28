@@ -2,7 +2,7 @@ package mig
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 )
 
 type Actuator struct {

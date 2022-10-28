@@ -3,7 +3,7 @@ package migagent
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/plan"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/gpu/mig"

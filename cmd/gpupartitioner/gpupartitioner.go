@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
+	state2 "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -47,10 +47,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	clusterState := state.NewClusterState()
+	clusterState := state2.NewClusterState()
 
 	// Setup state controllers
-	nodeController := state.NewNodeController(
+	nodeController := state2.NewNodeController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,
@@ -64,7 +64,7 @@ func main() {
 		)
 		os.Exit(1)
 	}
-	podController := state.NewPodController(
+	podController := state2.NewPodController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,
