@@ -2,7 +2,7 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"strings"
 )
 

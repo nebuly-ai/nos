@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
+	k8sresource "k8s.io/apimachinery/pkg/api/resource"
 	quota "k8s.io/apiserver/pkg/quota/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -16,7 +16,7 @@ import (
 
 type elasticQuotaPodsReconciler struct {
 	c                  client.Client
-	resourceCalculator *gpu.ResourceCalculator
+	resourceCalculator resource.Calculator
 }
 
 func (r *elasticQuotaPodsReconciler) PatchPodsAndComputeUsedQuota(ctx context.Context,
@@ -93,10 +93,10 @@ func newZeroUsed(min v1.ResourceList, max v1.ResourceList) v1.ResourceList {
 	maxResources := quota.ResourceNames(max)
 	res := v1.ResourceList{}
 	for _, v := range minResources {
-		res[v] = *resource.NewQuantity(0, resource.DecimalSI)
+		res[v] = *k8sresource.NewQuantity(0, k8sresource.DecimalSI)
 	}
 	for _, v := range maxResources {
-		res[v] = *resource.NewQuantity(0, resource.DecimalSI)
+		res[v] = *k8sresource.NewQuantity(0, k8sresource.DecimalSI)
 	}
 	return res
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -24,8 +25,8 @@ import (
 // CompositeElasticQuotaReconciler reconciles a CompositeElasticQuota object
 type CompositeElasticQuotaReconciler struct {
 	client.Client
+	resourceCalculator resource.Calculator
 	Scheme             *runtime.Scheme
-	resourceCalculator *gpu.ResourceCalculator
 	podsReconciler     *elasticQuotaPodsReconciler
 }
 

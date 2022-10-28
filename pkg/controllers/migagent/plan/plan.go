@@ -1,7 +1,6 @@
 package plan
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
@@ -23,7 +22,7 @@ type MigConfigPlan struct {
 	CreateOperations []CreateOperation
 }
 
-func NewMigConfigPlan(state MigState, desired annotation.GPUSpecAnnotationList) MigConfigPlan {
+func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConfigPlan {
 	plan := MigConfigPlan{}
 
 	// Get resources present in current state which MIG profile is not included in spec
@@ -82,7 +81,7 @@ func (p *MigConfigPlan) IsEmpty() bool {
 	return len(p.DeleteOperations) == 0 && len(p.CreateOperations) == 0
 }
 
-func getResourcesNotIncludedInSpec(state MigState, specAnnotations annotation.GPUSpecAnnotationList) mig.DeviceResourceList {
+func getResourcesNotIncludedInSpec(state MigState, specAnnotations mig.GPUSpecAnnotationList) mig.DeviceResourceList {
 	lookup := specAnnotations.GroupByGpuIndex()
 
 	updatedState := state

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"

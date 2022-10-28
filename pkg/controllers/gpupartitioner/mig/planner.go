@@ -3,6 +3,7 @@ package mig
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
@@ -17,9 +18,10 @@ import (
 
 type Planner struct {
 	schedulerFramework framework.Framework
+	logger             logr.Logger
 }
 
-func NewPlanner(kubeClient kubernetes.Interface) (*Planner, error) {
+func NewPlanner(kubeClient kubernetes.Interface, logger logr.Logger) (*Planner, error) {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
 	config, err := scheduler_config.Default()
 	if err != nil {
@@ -38,7 +40,7 @@ func NewPlanner(kubeClient kubernetes.Interface) (*Planner, error) {
 		return nil, fmt.Errorf("couldn't create scheduler framework; %v", err)
 	}
 
-	return &Planner{schedulerFramework: f}, nil
+	return &Planner{schedulerFramework: f, logger: logger}, nil
 }
 
 func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (map[string]core.PartitioningPlan, error) {
@@ -88,8 +90,20 @@ func (p Planner) getLackingMigResource(snapshot state.ClusterSnapshot, pod v1.Po
 func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMigResource v1.ResourceName) []mig.Node {
 	result := make([]mig.Node, 0)
 
+	var migNode mig.Node
+	var err error
+
 	for _, n := range snapshot.GetNodes() {
-		migNode := mig.NewNode(n)
+		if migNode, err = mig.NewNode(n); err != nil {
+			p.logger.V(3).Info(
+				"node is not a valid candidate",
+				"node",
+				n.Node().Name,
+				"reason",
+				err,
+			)
+			continue
+		}
 		if err := migNode.UpdateGeometryFor(requiredMigResource); err != nil {
 			result = append(result, migNode)
 		}

@@ -4,9 +4,9 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
-	"k8s.io/api/core/v1"
-	resource2 "k8s.io/apimachinery/pkg/api/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	v1 "k8s.io/api/core/v1"
+	k8sresource "k8s.io/apimachinery/pkg/api/resource"
 )
 
 type ResourceCalculator struct {
@@ -46,7 +46,7 @@ func (r ResourceCalculator) ComputePodRequest(pod v1.Pod) v1.ResourceList {
 
 	// add required GPU memory resource
 	gpuMemory := r.ComputeRequiredGPUMemoryGB(res)
-	res[v1alpha1.ResourceGPUMemory] = *resource2.NewQuantity(gpuMemory, resource2.DecimalSI)
+	res[v1alpha1.ResourceGPUMemory] = *k8sresource.NewQuantity(gpuMemory, k8sresource.DecimalSI)
 
 	return res
 }

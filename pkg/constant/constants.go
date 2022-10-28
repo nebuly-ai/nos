@@ -38,6 +38,13 @@ const (
 	ResourceNvidiaGPU v1.ResourceName = "nvidia.com/gpu"
 )
 
+// Labels
+const (
+	// LabelNvidiaProduct is the name of the label assigned by the NVIDIA GPU Operator that identities
+	// the model of the NVIDIA GPUs on a certain node
+	LabelNvidiaProduct = "nvidia.com/gpu.product"
+)
+
 const (
 	// DefaultNvidiaGPUResourceMemory is the default memory value (in GigaByte) that is associated to
 	// nvidia.com/gpu resources. The value represents the GPU memory requirement of a single resource.

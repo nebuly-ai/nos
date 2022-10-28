@@ -3,9 +3,8 @@ package migagent
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	"reflect"
@@ -63,10 +62,10 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 	logger.V(3).Info("loaded free MIG devices", "freeMIGs", freeMigs)
 	logger.V(3).Info("loaded used MIG devices", "usedMIGs", usedMigs)
-	newStatusAnnotations := annotation.ComputeStatusAnnotations(usedMigs, freeMigs)
+	newStatusAnnotations := mig.ComputeStatusAnnotations(usedMigs, freeMigs)
 
 	// Get current status annotations and compare with new ones
-	oldStatusAnnotations, _ := annotation.GetGPUAnnotationsFromNode(instance)
+	oldStatusAnnotations, _ := mig.GetGPUAnnotationsFromNode(instance)
 	if reflect.DeepEqual(newStatusAnnotations, oldStatusAnnotations) {
 		logger.Info("current status is equal to last reported status, nothing to do")
 		return ctrl.Result{RequeueAfter: r.refreshInterval}, nil

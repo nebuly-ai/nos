@@ -21,7 +21,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sort"
@@ -30,7 +30,7 @@ import (
 	gocmp "github.com/google/go-cmp/cmp"
 
 	"k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
+	k8sresource "k8s.io/apimachinery/pkg/api/resource"
 	apiruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/informers"
 	clientsetfake "k8s.io/client-go/kubernetes/fake"
@@ -476,7 +476,7 @@ func TestDryRunPreemption(t *testing.T) {
 			}
 
 			r := resourceCalculator.ComputePodRequest(*tt.pod)
-			podReq := resource2.FromListToFramework(r)
+			podReq := resource.FromListToFramework(r)
 			elasticQuotaSnapshotState := &ElasticQuotaSnapshotState{
 				elasticQuotaInfos: tt.elasticQuotas,
 			}
@@ -538,9 +538,9 @@ func makePod(podName string, namespace string, memReq int64, cpuReq int64, gpuRe
 		Priority(priority).Node(nodeName).UID(uid).ZeroTerminationGracePeriod().Obj()
 	pod.Spec.Containers[0].Resources = v1.ResourceRequirements{
 		Requests: v1.ResourceList{
-			v1.ResourceMemory:          *resource.NewQuantity(memReq, resource.DecimalSI),
-			v1.ResourceCPU:             *resource.NewMilliQuantity(cpuReq, resource.DecimalSI),
-			constant.ResourceNvidiaGPU: *resource.NewQuantity(gpuReq, resource.DecimalSI),
+			v1.ResourceMemory:          *k8sresource.NewQuantity(memReq, k8sresource.DecimalSI),
+			v1.ResourceCPU:             *k8sresource.NewMilliQuantity(cpuReq, k8sresource.DecimalSI),
+			constant.ResourceNvidiaGPU: *k8sresource.NewQuantity(gpuReq, k8sresource.DecimalSI),
 		},
 	}
 

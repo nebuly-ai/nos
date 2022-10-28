@@ -8,7 +8,7 @@ import (
 func TestKnownGeometries(t *testing.T) {
 	testCases := []struct {
 		name      string
-		gpu       Gpu
+		gpu       GPU
 		maxMemory uint8
 		maxGi     uint8
 	}{
@@ -27,7 +27,7 @@ func TestKnownGeometries(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		availableGeometries := tt.gpu.GetAvailableMigGeometries()
+		availableGeometries := tt.gpu.GetAllowedMigGeometries()
 		for _, geometryList := range availableGeometries {
 			var geometryTotalMemory uint8
 			var geometryTotalGi uint8

@@ -3,8 +3,8 @@ package mig
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/gpu/nvml"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"

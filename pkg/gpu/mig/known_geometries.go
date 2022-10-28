@@ -1,10 +1,23 @@
 package mig
 
-type A100_SMX4_40GB struct {
-}
+var (
+	A30_AllowedGeometries = []Geometry{
+		{
+			profile4g24gb: 1,
+		},
+		{
+			profile2g12gb: 2,
+		},
+		{
+			profile2g12gb: 1,
+			profile1g6gb:  2,
+		},
+		{
+			profile1g6gb: 4,
+		},
+	}
 
-func (a A100_SMX4_40GB) GetAvailableMigGeometries() []Geometry {
-	return []Geometry{
+	A100_SMX4_40GB_AllowedGeometries = []Geometry{
 		{
 			profile7g40gb: 1,
 		},
@@ -54,25 +67,4 @@ func (a A100_SMX4_40GB) GetAvailableMigGeometries() []Geometry {
 			profile1g5gb: 7,
 		},
 	}
-}
-
-type A30 struct {
-}
-
-func (a A30) GetAvailableMigGeometries() []Geometry {
-	return []Geometry{
-		{
-			profile4g24gb: 1,
-		},
-		{
-			profile2g12gb: 2,
-		},
-		{
-			profile2g12gb: 1,
-			profile1g6gb:  2,
-		},
-		{
-			profile1g6gb: 4,
-		},
-	}
-}
+)

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

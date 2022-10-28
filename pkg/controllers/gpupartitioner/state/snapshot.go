@@ -2,7 +2,7 @@ package state
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )

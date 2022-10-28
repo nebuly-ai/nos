@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/annotation"
 	"github.com/nebuly-ai/nebulnetes/pkg/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -51,8 +50,8 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 
 	// Check if reported status already matches spec
-	statusAnnotations, specAnnotations := annotation.GetGPUAnnotationsFromNode(instance)
-	if annotation.SpecMatchesStatus(specAnnotations, statusAnnotations) {
+	statusAnnotations, specAnnotations := mig.GetGPUAnnotationsFromNode(instance)
+	if mig.SpecMatchesStatus(specAnnotations, statusAnnotations) {
 		logger.Info("reported status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
 	}
@@ -71,7 +70,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	return a.apply(ctx, configPlan)
 }
 
-func (a *MigActuator) plan(ctx context.Context, specAnnotations annotation.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
+func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
 	logger := a.newLogger(ctx)
 
 	// Compute current state

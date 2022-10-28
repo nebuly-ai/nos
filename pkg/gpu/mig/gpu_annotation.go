@@ -1,10 +1,8 @@
-package annotation
+package mig
 
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"regexp"
 	"strconv"
@@ -13,26 +11,7 @@ import (
 
 var (
 	numberBeginningLineRegex = regexp.MustCompile("^\\d+")
-	migProfileRegex          = regexp.MustCompile(constant.RegexNvidiaMigProfile)
 )
-
-type GPUAnnotationList []GPUAnnotation
-
-func (l GPUAnnotationList) ContainsMigProfile(migProfile string) bool {
-	for _, a := range l {
-		if a.GetMigProfileName() == migProfile {
-			return true
-		}
-	}
-	return false
-}
-
-type GPUAnnotation interface {
-	GetValue() string
-	GetGPUIndex() int
-	GetMigProfileName() string
-	GetGPUIndexWithMigProfile() string
-}
 
 type GPUSpecAnnotationList []GPUSpecAnnotation
 
@@ -48,10 +27,10 @@ func (l GPUSpecAnnotationList) GroupByGpuIndex() map[int]GPUSpecAnnotationList {
 	return result
 }
 
-func (l GPUSpecAnnotationList) GroupByMigProfile() map[mig.Profile]GPUSpecAnnotationList {
-	result := make(map[mig.Profile]GPUSpecAnnotationList)
+func (l GPUSpecAnnotationList) GroupByMigProfile() map[Profile]GPUSpecAnnotationList {
+	result := make(map[Profile]GPUSpecAnnotationList)
 	for _, a := range l {
-		key := mig.Profile{
+		key := Profile{
 			GpuIndex: a.GetGPUIndex(),
 			Name:     a.GetMigProfileName(),
 		}
@@ -91,8 +70,8 @@ func (a GPUSpecAnnotation) GetGPUIndex() int {
 	return index
 }
 
-func (a GPUSpecAnnotation) GetMigProfileName() mig.ProfileName {
-	return mig.ProfileName(migProfileRegex.FindString(a.Name))
+func (a GPUSpecAnnotation) GetMigProfileName() ProfileName {
+	return ProfileName(migProfileRegex.FindString(a.Name))
 }
 
 // GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the
@@ -137,8 +116,8 @@ func (a GPUStatusAnnotation) GetGPUIndex() int {
 	return index
 }
 
-func (a GPUStatusAnnotation) GetMigProfileName() string {
-	return migProfileRegex.FindString(a.Name)
+func (a GPUStatusAnnotation) GetMigProfileName() ProfileName {
+	return ProfileName(migProfileRegex.FindString(a.Name))
 }
 
 // GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the

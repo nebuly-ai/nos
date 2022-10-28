@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"

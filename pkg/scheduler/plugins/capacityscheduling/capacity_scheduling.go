@@ -22,8 +22,8 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	schedulerconfig "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	podutil "github.com/nebuly-ai/nebulnetes/pkg/util/pod"
-	"github.com/nebuly-ai/nebulnetes/pkg/util/resource"
 	"sort"
 	"sync"
 
@@ -54,7 +54,7 @@ type CapacityScheduling struct {
 	podLister                corelisters.PodLister
 	pdbLister                policylisters.PodDisruptionBudgetLister
 	elasticQuotaInfos        ElasticQuotaInfos
-	resourceCalculator       *gpu.ResourceCalculator
+	resourceCalculator       resource.Calculator
 	elasticQuotaInfoInformer *ElasticQuotaInfoInformer
 }
 

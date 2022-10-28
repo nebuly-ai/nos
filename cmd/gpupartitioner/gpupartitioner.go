@@ -81,7 +81,7 @@ func main() {
 
 	// Setup MIG partitioner controller
 	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
-	migPlanner, err := mig.NewPlanner(k8sClient)
+	migPlanner, err := mig.NewPlanner(k8sClient, ctrl.Log.WithName("MIG Planner"))
 	if err != nil {
 		setupLog.Error(err, "unable to create MIG planner")
 		os.Exit(1)

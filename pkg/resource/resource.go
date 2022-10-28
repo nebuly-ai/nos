@@ -11,7 +11,11 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-// FromFrameworkToList
+type Calculator interface {
+	ComputePodRequest(pod v1.Pod) v1.ResourceList
+}
+
+// FromFrameworkToList converts the input scheduler framework.Resource to a core v1.ResourceList
 func FromFrameworkToList(r framework.Resource) v1.ResourceList {
 	result := v1.ResourceList{
 		v1.ResourceCPU:              *resource.NewMilliQuantity(r.MilliCPU, resource.DecimalSI),
@@ -29,6 +33,7 @@ func FromFrameworkToList(r framework.Resource) v1.ResourceList {
 	return result
 }
 
+// FromListToFramework converts the input core v1.ResourceList to a scheduler framework.Resource
 func FromListToFramework(r v1.ResourceList) framework.Resource {
 	return *framework.NewResource(r)
 }
@@ -100,16 +105,4 @@ func ComputePodRequest(pod v1.Pod) v1.ResourceList {
 
 	// take max_resource for init_containers and containers
 	return quota.Max(containersRes, initRes)
-}
-
-func GetNvidiaGPUsCount(node v1.Node) int {
-	return 0
-}
-
-func GetNvidiaGPUsModel(node v1.Node) string {
-	return ""
-}
-
-func GetNvidiaGPUsMemoryMb(node v1.Node) int {
-	return 0
 }

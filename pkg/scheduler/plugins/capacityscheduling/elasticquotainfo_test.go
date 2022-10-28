@@ -20,9 +20,9 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	resource2 "github.com/nebuly-ai/nebulnetes/pkg/util/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/api/resource"
+	k8sresource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"math"
 	"reflect"
@@ -77,7 +77,7 @@ func TestReserveResource(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
 				r := resourceCalculator.ComputePodRequest(*pod)
-				request := resource2.FromListToFramework(r)
+				request := resource.FromListToFramework(r)
 				elasticQuotaInfo.reserveResource(request)
 			}
 
@@ -133,7 +133,7 @@ func TestUnReserveResource(t *testing.T) {
 			elasticQuotaInfo := tt.before
 			for _, pod := range tt.pods {
 				r := resourceCalculator.ComputePodRequest(*pod)
-				request := resource2.FromListToFramework(r)
+				request := resource.FromListToFramework(r)
 				elasticQuotaInfo.unreserveResource(request)
 			}
 
@@ -437,7 +437,7 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 					Namespaces: sets.NewString("ns-1"),
 					pods:       sets.NewString("pd-1", "pd-2"),
 					Min: &framework.Resource{
-						MilliCPU:         resource.MaxMilliValue,
+						MilliCPU:         k8sresource.MaxMilliValue,
 						Memory:           math.MaxInt64,
 						EphemeralStorage: math.MaxInt64,
 						AllowedPodNumber: math.MaxInt64,
