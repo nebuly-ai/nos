@@ -28,11 +28,10 @@ func NewNode(n framework.NodeInfo) (Node, error) {
 func getNodeGPUs(nodeInfo framework.NodeInfo, gpusModel GPUModel) ([]GPU, error) {
 	result := make([]GPU, 0)
 
-	statusAnnotations, _ := GetGPUAnnotationsFromNode(*nodeInfo.Node())
-	for _, a := range statusAnnotations {
-		a.GetMigProfileName()
-		NewGPU(gpusModel, a.GetGPUIndex())
-	}
+	//statusAnnotations, _ := GetGPUAnnotationsFromNode(*nodeInfo.Node())
+	//for _, a := range statusAnnotations {
+	//	gpu, err := NewGPU(gpusModel, a.GetGPUIndex())
+	//}
 
 	//for resourceName, quantity := range nodeInfo.Requested.ScalarResources {
 	//	if IsNvidiaMigDevice(resourceName) {

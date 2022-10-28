@@ -95,7 +95,7 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMigRe
 
 	for _, n := range snapshot.GetNodes() {
 		if migNode, err = mig.NewNode(n); err != nil {
-			p.logger.V(3).Info(
+			p.logger.V(1).Info(
 				"node is not a valid candidate",
 				"node",
 				n.Node().Name,
