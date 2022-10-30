@@ -98,7 +98,7 @@ func main() {
 	podResourcesClient, err := newPodResourcesListerClient()
 	setupLog.Info("Initializing NVML client")
 	nvmlClient := nvml.NewClient()
-	migClient := mig.NewNvmlMigClient(podResourcesClient, nvmlClient)
+	migClient := mig.NewClient(podResourcesClient, nvmlClient)
 
 	// Setup MIG Reporter
 	migReporter := migagent.NewReporter(

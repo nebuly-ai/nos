@@ -6,6 +6,7 @@ import (
 	"sync"
 )
 
+// Todo: use some tool for auto-generating mocks
 type MockedMigClient struct {
 	NumCallsDeleteMigResource     uint
 	NumCallsCreateMigResource     uint
@@ -47,4 +48,12 @@ func (m *MockedMigClient) DeleteMigResource(_ context.Context, _ mig.DeviceResou
 	defer m.lockDeleteMigResource.Unlock()
 	m.NumCallsDeleteMigResource++
 	return m.ReturnedError
+}
+
+func (m *MockedMigClient) GetUsedMigDeviceResources(ctx context.Context) (mig.DeviceResourceList, error) {
+	return mig.DeviceResourceList{}, m.ReturnedError
+}
+
+func (m *MockedMigClient) GetAllocatableMigDeviceResources(ctx context.Context) (mig.DeviceResourceList, error) {
+	return mig.DeviceResourceList{}, m.ReturnedError
 }
