@@ -99,17 +99,7 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 			snapshot.Commit()
 
 			// Update desired partitioning
-			nodePartitioning := state.NodePartitioning{
-				GPUs: make([]state.GPUPartitioning, 0),
-			}
-			for _, g := range n.GPUs {
-				gpuPartitioning := state.GPUPartitioning{
-					GPUIndex:  g.GetIndex(),
-					Resources: g.GetGeometry().AsResourceList(),
-				}
-				nodePartitioning.GPUs = append(nodePartitioning.GPUs, gpuPartitioning)
-			}
-			res[n.Name] = nodePartitioning
+			res[n.Name] = fromMigNodeToNodePartitioning(n)
 		}
 	}
 	return res, nil
@@ -175,6 +165,39 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
 	}
 
 	return result
+}
+
+func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) map[string]state.NodePartitioning {
+	migNodes := make([]mig.Node, 0)
+	for k, v := range snapshot.Nodes {
+		node, err := mig.NewNode(*v.Node())
+		if err != nil {
+			p.logger.Error(err, "unable to create MIG node", "node", k)
+			continue
+		}
+		migNodes = append(migNodes, node)
+	}
+	return fromMigNodesToPartitioningState(migNodes)
+}
+
+func fromMigNodesToPartitioningState(nodes []mig.Node) map[string]state.NodePartitioning {
+	res := make(map[string]state.NodePartitioning)
+	for _, node := range nodes {
+		res[node.Name] = fromMigNodeToNodePartitioning(node)
+	}
+	return res
+}
+
+func fromMigNodeToNodePartitioning(node mig.Node) state.NodePartitioning {
+	gpuPartitioning := make([]state.GPUPartitioning, 0)
+	for _, gpu := range node.GPUs {
+		gp := state.GPUPartitioning{
+			GPUIndex:  gpu.GetIndex(),
+			Resources: gpu.GetGeometry().AsResourceList(),
+		}
+		gpuPartitioning = append(gpuPartitioning, gp)
+	}
+	return state.NodePartitioning{GPUs: gpuPartitioning}
 }
 
 func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) (bool, error) {
