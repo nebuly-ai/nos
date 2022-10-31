@@ -7,20 +7,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"testing"
 )
 
 func TestNewNode(t *testing.T) {
 	testCases := []struct {
 		name          string
-		node          *v1.Node
+		node          v1.Node
 		expectedNode  Node
 		expectedError bool
 	}{
 		{
 			name: "Node without GPU annotations",
-			node: &v1.Node{
+			node: v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Labels: map[string]string{
@@ -36,7 +35,7 @@ func TestNewNode(t *testing.T) {
 		},
 		{
 			name: "Node without GPU model label",
-			node: &v1.Node{
+			node: v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
@@ -52,7 +51,7 @@ func TestNewNode(t *testing.T) {
 		},
 		{
 			name: "Node with unknown GPU model",
-			node: &v1.Node{
+			node: v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
@@ -67,7 +66,7 @@ func TestNewNode(t *testing.T) {
 		},
 		{
 			name: "Node with multiple GPUs with used and free MIG device annotations",
-			node: &v1.Node{
+			node: v1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
@@ -111,9 +110,7 @@ func TestNewNode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			nodeInfo := framework.NewNodeInfo()
-			nodeInfo.SetNode(tt.node)
-			node, err := NewNode(*nodeInfo)
+			node, err := NewNode(tt.node)
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -123,12 +120,6 @@ func TestNewNode(t *testing.T) {
 			}
 		})
 	}
-
-	t.Run("Node is nil", func(t *testing.T) {
-		ni := framework.NodeInfo{}
-		_, err := NewNode(ni)
-		assert.Error(t, err)
-	})
 }
 
 func TestNode__GetGeometry(t *testing.T) {

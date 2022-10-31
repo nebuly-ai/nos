@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
 type Node struct {
@@ -12,25 +11,22 @@ type Node struct {
 	GPUs []GPU
 }
 
-func NewNode(n framework.NodeInfo) (Node, error) {
-	if n.Node() == nil {
-		return Node{}, fmt.Errorf("cannot create Node from a nil v1.Node")
-	}
-	gpusModel, err := getGPUsModel(*n.Node())
+func NewNode(n v1.Node) (Node, error) {
+	gpusModel, err := getGPUsModel(n)
 	if err != nil {
-		return Node{Name: n.Node().Name, GPUs: make([]GPU, 0)}, nil
+		return Node{Name: n.Name, GPUs: make([]GPU, 0)}, nil
 	}
 	gpus, err := extractGPUs(n, gpusModel)
 	if err != nil {
 		return Node{}, err
 	}
-	return Node{Name: n.Node().Name, GPUs: gpus}, nil
+	return Node{Name: n.Name, GPUs: gpus}, nil
 }
 
-func extractGPUs(nodeInfo framework.NodeInfo, gpusModel GPUModel) ([]GPU, error) {
+func extractGPUs(node v1.Node, gpusModel GPUModel) ([]GPU, error) {
 	result := make([]GPU, 0)
 
-	statusAnnotations, _ := GetGPUAnnotationsFromNode(*nodeInfo.Node())
+	statusAnnotations, _ := GetGPUAnnotationsFromNode(node)
 	for gpuIndex, gpuAnnotations := range statusAnnotations.GroupByGpuIndex() {
 		usedMigDevices := make(map[ProfileName]int)
 		freeMigDevices := make(map[ProfileName]int)

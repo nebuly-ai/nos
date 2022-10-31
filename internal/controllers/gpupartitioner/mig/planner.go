@@ -160,7 +160,7 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
 	var err error
 
 	for _, n := range snapshot.GetNodes() {
-		if migNode, err = mig.NewNode(n); err != nil {
+		if migNode, err = mig.NewNode(*n.Node()); err != nil {
 			p.logger.Error(
 				err,
 				"unable to create MIG node",
