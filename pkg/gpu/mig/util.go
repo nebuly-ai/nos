@@ -25,11 +25,12 @@ func IsNvidiaMigDevice(resourceName v1.ResourceName) bool {
 // Example:
 //
 //	nvidia.com/mig-1g.10gb => 1g.10gb
-func ExtractMigProfile(migFormatResourceName v1.ResourceName) (string, error) {
+func ExtractMigProfile(migFormatResourceName v1.ResourceName) (ProfileName, error) {
 	if isMigResource := resourceRegexp.MatchString(string(migFormatResourceName)); !isMigResource {
 		return "", fmt.Errorf("invalid input string, required format is %s", resourceRegexp.String())
 	}
-	return strings.TrimPrefix(string(migFormatResourceName), "nvidia.com/mig-"), nil
+	name := strings.TrimPrefix(string(migFormatResourceName), "nvidia.com/mig-")
+	return ProfileName(name), nil
 }
 
 func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64, error) {

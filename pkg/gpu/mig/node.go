@@ -9,7 +9,7 @@ import (
 
 type Node struct {
 	Name string
-	gpus []GPU
+	GPUs []GPU
 }
 
 func NewNode(n framework.NodeInfo) (Node, error) {
@@ -18,13 +18,13 @@ func NewNode(n framework.NodeInfo) (Node, error) {
 	}
 	gpusModel, err := getGPUsModel(*n.Node())
 	if err != nil {
-		return Node{Name: n.Node().Name, gpus: make([]GPU, 0)}, nil
+		return Node{Name: n.Node().Name, GPUs: make([]GPU, 0)}, nil
 	}
 	gpus, err := extractGPUs(n, gpusModel)
 	if err != nil {
 		return Node{}, err
 	}
-	return Node{Name: n.Node().Name, gpus: gpus}, nil
+	return Node{Name: n.Node().Name, GPUs: gpus}, nil
 }
 
 func extractGPUs(nodeInfo framework.NodeInfo, gpusModel GPUModel) ([]GPU, error) {
@@ -59,10 +59,42 @@ func getGPUsModel(node v1.Node) (GPUModel, error) {
 	return "", fmt.Errorf("cannot get NVIDIA GPU model: node does not have label %q", constant.LabelNvidiaProduct)
 }
 
-func (n *Node) UpdateGeometryFor(migResource v1.ResourceName) error {
+func (n *Node) UpdateGeometryFor(profile ProfileName, quantity int) error {
 	return nil
 }
 
-func (n *Node) GetGPUsGeometry() map[string]v1.ResourceList {
-	return nil
+func (n *Node) GetGeometry() Geometry {
+	res := make(Geometry)
+	for _, g := range n.GPUs {
+		for p, q := range g.GetGeometry() {
+			res[p] += q
+		}
+	}
+	return res
 }
+
+func (n *Node) HasFreeMigResources() bool {
+	if len(n.GPUs) == 0 {
+		return false
+	}
+	for _, gpu := range n.GPUs {
+		if len(gpu.freeMigDevices) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// HasFree returns true if the node has enough free resources for providing (even by changing its MIG geometry)
+// the amount of MIG profiles provided as argument.
+//func (n *Node) HasFree(profile ProfileName, quantity int) bool {
+//	// check if the node already has
+//	for _, g := range n.GPUs {
+//		for p, q := range g.freeMigDevices {
+//			if p == profile && q >= quantity {
+//				return true
+//			}
+//		}
+//	}
+//	return false
+//}

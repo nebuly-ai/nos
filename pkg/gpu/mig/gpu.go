@@ -1,10 +1,26 @@
 package mig
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+)
 
 // Geometry corresponds to the MIG Geometry of a GPU,
 // namely the MIG profiles of the GPU with the respective quantity.
 type Geometry map[ProfileName]int
+
+func (g Geometry) AsResourceList() v1.ResourceList {
+	res := make(v1.ResourceList)
+	for p, v := range g {
+		resourceName := v1.ResourceName(fmt.Sprintf("%s%s", constant.NvidiaMigResourcePrefix, p))
+		quantity := res[resourceName]
+		quantity.Add(*resource.NewQuantity(int64(v), resource.DecimalSI))
+		res[resourceName] = quantity
+	}
+	return res
+}
 
 type GPUModel string
 
@@ -38,7 +54,7 @@ func (g GPU) GetModel() GPUModel {
 	return g.model
 }
 
-func (g GPU) GetCurrentMigGeometry() Geometry {
+func (g GPU) GetGeometry() Geometry {
 	res := make(Geometry)
 
 	for profile, quantity := range g.usedMigDevices {

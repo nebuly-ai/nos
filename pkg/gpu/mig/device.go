@@ -2,6 +2,7 @@ package mig
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"strings"
 )
@@ -26,7 +27,7 @@ func (m DeviceResource) FullResourceName() string {
 //	Resource name: nvidia.com/mig-1g.10gb
 //	GetMigProfileName() -> 1g.10gb
 func (m DeviceResource) GetMigProfileName() ProfileName {
-	return ProfileName(strings.TrimPrefix(m.ResourceName.String(), "nvidia.com/mig-"))
+	return ProfileName(strings.TrimPrefix(m.ResourceName.String(), constant.NvidiaMigResourcePrefix))
 }
 
 type DeviceResourceList []DeviceResource

@@ -32,6 +32,12 @@ const (
 	RegexNvidiaMigFormatMemory = `\d+gb`
 )
 
+// Prefixes
+const (
+	// NvidiaMigResourcePrefix is the prefix of NVIDIA MIG resources
+	NvidiaMigResourcePrefix = "nvidia.com/mig-"
+)
+
 // Resource names
 const (
 	// ResourceNvidiaGPU is the name of the GPU resource exposed by the NVIDIA device plugin
