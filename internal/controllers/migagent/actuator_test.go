@@ -24,10 +24,6 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "Empty delete operation",
 			op: plan.DeleteOperation{
-				MigProfile: mig.Profile{
-					GpuIndex: 0,
-					Name:     "1g.10gb",
-				},
 				Resources: make(mig.DeviceResourceList, 0),
 				Quantity:  0,
 			},
@@ -39,10 +35,6 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "Delete op does not have enough candidates",
 			op: plan.DeleteOperation{
-				MigProfile: mig.Profile{
-					GpuIndex: 0,
-					Name:     "1g.10gb",
-				},
 				Resources: mig.DeviceResourceList{
 					{
 						Device: resource.Device{
@@ -79,10 +71,6 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "More candidates than required, the op should delete only Quantity resources",
 			op: plan.DeleteOperation{
-				MigProfile: mig.Profile{
-					GpuIndex: 0,
-					Name:     "1g.10gb",
-				},
 				Resources: mig.DeviceResourceList{
 					{
 						Device: resource.Device{
@@ -119,10 +107,6 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "MIG client returns error",
 			op: plan.DeleteOperation{
-				MigProfile: mig.Profile{
-					GpuIndex: 0,
-					Name:     "1g.10gb",
-				},
 				Resources: mig.DeviceResourceList{
 					{
 						Device: resource.Device{

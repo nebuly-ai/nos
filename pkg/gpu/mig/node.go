@@ -59,10 +59,6 @@ func getGPUsModel(node v1.Node) (GPUModel, error) {
 	return "", fmt.Errorf("cannot get NVIDIA GPU model: node does not have label %q", constant.LabelNvidiaProduct)
 }
 
-func (n *Node) GetAllocatableScalarResources() v1.ResourceList {
-	return make(v1.ResourceList)
-}
-
 func (n *Node) UpdateGeometryFor(migResource v1.ResourceName) error {
 	return nil
 }

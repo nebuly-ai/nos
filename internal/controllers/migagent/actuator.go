@@ -3,7 +3,7 @@ package migagent
 import (
 	"context"
 	"fmt"
-	plan2 "github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
@@ -70,28 +70,28 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	return a.apply(ctx, configPlan)
 }
 
-func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnotationList) (plan2.MigConfigPlan, error) {
+func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
 	logger := a.newLogger(ctx)
 
 	// Compute current state
 	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
 	if err != nil {
 		logger.Error(err, "unable to get MIG device resources")
-		return plan2.MigConfigPlan{}, err
+		return plan.MigConfigPlan{}, err
 	}
-	state := plan2.NewMigState(migDeviceResources)
+	state := plan.NewMigState(migDeviceResources)
 
 	// Check if actual state already matches spec
 	if state.Matches(specAnnotations) {
 		logger.Info("actual state matches desired MIG config")
-		return plan2.MigConfigPlan{}, nil
+		return plan.MigConfigPlan{}, nil
 	}
 
 	// Compute MIG config plan
-	return plan2.NewMigConfigPlan(state, specAnnotations), nil
+	return plan.NewMigConfigPlan(state, specAnnotations), nil
 }
 
-func (a *MigActuator) apply(ctx context.Context, plan plan2.MigConfigPlan) (ctrl.Result, error) {
+func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.Result, error) {
 	var err error
 	logger := a.newLogger(ctx)
 	logger.Info(
@@ -213,9 +213,9 @@ func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, time
 	return nil
 }
 
-func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan2.DeleteOperation) (bool, error) {
+func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) (bool, error) {
 	logger := a.newLogger(ctx)
-	logger.Info("applying delete operation for MigProfile", "migProfile", op.MigProfile)
+	logger.Info("applying delete operation for MigProfile", "migProfile", op.GetMigProfileName())
 
 	// Get resources candidate to be deleted
 	candidateResources := make([]mig.DeviceResource, 0)
@@ -236,7 +236,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan2.DeleteOperatio
 	}
 
 	// Delete resources choosing from candidates
-	var nDeleted uint8
+	var nDeleted int
 	for _, r := range candidateResources {
 		if err := a.migClient.DeleteMigResource(ctx, r); err != nil {
 			logger.Error(err, "unable to delete MIG resource", "resource", r)
@@ -259,12 +259,12 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan2.DeleteOperatio
 	return atLeastOneDelete, nil
 }
 
-func (a *MigActuator) applyCreateOp(ctx context.Context, op plan2.CreateOperation) (bool, error) {
+func (a *MigActuator) applyCreateOp(ctx context.Context, op plan.CreateOperation) (bool, error) {
 	logger := a.newLogger(ctx)
 	logger.Info("applying create operation for MigProfile", "migProfile", op.MigProfile)
 
-	var nCreated uint8
-	var i uint8
+	var nCreated int
+	var i int
 	for i = 0; i < op.Quantity; i++ {
 		err := a.migClient.CreateMigResource(ctx, op.MigProfile)
 		if err != nil {

@@ -7,14 +7,21 @@ import (
 
 type CreateOperation struct {
 	MigProfile mig.Profile
-	Quantity   uint8
+	Quantity   int
 }
 
 type DeleteOperation struct {
-	MigProfile mig.Profile
-	Resources  mig.DeviceResourceList
-	// Quantity is the amount of resources that need to be deleted
-	Quantity uint8
+	// Resources are the possible device resources that can be deleted. Must be >= Quantity.
+	Resources mig.DeviceResourceList
+	// Quantity is the amount of resources that need to be deleted. Must be <= len(Resources).
+	Quantity int
+}
+
+func (o DeleteOperation) GetMigProfileName() mig.ProfileName {
+	if len(o.Resources) > 0 {
+		return o.Resources[0].GetMigProfileName()
+	}
+	return ""
 }
 
 type MigConfigPlan struct {
@@ -26,11 +33,10 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	plan := MigConfigPlan{}
 
 	// Get resources present in current state which MIG profile is not included in spec
-	for migProfile, resourceList := range getResourcesNotIncludedInSpec(state, desired).GroupByMigProfile() {
+	for _, resourceList := range getResourcesNotIncludedInSpec(state, desired).GroupByMigProfile() {
 		op := DeleteOperation{
-			MigProfile: migProfile,
-			Resources:  resourceList,
-			Quantity:   uint8(len(resourceList)), // we want all of these resources to be deleted
+			Resources: resourceList,
+			Quantity:  len(resourceList), // we want all of these resources to be deleted
 		}
 		plan.addDeleteOp(op)
 	}
@@ -52,15 +58,14 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 		if diff > 0 {
 			op := CreateOperation{
 				MigProfile: migProfile,
-				Quantity:   uint8(diff),
+				Quantity:   diff,
 			}
 			plan.addCreateOp(op)
 		}
 		if diff < 0 {
 			op := DeleteOperation{
-				MigProfile: migProfile,
-				Quantity:   uint8(util.Abs(diff)),
-				Resources:  actualResources,
+				Quantity:  util.Abs(diff),
+				Resources: actualResources,
 			}
 			plan.addDeleteOp(op)
 		}

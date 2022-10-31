@@ -85,10 +85,6 @@ func TestNewMigConfigPlan(t *testing.T) {
 			specAnnotations: map[string]string{},
 			expectedDeleteOps: []DeleteOperation{
 				{
-					MigProfile: mig.Profile{
-						GpuIndex: 0,
-						Name:     "1g.10gb",
-					},
 					Resources: []mig.DeviceResource{
 						{
 							Device: resource.Device{
@@ -110,10 +106,6 @@ func TestNewMigConfigPlan(t *testing.T) {
 					Quantity: 2,
 				},
 				{
-					MigProfile: mig.Profile{
-						GpuIndex: 1,
-						Name:     "2g.20gb",
-					},
 					Resources: []mig.DeviceResource{
 						{
 							Device: resource.Device{
