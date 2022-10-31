@@ -86,6 +86,28 @@ func Subtract(r1 framework.Resource, r2 framework.Resource) framework.Resource {
 	return res
 }
 
+func Abs(r framework.Resource) framework.Resource {
+	res := r.Clone()
+	if res.MilliCPU < 0 {
+		res.MilliCPU = -res.MilliCPU
+	}
+	if res.Memory < 0 {
+		res.Memory = -res.Memory
+	}
+	if res.AllowedPodNumber < 0 {
+		res.AllowedPodNumber = -res.AllowedPodNumber
+	}
+	if res.EphemeralStorage < 0 {
+		res.EphemeralStorage = -res.EphemeralStorage
+	}
+	for k, v := range res.ScalarResources {
+		if v < 0 {
+			res.ScalarResources[k] = -v
+		}
+	}
+	return *res
+}
+
 func ComputePodRequest(pod v1.Pod) v1.ResourceList {
 	containersRes := v1.ResourceList{}
 	for _, container := range pod.Spec.Containers {

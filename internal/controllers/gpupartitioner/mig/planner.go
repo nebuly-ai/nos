@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
 	scheduler_config "k8s.io/kubernetes/pkg/scheduler/apis/config/latest"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	scheduler_plugins "k8s.io/kubernetes/pkg/scheduler/framework/plugins"
 	"k8s.io/kubernetes/pkg/scheduler/framework/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Planner struct {
@@ -43,51 +44,116 @@ func NewPlanner(kubeClient kubernetes.Interface, logger logr.Logger) (*Planner, 
 	return &Planner{schedulerFramework: f, logger: logger}, nil
 }
 
-func (p Planner) GetNodesPartitioningPlan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (map[string]core.PartitioningPlan, error) {
-	plan := make(map[string]core.PartitioningPlan)
+func (p Planner) newLogger(ctx context.Context) klog.Logger {
+	return log.FromContext(ctx).WithName("MigPlanner")
+}
+
+func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.DesiredPartitioning, error) {
+	logger := p.newLogger(ctx)
+	res := snapshot.GetCurrentPartitioning()
 	for _, pod := range candidates {
-		lackingMig, isLacking := p.getLackingMigResource(snapshot, pod)
+		lackingMig, isLacking := p.getLackingMigProfile(snapshot, pod)
 		if !isLacking {
-			return plan, nil
+			continue
 		}
-		candidateNodes := p.getCandidateNodes(snapshot, lackingMig)
+		candidateNodes := p.getCandidateNodes(snapshot)
+		logger.V(1).Info(
+			fmt.Sprintf("found %d candidate nodes for pod", len(candidateNodes)),
+			"namespace",
+			pod.GetNamespace(),
+			"pod",
+			pod.GetName(),
+			"lackingResource",
+			lackingMig,
+		)
 		for _, n := range candidateNodes {
+			// Check if node can potentially host the Pod by updating its MIG geometry
+			if err := n.UpdateGeometryFor(lackingMig, 1); err != nil {
+				continue
+			}
+
+			// Fork the state and update the nodes' allocatable scalar resources by taking into
+			// account the new MIG geometry
 			snapshot.Fork()
-			//_ = snapshot.UpdateAllocatableScalarResources(n.Name, n.GetAllocatableScalarResources())
 			nodeInfo, _ := snapshot.GetNode(n.Name)
+			scalarResources := getUpdatedScalarResources(nodeInfo, n)
+			nodeInfo.Allocatable.ScalarResources = scalarResources
+			snapshot.SetNode(nodeInfo)
+
+			// Run a scheduler cycle to check whether the Pod can be scheduled on the Node
 			podFits, err := p.podFitsNode(ctx, nodeInfo, pod)
 			if err != nil {
-				return nil, err
+				return res, err
 			}
+
+			// The Pod cannot be scheduled, revert the changes on the snapthot
 			if !podFits {
 				snapshot.Revert()
 				continue
 			}
-			_ = snapshot.AddPod(n.Name, pod)
+
+			// The Pod can be scheduled, commit changes
+			if err = snapshot.AddPod(n.Name, pod); err != nil {
+				return res, err
+			}
 			snapshot.Commit()
-			plan[n.Name] = n.GetGPUsGeometry()
+
+			// Update desired partitioning
+			nodePartitioning := state.NodePartitioning{
+				GPUs: make([]state.GPUPartitioning, 0),
+			}
+			for _, g := range n.GPUs {
+				gpuPartitioning := state.GPUPartitioning{
+					GPUIndex:  g.GetIndex(),
+					Resources: g.GetGeometry().AsResourceList(),
+				}
+				nodePartitioning.GPUs = append(nodePartitioning.GPUs, gpuPartitioning)
+			}
+			res[n.Name] = nodePartitioning
 		}
 	}
-	return plan, nil
+	return res, nil
 }
 
-// getLackingMigResource returns, if any, a Mig resource requested by the Pod but currently not
+// getUpdatedScalarResources returns the scalar resources of the nodeInfo provided as argument updated for
+// matching the MIG resources defied by the specified mig.Node
+func getUpdatedScalarResources(nodeInfo framework.NodeInfo, node mig.Node) map[v1.ResourceName]int64 {
+	res := make(map[v1.ResourceName]int64)
+
+	// Set all non-MIG scalar resources
+	for r, v := range nodeInfo.Allocatable.ScalarResources {
+		if !mig.IsNvidiaMigDevice(r) {
+			res[r] = v
+		}
+	}
+	// Set MIG scalar resources
+	for r, v := range node.GetGeometry().AsResourceList() {
+		nodeInfo.Allocatable.ScalarResources[r] = v.Value()
+	}
+
+	return res
+}
+
+// getLackingMigProfile returns (if any) the MIG profile requested by the Pod but currently not
 // available in the ClusterSnapshot.
 //
 // As described in "Supporting MIG GPUs in Kubernetes" document, it is assumed that
 // Pods request only one MIG device per time and with quantity 1, according to the
 // idea that users should ask for a larger, single instance as opposed to multiple
 // smaller instances.
-func (p Planner) getLackingMigResource(snapshot state.ClusterSnapshot, pod v1.Pod) (v1.ResourceName, bool) {
-	for r := range snapshot.GetLackingScalarResources(pod) {
+func (p Planner) getLackingMigProfile(snapshot state.ClusterSnapshot, pod v1.Pod) (mig.ProfileName, bool) {
+	for r := range snapshot.GetLackingResources(pod).ScalarResources {
 		if mig.IsNvidiaMigDevice(r) {
-			return r, true
+			profileName, _ := mig.ExtractMigProfile(r)
+			return profileName, true
 		}
 	}
 	return "", false
 }
 
-func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMigResource v1.ResourceName) []mig.Node {
+// getCandidateNodes returns the Nodes of the ClusterSnapshot with free (e.g. not allocated) MIG resources
+// candidate for a MIG geometry updated aimed to schedule a pending pod
+func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
 	result := make([]mig.Node, 0)
 
 	var migNode mig.Node
@@ -95,16 +161,15 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot, requiredMigRe
 
 	for _, n := range snapshot.GetNodes() {
 		if migNode, err = mig.NewNode(n); err != nil {
-			p.logger.V(1).Info(
-				"node is not a valid candidate",
+			p.logger.Error(
+				err,
+				"unable to create MIG node",
 				"node",
 				n.Node().Name,
-				"reason",
-				err,
 			)
 			continue
 		}
-		if err = migNode.UpdateGeometryFor(requiredMigResource); err != nil {
+		if migNode.HasFreeMigResources() {
 			result = append(result, migNode)
 		}
 	}

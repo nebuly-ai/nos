@@ -65,23 +65,15 @@ func (c *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		return pod.IsMoreImportant(pendingCandidates[i], pendingCandidates[j])
 	})
 
-	// Compute partitioning plan
-	plan, err := c.planner.GetNodesPartitioningPlan(ctx, c.clusterState.GetSnapshot(), pendingCandidates)
+	// Compute desired state
+	plan, err := c.planner.Plan(ctx, c.clusterState.GetSnapshot(), pendingCandidates)
 	if err != nil {
 		logger.Error(err, "unable to compute partitioning plan")
 		return ctrl.Result{}, err
 	}
-	if len(plan) == 0 {
-		logger.Info(
-			"Partitioning plan is empty, nothing to do",
-			"nPendingCandidatePods",
-			len(pendingCandidates),
-		)
-		return ctrl.Result{}, nil
-	}
 
 	// Apply partitioning plan
-	if err := c.actuator.ApplyPartitioning(ctx, plan); err != nil {
+	if err := c.actuator.Apply(ctx, plan); err != nil {
 		logger.Error(err, "unable to apply partitioning plan")
 		return ctrl.Result{}, err
 	}
