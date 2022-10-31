@@ -41,18 +41,18 @@ func (p ProfileName) AsString() string {
 	return string(p)
 }
 
-func (p ProfileName) getMemorySlices() uint8 {
+func (p ProfileName) getMemorySlices() int {
 	asString := migMemoryRegex.FindString(string(p))
 	asString = strings.TrimSuffix(asString, "gb")
 	asInt, _ := strconv.Atoi(asString)
-	return uint8(asInt)
+	return asInt
 }
 
-func (p ProfileName) getGiSlices() uint8 {
+func (p ProfileName) getGiSlices() int {
 	asString := migGiRegex.FindString(string(p))
 	asString = strings.TrimSuffix(asString, "g")
 	asInt, _ := strconv.Atoi(asString)
-	return uint8(asInt)
+	return asInt
 }
 
 type Profile struct {

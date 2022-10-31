@@ -9,8 +9,8 @@ func TestKnownGeometries(t *testing.T) {
 	testCases := []struct {
 		name      string
 		gpuModel  GPUModel
-		maxMemory uint8
-		maxGi     uint8
+		maxMemory int
+		maxGi     int
 	}{
 		{
 			name:      "A100-40GB",
@@ -29,8 +29,8 @@ func TestKnownGeometries(t *testing.T) {
 	for _, tt := range testCases {
 		availableGeometries := gpuModelToAllowedMigGeometries[tt.gpuModel]
 		for _, geometryList := range availableGeometries {
-			var geometryTotalMemory uint8
-			var geometryTotalGi uint8
+			var geometryTotalMemory int
+			var geometryTotalGi int
 			for profile, quantity := range geometryList {
 				assert.True(t, profile.isValid())
 				geometryTotalMemory += profile.getMemorySlices() * quantity
