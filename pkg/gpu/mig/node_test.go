@@ -182,3 +182,191 @@ func TestNode__GetGeometry(t *testing.T) {
 		})
 	}
 }
+
+func TestNode__UpdateGeometryFor(t *testing.T) {
+	type gpuSpec struct {
+		model GPUModel
+		index int
+		used  map[ProfileName]int
+		free  map[ProfileName]int
+	}
+
+	testCases := []struct {
+		name             string
+		nodeGPUs         []gpuSpec
+		migProfile       ProfileName
+		quantity         uint8
+		expectedErr      bool
+		expectedGeometry Geometry
+	}{
+		{
+			name:             "Node without GPUs",
+			nodeGPUs:         make([]gpuSpec, 0),
+			migProfile:       Profile1g6gb,
+			quantity:         1,
+			expectedErr:      true,
+			expectedGeometry: make(Geometry),
+		},
+		{
+			name: "Quantity is zero, geometry should not change",
+			nodeGPUs: []gpuSpec{
+				{
+					model: GPUModel_A30,
+					index: 0,
+					used: map[ProfileName]int{
+						Profile1g6gb:  1,
+						Profile3g20gb: 2,
+					},
+					free: map[ProfileName]int{
+						Profile2g10gb: 1,
+					},
+				},
+			},
+			migProfile:  Profile3g40gb,
+			quantity:    0,
+			expectedErr: false,
+			expectedGeometry: Geometry{
+				Profile1g6gb:  1,
+				Profile3g20gb: 2,
+				Profile2g10gb: 1,
+			},
+		},
+		{
+			name: "Multiple GPUs, all are full: should return error and geometry should not change",
+			nodeGPUs: []gpuSpec{
+				{
+					model: GPUModel_A30,
+					index: 0,
+					used: map[ProfileName]int{
+						Profile4g24gb: 1,
+					},
+					free: map[ProfileName]int{},
+				},
+				{
+					model: GPUModel_A100_SMX4_40GB,
+					index: 1,
+					used: map[ProfileName]int{
+						Profile7g40gb: 1,
+					},
+					free: map[ProfileName]int{},
+				},
+			},
+			migProfile:  Profile1g5gb,
+			quantity:    1,
+			expectedErr: true,
+			expectedGeometry: Geometry{
+				Profile4g24gb: 1,
+				Profile7g40gb: 1,
+			},
+		},
+		{
+			name: "GPU with available capacity: should create a new profile without changing the existing free ones",
+			nodeGPUs: []gpuSpec{
+				{
+					model: GPUModel_A30,
+					index: 0,
+					used: map[ProfileName]int{
+						Profile1g6gb: 1,
+					},
+					free: map[ProfileName]int{}, // free is empty, but GPU has enough capacity for creating new profiles
+				},
+				{
+					model: GPUModel_A30,
+					index: 1,
+					used:  map[ProfileName]int{},
+					free: map[ProfileName]int{
+						Profile4g24gb: 1, // free profile that occupies all the available GPU slices for this GPU model
+					},
+				},
+			},
+			migProfile:  Profile1g6gb,
+			quantity:    1,
+			expectedErr: false,
+			expectedGeometry: Geometry{
+				Profile1g6gb:  2,
+				Profile4g24gb: 1,
+			},
+		},
+		{
+			name: "GPU with free MIG device: should split it into smaller profiles for making up space",
+			nodeGPUs: []gpuSpec{
+				{
+					model: GPUModel_A30,
+					index: 0,
+					used: map[ProfileName]int{
+						Profile4g24gb: 1, // GPU is full
+					},
+					free: map[ProfileName]int{},
+				},
+				{
+					model: GPUModel_A30,
+					index: 1,
+					used: map[ProfileName]int{
+						Profile1g6gb: 1,
+					},
+					free: map[ProfileName]int{
+						Profile1g6gb:  1,
+						Profile2g12gb: 1,
+					},
+				},
+			},
+			migProfile:  Profile1g6gb,
+			quantity:    2,
+			expectedErr: false,
+			expectedGeometry: Geometry{
+				Profile4g24gb: 1,
+				Profile1g6gb:  4,
+			},
+		},
+		{
+			name: "Multiple GPUs with free MIG device: should split them into smaller profiles for making up space",
+			nodeGPUs: []gpuSpec{
+				{
+					model: GPUModel_A30,
+					index: 0,
+					used:  map[ProfileName]int{},
+					free: map[ProfileName]int{
+						Profile4g24gb: 1,
+					},
+				},
+				{
+					model: GPUModel_A30,
+					index: 1,
+					used:  map[ProfileName]int{},
+					free: map[ProfileName]int{
+						Profile4g24gb: 1,
+					},
+				},
+			},
+			migProfile:  Profile1g6gb,
+			quantity:    8,
+			expectedErr: false,
+			expectedGeometry: Geometry{
+				Profile1g6gb: 8,
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			// Init node
+			node := Node{Name: "test"}
+			gpus := make([]GPU, 0)
+			for _, spec := range tt.nodeGPUs {
+				gpu, err := NewGPU(spec.model, spec.index, spec.used, spec.free)
+				assert.NoError(t, err)
+				gpus = append(gpus, gpu)
+			}
+			node.GPUs = gpus
+
+			// Run test
+			err := node.UpdateGeometryFor(tt.migProfile, tt.quantity)
+			if tt.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectedGeometry, node.GetGeometry())
+		})
+	}
+}

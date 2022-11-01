@@ -86,20 +86,19 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 				return res, err
 			}
 
-			// The Pod cannot be scheduled, revert the changes on the snapthot
+			// The Pod cannot be scheduled, revert the changes on the snapshot
 			if !podFits {
 				snapshot.Revert()
 				continue
 			}
 
-			// The Pod can be scheduled, commit changes
+			// The Pod can be scheduled: commit changes, update desired partitioning and stop iterating over nodes
 			if err = snapshot.AddPod(n.Name, pod); err != nil {
 				return res, err
 			}
 			snapshot.Commit()
-
-			// Update desired partitioning
 			res[n.Name] = fromMigNodeToNodePartitioning(n)
+			break
 		}
 	}
 	return res, nil

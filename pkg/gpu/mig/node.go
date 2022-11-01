@@ -55,10 +55,17 @@ func getGPUsModel(node v1.Node) (GPUModel, error) {
 	return "", fmt.Errorf("cannot get NVIDIA GPU model: node does not have label %q", constant.LabelNvidiaProduct)
 }
 
-func (n *Node) UpdateGeometryFor(profile ProfileName, quantity int) error {
+// UpdateGeometryFor tries to update the MIG geometry of the GPUs of the node in order to create the MIG profiles
+// provided as argument. It does that by either creating new MIG profiles (if there is enough capacity) or by
+// deleting free (e.g. unused) MIG profiles to make up space.
+// UpdateGeometryFor returns an error if is not possible to update the GPUs geometry for creating
+// the specified MIG profiles.
+func (n *Node) UpdateGeometryFor(profile ProfileName, quantity uint8) error {
 	return nil
 }
 
+// GetGeometry returns the overall MIG geometry of the node, which corresponds to the sum of the MIG geometry of all
+// the GPUs present in the Node.
 func (n *Node) GetGeometry() Geometry {
 	res := make(Geometry)
 	for _, g := range n.GPUs {
@@ -69,6 +76,7 @@ func (n *Node) GetGeometry() Geometry {
 	return res
 }
 
+// HasFreeMigResources returns true if the Node has at least one MIG GPU with a free MIG resource.
 func (n *Node) HasFreeMigResources() bool {
 	if len(n.GPUs) == 0 {
 		return false
