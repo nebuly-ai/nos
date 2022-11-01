@@ -5,6 +5,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"reflect"
 )
 
 // Geometry corresponds to the MIG Geometry of a GPU,
@@ -46,15 +47,15 @@ func NewGPU(model GPUModel, index int, usedMigDevices, freeMigDevices map[Profil
 	}, nil
 }
 
-func (g GPU) GetIndex() int {
+func (g *GPU) GetIndex() int {
 	return g.index
 }
 
-func (g GPU) GetModel() GPUModel {
+func (g *GPU) GetModel() GPUModel {
 	return g.model
 }
 
-func (g GPU) GetGeometry() Geometry {
+func (g *GPU) GetGeometry() Geometry {
 	res := make(Geometry)
 
 	for profile, quantity := range g.usedMigDevices {
@@ -67,6 +68,39 @@ func (g GPU) GetGeometry() Geometry {
 	return res
 }
 
-func (g GPU) GetAllowedMigGeometries() []Geometry {
+func (g *GPU) ApplyGeometry(geometry Geometry) error {
+	// Check if geometry is allowed
+	if !g.AllowsGeometry(geometry) {
+		return fmt.Errorf("GPU model %s does not allow the provided MIG geometry", g.model)
+	}
+	// Check if new geometry deletes used devices
+	for usedProfile, usedQuantity := range g.usedMigDevices {
+		if geometry[usedProfile] < usedQuantity {
+			return fmt.Errorf("cannot apply MIG geometry: cannot delete MIG devices being used")
+		}
+	}
+	// Apply geometry by changing free devices
+	for profile, quantity := range geometry {
+		g.freeMigDevices[profile] = quantity
+	}
+	// Delete all free devices not included in the new geometry
+	for profile := range g.freeMigDevices {
+		if _, ok := geometry[profile]; !ok {
+			delete(g.freeMigDevices, profile)
+		}
+	}
+	return nil
+}
+
+func (g *GPU) AllowsGeometry(geometry Geometry) bool {
+	for _, allowedGeometry := range g.GetAllowedGeometries() {
+		if reflect.DeepEqual(geometry, allowedGeometry) {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *GPU) GetAllowedGeometries() []Geometry {
 	return g.allowedMigGeometries
 }
