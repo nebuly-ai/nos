@@ -108,24 +108,28 @@ func TestGPU_ApplyGeometry(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name: "Applying new geometry changes free devices",
+			name: "Applying new geometry changes only free devices",
 			gpu: newGpuOrPanic(
 				mig.GPUModel_A30,
 				0,
-				make(map[mig.ProfileName]int),
 				map[mig.ProfileName]int{
-					mig.Profile1g6gb: 4,
+					mig.Profile1g6gb: 2,
+				},
+				map[mig.ProfileName]int{
+					mig.Profile2g12gb: 1,
 				},
 			),
 			geometryToApply: map[mig.ProfileName]int{
-				mig.Profile4g24gb: 1,
+				mig.Profile1g6gb: 4,
 			},
 			expected: newGpuOrPanic(
 				mig.GPUModel_A30,
 				0,
-				make(map[mig.ProfileName]int),
 				map[mig.ProfileName]int{
-					mig.Profile4g24gb: 1,
+					mig.Profile1g6gb: 2,
+				},
+				map[mig.ProfileName]int{
+					mig.Profile1g6gb: 2,
 				},
 			),
 			expectedErr: false,

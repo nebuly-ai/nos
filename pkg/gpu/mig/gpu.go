@@ -81,7 +81,7 @@ func (g *GPU) ApplyGeometry(geometry Geometry) error {
 	}
 	// Apply geometry by changing free devices
 	for profile, quantity := range geometry {
-		g.freeMigDevices[profile] = quantity
+		g.freeMigDevices[profile] = quantity - g.usedMigDevices[profile]
 	}
 	// Delete all free devices not included in the new geometry
 	for profile := range g.freeMigDevices {
