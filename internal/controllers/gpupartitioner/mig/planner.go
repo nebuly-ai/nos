@@ -68,7 +68,7 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 		)
 		for _, n := range candidateNodes {
 			// Check if node can potentially host the Pod by updating its MIG geometry
-			if err := n.UpdateGeometryFor(lackingMig, 1); err != nil {
+			if err := n.UpdateGeometryFor(lackingMig); err != nil {
 				continue
 			}
 
