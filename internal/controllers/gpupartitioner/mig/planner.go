@@ -23,14 +23,21 @@ func NewPlanner(scheduler framework.Framework, logger logr.Logger) Planner {
 }
 
 func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.PartitioningState, error) {
-	res := p.getPartitioningState(snapshot)
 	p.logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
+
+	var migNodes []mig.Node
+	var err error
+	res := p.getPartitioningState(snapshot)
+	if migNodes, err = extractMigNodes(snapshot); err != nil {
+		return res, fmt.Errorf("error extracting MIG nodes from cluster state: %v", err)
+	}
+
 	for _, pod := range candidates {
 		lackingMig, isLacking := p.getLackingMigProfile(snapshot, pod)
 		if !isLacking {
 			continue
 		}
-		candidateNodes := p.getCandidateNodes(snapshot)
+		candidateNodes := p.getCandidateNodes(migNodes)
 		p.logger.V(1).Info(
 			fmt.Sprintf("found %d candidate nodes for pod", len(candidateNodes)),
 			"namespace",
@@ -42,13 +49,13 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 		)
 		for _, n := range candidateNodes {
 			// Check if node can potentially host the Pod by updating its MIG geometry
-			if err := n.UpdateGeometryFor(lackingMig); err != nil {
+			if err = n.UpdateGeometryFor(lackingMig); err != nil {
 				continue
 			}
 
 			// Fork the state and update the nodes' allocatable scalar resources by taking into
 			// account the new MIG geometry
-			if err := snapshot.Fork(); err != nil {
+			if err = snapshot.Fork(); err != nil {
 				return res, fmt.Errorf("error forking cluster snapshot, this should never happen: %v", err)
 			}
 			nodeInfo, _ := snapshot.GetNode(n.Name)
@@ -75,7 +82,7 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 			}
 
 			// The Pod can be scheduled: commit changes, update desired partitioning and stop iterating over nodes
-			if err := snapshot.AddPod(n.Name, pod); err != nil {
+			if err = snapshot.AddPod(n.Name, pod); err != nil {
 				return res, err
 			}
 			snapshot.Commit()
@@ -131,29 +138,14 @@ func (p Planner) getLackingMigProfile(snapshot state.ClusterSnapshot, pod v1.Pod
 	return "", false
 }
 
-// getCandidateNodes returns the Nodes of the ClusterSnapshot with free (e.g. not allocated) MIG resources
-// candidate for a MIG geometry updated aimed to schedule a pending pod
-func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
+// getCandidateNodes returns the Nodes with free MIG devices or available MIG capacity
+func (p Planner) getCandidateNodes(nodes []mig.Node) []mig.Node {
 	result := make([]mig.Node, 0)
-
-	var migNode mig.Node
-	var err error
-
-	for k, n := range snapshot.GetNodes() {
-		if migNode, err = mig.NewNode(*n.Node()); err != nil {
-			p.logger.Error(
-				err,
-				"unable to create MIG node",
-				"node",
-				k,
-			)
-			continue
-		}
-		if migNode.HasFreeMigResources() {
-			result = append(result, migNode)
+	for _, n := range nodes {
+		if n.HasFreeMigResources() {
+			result = append(result, n)
 		}
 	}
-
 	return result
 }
 
@@ -197,4 +189,16 @@ func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v
 		return false
 	}
 	return p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge().IsSuccess()
+}
+
+func extractMigNodes(snapshot state.ClusterSnapshot) ([]mig.Node, error) {
+	res := make([]mig.Node, 0)
+	for _, v := range snapshot.GetNodes() {
+		migNode, err := mig.NewNode(*v.Node())
+		if err != nil {
+			return res, err
+		}
+		res = append(res, migNode)
+	}
+	return res, nil
 }
