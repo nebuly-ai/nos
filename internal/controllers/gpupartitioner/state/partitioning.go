@@ -4,11 +4,11 @@ import v1 "k8s.io/api/core/v1"
 
 type GPUPartitioning struct {
 	GPUIndex  int
-	Resources v1.ResourceList
+	Resources map[v1.ResourceName]int
 }
 
 type NodePartitioning struct {
 	GPUs []GPUPartitioning
 }
 
-type ClusterPartitioning map[string]NodePartitioning
+type PartitioningState map[string]NodePartitioning

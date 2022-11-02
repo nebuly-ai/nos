@@ -48,7 +48,7 @@ func (p Planner) newLogger(ctx context.Context) klog.Logger {
 	return log.FromContext(ctx).WithName("MigPlanner")
 }
 
-func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.ClusterPartitioning, error) {
+func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.PartitioningState, error) {
 	logger := p.newLogger(ctx)
 	res := p.getPartitioningState(snapshot)
 	logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
@@ -135,8 +135,8 @@ func getUpdatedScalarResources(nodeInfo framework.NodeInfo, node mig.Node) map[v
 		}
 	}
 	// Set MIG scalar resources
-	for r, v := range node.GetGeometry().AsResourceList() {
-		nodeInfo.Allocatable.ScalarResources[r] = v.Value()
+	for r, v := range node.GetGeometry().AsResources() {
+		nodeInfo.Allocatable.ScalarResources[r] = int64(v)
 	}
 
 	return res
@@ -185,7 +185,7 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
 	return result
 }
 
-func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) state.ClusterPartitioning {
+func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) state.PartitioningState {
 	migNodes := make([]mig.Node, 0)
 	for k, v := range snapshot.Nodes {
 		node, err := mig.NewNode(*v.Node())
@@ -198,7 +198,7 @@ func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) state.Clus
 	return fromMigNodesToPartitioningState(migNodes)
 }
 
-func fromMigNodesToPartitioningState(nodes []mig.Node) map[string]state.NodePartitioning {
+func fromMigNodesToPartitioningState(nodes []mig.Node) state.PartitioningState {
 	res := make(map[string]state.NodePartitioning)
 	for _, node := range nodes {
 		res[node.Name] = fromMigNodeToNodePartitioning(node)
@@ -211,7 +211,7 @@ func fromMigNodeToNodePartitioning(node mig.Node) state.NodePartitioning {
 	for _, gpu := range node.GPUs {
 		gp := state.GPUPartitioning{
 			GPUIndex:  gpu.GetIndex(),
-			Resources: gpu.GetGeometry().AsResourceList(),
+			Resources: gpu.GetGeometry().AsResources(),
 		}
 		gpuPartitioning = append(gpuPartitioning, gp)
 	}

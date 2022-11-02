@@ -47,11 +47,6 @@ func (c *ClusterSnapshot) GetNodes() []framework.NodeInfo {
 	return res
 }
 
-func (c *ClusterSnapshot) GetCurrentPartitioning() map[string]NodePartitioning {
-	res := make(map[string]NodePartitioning)
-	return res
-}
-
 func (c *ClusterSnapshot) GetNode(name string) (framework.NodeInfo, bool) {
 	node, found := c.Nodes[name]
 	return node, found

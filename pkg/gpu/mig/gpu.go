@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 )
 
@@ -12,13 +11,11 @@ import (
 // namely the MIG profiles of the GPU with the respective quantity.
 type Geometry map[ProfileName]int
 
-func (g Geometry) AsResourceList() v1.ResourceList {
-	res := make(v1.ResourceList)
+func (g Geometry) AsResources() map[v1.ResourceName]int {
+	res := make(map[v1.ResourceName]int)
 	for p, v := range g {
 		resourceName := v1.ResourceName(fmt.Sprintf("%s%s", constant.NvidiaMigResourcePrefix, p))
-		quantity := res[resourceName]
-		quantity.Add(*resource.NewQuantity(int64(v), resource.DecimalSI))
-		res[resourceName] = quantity
+		res[resourceName] += v
 	}
 	return res
 }

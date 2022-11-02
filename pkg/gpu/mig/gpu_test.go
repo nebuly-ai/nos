@@ -4,7 +4,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"testing"
 )
 
@@ -149,16 +148,16 @@ func TestGPU_ApplyGeometry(t *testing.T) {
 	}
 }
 
-func TestGeometry__AsResourceList(t *testing.T) {
+func TestGeometry__AsResources(t *testing.T) {
 	testCases := []struct {
 		name     string
 		geometry mig.Geometry
-		expected v1.ResourceList
+		expected map[v1.ResourceName]int
 	}{
 		{
 			name:     "Empty geometry",
 			geometry: mig.Geometry{},
-			expected: make(v1.ResourceList),
+			expected: make(map[v1.ResourceName]int),
 		},
 		{
 			name: "Multiple resources",
@@ -166,16 +165,16 @@ func TestGeometry__AsResourceList(t *testing.T) {
 				mig.Profile1g5gb:  3,
 				mig.Profile1g10gb: 2,
 			},
-			expected: v1.ResourceList{
-				mig.Profile1g5gb.AsResourceName():  *resource.NewQuantity(3, resource.DecimalSI),
-				mig.Profile1g10gb.AsResourceName(): *resource.NewQuantity(2, resource.DecimalSI),
+			expected: map[v1.ResourceName]int{
+				mig.Profile1g5gb.AsResourceName():  3,
+				mig.Profile1g10gb.AsResourceName(): 2,
 			},
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.geometry.AsResourceList())
+			assert.Equal(t, tt.expected, tt.geometry.AsResources())
 		})
 	}
 }

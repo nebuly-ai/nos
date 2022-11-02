@@ -7,9 +7,9 @@ import (
 )
 
 type Planner interface {
-	Plan(ctx context.Context, snapshot state.ClusterSnapshot, pendingPods []v1.Pod) (state.ClusterPartitioning, error)
+	Plan(ctx context.Context, snapshot state.ClusterSnapshot, pendingPods []v1.Pod) (state.PartitioningState, error)
 }
 
 type Actuator interface {
-	Apply(ctx context.Context, partitioning state.ClusterPartitioning) error
+	Apply(ctx context.Context, partitioning state.PartitioningState) error
 }
