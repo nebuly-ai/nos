@@ -44,6 +44,23 @@ func NewGPU(model GPUModel, index int, usedMigDevices, freeMigDevices map[Profil
 	}, nil
 }
 
+func (g *GPU) Clone() GPU {
+	cloned := GPU{
+		index:                g.index,
+		model:                g.model,
+		allowedMigGeometries: g.allowedMigGeometries,
+		usedMigDevices:       make(map[ProfileName]int),
+		freeMigDevices:       make(map[ProfileName]int),
+	}
+	for k, v := range g.freeMigDevices {
+		cloned.freeMigDevices[k] = v
+	}
+	for k, v := range g.usedMigDevices {
+		cloned.usedMigDevices[k] = v
+	}
+	return cloned
+}
+
 func (g *GPU) GetIndex() int {
 	return g.index
 }

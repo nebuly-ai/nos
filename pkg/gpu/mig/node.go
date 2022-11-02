@@ -113,16 +113,13 @@ func (n *Node) HasFreeMigResources() bool {
 	return false
 }
 
-// HasFree returns true if the node has enough free resources for providing (even by changing its MIG geometry)
-// the amount of MIG profiles provided as argument.
-//func (n *Node) HasFree(profile ProfileName, quantity int) bool {
-//	// check if the node already has
-//	for _, g := range n.GPUs {
-//		for p, q := range g.freeMigDevices {
-//			if p == profile && q >= quantity {
-//				return true
-//			}
-//		}
-//	}
-//	return false
-//}
+func (n *Node) Clone() Node {
+	cloned := Node{
+		Name: n.Name,
+		GPUs: make([]GPU, len(n.GPUs)),
+	}
+	for i := range n.GPUs {
+		cloned.GPUs[i] = n.GPUs[i].Clone()
+	}
+	return cloned
+}
