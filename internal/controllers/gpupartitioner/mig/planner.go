@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
@@ -22,22 +22,21 @@ func NewPlanner(scheduler framework.Framework, logger logr.Logger) Planner {
 	}
 }
 
-func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.PartitioningState, error) {
+func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates []v1.Pod) (state.PartitioningState, error) {
 	p.logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
-
-	var migNodes []mig.Node
 	var err error
-	res := p.getPartitioningState(snapshot)
-	if migNodes, err = extractMigNodes(snapshot); err != nil {
-		return res, fmt.Errorf("error extracting MIG nodes from cluster state: %v", err)
+	var snapshot migstate.MigClusterSnapshot
+	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
+		return state.PartitioningState{}, fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
 	}
 
+	partitioningState := snapshot.GetPartitioningState()
 	for _, pod := range candidates {
-		lackingMig, isLacking := p.getLackingMigProfile(snapshot, pod)
+		lackingMig, isLacking := snapshot.GetLackingMigProfile(pod)
 		if !isLacking {
 			continue
 		}
-		candidateNodes := p.getCandidateNodes(migNodes)
+		candidateNodes := snapshot.GetCandidateNodes()
 		p.logger.V(1).Info(
 			fmt.Sprintf("found %d candidate nodes for pod", len(candidateNodes)),
 			"namespace",
@@ -48,22 +47,24 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 			lackingMig,
 		)
 		for _, n := range candidateNodes {
-			// Check if node can potentially host the Pod by updating its MIG geometry
+			// Fork the state
+			if err = snapshot.Fork(); err != nil {
+				return partitioningState, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
+			}
+
+			// Update the node MIG geometry (if possible)
 			if err = n.UpdateGeometryFor(lackingMig); err != nil {
+				snapshot.Revert()
 				continue
 			}
 
-			// Fork the state and update the nodes' allocatable scalar resources by taking into
-			// account the new MIG geometry
-			if err = snapshot.Fork(); err != nil {
-				return res, fmt.Errorf("error forking cluster snapshot, this should never happen: %v", err)
+			// Update MIG nodes geometry and allocatable scalar resources according to the update MIG geometry
+			if err = snapshot.SetNode(&n); err != nil {
+				return partitioningState, err
 			}
-			nodeInfo, _ := snapshot.GetNode(n.Name)
-			scalarResources := getUpdatedScalarResources(*nodeInfo, n)
-			nodeInfo.Allocatable.ScalarResources = scalarResources
-			snapshot.SetNode(nodeInfo)
 
 			// Run a scheduler cycle to check whether the Pod can be scheduled on the Node
+			nodeInfo, _ := snapshot.GetNode(n.Name)
 			podFits := p.podFitsNode(ctx, *nodeInfo, pod)
 
 			// The Pod cannot be scheduled, revert the changes on the snapshot
@@ -83,10 +84,10 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 
 			// The Pod can be scheduled: commit changes, update desired partitioning and stop iterating over nodes
 			if err = snapshot.AddPod(n.Name, pod); err != nil {
-				return res, err
+				return partitioningState, err
 			}
 			snapshot.Commit()
-			res[n.Name] = fromMigNodeToNodePartitioning(n)
+			partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
 			p.logger.V(3).Info(
 				"pod fits node, state snapshot updated with new MIG geometry",
 				"namespace",
@@ -99,87 +100,7 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 			break
 		}
 	}
-	return res, nil
-}
-
-// getUpdatedScalarResources returns the scalar resources of the nodeInfo provided as argument updated for
-// matching the MIG resources defied by the specified mig.Node
-func getUpdatedScalarResources(nodeInfo framework.NodeInfo, node mig.Node) map[v1.ResourceName]int64 {
-	res := make(map[v1.ResourceName]int64)
-
-	// Set all non-MIG scalar resources
-	for r, v := range nodeInfo.Allocatable.ScalarResources {
-		if !mig.IsNvidiaMigDevice(r) {
-			res[r] = v
-		}
-	}
-	// Set MIG scalar resources
-	for r, v := range node.GetGeometry().AsResources() {
-		res[r] = int64(v)
-	}
-
-	return res
-}
-
-// getLackingMigProfile returns (if any) the MIG profile requested by the Pod but currently not
-// available in the ClusterSnapshot.
-//
-// As described in "Supporting MIG GPUs in Kubernetes" document, it is assumed that
-// Pods request only one MIG device per time and with quantity 1, according to the
-// idea that users should ask for a larger, single instance as opposed to multiple
-// smaller instances.
-func (p Planner) getLackingMigProfile(snapshot state.ClusterSnapshot, pod v1.Pod) (mig.ProfileName, bool) {
-	for r := range snapshot.GetLackingResources(pod).ScalarResources {
-		if mig.IsNvidiaMigDevice(r) {
-			profileName, _ := mig.ExtractMigProfile(r)
-			return profileName, true
-		}
-	}
-	return "", false
-}
-
-// getCandidateNodes returns the Nodes with free MIG devices or available MIG capacity
-func (p Planner) getCandidateNodes(nodes []mig.Node) []mig.Node {
-	result := make([]mig.Node, 0)
-	for _, n := range nodes {
-		if n.HasFreeMigResources() {
-			result = append(result, n)
-		}
-	}
-	return result
-}
-
-func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) state.PartitioningState {
-	migNodes := make([]mig.Node, 0)
-	for k, v := range snapshot.GetNodes() {
-		node, err := mig.NewNode(*v.Node())
-		if err != nil {
-			p.logger.Error(err, "unable to create MIG node", "node", k)
-			continue
-		}
-		migNodes = append(migNodes, node)
-	}
-	return fromMigNodesToPartitioningState(migNodes)
-}
-
-func fromMigNodesToPartitioningState(nodes []mig.Node) state.PartitioningState {
-	res := make(map[string]state.NodePartitioning)
-	for _, node := range nodes {
-		res[node.Name] = fromMigNodeToNodePartitioning(node)
-	}
-	return res
-}
-
-func fromMigNodeToNodePartitioning(node mig.Node) state.NodePartitioning {
-	gpuPartitioning := make([]state.GPUPartitioning, 0)
-	for _, gpu := range node.GPUs {
-		gp := state.GPUPartitioning{
-			GPUIndex:  gpu.GetIndex(),
-			Resources: gpu.GetGeometry().AsResources(),
-		}
-		gpuPartitioning = append(gpuPartitioning, gp)
-	}
-	return state.NodePartitioning{GPUs: gpuPartitioning}
+	return partitioningState, nil
 }
 
 func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) bool {
@@ -189,16 +110,4 @@ func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v
 		return false
 	}
 	return p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge().IsSuccess()
-}
-
-func extractMigNodes(snapshot state.ClusterSnapshot) ([]mig.Node, error) {
-	res := make([]mig.Node, 0)
-	for _, v := range snapshot.GetNodes() {
-		migNode, err := mig.NewNode(*v.Node())
-		if err != nil {
-			return res, err
-		}
-		res = append(res, migNode)
-	}
-	return res, nil
 }

@@ -55,7 +55,7 @@ func getGPUsModel(node v1.Node) (GPUModel, error) {
 	return "", fmt.Errorf("cannot get NVIDIA GPU model: node does not have label %q", constant.LabelNvidiaProduct)
 }
 
-// UpdateGeometryFor tries to update the MIG geometry of the GPUs of the node in order to create the MIG profile
+// UpdateGeometryFor tries to update the MIG geometry of one of the GPUs of the node in order to create the MIG profile
 // provided as argument. It does that by either creating a new MIG profile (if there is enough capacity) or by
 // deleting free (e.g. unused) MIG profiles to make up space and create the required profile, according to the
 // allowed MIG geometries of each GPU.
