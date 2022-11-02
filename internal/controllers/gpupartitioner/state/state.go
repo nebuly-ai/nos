@@ -2,7 +2,6 @@ package state
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,7 +17,6 @@ func NewClusterState() ClusterState {
 
 type ClusterState struct {
 	nodes    map[string]framework.NodeInfo
-	migNodes map[string]mig.Node
 	bindings map[types.NamespacedName]string // lookup table: Pod => NodeName
 
 	mtx sync.RWMutex

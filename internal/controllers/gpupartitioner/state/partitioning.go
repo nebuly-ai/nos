@@ -11,4 +11,4 @@ type NodePartitioning struct {
 	GPUs []GPUPartitioning
 }
 
-type DesiredPartitioning map[string]NodePartitioning
+type ClusterPartitioning map[string]NodePartitioning

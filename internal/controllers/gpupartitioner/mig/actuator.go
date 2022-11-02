@@ -18,7 +18,7 @@ func (a *Actuator) newLogger(ctx context.Context) klog.Logger {
 	return log.FromContext(ctx).WithName("MigActuator")
 }
 
-func (a *Actuator) Apply(ctx context.Context, plan state.DesiredPartitioning) error {
+func (a *Actuator) Apply(ctx context.Context, plan state.ClusterPartitioning) error {
 	var err error
 	logger := a.newLogger(ctx)
 	logger.Info(

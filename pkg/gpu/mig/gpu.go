@@ -68,6 +68,9 @@ func (g *GPU) GetGeometry() Geometry {
 	return res
 }
 
+// ApplyGeometry applies the MIG geometry provided as argument by changing the free devices of the GPU.
+// It returns an error if the provided geometry is not allowed or if applying it would require to delete any used
+// device of the GPU.
 func (g *GPU) ApplyGeometry(geometry Geometry) error {
 	// Check if geometry is allowed
 	if !g.AllowsGeometry(geometry) {
@@ -92,6 +95,7 @@ func (g *GPU) ApplyGeometry(geometry Geometry) error {
 	return nil
 }
 
+// AllowsGeometry returns true if the geometry provided as argument is allowed by the GPU model
 func (g *GPU) AllowsGeometry(geometry Geometry) bool {
 	for _, allowedGeometry := range g.GetAllowedGeometries() {
 		if reflect.DeepEqual(geometry, allowedGeometry) {
@@ -101,6 +105,7 @@ func (g *GPU) AllowsGeometry(geometry Geometry) bool {
 	return false
 }
 
+// GetAllowedGeometries returns the MIG geometries allowed by the GPU model
 func (g *GPU) GetAllowedGeometries() []Geometry {
 	return g.allowedMigGeometries
 }

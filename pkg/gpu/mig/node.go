@@ -85,7 +85,7 @@ func (n *Node) UpdateGeometryFor(profile ProfileName) error {
 		}
 	}
 
-	return fmt.Errorf("")
+	return fmt.Errorf("cannot update MIG geometry for creating MIG device %q", profile)
 }
 
 // GetGeometry returns the overall MIG geometry of the node, which corresponds to the sum of the MIG geometry of all

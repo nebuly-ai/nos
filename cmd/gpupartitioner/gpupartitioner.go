@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
-	state2 "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,15 +47,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	clusterState := state2.NewClusterState()
+	clusterState := state.NewClusterState()
 
 	// Setup state controllers
-	nodeController := state2.NewNodeController(
+	nodeController := state.NewNodeController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,
 	)
-	if err := nodeController.SetupWithManager(mgr, constant.ClusterStateNodeControllerName); err != nil {
+	if err = nodeController.SetupWithManager(mgr, constant.ClusterStateNodeControllerName); err != nil {
 		setupLog.Error(
 			err,
 			"unable to create controller",
@@ -64,12 +64,12 @@ func main() {
 		)
 		os.Exit(1)
 	}
-	podController := state2.NewPodController(
+	podController := state.NewPodController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,
 	)
-	if err := podController.SetupWithManager(mgr, constant.ClusterStatePodControllerName); err != nil {
+	if err = podController.SetupWithManager(mgr, constant.ClusterStatePodControllerName); err != nil {
 		setupLog.Error(
 			err,
 			"unable to create controller",
@@ -94,7 +94,7 @@ func main() {
 		migPlanner,
 		migActuator,
 	)
-	if err := migController.SetupWithManager(mgr, constant.MigPartitionerControllerName); err != nil {
+	if err = migController.SetupWithManager(mgr, constant.MigPartitionerControllerName); err != nil {
 		setupLog.Error(
 			err,
 			"unable to create controller",
@@ -105,18 +105,18 @@ func main() {
 	}
 
 	// Setup health checks
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
 	// Start controller manager
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

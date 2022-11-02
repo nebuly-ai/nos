@@ -48,9 +48,10 @@ func (p Planner) newLogger(ctx context.Context) klog.Logger {
 	return log.FromContext(ctx).WithName("MigPlanner")
 }
 
-func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.DesiredPartitioning, error) {
+func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.ClusterPartitioning, error) {
 	logger := p.newLogger(ctx)
-	res := snapshot.GetCurrentPartitioning()
+	res := p.getPartitioningState(snapshot)
+	logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
 	for _, pod := range candidates {
 		lackingMig, isLacking := p.getLackingMigProfile(snapshot, pod)
 		if !isLacking {
@@ -88,6 +89,15 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 
 			// The Pod cannot be scheduled, revert the changes on the snapshot
 			if !podFits {
+				logger.V(3).Info(
+					"pod does not fit node",
+					"namespace",
+					pod.Namespace,
+					"pod",
+					pod.Name,
+					"node",
+					n.Name,
+				)
 				snapshot.Revert()
 				continue
 			}
@@ -98,6 +108,15 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 			}
 			snapshot.Commit()
 			res[n.Name] = fromMigNodeToNodePartitioning(n)
+			logger.V(3).Info(
+				"pod fits node, state snapshot updated with new MIG geometry",
+				"namespace",
+				pod.Namespace,
+				"pod",
+				pod.Name,
+				"node",
+				n.Name,
+			)
 			break
 		}
 	}
@@ -166,7 +185,7 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
 	return result
 }
 
-func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) map[string]state.NodePartitioning {
+func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) state.ClusterPartitioning {
 	migNodes := make([]mig.Node, 0)
 	for k, v := range snapshot.Nodes {
 		node, err := mig.NewNode(*v.Node())

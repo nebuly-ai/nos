@@ -52,7 +52,7 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate/license.txt" paths="./..."
 
 .PHONY: generate-scheduler
-generate-scheduler: defaulter-gen conversion-gen ## Generate defaults and conversions for scheduler
+generate-scheduler: defaulter-gen conversion-gen ## Generate defaults and conversions for scheduler.
 	CONVERSION_GEN=$(CONVERSION_GEN) DEFAULTER_GEN=$(DEFAULTER_GEN) bash hack/generate-scheduler.sh
 
 .PHONY: fmt
@@ -68,7 +68,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -tags integration ./... -coverprofile cover.out
 
 .PHONY: lint
-lint: golangci-lint
+lint: golangci-lint ## Run Go linter.
 	$(GOLANGCI_LINT) run ./... -v
 
 ##@ Build
