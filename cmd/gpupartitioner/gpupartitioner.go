@@ -2,15 +2,22 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	scheduler_config "k8s.io/kubernetes/pkg/scheduler/apis/config/latest"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
+	scheduler_plugins "k8s.io/kubernetes/pkg/scheduler/framework/plugins"
+	scheduler_runtime "k8s.io/kubernetes/pkg/scheduler/framework/runtime"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -81,7 +88,12 @@ func main() {
 
 	// Setup MIG partitioner controller
 	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
-	migPlanner, err := mig.NewPlanner(k8sClient, ctrl.Log.WithName("MIG Planner"))
+	schedulerFramework, err := newSchedulerFramework(k8sClient)
+	if err != nil {
+		setupLog.Error(err, "unable to init k8s scheduler framework")
+		os.Exit(1)
+	}
+	migPlanner := mig.NewPlanner(schedulerFramework, ctrl.Log.WithName("MIGPlanner"))
 	if err != nil {
 		setupLog.Error(err, "unable to create MIG planner")
 		os.Exit(1)
@@ -120,4 +132,23 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func newSchedulerFramework(kubeClient kubernetes.Interface) (framework.Framework, error) {
+	informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
+	schedulerConfig, err := scheduler_config.Default()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create scheduler config: %v", err)
+	}
+	if len(schedulerConfig.Profiles) != 1 || schedulerConfig.Profiles[0].SchedulerName != v1.DefaultSchedulerName {
+		return nil, fmt.Errorf(
+			"unexpected scheduler config: expected default scheduler profile only (found %d profiles)",
+			len(schedulerConfig.Profiles),
+		)
+	}
+	return scheduler_runtime.NewFramework(
+		scheduler_plugins.NewInTreeRegistry(),
+		&schedulerConfig.Profiles[0],
+		scheduler_runtime.WithInformerFactory(informerFactory),
+	)
 }

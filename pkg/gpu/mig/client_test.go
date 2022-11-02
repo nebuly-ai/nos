@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	"github.com/nebuly-ai/nebulnetes/pkg/test/gpu/nvml"
+	"github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
@@ -245,7 +245,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			nvmlClient := nvml.MockedNvmlClient{
+			nvmlClient := mocks.MockedNvmlClient{
 				MigDeviceIdToGPUIndex: tt.deviceIdToGPUIndex,
 				ReturnedError:         tt.getGpuIndexErr,
 			}
@@ -380,7 +380,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			nvmlClient := nvml.MockedNvmlClient{
+			nvmlClient := mocks.MockedNvmlClient{
 				MigDeviceIdToGPUIndex: tt.deviceIdToGPUIndex,
 				ReturnedError:         tt.getGpuIndexErr,
 			}

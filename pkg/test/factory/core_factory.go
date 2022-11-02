@@ -21,6 +21,11 @@ func (b *nodeBuilder) WithAnnotations(annotations map[string]string) *nodeBuilde
 	return b
 }
 
+func (b *nodeBuilder) WithLabels(labels map[string]string) *nodeBuilder {
+	b.Node.Labels = labels
+	return b
+}
+
 func BuildNode(name string) *nodeBuilder {
 	node := v1.Node{
 		TypeMeta: metav1.TypeMeta{
@@ -166,19 +171,19 @@ func (b *containerBuilder) WithNvidiaGPURequest(amount int64) *containerBuilder 
 	return b
 }
 
-func (b *containerBuilder) WithNvidiaMigRequest(migDevice string, amount int64) *containerBuilder {
-	if b.Resources.Requests == nil {
-		b.Resources.Requests = make(v1.ResourceList)
-	}
-	b.Resources.Requests[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
-	return b
-}
-
-func (b *containerBuilder) WithNvidiaMigLimit(migDevice string, amount int64) *containerBuilder {
+func (b *containerBuilder) WithScalarResourceLimit(resourceName v1.ResourceName, amount int) *containerBuilder {
 	if b.Resources.Limits == nil {
 		b.Resources.Limits = make(v1.ResourceList)
 	}
-	b.Resources.Limits[v1.ResourceName(migDevice)] = *resource.NewQuantity(amount, resource.DecimalSI)
+	b.Resources.Limits[resourceName] = *resource.NewQuantity(int64(amount), resource.DecimalSI)
+	return b
+}
+
+func (b *containerBuilder) WithScalarResourceRequest(resourceName v1.ResourceName, amount int) *containerBuilder {
+	if b.Resources.Requests == nil {
+		b.Resources.Requests = make(v1.ResourceList)
+	}
+	b.Resources.Requests[resourceName] = *resource.NewQuantity(int64(amount), resource.DecimalSI)
 	return b
 }
 

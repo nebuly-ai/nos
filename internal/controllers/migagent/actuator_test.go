@@ -6,7 +6,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/gpu/mig"
+	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

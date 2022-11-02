@@ -7,7 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
-	testmig "github.com/nebuly-ai/nebulnetes/pkg/test/gpu/mig"
+	testmig "github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"

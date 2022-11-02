@@ -7,6 +7,10 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
+func NewClusterSnapshot() ClusterSnapshot {
+	return ClusterSnapshot{Nodes: map[string]framework.NodeInfo{}}
+}
+
 type ClusterSnapshot struct {
 	Nodes map[string]framework.NodeInfo
 }

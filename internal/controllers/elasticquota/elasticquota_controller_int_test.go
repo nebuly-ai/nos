@@ -86,7 +86,7 @@ var _ = Describe("ElasticQuota controller", func() {
 					factory.BuildContainer("container-2", "test:0.0.1").
 						WithCPUMilliLimit(containerTwoCPUMilli).
 						WithNvidiaGPULimit(containerTwoNvidiaGpu).
-						WithNvidiaMigLimit(string(containerTwoNvidiaMigResource), 1).
+						WithScalarResourceLimit(containerTwoNvidiaMigResource, 1).
 						Get(),
 				).
 				Get()

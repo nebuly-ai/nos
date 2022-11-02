@@ -1,4 +1,4 @@
-package nvml
+package mocks
 
 type MockedNvmlClient struct {
 	MigDeviceIdToGPUIndex map[string]int

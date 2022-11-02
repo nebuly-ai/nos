@@ -7,14 +7,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog/v2"
-	scheduler_config "k8s.io/kubernetes/pkg/scheduler/apis/config/latest"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
-	scheduler_plugins "k8s.io/kubernetes/pkg/scheduler/framework/plugins"
-	"k8s.io/kubernetes/pkg/scheduler/framework/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Planner struct {
@@ -22,43 +15,23 @@ type Planner struct {
 	logger             logr.Logger
 }
 
-func NewPlanner(kubeClient kubernetes.Interface, logger logr.Logger) (*Planner, error) {
-	informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
-	config, err := scheduler_config.Default()
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create scheduler config: %v", err)
+func NewPlanner(scheduler framework.Framework, logger logr.Logger) Planner {
+	return Planner{
+		schedulerFramework: scheduler,
+		logger:             logger,
 	}
-	if len(config.Profiles) != 1 || config.Profiles[0].SchedulerName != v1.DefaultSchedulerName {
-		return nil, fmt.Errorf("unexpected scheduler config: expected default scheduler profile only (found %d profiles)", len(config.Profiles))
-	}
-
-	f, err := runtime.NewFramework(
-		scheduler_plugins.NewInTreeRegistry(),
-		&config.Profiles[0],
-		runtime.WithInformerFactory(informerFactory),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create scheduler framework; %v", err)
-	}
-
-	return &Planner{schedulerFramework: f, logger: logger}, nil
-}
-
-func (p Planner) newLogger(ctx context.Context) klog.Logger {
-	return log.FromContext(ctx).WithName("MigPlanner")
 }
 
 func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candidates []v1.Pod) (state.PartitioningState, error) {
-	logger := p.newLogger(ctx)
 	res := p.getPartitioningState(snapshot)
-	logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
+	p.logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
 	for _, pod := range candidates {
 		lackingMig, isLacking := p.getLackingMigProfile(snapshot, pod)
 		if !isLacking {
 			continue
 		}
 		candidateNodes := p.getCandidateNodes(snapshot)
-		logger.V(1).Info(
+		p.logger.V(1).Info(
 			fmt.Sprintf("found %d candidate nodes for pod", len(candidateNodes)),
 			"namespace",
 			pod.GetNamespace(),
@@ -82,14 +55,11 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 			snapshot.SetNode(nodeInfo)
 
 			// Run a scheduler cycle to check whether the Pod can be scheduled on the Node
-			podFits, err := p.podFitsNode(ctx, nodeInfo, pod)
-			if err != nil {
-				return res, err
-			}
+			podFits := p.podFitsNode(ctx, nodeInfo, pod)
 
 			// The Pod cannot be scheduled, revert the changes on the snapshot
 			if !podFits {
-				logger.V(3).Info(
+				p.logger.V(3).Info(
 					"pod does not fit node",
 					"namespace",
 					pod.Namespace,
@@ -103,12 +73,12 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 			}
 
 			// The Pod can be scheduled: commit changes, update desired partitioning and stop iterating over nodes
-			if err = snapshot.AddPod(n.Name, pod); err != nil {
+			if err := snapshot.AddPod(n.Name, pod); err != nil {
 				return res, err
 			}
 			snapshot.Commit()
 			res[n.Name] = fromMigNodeToNodePartitioning(n)
-			logger.V(3).Info(
+			p.logger.V(3).Info(
 				"pod fits node, state snapshot updated with new MIG geometry",
 				"namespace",
 				pod.Namespace,
@@ -136,7 +106,7 @@ func getUpdatedScalarResources(nodeInfo framework.NodeInfo, node mig.Node) map[v
 	}
 	// Set MIG scalar resources
 	for r, v := range node.GetGeometry().AsResources() {
-		nodeInfo.Allocatable.ScalarResources[r] = int64(v)
+		res[r] = int64(v)
 	}
 
 	return res
@@ -218,12 +188,11 @@ func fromMigNodeToNodePartitioning(node mig.Node) state.NodePartitioning {
 	return state.NodePartitioning{GPUs: gpuPartitioning}
 }
 
-func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) (bool, error) {
+func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) bool {
 	cycleState := framework.NewCycleState()
 	_, preFilterStatus := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod)
 	if !preFilterStatus.IsSuccess() {
-		return false, fmt.Errorf("error running pre filter plugins for pod %s; %s", pod.Name, preFilterStatus.Message())
+		return false
 	}
-	filterStatus := p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge()
-	return filterStatus.IsSuccess(), nil
+	return p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge().IsSuccess()
 }
