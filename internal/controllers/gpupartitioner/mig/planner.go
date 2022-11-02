@@ -48,14 +48,16 @@ func (p Planner) Plan(ctx context.Context, snapshot state.ClusterSnapshot, candi
 
 			// Fork the state and update the nodes' allocatable scalar resources by taking into
 			// account the new MIG geometry
-			snapshot.Fork()
+			if err := snapshot.Fork(); err != nil {
+				return res, fmt.Errorf("error forking cluster snapshot, this should never happen: %v", err)
+			}
 			nodeInfo, _ := snapshot.GetNode(n.Name)
-			scalarResources := getUpdatedScalarResources(nodeInfo, n)
+			scalarResources := getUpdatedScalarResources(*nodeInfo, n)
 			nodeInfo.Allocatable.ScalarResources = scalarResources
 			snapshot.SetNode(nodeInfo)
 
 			// Run a scheduler cycle to check whether the Pod can be scheduled on the Node
-			podFits := p.podFitsNode(ctx, nodeInfo, pod)
+			podFits := p.podFitsNode(ctx, *nodeInfo, pod)
 
 			// The Pod cannot be scheduled, revert the changes on the snapshot
 			if !podFits {
@@ -137,13 +139,13 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
 	var migNode mig.Node
 	var err error
 
-	for _, n := range snapshot.GetNodes() {
+	for k, n := range snapshot.GetNodes() {
 		if migNode, err = mig.NewNode(*n.Node()); err != nil {
 			p.logger.Error(
 				err,
 				"unable to create MIG node",
 				"node",
-				n.Node().Name,
+				k,
 			)
 			continue
 		}
@@ -157,7 +159,7 @@ func (p Planner) getCandidateNodes(snapshot state.ClusterSnapshot) []mig.Node {
 
 func (p Planner) getPartitioningState(snapshot state.ClusterSnapshot) state.PartitioningState {
 	migNodes := make([]mig.Node, 0)
-	for k, v := range snapshot.Nodes {
+	for k, v := range snapshot.GetNodes() {
 		node, err := mig.NewNode(*v.Node())
 		if err != nil {
 			p.logger.Error(err, "unable to create MIG node", "node", k)

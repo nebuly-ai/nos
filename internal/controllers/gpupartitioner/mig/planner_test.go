@@ -314,16 +314,15 @@ func TestPlanner__Plan(t *testing.T) {
 }
 
 func newSnapshotFromNodes(nodes []v1.Node) state.ClusterSnapshot {
-	nodeInfos := make(map[string]framework.NodeInfo)
+	nodeInfos := make(map[string]*framework.NodeInfo)
 	for _, node := range nodes {
 		n := node
 		ni := framework.NewNodeInfo()
 		ni.Requested = framework.NewResource(v1.ResourceList{})
 		ni.Allocatable = framework.NewResource(v1.ResourceList{})
 		ni.SetNode(&n)
-		nodeInfos[n.Name] = *ni
+		nodeInfos[n.Name] = ni
 	}
-	snapshot := state.NewClusterSnapshot()
-	snapshot.Nodes = nodeInfos
+	snapshot := state.NewClusterSnapshot(nodeInfos)
 	return snapshot
 }
