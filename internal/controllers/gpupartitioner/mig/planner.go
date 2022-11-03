@@ -32,10 +32,6 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 
 	partitioningState := snapshot.GetPartitioningState()
 	for _, pod := range candidates {
-		lackingMig, isLacking := snapshot.GetLackingMigProfile(pod)
-		if !isLacking {
-			continue
-		}
 		candidateNodes := snapshot.GetCandidateNodes()
 		p.logger.V(1).Info(
 			fmt.Sprintf("found %d candidate nodes for pod", len(candidateNodes)),
@@ -43,18 +39,54 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			pod.GetNamespace(),
 			"pod",
 			pod.GetName(),
-			"lackingResource",
-			lackingMig,
 		)
 		for _, n := range candidateNodes {
+			// If Pod already fits, move on to next pod
+			if p.addPodToSnapshot(ctx, pod, n.Name, snapshot) {
+				p.logger.V(3).Info(
+					"pod fits node, cluster snapshot updated",
+					"namespace",
+					pod.Namespace,
+					"pod",
+					pod.Name,
+					"node",
+					n.Name,
+				)
+				break
+			}
+
+			// Check if any MIG resource is lacking
+			lackingMig, isLacking := snapshot.GetLackingMigProfile(pod)
+			if !isLacking {
+				p.logger.V(3).Info(
+					"no lacking MIG resources, skipping node",
+					"namespace",
+					pod.Namespace,
+					"pod",
+					pod.Name,
+					"node",
+					n.Name,
+				)
+				continue
+			}
+
 			// Fork the state
 			if err = snapshot.Fork(); err != nil {
 				return partitioningState, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
 			}
 
-			// Update the node MIG geometry (if possible)
+			// Try update the node MIG geometry
 			if err = n.UpdateGeometryFor(lackingMig); err != nil {
 				snapshot.Revert()
+				p.logger.V(3).Info(
+					"cannot update node MIG geometry",
+					"reason",
+					err,
+					"node",
+					n.Name,
+					"lackingMig",
+					lackingMig,
+				)
 				continue
 			}
 
@@ -63,14 +95,12 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 				return partitioningState, err
 			}
 
-			// Run a scheduler cycle to check whether the Pod can be scheduled on the Node
-			nodeInfo, _ := snapshot.GetNode(n.Name)
-			podFits := p.podFitsNode(ctx, nodeInfo, pod)
-
-			// The Pod cannot be scheduled, revert the changes on the snapshot
-			if !podFits {
+			// Check if the Pod now fits the Node with the updated MIG geometry
+			if p.addPodToSnapshot(ctx, pod, n.Name, snapshot) {
+				snapshot.Commit()
+				partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
 				p.logger.V(3).Info(
-					"pod does not fit node",
+					"pod fits node, state snapshot updated with new MIG geometry",
 					"namespace",
 					pod.Namespace,
 					"pod",
@@ -78,29 +108,26 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 					"node",
 					n.Name,
 				)
-				snapshot.Revert()
-				continue
 			}
 
-			// The Pod can be scheduled: commit changes, update desired partitioning and stop iterating over nodes
-			if err = snapshot.AddPod(n.Name, pod); err != nil {
-				return partitioningState, err
-			}
-			snapshot.Commit()
-			partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
-			p.logger.V(3).Info(
-				"pod fits node, state snapshot updated with new MIG geometry",
-				"namespace",
-				pod.Namespace,
-				"pod",
-				pod.Name,
-				"node",
-				n.Name,
-			)
-			break
+			// Could not make the Pod fit, revert changes and move on
+			p.logger.V(3).Info("pod does not fit node", "namespace", pod.Namespace, "pod", pod.Name, "node", n.Name)
+			snapshot.Revert()
 		}
 	}
 	return partitioningState, nil
+}
+
+func (p Planner) addPodToSnapshot(ctx context.Context, pod v1.Pod, node string, snapshot migstate.MigClusterSnapshot) bool {
+	// Run a scheduler cycle to check whether the Pod can be scheduled on the Node
+	nodeInfo, _ := snapshot.GetNode(node)
+	if p.podFitsNode(ctx, nodeInfo, pod) {
+		// Try to add the Pod to the cluster
+		if err := snapshot.AddPod(node, pod); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) bool {
