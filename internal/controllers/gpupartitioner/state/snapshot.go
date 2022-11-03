@@ -7,21 +7,21 @@ import (
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-func NewClusterSnapshot(nodes map[string]*framework.NodeInfo) ClusterSnapshot {
+func NewClusterSnapshot(nodes map[string]framework.NodeInfo) ClusterSnapshot {
 	data := snapshotData{nodes: nodes}
 	return ClusterSnapshot{data: &data}
 }
 
 type snapshotData struct {
-	nodes map[string]*framework.NodeInfo
+	nodes map[string]framework.NodeInfo
 }
 
 func (d snapshotData) clone() *snapshotData {
 	res := snapshotData{
-		nodes: make(map[string]*framework.NodeInfo),
+		nodes: make(map[string]framework.NodeInfo),
 	}
 	for k, v := range d.nodes {
-		res.nodes[k] = v.Clone()
+		res.nodes[k] = *v.Clone()
 	}
 	return &res
 }
@@ -71,16 +71,16 @@ func (c *ClusterSnapshot) GetLackingResources(pod v1.Pod) framework.Resource {
 	return resource.Abs(res)
 }
 
-func (c *ClusterSnapshot) GetNodes() map[string]*framework.NodeInfo {
+func (c *ClusterSnapshot) GetNodes() map[string]framework.NodeInfo {
 	return c.getData().nodes
 }
 
-func (c *ClusterSnapshot) GetNode(name string) (*framework.NodeInfo, bool) {
+func (c *ClusterSnapshot) GetNode(name string) (framework.NodeInfo, bool) {
 	node, found := c.GetNodes()[name]
 	return node, found
 }
 
-func (c *ClusterSnapshot) SetNode(nodeInfo *framework.NodeInfo) {
+func (c *ClusterSnapshot) SetNode(nodeInfo framework.NodeInfo) {
 	c.getData().nodes[nodeInfo.Node().Name] = nodeInfo
 }
 
@@ -90,5 +90,6 @@ func (c *ClusterSnapshot) AddPod(nodeName string, pod v1.Pod) error {
 		return fmt.Errorf("could not find node %s in cluster snapshot", nodeName)
 	}
 	node.AddPod(&pod)
+	c.getData().nodes[nodeName] = node
 	return nil
 }

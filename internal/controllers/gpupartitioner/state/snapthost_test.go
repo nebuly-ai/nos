@@ -14,13 +14,13 @@ import (
 func TestSnapshot__GetLackingResources(t *testing.T) {
 	testCases := []struct {
 		name          string
-		snapshotNodes map[string]*framework.NodeInfo
+		snapshotNodes map[string]framework.NodeInfo
 		pod           v1.Pod
 		expected      framework.Resource
 	}{
 		{
 			name:          "Empty snapshot",
-			snapshotNodes: make(map[string]*framework.NodeInfo),
+			snapshotNodes: make(map[string]framework.NodeInfo),
 			pod: factory.BuildPod("ns-1", "pd-1").
 				WithContainer(
 					factory.BuildContainer("c1", "test").
@@ -38,7 +38,7 @@ func TestSnapshot__GetLackingResources(t *testing.T) {
 		},
 		{
 			name: "NOT-empty snapshot",
-			snapshotNodes: map[string]*framework.NodeInfo{
+			snapshotNodes: map[string]framework.NodeInfo{
 				"node-1": {
 					Requested: &framework.Resource{
 						MilliCPU:         200,
@@ -104,18 +104,18 @@ func TestSnapshot__GetLackingResources(t *testing.T) {
 
 func TestSnapshot__Forking(t *testing.T) {
 	t.Run("Forking multiple times shall return error", func(t *testing.T) {
-		snapshot := state.NewClusterSnapshot(map[string]*framework.NodeInfo{})
+		snapshot := state.NewClusterSnapshot(map[string]framework.NodeInfo{})
 		assert.NoError(t, snapshot.Fork())
 		assert.Error(t, snapshot.Fork())
 	})
 
 	t.Run("Test Revert changes", func(t *testing.T) {
-		snapshot := state.NewClusterSnapshot(map[string]*framework.NodeInfo{
-			"node-1": framework.NewNodeInfo(),
+		snapshot := state.NewClusterSnapshot(map[string]framework.NodeInfo{
+			"node-1": *framework.NewNodeInfo(),
 		})
-		originalNodes := make(map[string]*framework.NodeInfo)
+		originalNodes := make(map[string]framework.NodeInfo)
 		for k, v := range snapshot.GetNodes() {
-			originalNodes[k] = v.Clone()
+			originalNodes[k] = *v.Clone()
 		}
 		assert.NoError(t, snapshot.Fork())
 		assert.NoError(t, snapshot.AddPod("node-1", factory.BuildPod("ns-1", "pod-1").Get()))
@@ -128,8 +128,8 @@ func TestSnapshot__Forking(t *testing.T) {
 	})
 
 	t.Run("Test Commit changes", func(t *testing.T) {
-		snapshot := state.NewClusterSnapshot(map[string]*framework.NodeInfo{
-			"node-1": framework.NewNodeInfo(),
+		snapshot := state.NewClusterSnapshot(map[string]framework.NodeInfo{
+			"node-1": *framework.NewNodeInfo(),
 		})
 		originalNodes := make(map[string]*framework.NodeInfo)
 		for k, v := range snapshot.GetNodes() {

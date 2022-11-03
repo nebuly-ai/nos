@@ -59,13 +59,13 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			}
 
 			// Update MIG nodes geometry and allocatable scalar resources according to the update MIG geometry
-			if err = snapshot.SetNode(&n); err != nil {
+			if err = snapshot.SetNode(n); err != nil {
 				return partitioningState, err
 			}
 
 			// Run a scheduler cycle to check whether the Pod can be scheduled on the Node
 			nodeInfo, _ := snapshot.GetNode(n.Name)
-			podFits := p.podFitsNode(ctx, *nodeInfo, pod)
+			podFits := p.podFitsNode(ctx, nodeInfo, pod)
 
 			// The Pod cannot be scheduled, revert the changes on the snapshot
 			if !podFits {

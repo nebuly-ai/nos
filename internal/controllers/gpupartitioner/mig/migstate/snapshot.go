@@ -15,14 +15,14 @@ type MigClusterSnapshot struct {
 }
 
 type migData struct {
-	migNodes map[string]*mig.Node
+	migNodes map[string]mig.Node
 }
 
 func (d migData) clone() *migData {
-	res := migData{migNodes: make(map[string]*mig.Node)}
+	res := migData{migNodes: make(map[string]mig.Node)}
 	for k, v := range d.migNodes {
 		node := v.Clone()
-		res.migNodes[k] = &node
+		res.migNodes[k] = node
 	}
 	return &res
 }
@@ -38,14 +38,14 @@ func NewClusterSnapshot(snapshot state.ClusterSnapshot) (MigClusterSnapshot, err
 	}, nil
 }
 
-func extractMigNodes(snapshot state.ClusterSnapshot) (map[string]*mig.Node, error) {
-	res := make(map[string]*mig.Node)
+func extractMigNodes(snapshot state.ClusterSnapshot) (map[string]mig.Node, error) {
+	res := make(map[string]mig.Node)
 	for _, v := range snapshot.GetNodes() {
 		migNode, err := mig.NewNode(*v.Node())
 		if err != nil {
 			return res, err
 		}
-		res[migNode.Name] = &migNode
+		res[migNode.Name] = migNode
 	}
 	return res, nil
 }
@@ -62,7 +62,7 @@ func (s *MigClusterSnapshot) GetCandidateNodes() []mig.Node {
 	result := make([]mig.Node, 0)
 	for _, n := range s.getData().migNodes {
 		if n.HasFreeMigResources() {
-			result = append(result, *n)
+			result = append(result, n)
 		}
 	}
 	return result
@@ -95,12 +95,12 @@ func (s *MigClusterSnapshot) GetLackingMigProfile(pod v1.Pod) (mig.ProfileName, 
 	return "", false
 }
 
-func (s *MigClusterSnapshot) SetNode(node *mig.Node) error {
+func (s *MigClusterSnapshot) SetNode(node mig.Node) error {
 	nodeInfo, found := s.GetNode(node.Name)
 	if !found {
 		return fmt.Errorf("cannot set MIG node %q because corresponding NodeInfo does not exist", node.Name)
 	}
-	scalarResources := getUpdatedScalarResources(*nodeInfo, *node)
+	scalarResources := getUpdatedScalarResources(nodeInfo, node)
 	nodeInfo.Allocatable.ScalarResources = scalarResources
 	s.ClusterSnapshot.SetNode(nodeInfo)
 	s.getData().migNodes[node.Name] = node
