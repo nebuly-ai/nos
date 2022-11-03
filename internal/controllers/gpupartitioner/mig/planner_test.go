@@ -27,8 +27,8 @@ func TestPlanner__Plan(t *testing.T) {
 		schedulerPreFilterStatus *framework.Status
 		schedulerFilterStatus    *framework.Status
 
-		expectedPartitioningState state.PartitioningState
-		expectedErr               bool
+		expectedOverallPartitioning []state.GPUPartitioning
+		expectedErr                 bool
 	}{
 		{
 			name:                     "Empty snapshot, no candidates",
@@ -37,8 +37,8 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 
-			expectedPartitioningState: map[string]state.NodePartitioning{},
-			expectedErr:               false,
+			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
+			expectedErr:                 false,
 		},
 		{
 			name:          "Empty snapshot, many candidates",
@@ -50,8 +50,8 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 
-			expectedPartitioningState: map[string]state.NodePartitioning{},
-			expectedErr:               false,
+			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
+			expectedErr:                 false,
 		},
 		{
 			name: "Cluster geometry cannot be changed for pending Pods",
@@ -84,25 +84,17 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedPartitioningState: map[string]state.NodePartitioning{
-				"node-1": {
-					GPUs: []state.GPUPartitioning{
-						{
-							GPUIndex: 0,
-							Resources: map[v1.ResourceName]int{
-								mig.Profile4g20gb.AsResourceName(): 1,
-							},
-						},
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						mig.Profile4g20gb.AsResourceName(): 1,
 					},
 				},
-				"node-2": {
-					GPUs: []state.GPUPartitioning{
-						{
-							GPUIndex: 0,
-							Resources: map[v1.ResourceName]int{
-								mig.Profile1g5gb.AsResourceName(): 1,
-							},
-						},
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						mig.Profile1g5gb.AsResourceName(): 1,
 					},
 				},
 			},
@@ -145,18 +137,13 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Error),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedPartitioningState: map[string]state.NodePartitioning{
-				"node-1": {
-					GPUs: []state.GPUPartitioning{
-						{
-							GPUIndex: 0,
-							Resources: map[v1.ResourceName]int{
-								mig.Profile4g24gb.AsResourceName(): 1,
-							},
-						},
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						mig.Profile4g24gb.AsResourceName(): 1,
 					},
 				},
-				"node-2": {GPUs: []state.GPUPartitioning{}},
 			},
 			expectedErr: false,
 		},
@@ -197,18 +184,13 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Error),
-			expectedPartitioningState: map[string]state.NodePartitioning{
-				"node-1": {
-					GPUs: []state.GPUPartitioning{
-						{
-							GPUIndex: 0,
-							Resources: map[v1.ResourceName]int{
-								mig.Profile4g24gb.AsResourceName(): 1,
-							},
-						},
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						mig.Profile4g24gb.AsResourceName(): 1,
 					},
 				},
-				"node-2": {GPUs: []state.GPUPartitioning{}},
 			},
 			expectedErr: false,
 		},
@@ -260,26 +242,18 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedPartitioningState: map[string]state.NodePartitioning{
-				"node-1": {
-					GPUs: []state.GPUPartitioning{
-						{
-							GPUIndex: 0,
-							Resources: map[v1.ResourceName]int{
-								mig.Profile1g6gb.AsResourceName():  2,
-								mig.Profile2g12gb.AsResourceName(): 1,
-							},
-						},
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						mig.Profile1g6gb.AsResourceName():  2,
+						mig.Profile2g12gb.AsResourceName(): 1,
 					},
 				},
-				"node-2": {
-					GPUs: []state.GPUPartitioning{
-						{
-							GPUIndex: 0,
-							Resources: map[v1.ResourceName]int{
-								mig.Profile1g6gb.AsResourceName(): 4,
-							},
-						},
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						mig.Profile1g6gb.AsResourceName(): 4,
 					},
 				},
 			},
@@ -307,11 +281,21 @@ func TestPlanner__Plan(t *testing.T) {
 			planner := partitioner_mig.NewPlanner(mockedScheduler, ctrl.Log.WithName("test-planner"))
 			snapshot := newSnapshotFromNodes(tt.snapshotNodes)
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
+
+			// Compute overall partitioning
+			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
+			for _, nodePartitioning := range plan {
+				for _, gpuPartitioning := range nodePartitioning.GPUs {
+					overallGpuPartitioning = append(overallGpuPartitioning, gpuPartitioning)
+				}
+			}
+
+			// Run assertions
 			if tt.expectedErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedPartitioningState, plan)
+				assert.ElementsMatch(t, tt.expectedOverallPartitioning, overallGpuPartitioning)
 			}
 		})
 	}
