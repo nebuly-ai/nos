@@ -30,6 +30,14 @@ type GPU struct {
 	freeMigDevices       map[ProfileName]int
 }
 
+func NewGpuOrPanic(model GPUModel, index int, usedMigDevices, freeMigDevices map[ProfileName]int) GPU {
+	gpu, err := NewGPU(model, index, usedMigDevices, freeMigDevices)
+	if err != nil {
+		panic(err)
+	}
+	return gpu
+}
+
 func NewGPU(model GPUModel, index int, usedMigDevices, freeMigDevices map[ProfileName]int) (GPU, error) {
 	allowedGeometries, ok := gpuModelToAllowedMigGeometries[model]
 	if !ok {
@@ -142,6 +150,10 @@ func (g *GPU) AddPod(pod v1.Pod) error {
 		g.usedMigDevices[r] += q
 	}
 	return nil
+}
+
+func (g *GPU) HasFreeMigDevices() bool {
+	return len(g.GetFreeMigDevices()) > 0
 }
 
 func (g *GPU) GetFreeMigDevices() map[ProfileName]int {

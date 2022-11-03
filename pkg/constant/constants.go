@@ -46,9 +46,12 @@ const (
 
 // Labels
 const (
-	// LabelNvidiaProduct is the name of the label assigned by the NVIDIA GPU Operator that identities
+	// LabelNvidiaProduct is the name of the label assigned by the NVIDIA GPU Operator that identifies
 	// the model of the NVIDIA GPUs on a certain node
 	LabelNvidiaProduct = "nvidia.com/gpu.product"
+	// LabelNvidiaCount is the name of the label assigned by the NVIDIA GPU Operator that identifies
+	// the number of NVIDIA GPUs on a certain node
+	LabelNvidiaCount = "nvidia.com/gpu.count"
 )
 
 const (

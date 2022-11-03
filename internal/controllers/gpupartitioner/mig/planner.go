@@ -108,6 +108,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 					"node",
 					n.Name,
 				)
+				break
 			}
 
 			// Could not make the Pod fit, revert changes and move on

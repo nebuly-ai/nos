@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strconv"
 	"testing"
 )
 
@@ -105,6 +106,37 @@ func TestNewNode(t *testing.T) {
 				},
 			},
 			expectedError: false,
+		},
+		{
+			name: "Node with MIG-enabled GPUs, but without any MIG profile created",
+			node: v1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-node",
+					Labels: map[string]string{
+						constant.LabelNvidiaProduct: string(GPUModel_A30),
+						constant.LabelNvidiaCount:   strconv.Itoa(2),
+					},
+				},
+			},
+			expectedNode: Node{
+				Name: "test-node",
+				GPUs: []GPU{
+					{
+						index:                0,
+						model:                GPUModel_A30,
+						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A30],
+						usedMigDevices:       map[ProfileName]int{},
+						freeMigDevices:       map[ProfileName]int{},
+					},
+					{
+						index:                1,
+						model:                GPUModel_A30,
+						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A30],
+						usedMigDevices:       map[ProfileName]int{},
+						freeMigDevices:       map[ProfileName]int{},
+					},
+				},
+			},
 		},
 	}
 
@@ -354,6 +386,61 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			assert.Equal(t, tt.expectedGeometry, node.GetGeometry())
+		})
+	}
+}
+
+func TestNode__HasFreeMigCapacity(t *testing.T) {
+	testCases := []struct {
+		name     string
+		nodeGPUs []GPU
+		expected bool
+	}{
+		{
+			name:     "Node without GPUs",
+			nodeGPUs: make([]GPU, 0),
+			expected: false,
+		},
+		{
+			name: "Node with GPU without any free or used device",
+			nodeGPUs: []GPU{
+				NewGpuOrPanic(GPUModel_A30, 0, make(map[ProfileName]int), make(map[ProfileName]int)),
+			},
+			expected: true,
+		},
+		{
+			name: "Node with GPU with free MIG devices",
+			nodeGPUs: []GPU{
+				NewGpuOrPanic(
+					GPUModel_A30,
+					0,
+					map[ProfileName]int{Profile1g6gb: 1},
+					map[ProfileName]int{Profile1g6gb: 1},
+				),
+			},
+			expected: true,
+		},
+		{
+			name: "Node with just a single GPU with just used MIG device, but which MIG allowed geometries allow to create more MIG devices",
+			nodeGPUs: []GPU{
+				NewGpuOrPanic(
+					GPUModel_A30,
+					0,
+					map[ProfileName]int{
+						Profile1g6gb: 1,
+					},
+					make(map[ProfileName]int),
+				),
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			n := Node{Name: "test", GPUs: tt.nodeGPUs}
+			res := n.HasFreeMigCapacity()
+			assert.Equal(t, tt.expected, res)
 		})
 	}
 }

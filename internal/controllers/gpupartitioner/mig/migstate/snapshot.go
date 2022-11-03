@@ -61,7 +61,7 @@ func (s *MigClusterSnapshot) getData() *migData {
 func (s *MigClusterSnapshot) GetCandidateNodes() []mig.Node {
 	result := make([]mig.Node, 0)
 	for _, n := range s.getData().migNodes {
-		if n.HasFreeMigResources() {
+		if n.HasFreeMigCapacity() {
 			result = append(result, n)
 		}
 	}

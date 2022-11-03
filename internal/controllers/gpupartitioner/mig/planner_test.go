@@ -15,6 +15,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"strconv"
 	"testing"
 )
 
@@ -220,11 +221,13 @@ func TestPlanner__Plan(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
+						constant.LabelNvidiaCount:   strconv.Itoa(1),
 					}).
 					Get(),
 				factory.BuildNode("node-2").
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
+						constant.LabelNvidiaCount:   strconv.Itoa(1),
 					}).
 					Get(),
 			},
@@ -263,20 +266,22 @@ func TestPlanner__Plan(t *testing.T) {
 						{
 							GPUIndex: 0,
 							Resources: map[v1.ResourceName]int{
+								mig.Profile1g6gb.AsResourceName():  2,
+								mig.Profile2g12gb.AsResourceName(): 1,
+							},
+						},
+					},
+				},
+				"node-2": {
+					GPUs: []state.GPUPartitioning{
+						{
+							GPUIndex: 0,
+							Resources: map[v1.ResourceName]int{
 								mig.Profile1g6gb.AsResourceName(): 4,
 							},
 						},
 					},
 				},
-				"node-2": {GPUs: []state.GPUPartitioning{
-					{
-						GPUIndex: 0,
-						Resources: map[v1.ResourceName]int{
-							mig.Profile1g6gb.AsResourceName():  1,
-							mig.Profile2g12gb.AsResourceName(): 1,
-						},
-					},
-				}},
 			},
 			expectedErr: false,
 		},
