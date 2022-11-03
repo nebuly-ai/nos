@@ -66,9 +66,30 @@ func (c *ClusterSnapshot) GetLackingResources(pod v1.Pod) framework.Resource {
 		totalRequested = resource.Sum(totalRequested, *n.Requested)
 	}
 	available := resource.Subtract(totalAllocatable, totalRequested)
+	diff := resource.Subtract(available, resource.FromListToFramework(podRequest))
 
-	res := resource.Subtract(available, resource.FromListToFramework(podRequest))
-	return resource.Abs(res)
+	// consider only negative (e.g. lacking) quantities
+	res := framework.NewResource(v1.ResourceList{})
+	res.ScalarResources = make(map[v1.ResourceName]int64)
+	if diff.MilliCPU < 0 {
+		res.MilliCPU = diff.MilliCPU
+	}
+	if diff.Memory < 0 {
+		res.Memory = diff.Memory
+	}
+	if diff.EphemeralStorage < 0 {
+		res.EphemeralStorage = diff.EphemeralStorage
+	}
+	if diff.AllowedPodNumber < 0 {
+		res.AllowedPodNumber = diff.AllowedPodNumber
+	}
+	for k, v := range diff.ScalarResources {
+		if v < 0 {
+			res.ScalarResources[k] = v
+		}
+	}
+
+	return resource.Abs(*res)
 }
 
 func (c *ClusterSnapshot) GetNodes() map[string]framework.NodeInfo {

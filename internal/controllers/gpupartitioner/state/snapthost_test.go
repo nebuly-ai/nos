@@ -3,6 +3,7 @@ package state_test
 import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -55,7 +56,8 @@ func TestSnapshot__GetLackingResources(t *testing.T) {
 						EphemeralStorage: 0,
 						AllowedPodNumber: 0,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU: 3,
+							constant.ResourceNvidiaGPU:        3,
+							mig.Profile1g5gb.AsResourceName(): 1, // not requested by Pod, should be excluded from result
 						},
 					},
 				},
@@ -81,12 +83,16 @@ func TestSnapshot__GetLackingResources(t *testing.T) {
 					factory.BuildContainer("c1", "test").
 						WithResourceRequest(v1.ResourceCPU, *resource.NewMilliQuantity(4000, resource.DecimalSI)).
 						WithResourceRequest(v1.ResourceMemory, *resource.NewQuantity(200, resource.DecimalSI)).
+						WithResourceRequest(v1.ResourceEphemeralStorage, *resource.NewQuantity(1, resource.DecimalSI)).
+						WithResourceRequest(v1.ResourcePods, *resource.NewQuantity(1, resource.DecimalSI)).
 						WithResourceRequest(constant.ResourceNvidiaGPU, *resource.NewQuantity(2, resource.DecimalSI)).
 						Get(),
 				).
 				Get(),
 			expected: framework.Resource{
-				MilliCPU: 300,
+				MilliCPU:         300,
+				EphemeralStorage: 1,
+				AllowedPodNumber: 1,
 				ScalarResources: map[v1.ResourceName]int64{
 					constant.ResourceNvidiaGPU: 2,
 				},
