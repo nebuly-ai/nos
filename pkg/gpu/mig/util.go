@@ -3,6 +3,7 @@ package mig
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"k8s.io/api/core/v1"
 	"regexp"
 	"strconv"
@@ -50,4 +51,14 @@ func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64,
 	}
 
 	return res, nil
+}
+
+func GetRequestedMigResources(pod v1.Pod) map[ProfileName]int {
+	res := make(map[ProfileName]int)
+	for r, quantity := range resource.ComputePodRequest(pod) {
+		if migProfile, err := ExtractMigProfile(r); err == nil {
+			res[migProfile] += int(quantity.Value())
+		}
+	}
+	return res
 }

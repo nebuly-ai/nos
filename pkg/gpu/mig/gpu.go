@@ -123,3 +123,31 @@ func (g *GPU) AllowsGeometry(geometry Geometry) bool {
 func (g *GPU) GetAllowedGeometries() []Geometry {
 	return g.allowedMigGeometries
 }
+
+// AddPod adds a Pod to the GPU by updating the free and used MIG devices according to the MIG resources
+// requested by the Pod.
+//
+// AddPod returns an error if the GPU does not have enough free MIG resources for the Pod.
+func (g *GPU) AddPod(pod v1.Pod) error {
+	for r, q := range GetRequestedMigResources(pod) {
+		if g.freeMigDevices[r] < q {
+			return fmt.Errorf(
+				"not enough free MIG devices (pod requests %d %s, but GPU only has %d)",
+				q,
+				r,
+				g.freeMigDevices[r],
+			)
+		}
+		g.freeMigDevices[r] -= q
+		g.usedMigDevices[r] += q
+	}
+	return nil
+}
+
+func (g *GPU) GetFreeMigDevices() map[ProfileName]int {
+	return g.freeMigDevices
+}
+
+func (g *GPU) GetUsedMigDevices() map[ProfileName]int {
+	return g.usedMigDevices
+}

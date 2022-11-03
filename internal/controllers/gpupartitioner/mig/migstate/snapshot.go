@@ -123,6 +123,21 @@ func (s *MigClusterSnapshot) Commit() {
 	}
 }
 
+func (s *MigClusterSnapshot) AddPod(nodeName string, pod v1.Pod) error {
+	if err := s.ClusterSnapshot.AddPod(nodeName, pod); err != nil {
+		return err
+	}
+	migNode, ok := s.getData().migNodes[nodeName]
+	if !ok {
+		return fmt.Errorf("MIG node %v not found in cluster snapshot", nodeName)
+	}
+	if err := migNode.AddPod(pod); err != nil {
+		return err
+	}
+	s.getData().migNodes[nodeName] = migNode
+	return nil
+}
+
 // getUpdatedScalarResources returns the scalar resources of the nodeInfo provided as argument updated for
 // matching the MIG resources defied by the specified mig.Node
 func getUpdatedScalarResources(nodeInfo framework.NodeInfo, node mig.Node) map[v1.ResourceName]int64 {

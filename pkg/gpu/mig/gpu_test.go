@@ -2,6 +2,7 @@ package mig_test
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"
@@ -65,6 +66,107 @@ func TestGPU__Clone(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cloned := tt.gpu.Clone()
 			assert.Equal(t, tt.gpu, cloned)
+		})
+	}
+}
+
+func TestGPU__AddPod(t *testing.T) {
+	testCases := []struct {
+		name string
+		gpu  mig.GPU
+		pod  v1.Pod
+
+		expectedUsed map[mig.ProfileName]int
+		expectedFree map[mig.ProfileName]int
+		expectedErr  bool
+	}{
+		{
+			name: "GPU without free MIG resources",
+			gpu: newGpuOrPanic(
+				mig.GPUModel_A30,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile1g6gb: 4,
+				},
+				make(map[mig.ProfileName]int),
+			),
+			pod: factory.BuildPod("ns-1", "pd-1").WithContainer(
+				factory.BuildContainer("test", "test").
+					WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+					Get(),
+			).Get(),
+			expectedUsed: map[mig.ProfileName]int{
+				mig.Profile1g6gb: 4,
+			},
+			expectedFree: make(map[mig.ProfileName]int),
+			expectedErr:  true,
+		},
+		{
+			name: "GPU without enough free MIG resources",
+			gpu: newGpuOrPanic(
+				mig.GPUModel_A30,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile1g6gb: 1,
+				},
+				map[mig.ProfileName]int{
+					mig.Profile2g12gb: 1,
+					mig.Profile1g6gb:  1,
+				},
+			),
+			pod: factory.BuildPod("ns-1", "pd-1").WithContainer(
+				factory.BuildContainer("test", "test").
+					WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 2).
+					Get(),
+			).Get(),
+			expectedUsed: map[mig.ProfileName]int{
+				mig.Profile1g6gb: 1,
+			},
+			expectedFree: map[mig.ProfileName]int{
+				mig.Profile2g12gb: 1,
+				mig.Profile1g6gb:  1,
+			},
+			expectedErr: true,
+		},
+		{
+			name: "GPU with enough free MIG resources: both used and free devices should be updated",
+			gpu: newGpuOrPanic(
+				mig.GPUModel_A30,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile1g6gb: 1,
+				},
+				map[mig.ProfileName]int{
+					mig.Profile2g12gb: 1,
+					mig.Profile1g6gb:  1,
+				},
+			),
+			pod: factory.BuildPod("ns-1", "pd-1").WithContainer(
+				factory.BuildContainer("test", "test").
+					WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+					Get(),
+			).Get(),
+			expectedUsed: map[mig.ProfileName]int{
+				mig.Profile1g6gb: 2,
+			},
+			expectedFree: map[mig.ProfileName]int{
+				mig.Profile2g12gb: 1,
+				mig.Profile1g6gb:  0,
+			},
+			expectedErr: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.gpu.AddPod(tt.pod)
+			if tt.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expectedUsed, tt.gpu.GetUsedMigDevices())
+			assert.Equal(t, tt.expectedFree, tt.gpu.GetFreeMigDevices())
 		})
 	}
 }

@@ -113,6 +113,19 @@ func (n *Node) HasFreeMigResources() bool {
 	return false
 }
 
+// AddPod adds a Pod to the node by updating the free and used MIG devices of the Node GPUs according to the
+// MIG requested required by the Pod.
+//
+// AddPod returns an error if the node does not have any GPU providing enough free MIG resources for the Pod.
+func (n *Node) AddPod(pod v1.Pod) error {
+	for _, g := range n.GPUs {
+		if err := g.AddPod(pod); err == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("not enough free MIG devices")
+}
+
 func (n *Node) Clone() Node {
 	cloned := Node{
 		Name: n.Name,
