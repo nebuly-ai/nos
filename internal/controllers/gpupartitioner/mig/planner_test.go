@@ -86,13 +86,11 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
-					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g20gb.AsResourceName(): 1,
 					},
 				},
 				{
-					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
 						mig.Profile1g5gb.AsResourceName(): 1,
 					},
@@ -186,7 +184,6 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerFilterStatus:    framework.NewStatus(framework.Error),
 			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
-					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g24gb.AsResourceName(): 1,
 					},
@@ -195,7 +192,7 @@ func TestPlanner__Plan(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			name: "Cluster geometry gets changed",
+			name: "Cluster geometry gets changed by splitting up MIG profile and creating new ones from spare MIG capacity",
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
@@ -244,16 +241,77 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
-					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
 						mig.Profile1g6gb.AsResourceName():  2,
 						mig.Profile2g12gb.AsResourceName(): 1,
 					},
 				},
 				{
-					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
 						mig.Profile1g6gb.AsResourceName(): 4,
+					},
+				},
+			},
+			expectedErr: false,
+		},
+		{
+			name: "Cluster geometry gets updated by grouping small unused MIG profiles into a larger one",
+			snapshotNodes: []v1.Node{
+				factory.BuildNode("node-1").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g6gb): "4",
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile1g6gb): "4",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
+						constant.LabelNvidiaCount:   strconv.Itoa(2),
+					}).
+					Get(),
+				factory.BuildNode("node-2").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb):  "5",
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile2g10gb): "1",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct: string(mig.GPUModel_A100_SMX4_40GB),
+						constant.LabelNvidiaCount:   strconv.Itoa(1),
+					}).
+					Get(),
+			},
+			candidatePods: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-2").WithContainer(
+					factory.BuildContainer("test", "test").
+						WithScalarResourceRequest(mig.Profile3g20gb.AsResourceName(), 1).
+						Get(),
+				).Get(),
+				factory.BuildPod("ns-1", "pd-1").WithContainer(
+					factory.BuildContainer("test", "test").
+						WithScalarResourceRequest(mig.Profile4g24gb.AsResourceName(), 1).
+						Get(),
+				).Get(),
+				factory.BuildPod("ns-1", "pd-1").WithContainer(
+					factory.BuildContainer("test", "test").
+						WithScalarResourceRequest(mig.Profile2g12gb.AsResourceName(), 1).
+						Get(),
+				).Get(),
+			},
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					Resources: map[v1.ResourceName]int{
+						mig.Profile3g20gb.AsResourceName(): 2,
+					},
+				},
+				{
+					Resources: map[v1.ResourceName]int{
+						mig.Profile4g24gb.AsResourceName(): 1,
+					},
+				},
+				{
+					Resources: map[v1.ResourceName]int{
+						mig.Profile2g12gb.AsResourceName(): 1,
+						mig.Profile1g6gb.AsResourceName():  2,
 					},
 				},
 			},
@@ -282,10 +340,17 @@ func TestPlanner__Plan(t *testing.T) {
 			snapshot := newSnapshotFromNodes(tt.snapshotNodes)
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
 
-			// Compute overall partitioning
+			// Compute overall partitioning ignoring GPU index
 			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
 			for _, nodePartitioning := range plan {
-				overallGpuPartitioning = append(overallGpuPartitioning, nodePartitioning.GPUs...)
+				for _, g := range nodePartitioning.GPUs {
+					g.GPUIndex = 0
+					overallGpuPartitioning = append(overallGpuPartitioning, g)
+				}
+			}
+			for i := range tt.expectedOverallPartitioning {
+				gpuPartitioning := &tt.expectedOverallPartitioning[i]
+				gpuPartitioning.GPUIndex = 0
 			}
 
 			// Run assertions
