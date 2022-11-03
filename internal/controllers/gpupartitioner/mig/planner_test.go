@@ -285,9 +285,7 @@ func TestPlanner__Plan(t *testing.T) {
 			// Compute overall partitioning
 			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
 			for _, nodePartitioning := range plan {
-				for _, gpuPartitioning := range nodePartitioning.GPUs {
-					overallGpuPartitioning = append(overallGpuPartitioning, gpuPartitioning)
-				}
+				overallGpuPartitioning = append(overallGpuPartitioning, nodePartitioning.GPUs...)
 			}
 
 			// Run assertions
