@@ -65,7 +65,7 @@ func (c *ClusterSnapshot) GetLackingResources(pod v1.Pod) framework.Resource {
 		totalAllocatable = resource.Sum(totalAllocatable, *n.Allocatable)
 		totalRequested = resource.Sum(totalRequested, *n.Requested)
 	}
-	available := resource.Subtract(totalAllocatable, totalRequested)
+	available := resource.SubtractNonNegative(totalAllocatable, totalRequested)
 	diff := resource.Subtract(available, resource.FromListToFramework(podRequest))
 
 	// consider only negative (e.g. lacking) quantities

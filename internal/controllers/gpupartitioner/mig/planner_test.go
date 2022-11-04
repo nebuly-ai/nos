@@ -310,8 +310,7 @@ func TestPlanner__Plan(t *testing.T) {
 				},
 				{
 					Resources: map[v1.ResourceName]int{
-						mig.Profile2g12gb.AsResourceName(): 1,
-						mig.Profile1g6gb.AsResourceName():  2,
+						mig.Profile2g12gb.AsResourceName(): 2,
 					},
 				},
 			},
