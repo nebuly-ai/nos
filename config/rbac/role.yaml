@@ -10,8 +10,9 @@ rules:
   resources:
   - nodes
   verbs:
-  - get
+    - get
   - list
+  - patch
   - watch
 - apiGroups:
   - ""
