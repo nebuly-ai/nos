@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"strconv"
@@ -63,6 +64,9 @@ func TestPlanner__Plan(t *testing.T) {
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
 					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile4g24gb.AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
 					Get(),
 				factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
@@ -70,6 +74,9 @@ func TestPlanner__Plan(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile1g5gb.AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 			},
@@ -107,6 +114,9 @@ func TestPlanner__Plan(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile4g24gb.AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 				factory.BuildNode("node-2").
@@ -155,6 +165,9 @@ func TestPlanner__Plan(t *testing.T) {
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
 					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile4g24gb.AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
 					Get(),
 				factory.BuildNode("node-2").
 					WithLabels(map[string]string{
@@ -202,11 +215,17 @@ func TestPlanner__Plan(t *testing.T) {
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
 						constant.LabelNvidiaCount:   strconv.Itoa(1),
 					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile4g24gb.AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
 					Get(),
 				factory.BuildNode("node-2").
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
 						constant.LabelNvidiaCount:   strconv.Itoa(1),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						constant.ResourceNvidiaGPU: *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 			},
@@ -266,6 +285,9 @@ func TestPlanner__Plan(t *testing.T) {
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A30),
 						constant.LabelNvidiaCount:   strconv.Itoa(2),
 					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile1g6gb.AsResourceName(): *resource.NewQuantity(8, resource.DecimalSI),
+					}).
 					Get(),
 				factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
@@ -275,6 +297,10 @@ func TestPlanner__Plan(t *testing.T) {
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct: string(mig.GPUModel_A100_SMX4_40GB),
 						constant.LabelNvidiaCount:   strconv.Itoa(1),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile1g5gb.AsResourceName():  *resource.NewQuantity(5, resource.DecimalSI),
+						mig.Profile2g10gb.AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 			},

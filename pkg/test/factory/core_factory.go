@@ -21,6 +21,11 @@ func (b *nodeBuilder) WithAnnotations(annotations map[string]string) *nodeBuilde
 	return b
 }
 
+func (b *nodeBuilder) WithAllocatableResources(resourceList v1.ResourceList) *nodeBuilder {
+	b.Node.Status.Allocatable = resourceList
+	return b
+}
+
 func (b *nodeBuilder) WithLabels(labels map[string]string) *nodeBuilder {
 	b.Node.Labels = labels
 	return b
