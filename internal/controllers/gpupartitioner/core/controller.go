@@ -14,7 +14,6 @@ import (
 )
 
 type Controller struct {
-	client.Client
 	Scheme       *runtime.Scheme
 	clusterState *state.ClusterState
 	planner      Planner
@@ -22,13 +21,11 @@ type Controller struct {
 }
 
 func NewController(
-	client client.Client,
 	scheme *runtime.Scheme,
 	clusterState *state.ClusterState,
 	planner Planner,
 	actuator Actuator) Controller {
 	return Controller{
-		Client:       client,
 		Scheme:       scheme,
 		clusterState: clusterState,
 		planner:      planner,
@@ -46,16 +43,10 @@ func (c *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 
 	snapshot := c.clusterState.GetSnapshot()
 
-	pendingPods, err := getPendingPods()
-	if err != nil {
-		logger.Error(err, "unable to fetch pending pods")
-		return ctrl.Result{}, err
-	}
-
 	// Keep only pending pods that could benefit from
 	// extra resources created through GPU partitioning
 	pendingCandidates := make([]v1.Pod, 0)
-	for _, p := range pendingPods {
+	for _, p := range snapshot.GetPendingPods() {
 		if pod.ExtraResourcesCouldHelpScheduling(p) {
 			pendingCandidates = append(pendingCandidates, p)
 		}
@@ -84,10 +75,6 @@ func (c *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func getPendingPods() ([]v1.Pod, error) {
-	return make([]v1.Pod, 0), nil
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {

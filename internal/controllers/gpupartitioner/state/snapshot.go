@@ -114,3 +114,15 @@ func (c *ClusterSnapshot) AddPod(nodeName string, pod v1.Pod) error {
 	c.getData().nodes[nodeName] = node
 	return nil
 }
+
+func (c *ClusterSnapshot) GetPendingPods() []v1.Pod {
+	res := make([]v1.Pod, 0)
+	for _, node := range c.GetNodes() {
+		for _, pod := range node.Pods {
+			if pod.Pod.Status.Phase == v1.PodPending {
+				res = append(res, *pod.Pod)
+			}
+		}
+	}
+	return res
+}

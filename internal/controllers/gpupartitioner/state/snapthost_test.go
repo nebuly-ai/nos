@@ -152,3 +152,93 @@ func TestSnapshot__Forking(t *testing.T) {
 		assert.NoError(t, snapshot.Fork())
 	})
 }
+
+func TestSnapshot__GetPendingPods(t *testing.T) {
+	type nodeWithPods struct {
+		node string
+		pods []v1.Pod
+	}
+
+	testCases := []struct {
+		name          string
+		snapshotNodes []nodeWithPods
+		expected      []v1.Pod
+	}{
+		{
+			name:          "Empty snapshot",
+			snapshotNodes: make([]nodeWithPods, 0),
+			expected:      make([]v1.Pod, 0),
+		},
+		{
+			name: "Snapshot without pending pods",
+			snapshotNodes: []nodeWithPods{
+				{
+					node: "node-1",
+					pods: []v1.Pod{
+						factory.BuildPod("ns-1", "pd-1").Get(),
+						factory.BuildPod("ns-1", "pd-2").Get(),
+					},
+				},
+				{
+					node: "node-2",
+					pods: []v1.Pod{
+						factory.BuildPod("ns-1", "pd-1").Get(),
+					},
+				},
+				{
+					node: "node-3",
+					pods: []v1.Pod{},
+				},
+			},
+			expected: make([]v1.Pod, 0),
+		},
+		{
+			name: "Snapshot with pending pods",
+			snapshotNodes: []nodeWithPods{
+				{
+					node: "node-1",
+					pods: []v1.Pod{
+						factory.BuildPod("ns-1", "pd-1").WithPhase(v1.PodPending).Get(),
+						factory.BuildPod("ns-1", "pd-2").Get(),
+					},
+				},
+				{
+					node: "node-2",
+					pods: []v1.Pod{
+						factory.BuildPod("ns-1", "pd-1").WithPhase(v1.PodPending).Get(),
+					},
+				},
+				{
+					node: "node-3",
+					pods: []v1.Pod{},
+				},
+			},
+			expected: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-1").WithPhase(v1.PodPending).Get(),
+				factory.BuildPod("ns-1", "pd-1").WithPhase(v1.PodPending).Get(),
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+
+			snapshotNodes := make(map[string]framework.NodeInfo)
+			for _, n := range tt.snapshotNodes {
+				pods := make([]*v1.Pod, len(n.pods))
+				for i, p := range n.pods {
+					p := p
+					pods[i] = &p
+				}
+				nodeInfo := *framework.NewNodeInfo(pods...)
+				node := factory.BuildNode(n.node).Get()
+				nodeInfo.SetNode(&node)
+				snapshotNodes[n.node] = nodeInfo
+			}
+
+			snapshot := state.NewClusterSnapshot(snapshotNodes)
+			pendingPods := snapshot.GetPendingPods()
+			assert.ElementsMatch(t, tt.expected, pendingPods)
+		})
+	}
+}

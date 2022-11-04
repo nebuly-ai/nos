@@ -100,7 +100,6 @@ func main() {
 	}
 	migActuator := mig.NewActuator(mgr.GetClient(), ctrl.Log.WithName("MigActuator"))
 	migController := core.NewController(
-		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,
 		migPlanner,
