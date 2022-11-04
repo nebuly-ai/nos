@@ -48,7 +48,7 @@ type GPUSpecAnnotation struct {
 	Quantity int
 }
 
-func NewGPUSpecAnnotation(key, value string) (GPUSpecAnnotation, error) {
+func NewGPUSpecAnnotationFromNodeAnnotation(key, value string) (GPUSpecAnnotation, error) {
 	if !strings.HasPrefix(key, v1alpha1.AnnotationGPUSpecPrefix) {
 		err := fmt.Errorf("GPUSpecAnnotation prefix is %q, got %q", v1alpha1.AnnotationGPUSpecPrefix, key)
 		return GPUSpecAnnotation{}, err
@@ -58,6 +58,13 @@ func NewGPUSpecAnnotation(key, value string) (GPUSpecAnnotation, error) {
 		return GPUSpecAnnotation{}, err
 	}
 	return GPUSpecAnnotation{Name: key, Quantity: quantity}, nil
+}
+
+func NewGpuSpecAnnotation(gpuIndex int, profile ProfileName, quantity int) GPUSpecAnnotation {
+	return GPUSpecAnnotation{
+		Name:     fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, gpuIndex, profile),
+		Quantity: quantity,
+	}
 }
 
 func (a GPUSpecAnnotation) GetValue() string {
@@ -206,7 +213,7 @@ func GetGPUAnnotationsFromNode(node v1.Node) (GPUStatusAnnotationList, GPUSpecAn
 	statusAnnotations := make(GPUStatusAnnotationList, 0)
 	specAnnotations := make(GPUSpecAnnotationList, 0)
 	for k, v := range node.Annotations {
-		if specAnnotation, err := NewGPUSpecAnnotation(k, v); err == nil {
+		if specAnnotation, err := NewGPUSpecAnnotationFromNodeAnnotation(k, v); err == nil {
 			specAnnotations = append(specAnnotations, specAnnotation)
 			continue
 		}

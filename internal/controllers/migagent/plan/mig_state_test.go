@@ -88,7 +88,7 @@ func TestMigState_Matches(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			specAnnotations := make([]mig.GPUSpecAnnotation, 0)
 			for k, v := range tt.spec {
-				a, _ := mig.NewGPUSpecAnnotation(k, v)
+				a, _ := mig.NewGPUSpecAnnotationFromNodeAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 			state := NewMigState(tt.stateResources)

@@ -24,7 +24,7 @@ func TestGPUSpecAnnotation_GetGPUIndex(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := NewGPUSpecAnnotation(tt.annotation, "1")
+			annotation, err := NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetGPUIndex())
 		})
@@ -46,7 +46,7 @@ func TestGPUSpecAnnotation_GetMigProfile(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := NewGPUSpecAnnotation(tt.annotation, "1")
+			annotation, err := NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetMigProfileName())
 		})
@@ -68,7 +68,7 @@ func TestGPUSpecAnnotation_GetGpuIndexWithMigProfile(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := NewGPUSpecAnnotation(tt.annotation, "1")
+			annotation, err := NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetGPUIndexWithMigProfile())
 		})

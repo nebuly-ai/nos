@@ -39,7 +39,11 @@ func NewController(
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 
 func (c *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(ctx).WithName("GPUPartitioner")
+	logger.V(3).Info("*** start reconcile ***")
+	defer logger.V(3).Info("*** end reconcile ***")
+
+	snapshot := c.clusterState.GetSnapshot()
 
 	pendingPods, err := getPendingPods()
 	if err != nil {
@@ -66,15 +70,15 @@ func (c *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	})
 
 	// Compute desired state
-	plan, err := c.planner.Plan(ctx, c.clusterState.GetSnapshot(), pendingCandidates)
+	desiredState, err := c.planner.Plan(ctx, snapshot, pendingCandidates)
 	if err != nil {
-		logger.Error(err, "unable to compute partitioning plan")
+		logger.Error(err, "unable to plan desired partitioning state")
 		return ctrl.Result{}, err
 	}
 
 	// Apply partitioning plan
-	if err := c.actuator.Apply(ctx, plan); err != nil {
-		logger.Error(err, "unable to apply partitioning plan")
+	if err = c.actuator.Apply(ctx, snapshot, desiredState); err != nil {
+		logger.Error(err, "unable to apply desired partitioning state")
 		return ctrl.Result{}, err
 	}
 
@@ -82,7 +86,7 @@ func (c *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 }
 
 func getPendingPods() ([]v1.Pod, error) {
-	return nil, nil
+	return make([]v1.Pod, 0), nil
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {

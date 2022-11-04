@@ -93,12 +93,12 @@ func main() {
 		setupLog.Error(err, "unable to init k8s scheduler framework")
 		os.Exit(1)
 	}
-	migPlanner := mig.NewPlanner(schedulerFramework, ctrl.Log.WithName("MIGPlanner"))
+	migPlanner := mig.NewPlanner(schedulerFramework, ctrl.Log.WithName("MigPlanner"))
 	if err != nil {
 		setupLog.Error(err, "unable to create MIG planner")
 		os.Exit(1)
 	}
-	migActuator := mig.NewActuator()
+	migActuator := mig.NewActuator(mgr.GetClient(), ctrl.Log.WithName("MigActuator"))
 	migController := core.NewController(
 		mgr.GetClient(),
 		mgr.GetScheme(),

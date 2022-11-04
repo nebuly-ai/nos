@@ -85,7 +85,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	for _, a := range newStatusAnnotations {
 		updated.Annotations[a.Name] = a.GetValue()
 	}
-	if err := r.Client.Patch(ctx, updated, client.MergeFrom(&instance)); err != nil {
+	if err = r.Client.Patch(ctx, updated, client.MergeFrom(&instance)); err != nil {
 		logger.Error(err, "unable to update node status annotations", "annotations", updated.Annotations)
 		return ctrl.Result{}, err
 	}

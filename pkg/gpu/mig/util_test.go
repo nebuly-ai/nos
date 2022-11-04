@@ -150,7 +150,7 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			specAnnotations := make([]GPUSpecAnnotation, 0)
 			for k, v := range tt.spec {
-				a, _ := NewGPUSpecAnnotation(k, v)
+				a, _ := NewGPUSpecAnnotationFromNodeAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 

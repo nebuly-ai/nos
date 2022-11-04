@@ -134,7 +134,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			annotations := make(mig.GPUSpecAnnotationList, 0)
 			for k, v := range tt.specAnnotations {
-				a, err := mig.NewGPUSpecAnnotation(k, v)
+				a, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(k, v)
 				assert.NoError(t, err)
 				annotations = append(annotations, a)
 			}
