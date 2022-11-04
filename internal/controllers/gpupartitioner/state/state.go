@@ -34,7 +34,7 @@ func (c *ClusterState) GetSnapshot() ClusterSnapshot {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	return ClusterSnapshot{} // Todo
+	return NewClusterSnapshot(c.nodes)
 }
 
 func (c *ClusterState) deleteNode(name string) {
