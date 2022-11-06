@@ -15,10 +15,6 @@ func TestBatcher__Ready(t *testing.T) {
 	const testTimeout = 3 * time.Second
 
 	t.Run("Adding items to batch should never block", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-
 		timeoutDuration := 10 * time.Millisecond
 		idleDuration := 10 * time.Millisecond
 		podBatcher := util.NewBatcher[v1.Pod](timeoutDuration, idleDuration)
@@ -31,7 +27,6 @@ func TestBatcher__Ready(t *testing.T) {
 
 		select {
 		case <-done: // success
-			cancel()
 		case <-time.NewTimer(testTimeout).C:
 			assert.Fail(t, "test timed out")
 		}
@@ -50,7 +45,7 @@ func TestBatcher__Ready(t *testing.T) {
 
 		// Start batcher
 		go func() {
-			assert.NoError(t, podBatcher.Start(context.Background()))
+			assert.NoError(t, podBatcher.Start(ctx))
 		}()
 
 		// Batch is empty, so it should never be ready
@@ -64,8 +59,7 @@ func TestBatcher__Ready(t *testing.T) {
 	})
 
 	t.Run("Should be ready after idle duration if no other items are added to the batch", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, cancel := context.WithCancel(ctx)
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
 		timeoutDuration := 20 * time.Millisecond
@@ -74,7 +68,7 @@ func TestBatcher__Ready(t *testing.T) {
 
 		// Start batcher
 		go func() {
-			assert.NoError(t, podBatcher.Start(context.Background()))
+			assert.NoError(t, podBatcher.Start(ctx))
 		}()
 
 		// Start a batch
@@ -178,7 +172,7 @@ func TestBatcher__Ready(t *testing.T) {
 		// Check idle timer gets reset after adding pods
 		select {
 		case <-podBatcher.Ready():
-			assert.Greater(t, time.Now().Sub(start), timeoutDuration)
+			assert.Greater(t, time.Since(start), timeoutDuration)
 		case <-time.NewTimer(testTimeout).C:
 			assert.Fail(t, "test timed out")
 		}
