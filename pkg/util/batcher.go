@@ -2,26 +2,33 @@ package util
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
 type Batcher[T any] struct {
-	trigger      chan T
-	currentBatch []T
-	idleDuration time.Duration
+	trigger         chan T
+	idleDuration    time.Duration
+	timeoutDuration time.Duration
+	batchChan       chan []T
+	running         bool
 }
 
-func NewBatcher[T any](idleDuration time.Duration) Batcher[T] {
+func NewBatcher[T any](timeoutDuration time.Duration, idleDuration time.Duration) Batcher[T] {
 	return Batcher[T]{
-		trigger:      make(chan T),
-		idleDuration: idleDuration,
+		trigger:         make(chan T),
+		timeoutDuration: timeoutDuration,
+		idleDuration:    idleDuration,
+		batchChan:       make(chan []T),
 	}
 }
 
-func NewBufferedBatcher[T any](idleDuration time.Duration, bufferSize int) Batcher[T] {
+func NewBufferedBatcher[T any](timeoutDuration time.Duration, idleDuration time.Duration, bufferSize int) Batcher[T] {
 	return Batcher[T]{
-		trigger:      make(chan T, bufferSize),
-		idleDuration: idleDuration,
+		trigger:         make(chan T, bufferSize),
+		timeoutDuration: timeoutDuration,
+		idleDuration:    idleDuration,
+		batchChan:       make(chan []T),
 	}
 }
 
@@ -33,25 +40,64 @@ func (b *Batcher[T]) Add(item T) {
 	}
 }
 
-func (b *Batcher[T]) WaitBatch(ctx context.Context, timeout time.Duration) []T {
-	var batch = make([]T, 0)
+func (b *Batcher[T]) Start(ctx context.Context) error {
+	// Check if the batcher has already been started
+	if b.running {
+		return fmt.Errorf("batcher already started")
+	}
+	b.running = true
 
-	idleTimer := time.NewTimer(timeout)
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+	// Init
+	var batch []T
+	var idleTimer = time.NewTimer(0 * time.Millisecond)
+	var timeoutTimer = time.NewTimer(0 * time.Millisecond)
+	var reset = func() {
+		batch = make([]T, 0)
+		stopTimer(idleTimer)
+		stopTimer(timeoutTimer)
+	}
+	reset()
 
+	// Run
 	for {
 		select {
 		case item := <-b.trigger:
-			batch = append(batch, item)
-			if !idleTimer.Stop() {
-				<-idleTimer.C
+			if len(batch) == 0 {
+				resetTimer(timeoutTimer, b.timeoutDuration)
 			}
-			idleTimer.Reset(b.idleDuration)
+			batch = append(batch, item)
+			resetTimer(idleTimer, b.idleDuration)
 		case <-idleTimer.C:
-			return batch
+			b.batchChan <- batch
+			reset()
+		case <-timeoutTimer.C:
+			b.batchChan <- batch
+			reset()
 		case <-ctx.Done():
-			return batch
+			// Stop
+			stopTimer(timeoutTimer)
+			stopTimer(idleTimer)
+			b.running = false
+			return nil
+		}
+	}
+}
+
+func (b *Batcher[T]) Ready() chan []T {
+	return b.batchChan
+}
+
+func resetTimer(timer *time.Timer, duration time.Duration) {
+	stopTimer(timer)
+	timer.Reset(duration)
+}
+
+// stopTimer stops and drains the provided timer
+func stopTimer(timer *time.Timer) {
+	if !timer.Stop() {
+		select {
+		case <-timer.C:
+		default:
 		}
 	}
 }
