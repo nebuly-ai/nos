@@ -48,12 +48,12 @@ func TestBatcher__WaitBatch(t *testing.T) {
 		assert.WithinDuration(t, end, start, 10*time.Millisecond)
 	})
 
-	t.Run("If no items are added, should wait until idle duration elapses", func(t *testing.T) {
-		idleDuration := 100 * time.Millisecond
-		podBatcher := util.NewBatcher[v1.Pod](idleDuration)
+	t.Run("If no items are added, should wait until timeout duration elapses", func(t *testing.T) {
+		timeoutDuration := 50 * time.Millisecond
+		podBatcher := util.NewBatcher[v1.Pod](10 * time.Millisecond)
 		start := time.Now()
-		podBatcher.WaitBatch(context.Background(), 10*time.Second)
-		assert.WithinDuration(t, time.Now(), start.Add(idleDuration), 2*time.Millisecond)
+		podBatcher.WaitBatch(context.Background(), timeoutDuration)
+		assert.WithinDuration(t, time.Now(), start.Add(timeoutDuration), 2*time.Millisecond)
 	})
 
 	t.Run("Adding an item should reset idle timeout", func(t *testing.T) {

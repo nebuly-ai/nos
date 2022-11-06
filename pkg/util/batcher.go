@@ -36,7 +36,7 @@ func (b *Batcher[T]) Add(item T) {
 func (b *Batcher[T]) WaitBatch(ctx context.Context, timeout time.Duration) []T {
 	var batch = make([]T, 0)
 
-	idleTimer := time.NewTimer(b.idleDuration)
+	idleTimer := time.NewTimer(timeout)
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
