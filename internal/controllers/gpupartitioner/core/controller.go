@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
@@ -91,6 +92,7 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 	c.logger.V(1).Info("*** processing pending pods ***")
 	defer c.logger.V(1).Info("*** end processing pending pods ***")
 
+	c.logger.Info(fmt.Sprintf("processing %d pods", len(pods)))
 	snapshot := c.clusterState.GetSnapshot()
 
 	// Keep only pending pods that could benefit from
@@ -104,8 +106,10 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 			pendingCandidates = append(pendingCandidates, p)
 		}
 	}
-	if len(pendingCandidates) == 0 {
-		c.logger.Info("there are no pending pods to help with GPU partitioning")
+
+	nPendingCandidates := len(pendingCandidates)
+	c.logger.Info(fmt.Sprintf("found %d pendiong candidate pods", nPendingCandidates))
+	if nPendingCandidates == 0 {
 		return ctrl.Result{}, nil
 	}
 
