@@ -21,6 +21,7 @@ type Controller struct {
 	logger       logr.Logger
 	podBatcher   util.Batcher[v1.Pod]
 	clusterState *state.ClusterState
+	currentBatch map[string]v1.Pod
 	planner      Planner
 	actuator     Actuator
 }
@@ -30,21 +31,25 @@ func NewController(
 	client client.Client,
 	logger logr.Logger,
 	podBatcher util.Batcher[v1.Pod],
+	clusterState *state.ClusterState,
 	planner Planner,
 	actuator Actuator) Controller {
 	return Controller{
-		Scheme:     scheme,
-		Client:     client,
-		logger:     logger,
-		podBatcher: podBatcher,
-		planner:    planner,
-		actuator:   actuator,
+		Scheme:       scheme,
+		Client:       client,
+		logger:       logger,
+		clusterState: clusterState,
+		currentBatch: make(map[string]v1.Pod),
+		podBatcher:   podBatcher,
+		planner:      planner,
+		actuator:     actuator,
 	}
 }
 
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	c.logger.V(1).Info("*** start reconcile ***")
-	defer c.logger.V(1).Info("*** end reconcile ***")
+	c.logger.V(3).Info("*** start reconcile ***")
+	defer c.logger.V(3).Info("*** end reconcile ***")
+	var requeueNecessary bool
 
 	// Fetch instance
 	var instance v1.Pod
@@ -57,19 +62,28 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
-	// Add Pod to current batch
-	c.podBatcher.Add(instance)
+	// Add Pod to current batch only if not already present
+	if _, ok := c.currentBatch[util.GetNamespacedName(&instance).String()]; !ok {
+		c.podBatcher.Add(instance)
+		c.currentBatch[util.GetNamespacedName(&instance).String()] = instance
+		c.logger.V(1).Info("batch updated", "pod", instance.Name, "namespace", instance.Namespace)
+		// pod has been added to current batch, requeue in order to process it in the next cycle
+		requeueNecessary = true
+	}
 
-	// If Pods batch is ready, then process it
+	// If batch is ready then process pending pods
 	select {
 	case <-c.podBatcher.Ready():
+		c.currentBatch = make(map[string]v1.Pod)
 		return c.processPendingPods(ctx)
 	default:
 		c.logger.V(1).Info("batch not ready")
 	}
 
-	// Pod has been added to current batch, requeue in order to process it in the next cycle
-	return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	if requeueNecessary {
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+	return ctrl.Result{}, nil
 }
 
 func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error) {

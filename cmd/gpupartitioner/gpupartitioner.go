@@ -56,6 +56,7 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+	ctx := ctrl.SetupSignalHandler()
 
 	clusterState := state.NewClusterState()
 
@@ -102,12 +103,19 @@ func main() {
 		os.Exit(1)
 	}
 	podBatcher := util.NewBatcher[v1.Pod](1*time.Minute, 5*time.Second) // TODO move to config
+	go func() {
+		if err = podBatcher.Start(ctx); err != nil {
+			setupLog.Error(err, "unable to start pod batcher")
+			os.Exit(1)
+		}
+	}()
 	migActuator := mig.NewActuator(mgr.GetClient(), ctrl.Log.WithName("MigActuator"))
 	migController := core.NewController(
 		mgr.GetScheme(),
 		mgr.GetClient(),
 		ctrl.Log.WithName("MigController"),
 		podBatcher,
+		&clusterState,
 		migPlanner,
 		migActuator,
 	)
@@ -133,7 +141,7 @@ func main() {
 
 	// Start controller manager
 	setupLog.Info("starting manager")
-	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

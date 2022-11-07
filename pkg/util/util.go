@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 )
 
@@ -57,7 +56,12 @@ func RandomStringLowercase(n int) string {
 	return string(b)
 }
 
-func GetNamespacedName(object client.Object) types.NamespacedName {
+type HasNamespacedName interface {
+	GetName() string
+	GetNamespace() string
+}
+
+func GetNamespacedName(object HasNamespacedName) types.NamespacedName {
 	return types.NamespacedName{
 		Name:      object.GetName(),
 		Namespace: object.GetNamespace(),
