@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: mig-agent
+  namespace: system
 spec:
   selector:
     matchLabels:
@@ -29,7 +30,7 @@ spec:
       imagePullSecrets:
         - name: ghcr # todo: remove me
       containers:
-        - name: manager
+        - name: mig-agent
           image: mig-agent:latest
           env:
             - name: NODE_NAME
@@ -37,7 +38,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
           args:
-            - "--config=mig-agent_config.yaml"
+            - "--config=mig_agent_config.yaml"
           securityContext:
             privileged: true
           livenessProbe:

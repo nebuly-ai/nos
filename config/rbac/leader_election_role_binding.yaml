@@ -7,7 +7,7 @@ roleRef:
   kind: Role
   name: leader-election-role
 subjects:
-  - kind: ServiceAccount
+- kind: ServiceAccount
   name: controller-manager
   namespace: system
 - kind: ServiceAccount
