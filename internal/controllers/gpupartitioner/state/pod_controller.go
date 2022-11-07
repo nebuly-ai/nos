@@ -26,8 +26,6 @@ func NewPodController(client client.Client, scheme *runtime.Scheme, state *Clust
 	}
 }
 
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
-
 func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -75,6 +73,13 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 }
 
 func (c *PodController) SetupWithManager(mgr ctrl.Manager, name string) error {
+	err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, constant.PodNodeNameKey, func(rawObj client.Object) []string {
+		p := rawObj.(*v1.Pod)
+		return []string{p.Spec.NodeName}
+	})
+	if err != nil {
+		return err
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		For(&v1.Pod{}).

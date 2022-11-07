@@ -26,9 +26,6 @@ func NewNodeController(client client.Client, scheme *runtime.Scheme, state *Clus
 	}
 }
 
-//+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
-
 func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 

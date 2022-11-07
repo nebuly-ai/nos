@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sort"
 	"time"
 )
@@ -43,13 +42,9 @@ func NewController(
 	}
 }
 
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
-//+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;patch
-
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx).WithName("Controller")
-	logger.V(1).Info("*** start reconcile ***")
-	defer logger.V(1).Info("*** end reconcile ***")
+	c.logger.V(1).Info("*** start reconcile ***")
+	defer c.logger.V(1).Info("*** end reconcile ***")
 
 	// Fetch instance
 	var instance v1.Pod
