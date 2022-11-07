@@ -2,6 +2,7 @@ package mig
 
 const (
 	GPUModel_A100_SMX4_40GB GPUModel = "A100-SMX4-40GB"
+	GPUModel_A100_PCIe_80GB GPUModel = "NVIDIA-A100-80GB-PCIe"
 	GPUModel_A30            GPUModel = "A30"
 )
 
@@ -70,6 +71,56 @@ var (
 			},
 			{
 				Profile1g5gb: 7,
+			},
+		},
+		GPUModel_A100_PCIe_80GB: {
+			{
+				Profile7g80gb: 1,
+			},
+			{
+				Profile4g40gb: 1,
+				Profile2g20gb: 1,
+				Profile1g10gb: 1,
+			},
+			{
+				Profile4g40gb: 1,
+				Profile1g10gb: 3,
+			},
+			{
+				Profile3g40gb: 2,
+			},
+			{
+				Profile3g40gb: 1,
+				Profile2g20gb: 1,
+				Profile1g10gb: 1,
+			},
+			{
+				Profile3g40gb: 1,
+				Profile1g10gb: 3,
+			},
+			{
+				Profile2g20gb: 2,
+				Profile3g20gb: 1,
+			},
+			{
+				Profile2g10gb: 1,
+				Profile1g10gb: 2,
+				Profile3g40gb: 1,
+			},
+			{
+				Profile2g20gb: 3,
+				Profile1g10gb: 1,
+			},
+			{
+				Profile2g20gb: 2,
+				Profile1g10gb: 3,
+			},
+			{
+				Profile2g20gb: 1,
+				Profile1g10gb: 5,
+			},
+			{
+				Profile1g10gb: 7,
 			},
 		},
 	}
