@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: migagent
+  name: mig-agent
 spec:
   selector:
     matchLabels:
-      name: migagent
+      name: mig-agent
   template:
     metadata:
       labels:
-        name: migagent
+        name: mig-agent
     spec:
       nodeSelector:
         n8s.nebuly.ai/auto-mig-enabled: "true"
@@ -30,14 +30,14 @@ spec:
         - name: ghcr # todo: remove me
       containers:
         - name: manager
-          image: migagent:latest
+          image: mig-agent:latest
           env:
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
           args:
-            - "--config=migagent_config.yaml"
+            - "--config=mig-agent_config.yaml"
           securityContext:
             privileged: true
           livenessProbe:
@@ -62,11 +62,8 @@ spec:
             - name: run-nvidia
               mountPath: /run/nvidia
               mountPropagation: HostToContainer
-            - name: migagent-config
-              mountPath: /migagent_config.yaml
-              subPath: migagent_config.yaml
       terminationGracePeriodSeconds: 30
-      serviceAccountName: migagent
+      serviceAccountName: mig-agent
       volumes:
         - name: device-plugin
           hostPath:
@@ -75,6 +72,3 @@ spec:
           hostPath:
             path: /run/nvidia
             type: Directory
-        - name: migagent-config
-          configMap:
-            name: migagent-config

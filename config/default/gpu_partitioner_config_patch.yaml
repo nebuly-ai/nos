@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-partitioner
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+        - name: gpu-partitioner
+          args:
+            - "--config=gpu_partitioner_config.yaml"
+          volumeMounts:
+            - name: gpu-partitioner-config
+              mountPath: /gpu_partitioner_config.yaml
+              subPath: gpu_partitioner_config.yaml
+      volumes:
+        - name: gpu-partitioner-config
+          configMap:
+            name: gpu-partitioner-config

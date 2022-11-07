@@ -3,7 +3,7 @@
 CONTROLLER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-controller:latest
 SCHEDULER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-scheduler:latest
 GPU_PARTITIONER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner:latest
-MIGAGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-migagent:latest
+MIGAGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-mig-agent:latest
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -89,8 +89,8 @@ run: manifests generate fmt vet ## Run a controller from your host.
 docker-build-gpu-partitioner: ## Build docker image with the manager.
 	docker build -t ${GPU_PARTITIONER_IMG} -f build/gpupartitioner/Dockerfile .
 
-.PHONY: docker-build-migagent
-docker-build-migagent: ## Build docker image with the manager.
+.PHONY: docker-build-mig-agent
+docker-build-mig-agent: ## Build docker image with the manager.
 	docker buildx build --platform linux/amd64 -t ${MIGAGENT_IMG} -f build/migagent/Dockerfile .
 
 .PHONY: docker-build-controller
@@ -105,8 +105,8 @@ docker-build-scheduler: ## Build docker image with the scheduler.
 docker-push-controller: ## Build docker image with the manager.
 	docker push ${CONTROLLER_IMG}
 
-.PHONY: docker-push-migagent
-docker-push-migagent: ## Build docker image with the manager.
+.PHONY: docker-push-mig-agent
+docker-push-mig-agent: ## Build docker image with the manager.
 	docker push ${MIGAGENT_IMG}
 
 .PHONY: docker-push-scheduler
@@ -118,10 +118,10 @@ docker-push-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 	docker push ${GPU_PARTITIONER_IMG}
 
 .PHONY: docker-build
-docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner docker-build-migagent
+docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner docker-build-mig-agent
 
 .PHONY: docker-push
-docker-push: docker-push-controller docker-push-scheduler docker-push-migagent docker-push-gpu-partitioner
+docker-push: docker-push-controller docker-push-scheduler docker-push-mig-agent docker-push-gpu-partitioner
 
 ##@ Deployment
 
@@ -144,7 +144,8 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}
 	cd config/scheduler && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
-	cd config/migagent && $(KUSTOMIZE) edit set image migagent=${MIGAGENT_IMG}
+	cd config/migagent && $(KUSTOMIZE) edit set image mig-agent=${MIGAGENT_IMG}
+	cd config/gpupartitioner && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy

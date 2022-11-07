@@ -7,7 +7,7 @@ env:
   REGISTRY: ghcr.io
   CONTROLLER_IMG: "ghcr.io/${{ github.repository }}-controller:latest"
   SCHEDULER_IMG: "ghcr.io/${{ github.repository }}-scheduler:latest"
-  MIGAGENT_IMG: "ghcr.io/${{ github.repository }}-migagent:latest"
+  MIGAGENT_IMG: "ghcr.io/${{ github.repository }}-mig-agent:latest"
   GPU_PARTITIONER_IMG: "ghcr.io/${{ github.repository }}-gpu-partitioner:latest"
 
 jobs:

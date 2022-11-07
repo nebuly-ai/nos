@@ -1,25 +1,25 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: mig-agent-role
+  name: gpu-partitioner-role
 rules:
   - apiGroups: [ "" ]
     resources: [ "nodes" ]
     verbs: [ "get", "list", "watch", "patch" ]
   - apiGroups: [ "" ]
     resources: [ "pods" ]
-    verbs: [ "list", "watch", "get", "delete" ]
+    verbs: [ "get", "list", "watch" ]
 
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: mig-agent-rolebinding
+  name: gpu-partitioner-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: mig-agent-role
+  name: gpu-partitioner-role
 subjects:
   - kind: ServiceAccount
-    name: mig-agent
+    name: gpu-partitioner
     namespace: system
