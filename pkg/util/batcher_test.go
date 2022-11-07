@@ -118,7 +118,7 @@ func TestBatcher__Ready(t *testing.T) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		timeoutDuration := 200 * time.Millisecond
+		timeoutDuration := 500 * time.Millisecond
 		idleDuration := 50 * time.Millisecond
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
@@ -134,12 +134,15 @@ func TestBatcher__Ready(t *testing.T) {
 			podBatcher.Add(v1.Pod{})
 			time.Sleep(25 * time.Millisecond)
 			podBatcher.Add(v1.Pod{})
+			time.Sleep(25 * time.Millisecond)
+			podBatcher.Add(v1.Pod{})
 		}()
 
 		// Check idle timer gets reset after adding pods
 		select {
 		case <-podBatcher.Ready():
-			assert.WithinDuration(t, time.Now(), start.Add(idleDuration*2), 25*time.Millisecond)
+			assert.Greater(t, time.Since(start), idleDuration*2)
+			assert.Less(t, time.Since(start), timeoutDuration)
 		case <-time.NewTimer(testTimeout).C:
 			assert.Fail(t, "test timed out")
 		}

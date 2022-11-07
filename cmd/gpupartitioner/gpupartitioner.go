@@ -8,6 +8,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -23,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"time"
 )
 
 var (
@@ -98,10 +100,13 @@ func main() {
 		setupLog.Error(err, "unable to create MIG planner")
 		os.Exit(1)
 	}
+	podBatcher := util.NewBatcher[v1.Pod](1*time.Minute, 5*time.Second) // TODO move to config
 	migActuator := mig.NewActuator(mgr.GetClient(), ctrl.Log.WithName("MigActuator"))
 	migController := core.NewController(
 		mgr.GetScheme(),
-		&clusterState,
+		mgr.GetClient(),
+		ctrl.Log.WithName("MigController"),
+		podBatcher,
 		migPlanner,
 		migActuator,
 	)
