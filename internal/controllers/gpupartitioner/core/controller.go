@@ -59,6 +59,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// If Pod is not pending then don't add it to the current batch
 	if instance.Status.Phase != v1.PodPending {
+		c.logger.V(3).Info("pod is not pending, skipping it", "pod", instance.Name, "namespace", instance.Namespace)
 		return ctrl.Result{}, nil
 	}
 
