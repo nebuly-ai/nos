@@ -74,9 +74,9 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// If batch is ready then process pending pods
 	select {
-	case <-c.podBatcher.Ready():
+	case batch := <-c.podBatcher.Ready():
 		c.currentBatch = make(map[string]v1.Pod)
-		return c.processPendingPods(ctx)
+		return c.processPendingPods(ctx, batch)
 	default:
 		c.logger.V(1).Info("batch not ready")
 	}
@@ -87,7 +87,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{}, nil
 }
 
-func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error) {
+func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctrl.Result, error) {
 	c.logger.V(1).Info("*** processing pending pods ***")
 	defer c.logger.V(1).Info("*** end processing pending pods ***")
 
@@ -96,7 +96,10 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 	// Keep only pending pods that could benefit from
 	// extra resources created through GPU partitioning
 	pendingCandidates := make([]v1.Pod, 0)
-	for _, p := range snapshot.GetPendingPods() {
+	for _, p := range pods {
+		if p.Status.Phase != v1.PodPending {
+			continue
+		}
 		if pod.ExtraResourcesCouldHelpScheduling(p) {
 			pendingCandidates = append(pendingCandidates, p)
 		}
