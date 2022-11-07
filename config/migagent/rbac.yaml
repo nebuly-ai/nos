@@ -3,9 +3,12 @@ kind: ClusterRole
 metadata:
   name: migagent-role
 rules:
-  - apiGroups: [""]
-    resources: ["nodes"]
-    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [ "" ]
+    resources: [ "nodes" ]
+    verbs: [ "get", "list", "watch", "patch" ]
+  - apiGroups: [ "" ]
+    resources: [ "pods" ]
+    verbs: [ "list", "watch" ]
 
 ---
 kind: ClusterRoleBinding
