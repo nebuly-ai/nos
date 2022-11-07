@@ -11,7 +11,8 @@ import (
 
 func NewClusterState() ClusterState {
 	return ClusterState{
-		nodes: make(map[string]framework.NodeInfo),
+		nodes:    make(map[string]framework.NodeInfo),
+		bindings: make(map[types.NamespacedName]string),
 	}
 }
 
