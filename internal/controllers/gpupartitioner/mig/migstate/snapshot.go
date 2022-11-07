@@ -28,7 +28,7 @@ func (d migData) clone() *migData {
 }
 
 func NewClusterSnapshot(snapshot state.ClusterSnapshot) (MigClusterSnapshot, error) {
-	migNodes, err := extractMigNodes(snapshot)
+	migNodes, err := asMigNodes(snapshot.GetNodes())
 	if err != nil {
 		return MigClusterSnapshot{}, err
 	}
@@ -38,9 +38,9 @@ func NewClusterSnapshot(snapshot state.ClusterSnapshot) (MigClusterSnapshot, err
 	}, nil
 }
 
-func extractMigNodes(snapshot state.ClusterSnapshot) (map[string]mig.Node, error) {
+func asMigNodes(nodes map[string]framework.NodeInfo) (map[string]mig.Node, error) {
 	res := make(map[string]mig.Node)
-	for _, v := range snapshot.GetNodes() {
+	for _, v := range nodes {
 		migNode, err := mig.NewNode(*v.Node())
 		if err != nil {
 			return res, err
