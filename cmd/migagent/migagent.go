@@ -107,7 +107,7 @@ func main() {
 		&mutex,
 		10*time.Second,
 	)
-	if err := migReporter.SetupWithManager(mgr, "MIGReporter", nodeName); err != nil {
+	if err = migReporter.SetupWithManager(mgr, "MIGReporter", nodeName); err != nil {
 		setupLog.Error(err, "unable to create MIG Reporter")
 		os.Exit(1)
 	}
@@ -119,24 +119,24 @@ func main() {
 		&mutex,
 		nodeName,
 	)
-	if err := migActuator.SetupWithManager(mgr, "MIGActuator"); err != nil {
+	if err = migActuator.SetupWithManager(mgr, "MIGActuator"); err != nil {
 		setupLog.Error(err, "unable to create MIG Actuator")
 		os.Exit(1)
 	}
 
 	// Add health check endpoints to manager
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
 	// Start manager
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
