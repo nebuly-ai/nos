@@ -49,7 +49,6 @@ func NewController(
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	c.logger.V(3).Info("*** start reconcile ***")
 	defer c.logger.V(3).Info("*** end reconcile ***")
-	var requeueNecessary bool
 
 	// Fetch instance
 	var instance v1.Pod
@@ -68,20 +67,19 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		c.podBatcher.Add(instance)
 		c.currentBatch[util.GetNamespacedName(&instance).String()] = instance
 		c.logger.V(1).Info("batch updated", "pod", instance.Name, "namespace", instance.Namespace)
-		// pod has been added to current batch, requeue in order to process it in the next cycle
-		requeueNecessary = true
 	}
 
 	// If batch is ready then process pending pods
 	select {
 	case batch := <-c.podBatcher.Ready():
+		c.logger.V(1).Info("batch ready")
 		c.currentBatch = make(map[string]v1.Pod)
 		return c.processPendingPods(ctx, batch)
 	default:
 		c.logger.V(1).Info("batch not ready")
 	}
 
-	if requeueNecessary {
+	if len(c.currentBatch) > 0 {
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 	return ctrl.Result{}, nil
