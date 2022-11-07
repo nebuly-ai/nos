@@ -8,6 +8,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	testutil "github.com/nebuly-ai/nebulnetes/pkg/test/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -154,5 +155,6 @@ func newSchedulerFramework(kubeClient kubernetes.Interface) (framework.Framework
 		scheduler_plugins.NewInTreeRegistry(),
 		&schedulerConfig.Profiles[0],
 		scheduler_runtime.WithInformerFactory(informerFactory),
+		scheduler_runtime.WithSnapshotSharedLister(testutil.NewFakeSharedLister(make([]*v1.Pod, 0), make([]*v1.Node, 0))),
 	)
 }
