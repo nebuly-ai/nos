@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/pod"
 	v1 "k8s.io/api/core/v1"
@@ -135,14 +134,6 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {
-	err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, constant.PodPhaseKey, func(rawObj client.Object) []string {
-		p := rawObj.(*v1.Pod)
-		return []string{string(p.Status.Phase)}
-	})
-	if err != nil {
-		return err
-	}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Pod{}).
 		Named(name).

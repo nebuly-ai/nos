@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
@@ -22,6 +23,7 @@ import (
 	scheduler_runtime "k8s.io/kubernetes/pkg/scheduler/framework/runtime"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -73,6 +75,12 @@ func main() {
 	ctx := ctrl.SetupSignalHandler()
 
 	clusterState := state.NewClusterState()
+
+	// Setup indexer
+	if err = setupIndexer(ctx, mgr); err != nil {
+		setupLog.Error(err, "error configuring controller manager indexer")
+		os.Exit(1)
+	}
 
 	// Setup state controllers
 	nodeController := state.NewNodeController(
@@ -159,6 +167,30 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func setupIndexer(ctx context.Context, mgr ctrl.Manager) error {
+	var err error
+
+	// Index Pods' phase
+	err = mgr.GetFieldIndexer().IndexField(ctx, &v1.Pod{}, constant.PodPhaseKey, func(rawObj client.Object) []string {
+		p := rawObj.(*v1.Pod)
+		return []string{string(p.Status.Phase)}
+	})
+	if err != nil {
+		return err
+	}
+
+	// Index Pods' node name
+	err = mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, constant.PodNodeNameKey, func(rawObj client.Object) []string {
+		p := rawObj.(*v1.Pod)
+		return []string{p.Spec.NodeName}
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func newSchedulerFramework(kubeClient kubernetes.Interface) (framework.Framework, error) {
