@@ -40,10 +40,7 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	// If Pod does not exist then remove it from Cluster State
 	if apierrors.IsNotFound(err) {
-		if err := c.clusterState.deletePod(req.NamespacedName); err != nil {
-			logger.Error(err, "unable to remove pod from cluster state")
-			return ctrl.Result{}, err
-		}
+		_ = c.clusterState.deletePod(req.NamespacedName)
 		return ctrl.Result{}, nil
 	}
 
