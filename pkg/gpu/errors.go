@@ -1,6 +1,8 @@
 package gpu
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type errorCode uint
 
@@ -11,7 +13,7 @@ const (
 
 var (
 	NotFoundError = errorImpl{code: errorCodeNotFound}
-	GenericError  = errorImpl{code: errorCodeNotFound}
+	GenericError  = errorImpl{code: errorCodeGeneric}
 )
 
 type Error interface {
@@ -35,6 +37,27 @@ func (e errorImpl) IsNotFound() bool {
 func (e errorImpl) Errorf(format string, args ...any) Error {
 	e.err = fmt.Errorf(format, args...)
 	return e
+}
+
+func IgnoreNotFound(err Error) Error {
+	if err == nil {
+		return nil
+	}
+	if err.IsNotFound() {
+		return nil
+	}
+	return err
+}
+
+func IsNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	gpuErr, ok := err.(Error)
+	if !ok {
+		return false
+	}
+	return gpuErr.IsNotFound()
 }
 
 func NewGenericError(err error) Error {

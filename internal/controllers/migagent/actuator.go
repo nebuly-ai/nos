@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
@@ -75,10 +76,16 @@ func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnot
 
 	// Compute current state
 	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
-	if err != nil {
+	if gpu.IgnoreNotFound(err) != nil {
 		logger.Error(err, "unable to get MIG device resources")
 		return plan.MigConfigPlan{}, err
 	}
+	// If err is not found, restart the NVIDIA device plugin for updating the resources exposed to k8s
+	if gpu.IsNotFound(err) {
+		logger.Error(err, "unable to get MIG device resources")
+		return plan.MigConfigPlan{}, a.restartNvidiaDevicePlugin(ctx)
+	}
+
 	state := plan.NewMigState(migDeviceResources)
 
 	// Check if actual state already matches spec
@@ -92,7 +99,6 @@ func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnot
 }
 
 func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.Result, error) {
-	var err error
 	logger := a.newLogger(ctx)
 	logger.Info(
 		"applying MIG config plan",
@@ -102,34 +108,47 @@ func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.
 		plan.DeleteOperations,
 	)
 
-	var atLeastOneDelete bool
-	var atLeastOneCreate bool
+	var restartRequired bool
+	var atLeastOneErr bool
 
 	// Apply delete operations first
 	for _, op := range plan.DeleteOperations {
-		atLeastOneDelete, err = a.applyDeleteOp(ctx, op)
-		if err != nil {
-			logger.Error(err, "unable to fulfill delete operation", "op", op)
+		status := a.applyDeleteOp(ctx, op)
+		if status.Err != nil {
+			logger.Error(status.Err, "unable to fulfill delete operation", "op", op)
+			atLeastOneErr = true
+		}
+		if status.PluginRestartRequired {
+			restartRequired = true
 		}
 	}
 
 	// Apply create operations
 	for _, op := range plan.CreateOperations {
-		atLeastOneCreate, err = a.applyCreateOp(ctx, op)
-		if err != nil {
-			logger.Error(err, "unable to fulfill create operation", "op", op)
+		status := a.applyCreateOp(ctx, op)
+		if status.Err != nil {
+			logger.Error(status.Err, "unable to fulfill create operation", "op", op)
+			atLeastOneErr = true
+		}
+		if status.PluginRestartRequired {
+			restartRequired = true
 		}
 	}
 
-	// If any MIG profile has been created/deleted, restart the device plugin to advertise the new resources
-	if atLeastOneCreate || atLeastOneDelete {
-		if err = a.restartNvidiaDevicePlugin(ctx); err != nil {
+	// Restart the NVIDIA device plugin if necessary
+	if restartRequired {
+		if err := a.restartNvidiaDevicePlugin(ctx); err != nil {
 			logger.Error(err, "unable to restart nvidia device plugin")
 			return ctrl.Result{}, err
 		}
 	}
 
-	return ctrl.Result{}, err
+	// Check if any error happened
+	if atLeastOneErr {
+		return ctrl.Result{}, fmt.Errorf("at least one operation failed while applying desired MIG config")
+	}
+
+	return ctrl.Result{}, nil
 }
 
 // restartNvidiaDevicePlugin deletes the Nvidia Device Plugin pod and blocks until it is successfully recreated by
@@ -213,9 +232,10 @@ func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, time
 	return nil
 }
 
-func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) (bool, error) {
+func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) plan.OperationStatus {
 	logger := a.newLogger(ctx)
 	logger.Info("applying delete operation for MigProfile", "migProfile", op.GetMigProfileName())
+	var restartRequired bool
 
 	// Get resources candidate to be deleted
 	candidateResources := make([]mig.DeviceResource, 0)
@@ -238,7 +258,12 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 	// Delete resources choosing from candidates
 	var nDeleted int
 	for _, r := range candidateResources {
-		if err := a.migClient.DeleteMigResource(ctx, r); err != nil {
+		err := a.migClient.DeleteMigResource(ctx, r)
+		if gpu.IgnoreNotFound(err) != nil {
+			logger.Error(err, "unable to delete MIG resource", "resource", r)
+			continue
+		}
+		if gpu.IsNotFound(err) {
 			logger.Error(err, "unable to delete MIG resource", "resource", r)
 			continue
 		}
@@ -249,39 +274,59 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 		}
 	}
 
-	atLeastOneDelete := nDeleted > 0
+	if nDeleted > 0 {
+		restartRequired = true
+	}
 
 	// Return error if we couldn't delete the amount of resources specified by the Delete Operation
 	if nDeleted < op.Quantity {
-		return atLeastOneDelete, fmt.Errorf("could delete only %d out of %d MIG resources", nDeleted, op.Quantity)
+		return plan.OperationStatus{
+			PluginRestartRequired: restartRequired,
+			Err:                   fmt.Errorf("could delete only %d out of %d MIG resources", nDeleted, op.Quantity),
+		}
 	}
-
-	return atLeastOneDelete, nil
+	return plan.OperationStatus{
+		PluginRestartRequired: restartRequired,
+		Err:                   nil,
+	}
 }
 
-func (a *MigActuator) applyCreateOp(ctx context.Context, op plan.CreateOperation) (bool, error) {
+func (a *MigActuator) applyCreateOp(ctx context.Context, op plan.CreateOperation) plan.OperationStatus {
 	logger := a.newLogger(ctx)
 	logger.Info("applying create operation for MigProfile", "migProfile", op.MigProfile)
 
+	var restartRequired bool
 	var nCreated int
 	var i int
 	for i = 0; i < op.Quantity; i++ {
 		err := a.migClient.CreateMigResource(ctx, op.MigProfile)
-		if err != nil {
+		if gpu.IgnoreNotFound(err) != nil {
 			logger.Error(err, "unable to create MIG resource", "migProfile", op.MigProfile)
+			continue
+		}
+		if gpu.IsNotFound(err) {
+			logger.Error(err, "unable to create MIG resource", "migProfile", op.MigProfile)
+			restartRequired = true
 			continue
 		}
 		logger.Info("created MIG resource", "migProfile", op.MigProfile)
 		nCreated++
 	}
 
-	atLeastOneCreate := nCreated > 0
-
-	if nCreated < op.Quantity {
-		return atLeastOneCreate, fmt.Errorf("could create only %d out of %d MIG resources", nCreated, op.Quantity)
+	if nCreated > 0 {
+		restartRequired = true
 	}
 
-	return atLeastOneCreate, nil
+	if nCreated < op.Quantity {
+		return plan.OperationStatus{
+			PluginRestartRequired: restartRequired,
+			Err:                   fmt.Errorf("could create only %d out of %d MIG resources", nCreated, op.Quantity),
+		}
+	}
+	return plan.OperationStatus{
+		PluginRestartRequired: restartRequired,
+		Err:                   nil,
+	}
 }
 
 func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string) error {

@@ -17,9 +17,9 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		op                  plan.DeleteOperation
 		clientReturnedError gpu.Error
 
-		expectedDeleteCalls      uint
-		errorExpected            bool
-		atLeastOneDeleteExpected bool
+		expectedDeleteCalls uint
+		errorExpected       bool
+		restartExpected     bool
 	}{
 		{
 			name: "Empty delete operation",
@@ -27,10 +27,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				Resources: make(mig.DeviceResourceList, 0),
 				Quantity:  0,
 			},
-			clientReturnedError:      nil,
-			expectedDeleteCalls:      0,
-			errorExpected:            false,
-			atLeastOneDeleteExpected: false,
+			clientReturnedError: nil,
+			expectedDeleteCalls: 0,
+			errorExpected:       false,
+			restartExpected:     false,
 		},
 		{
 			name: "Delete op does not have enough candidates",
@@ -63,10 +63,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				},
 				Quantity: 2,
 			},
-			clientReturnedError:      nil,
-			expectedDeleteCalls:      1,
-			errorExpected:            true,
-			atLeastOneDeleteExpected: true,
+			clientReturnedError: nil,
+			expectedDeleteCalls: 1,
+			errorExpected:       true,
+			restartExpected:     true,
 		},
 		{
 			name: "More candidates than required, the op should delete only Quantity resources",
@@ -99,10 +99,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				},
 				Quantity: 2,
 			},
-			clientReturnedError:      nil,
-			expectedDeleteCalls:      2,
-			atLeastOneDeleteExpected: true,
-			errorExpected:            false,
+			clientReturnedError: nil,
+			expectedDeleteCalls: 2,
+			restartExpected:     true,
+			errorExpected:       false,
 		},
 		{
 			name: "MIG client returns error",
@@ -119,10 +119,10 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				},
 				Quantity: 1,
 			},
-			clientReturnedError:      gpu.GenericError.Errorf("an error"),
-			expectedDeleteCalls:      1,
-			errorExpected:            true,
-			atLeastOneDeleteExpected: false,
+			clientReturnedError: gpu.GenericError.Errorf("an error"),
+			expectedDeleteCalls: 1,
+			errorExpected:       true,
+			restartExpected:     false,
 		},
 	}
 
@@ -133,14 +133,14 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		migClient.Reset()
 		migClient.ReturnedError = tt.clientReturnedError
 		t.Run(tt.name, func(t *testing.T) {
-			atLeastOneDelete, err := actuator.applyDeleteOp(context.TODO(), tt.op)
+			status := actuator.applyDeleteOp(context.TODO(), tt.op)
 			if tt.errorExpected {
-				assert.Error(t, err)
+				assert.Error(t, status.Err)
 			}
 			if !tt.errorExpected {
-				assert.NoError(t, err)
+				assert.NoError(t, status.Err)
 			}
-			assert.Equal(t, tt.atLeastOneDeleteExpected, atLeastOneDelete)
+			assert.Equal(t, tt.restartExpected, status.PluginRestartRequired)
 			assert.Equal(t, tt.expectedDeleteCalls, migClient.NumCallsDeleteMigResource)
 		})
 	}
@@ -152,9 +152,9 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		op                  plan.CreateOperation
 		clientReturnedError gpu.Error
 
-		expectedCreateCalls      uint
-		errorExpected            bool
-		atLeastOneCreateExpected bool
+		expectedCreateCalls uint
+		errorExpected       bool
+		restartExpected     bool
 	}{
 		{
 			name: "Empty create operation",
@@ -165,10 +165,10 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 				},
 				Quantity: 0,
 			},
-			clientReturnedError:      nil,
-			expectedCreateCalls:      0,
-			errorExpected:            false,
-			atLeastOneCreateExpected: false,
+			clientReturnedError: nil,
+			expectedCreateCalls: 0,
+			errorExpected:       false,
+			restartExpected:     false,
 		},
 		{
 			name: "MIG client returns error",
@@ -179,10 +179,10 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 				},
 				Quantity: 1,
 			},
-			clientReturnedError:      gpu.GenericError.Errorf("an error"),
-			expectedCreateCalls:      1,
-			errorExpected:            true,
-			atLeastOneCreateExpected: false,
+			clientReturnedError: gpu.GenericError.Errorf("an error"),
+			expectedCreateCalls: 1,
+			errorExpected:       true,
+			restartExpected:     false,
 		},
 		{
 			name: "Create success, quantity > 1",
@@ -193,10 +193,10 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 				},
 				Quantity: 4,
 			},
-			clientReturnedError:      nil,
-			expectedCreateCalls:      4,
-			errorExpected:            false,
-			atLeastOneCreateExpected: true,
+			clientReturnedError: nil,
+			expectedCreateCalls: 4,
+			errorExpected:       false,
+			restartExpected:     true,
 		},
 	}
 
@@ -207,14 +207,14 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 		migClient.Reset()
 		migClient.ReturnedError = tt.clientReturnedError
 		t.Run(tt.name, func(t *testing.T) {
-			atLeastOneCreate, err := actuator.applyCreateOp(context.TODO(), tt.op)
+			status := actuator.applyCreateOp(context.TODO(), tt.op)
 			if tt.errorExpected {
-				assert.Error(t, err)
+				assert.Error(t, status.Err)
 			}
 			if !tt.errorExpected {
-				assert.NoError(t, err)
+				assert.NoError(t, status.Err)
 			}
-			assert.Equal(t, tt.atLeastOneCreateExpected, atLeastOneCreate)
+			assert.Equal(t, tt.restartExpected, status.PluginRestartRequired)
 			assert.Equal(t, tt.expectedCreateCalls, migClient.NumCallsCreateMigResource)
 		})
 	}

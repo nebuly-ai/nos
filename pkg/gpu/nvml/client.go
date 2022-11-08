@@ -96,7 +96,7 @@ func (c *clientImpl) DeleteMigDevice(id string) gpu.Error {
 	// Fetch MIG device handle
 	d, ret := c.nvmlClient.DeviceGetHandleByUUID(id)
 	if ret == nvlibNvml.ERROR_NOT_FOUND {
-		return gpu.NotFoundError.Errorf("mig device %s not found", id)
+		return gpu.NotFoundError.Errorf("MIG device %s not found", id)
 	}
 	if ret != nvlibNvml.SUCCESS {
 		return gpu.GenericError.Errorf("error getting MIG device with UUID %s: %s", id, ret.Error())
@@ -123,6 +123,9 @@ func (c *clientImpl) DeleteMigDevice(id string) gpu.Error {
 		return gpu.GenericError.Errorf("error getting device handle from MIG device: %s", ret.Error())
 	}
 	gi, ret := parentGpu.GetGpuInstanceById(giId)
+	if ret == nvlibNvml.ERROR_NOT_FOUND {
+		return gpu.NotFoundError.Errorf("GPU instance %s not found", giId)
+	}
 	if ret != nvlibNvml.SUCCESS {
 		return gpu.GenericError.Errorf("error getting GPU Instance %d: %s", giId, ret.Error())
 	}
