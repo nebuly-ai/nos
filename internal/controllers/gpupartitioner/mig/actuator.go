@@ -3,46 +3,45 @@ package mig
 import (
 	"context"
 	"fmt"
-	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 )
 
 type Actuator struct {
 	client.Client
-	logger logr.Logger
 }
 
-func NewActuator(client client.Client, logger logr.Logger) Actuator {
+func NewActuator(client client.Client) Actuator {
 	return Actuator{
 		Client: client,
-		logger: logger,
 	}
 }
 
 func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, desiredState state.PartitioningState) error {
 	var err error
 	var snapshot migstate.MigClusterSnapshot
-	a.logger.Info("applying desired MIG partitioning")
+	logger := log.FromContext(ctx)
+	logger.Info("applying desired MIG partitioning")
 
 	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
 		return fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
 	}
 	if snapshot.GetPartitioningState().Equal(desiredState) {
-		a.logger.Info("current and desired partitioning states are equal, nothing to do")
+		logger.Info("current and desired partitioning states are equal, nothing to do")
 		return nil
 	}
 	if desiredState.IsEmpty() {
-		a.logger.Info("desired partitioning state is empty, nothing to do")
+		logger.Info("desired partitioning state is empty, nothing to do")
 	}
 
 	for node, partitioningState := range desiredState {
-		a.logger.V(1).Info("applying node partitioning", "node", node, "partitioning", partitioningState)
+		logger.V(1).Info("applying node partitioning", "node", node, "partitioning", partitioningState)
 		if err = a.applyNodePartitioning(ctx, node, partitioningState); err != nil {
 			return fmt.Errorf("error partitioning node %s: %v", node, err)
 		}
@@ -53,6 +52,7 @@ func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, desiredSta
 
 func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName string, partitioning state.NodePartitioning) error {
 	var err error
+	logger := log.FromContext(ctx)
 
 	// Compute GPU spec annotations
 	gpuSpecAnnotationList, err := getGPUSpecAnnotationList(partitioning)
@@ -82,7 +82,7 @@ func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName string, pa
 	if err = a.Patch(ctx, &node, client.MergeFrom(original)); err != nil {
 		return fmt.Errorf("error patching node annotations: %v", err)
 	}
-	a.logger.V(1).Info("patched node annotations", "node", nodeName, "GPUSpecAnnotations", gpuSpecAnnotationList)
+	logger.V(1).Info("patched node annotations", "node", nodeName, "GPUSpecAnnotations", gpuSpecAnnotationList)
 
 	return nil
 }

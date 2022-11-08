@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
@@ -167,7 +166,7 @@ func TestActuator__Apply(t *testing.T) {
 
 			snapshot := state.NewClusterSnapshot(nodeInfos)
 			fakeClient := fakeClientBuilder.Build()
-			actuator := partitionermig.NewActuator(fakeClient, ctrl.Log.WithName("test"))
+			actuator := partitionermig.NewActuator(fakeClient)
 			err := actuator.Apply(context.Background(), snapshot, tt.desiredState)
 
 			if tt.expectedErr {

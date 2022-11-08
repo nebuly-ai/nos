@@ -3,27 +3,26 @@ package mig
 import (
 	"context"
 	"fmt"
-	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Planner struct {
 	schedulerFramework framework.Framework
-	logger             logr.Logger
 }
 
-func NewPlanner(scheduler framework.Framework, logger logr.Logger) Planner {
+func NewPlanner(scheduler framework.Framework) Planner {
 	return Planner{
 		schedulerFramework: scheduler,
-		logger:             logger,
 	}
 }
 
 func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates []v1.Pod) (state.PartitioningState, error) {
-	p.logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
+	logger := log.FromContext(ctx)
+	logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
 	var err error
 	var snapshot migstate.MigClusterSnapshot
 	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
@@ -33,7 +32,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 	partitioningState := snapshot.GetPartitioningState()
 	for _, pod := range candidates {
 		candidateNodes := snapshot.GetCandidateNodes()
-		p.logger.V(1).Info(
+		logger.V(1).Info(
 			fmt.Sprintf("found %d candidate nodes for pod", len(candidateNodes)),
 			"namespace",
 			pod.GetNamespace(),
@@ -43,7 +42,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 		for _, n := range candidateNodes {
 			// If Pod already fits, move on to next pod
 			if p.addPodToSnapshot(ctx, pod, n.Name, snapshot) {
-				p.logger.V(3).Info(
+				logger.V(3).Info(
 					"pod fits node, cluster snapshot updated",
 					"namespace",
 					pod.Namespace,
@@ -58,7 +57,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			// Check if any MIG resource is lacking
 			lackingMig, isLacking := snapshot.GetLackingMigProfile(pod)
 			if !isLacking {
-				p.logger.V(3).Info(
+				logger.V(3).Info(
 					"no lacking MIG resources, skipping node",
 					"namespace",
 					pod.Namespace,
@@ -78,7 +77,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			// Try update the node MIG geometry
 			if err = n.UpdateGeometryFor(lackingMig); err != nil {
 				snapshot.Revert()
-				p.logger.V(3).Info(
+				logger.V(3).Info(
 					"cannot update node MIG geometry",
 					"reason",
 					err,
@@ -99,7 +98,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			if p.addPodToSnapshot(ctx, pod, n.Name, snapshot) {
 				snapshot.Commit()
 				partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
-				p.logger.V(3).Info(
+				logger.V(3).Info(
 					"pod fits node, state snapshot updated with new MIG geometry",
 					"namespace",
 					pod.Namespace,
@@ -112,7 +111,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			}
 
 			// Could not make the Pod fit, revert changes and move on
-			p.logger.V(3).Info("pod does not fit node", "namespace", pod.Namespace, "pod", pod.Name, "node", n.Name)
+			logger.V(3).Info("pod does not fit node", "namespace", pod.Namespace, "pod", pod.Name, "node", n.Name)
 			snapshot.Revert()
 		}
 	}

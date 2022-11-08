@@ -15,7 +15,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"strconv"
 	"testing"
 )
@@ -361,7 +360,7 @@ func TestPlanner__Plan(t *testing.T) {
 				mock.Anything,
 			).Return(framework.PluginToStatus{"": tt.schedulerFilterStatus}).Maybe()
 
-			planner := partitioner_mig.NewPlanner(mockedScheduler, ctrl.Log.WithName("test-planner"))
+			planner := partitioner_mig.NewPlanner(mockedScheduler)
 			snapshot := newSnapshotFromNodes(tt.snapshotNodes)
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
 

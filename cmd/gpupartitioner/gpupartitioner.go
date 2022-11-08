@@ -119,7 +119,7 @@ func main() {
 		setupLog.Error(err, "unable to init k8s scheduler framework")
 		os.Exit(1)
 	}
-	migPlanner := mig.NewPlanner(schedulerFramework, ctrl.Log.WithName("MigPlanner"))
+	migPlanner := mig.NewPlanner(schedulerFramework)
 	if err != nil {
 		setupLog.Error(err, "unable to create MIG planner")
 		os.Exit(1)
@@ -131,11 +131,10 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-	migActuator := mig.NewActuator(mgr.GetClient(), ctrl.Log.WithName("MigActuator"))
+	migActuator := mig.NewActuator(mgr.GetClient())
 	migController := core.NewController(
 		mgr.GetScheme(),
 		mgr.GetClient(),
-		ctrl.Log.WithName("MigController"),
 		podBatcher,
 		&clusterState,
 		migPlanner,
