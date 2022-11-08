@@ -9,6 +9,11 @@ const (
 	errorCodeGeneric
 )
 
+var (
+	NotFoundError = errorImpl{code: errorCodeNotFound}
+	GenericError  = errorImpl{code: errorCodeNotFound}
+)
+
 type Error interface {
 	error
 	IsNotFound() bool
@@ -27,11 +32,9 @@ func (e errorImpl) IsNotFound() bool {
 	return e.code == errorCodeNotFound
 }
 
-func Errorf(format string, args ...any) Error {
-	return errorImpl{
-		err:  fmt.Errorf(format, args...),
-		code: errorCodeGeneric,
-	}
+func (e errorImpl) Errorf(format string, args ...any) Error {
+	e.err = fmt.Errorf(format, args...)
+	return e
 }
 
 func NewGenericError(err error) Error {

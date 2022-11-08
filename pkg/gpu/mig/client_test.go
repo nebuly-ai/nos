@@ -150,7 +150,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 					},
 				},
 			},
-			getGpuIndexErr: gpu.Errorf("error"),
+			getGpuIndexErr: gpu.GenericError.Errorf("error"),
 			expectedError:  true,
 		},
 		{
@@ -312,7 +312,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 					},
 				},
 			},
-			getGpuIndexErr: gpu.Errorf("error"),
+			getGpuIndexErr: gpu.GenericError.Errorf("error"),
 			expectedError:  true,
 		},
 		{
