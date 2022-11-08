@@ -24,10 +24,15 @@ func IsOverQuota(pod v1.Pod) bool {
 // could allow the Pod to be scheduled. Returns false otherwise.
 func ExtraResourcesCouldHelpScheduling(pod v1.Pod) bool {
 	return !IsScheduled(pod) &&
+		IsPending(pod) &&
 		IsUnschedulable(pod) &&
 		!IsPreempting(pod) &&
 		!IsOwnedByDaemonSet(pod) &&
 		!IsOwnedByNode(pod)
+}
+
+func IsPending(pod v1.Pod) bool {
+	return pod.Status.Phase == v1.PodPending
 }
 
 func IsScheduled(pod v1.Pod) bool {

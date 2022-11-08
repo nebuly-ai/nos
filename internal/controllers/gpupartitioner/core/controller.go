@@ -54,9 +54,14 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// If Pod is not pending then don't add it to the current batch
-	if !isPodPending(instance) {
-		logger.V(3).Info("pod is not pending, skipping it", "pod", instance.Name, "namespace", instance.Namespace)
+	// Add pod to current batch only if it is pending and adding extra resources could make it schedulable
+	if !pod.ExtraResourcesCouldHelpScheduling(instance) {
+		logger.V(3).Info("pod does not require extra resources to be scheduled, skipping it",
+			"pod",
+			instance.Name,
+			"namespace",
+			instance.Namespace,
+		)
 		return ctrl.Result{}, nil
 	}
 
@@ -89,40 +94,19 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 	defer logger.V(1).Info("*** end processing pending pods ***")
 
 	logger.Info(fmt.Sprintf("processing %d pods", len(pods)))
-	snapshot := c.clusterState.GetSnapshot()
-
-	// Keep only pending pods that could benefit from
-	// extra resources created through GPU partitioning
-	pendingCandidates := make([]v1.Pod, 0)
-	for _, p := range pods {
-		if !isPodPending(p) {
-			logger.V(1).Info(
-				"pod is not in pending state, skipping it",
-				"pod",
-				p.Name,
-				"namespace",
-				p.Namespace,
-			)
-			continue
-		}
-		if pod.ExtraResourcesCouldHelpScheduling(p) {
-			pendingCandidates = append(pendingCandidates, p)
-		}
-	}
-
-	nPendingCandidates := len(pendingCandidates)
-	logger.Info(fmt.Sprintf("found %d pending candidate pods", nPendingCandidates))
-	if nPendingCandidates == 0 {
+	if len(pods) == 0 {
 		return ctrl.Result{}, nil
 	}
 
+	snapshot := c.clusterState.GetSnapshot()
+
 	// Sort Pods by importance
-	sort.Slice(pendingCandidates, func(i, j int) bool {
-		return pod.IsMoreImportant(pendingCandidates[i], pendingCandidates[j])
+	sort.Slice(pods, func(i, j int) bool {
+		return pod.IsMoreImportant(pods[i], pods[j])
 	})
 
 	// Compute desired state
-	desiredState, err := c.planner.Plan(ctx, snapshot, pendingCandidates)
+	desiredState, err := c.planner.Plan(ctx, snapshot, pods)
 	if err != nil {
 		logger.Error(err, "unable to plan desired partitioning state")
 		return ctrl.Result{}, err
@@ -135,10 +119,6 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func isPodPending(pod v1.Pod) bool {
-	return pod.Spec.NodeName == "" && pod.Status.Phase == v1.PodPending
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {
