@@ -2,8 +2,8 @@ package migagent
 
 import (
 	"context"
-	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
@@ -15,7 +15,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 	testCases := []struct {
 		name                string
 		op                  plan.DeleteOperation
-		clientReturnedError error
+		clientReturnedError gpu.Error
 
 		expectedDeleteCalls      uint
 		errorExpected            bool
@@ -119,7 +119,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 				},
 				Quantity: 1,
 			},
-			clientReturnedError:      fmt.Errorf("an error"),
+			clientReturnedError:      gpu.Errorf("an error"),
 			expectedDeleteCalls:      1,
 			errorExpected:            true,
 			atLeastOneDeleteExpected: false,
@@ -150,7 +150,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 	testCases := []struct {
 		name                string
 		op                  plan.CreateOperation
-		clientReturnedError error
+		clientReturnedError gpu.Error
 
 		expectedCreateCalls      uint
 		errorExpected            bool
@@ -179,7 +179,7 @@ func TestMigActuator_applyCreateOp(t *testing.T) {
 				},
 				Quantity: 1,
 			},
-			clientReturnedError:      fmt.Errorf("an error"),
+			clientReturnedError:      gpu.Errorf("an error"),
 			expectedCreateCalls:      1,
 			errorExpected:            true,
 			atLeastOneCreateExpected: false,

@@ -3,6 +3,7 @@ package mig_test
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
@@ -37,7 +38,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 		name                 string
 		listPodResourcesResp pdrv1.ListPodResourcesResponse
 		listPodResourcesErr  error
-		getGpuIndexErr       error
+		getGpuIndexErr       gpu.Error
 		deviceIdToGPUIndex   map[string]int
 
 		expectedError   bool
@@ -149,7 +150,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 					},
 				},
 			},
-			getGpuIndexErr: fmt.Errorf("error"),
+			getGpuIndexErr: gpu.Errorf("error"),
 			expectedError:  true,
 		},
 		{
@@ -271,7 +272,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 		name                     string
 		allocatableResourcesResp pdrv1.AllocatableResourcesResponse
 		allocatableResourcesErr  error
-		getGpuIndexErr           error
+		getGpuIndexErr           gpu.Error
 		deviceIdToGPUIndex       map[string]int
 
 		expectedError   bool
@@ -311,7 +312,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 					},
 				},
 			},
-			getGpuIndexErr: fmt.Errorf("error"),
+			getGpuIndexErr: gpu.Errorf("error"),
 			expectedError:  true,
 		},
 		{

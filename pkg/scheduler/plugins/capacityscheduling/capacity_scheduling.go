@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	schedulerconfig "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	gpu_util "github.com/nebuly-ai/nebulnetes/pkg/gpu/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	podutil "github.com/nebuly-ai/nebulnetes/pkg/util/pod"
 	"sort"
@@ -124,7 +124,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		elasticQuotaInfos: NewElasticQuotaInfos(),
 		podLister:         handle.SharedInformerFactory().Core().V1().Pods().Lister(),
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
-		resourceCalculator: &gpu.ResourceCalculator{
+		resourceCalculator: &gpu_util.ResourceCalculator{
 			NvidiaGPUDeviceMemoryGB: args.NvidiaGPUResourceMemoryGB,
 		},
 	}

@@ -1,4 +1,4 @@
-package gpu
+package util
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"

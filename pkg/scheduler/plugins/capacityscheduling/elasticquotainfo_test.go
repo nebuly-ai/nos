@@ -19,7 +19,7 @@ package capacityscheduling
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	k8sresource "k8s.io/apimachinery/pkg/api/resource"
@@ -71,7 +71,7 @@ func TestReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := gpu.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
@@ -127,7 +127,7 @@ func TestUnReserveResource(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := gpu.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
+	resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			elasticQuotaInfo := tt.before
@@ -803,7 +803,7 @@ func TestNewElasticQuotaInfo_usedLteWith(t *testing.T) {
 }
 
 func TestElasticQuotaInfos_AggregatedUsedOverMinWith(t *testing.T) {
-	calculator := &gpu.ResourceCalculator{}
+	calculator := &util.ResourceCalculator{}
 
 	testCases := []struct {
 		name              string

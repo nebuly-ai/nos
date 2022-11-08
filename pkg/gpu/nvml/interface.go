@@ -1,9 +1,13 @@
 package nvml
 
+import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+)
+
 type Client interface {
-	GetGpuIndex(migDeviceId string) (int, error)
+	GetGpuIndex(migDeviceId string) (int, gpu.Error)
 
-	DeleteMigDevice(id string) error
+	DeleteMigDevice(id string) gpu.Error
 
-	CreateMigDevice(migProfile string, gpuIndex int) error
+	CreateMigDevice(migProfile string, gpuIndex int) gpu.Error
 }

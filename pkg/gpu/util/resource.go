@@ -1,4 +1,4 @@
-package gpu
+package util
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"

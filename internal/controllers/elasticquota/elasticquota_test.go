@@ -2,7 +2,7 @@ package elasticquota
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -100,7 +100,7 @@ func TestElasticQuotaPodsReconciler_sortPodListForFindingOverQuotaPods(t *testin
 	}
 
 	r := elasticQuotaPodsReconciler{
-		resourceCalculator: &gpu.ResourceCalculator{
+		resourceCalculator: &util.ResourceCalculator{
 			NvidiaGPUDeviceMemoryGB: constant.DefaultNvidiaGPUResourceMemory,
 		},
 	}

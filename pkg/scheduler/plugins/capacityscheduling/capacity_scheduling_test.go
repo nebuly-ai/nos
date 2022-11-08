@@ -20,7 +20,7 @@ import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -221,7 +221,7 @@ func TestPreFilter(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			resourceCalculator := gpu.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
+			resourceCalculator := util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory}
 			cs := &CapacityScheduling{
 				elasticQuotaInfos:  tt.elasticQuotas,
 				fh:                 fwk,
@@ -439,7 +439,7 @@ func TestDryRunPreemption(t *testing.T) {
 		},
 	}
 
-	resourceCalculator := gpu.ResourceCalculator{
+	resourceCalculator := util.ResourceCalculator{
 		NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemory,
 	}
 	for _, tt := range tests {

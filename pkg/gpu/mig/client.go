@@ -3,6 +3,7 @@ package mig
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
@@ -21,11 +22,11 @@ func (r resourceWithDeviceId) isMigDevice() bool {
 }
 
 type Client interface {
-	GetMigDeviceResources(ctx context.Context) (DeviceResourceList, error)
-	GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, error)
-	GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, error)
-	CreateMigResource(ctx context.Context, profile Profile) error
-	DeleteMigResource(ctx context.Context, resource DeviceResource) error
+	GetMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
+	GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
+	GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
+	CreateMigResource(ctx context.Context, profile Profile) gpu.Error
+	DeleteMigResource(ctx context.Context, resource DeviceResource) gpu.Error
 }
 
 type clientImpl struct {
@@ -37,15 +38,15 @@ func NewClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Cl
 	return &clientImpl{lister: lister, nvmlClient: nvmlClient}
 }
 
-func (c clientImpl) CreateMigResource(_ context.Context, profile Profile) error {
+func (c clientImpl) CreateMigResource(_ context.Context, profile Profile) gpu.Error {
 	return c.nvmlClient.CreateMigDevice(profile.Name.AsString(), profile.GpuIndex)
 }
 
-func (c clientImpl) DeleteMigResource(_ context.Context, resource DeviceResource) error {
+func (c clientImpl) DeleteMigResource(_ context.Context, resource DeviceResource) gpu.Error {
 	return c.nvmlClient.DeleteMigDevice(resource.DeviceId)
 }
 
-func (c clientImpl) GetMigDeviceResources(ctx context.Context) (DeviceResourceList, error) {
+func (c clientImpl) GetMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error) {
 	// Get used
 	used, err := c.GetUsedMigDeviceResources(ctx)
 	if err != nil {
@@ -62,21 +63,21 @@ func (c clientImpl) GetMigDeviceResources(ctx context.Context) (DeviceResourceLi
 	return append(used, free...), nil
 }
 
-func (c clientImpl) GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, error) {
+func (c clientImpl) GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error) {
 	logger := klog.FromContext(ctx)
 
 	// List Pods Resources
 	listResp, err := c.lister.List(ctx, &pdrv1.ListPodResourcesRequest{})
 	if err != nil {
 		logger.Error(err, "unable to list resources used by running Pods from Kubelet gRPC socket")
-		return nil, err
+		return nil, gpu.NewGenericError(err)
 	}
 
 	// Extract GPUs as resourceName + deviceId
 	resources, err := fromListRespToGPUResourceWithDeviceId(listResp)
 	if err != nil {
 		logger.Error(err, "unable parse resources used by running pods")
-		return nil, err
+		return nil, gpu.NewGenericError(err)
 	}
 
 	// Extract MIG devices
@@ -114,14 +115,14 @@ func (c clientImpl) GetUsedMigDeviceResources(ctx context.Context) (DeviceResour
 	return migDevices, nil
 }
 
-func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, error) {
+func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error) {
 	logger := klog.FromContext(ctx)
 
 	// List Allocatable Resources
 	resp, err := c.lister.GetAllocatableResources(ctx, &pdrv1.AllocatableResourcesRequest{})
 	if err != nil {
 		logger.Error(err, "unable to get allocatable resources from Kubelet gRPC socket")
-		return nil, err
+		return nil, gpu.NewGenericError(err)
 	}
 
 	// Extract GPUs as resourceName + deviceId
@@ -138,7 +139,7 @@ func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (Devic
 				d.GetResourceName(),
 				len(d.DeviceIds),
 			)
-			return nil, err
+			return nil, gpu.NewGenericError(err)
 		}
 		res := resourceWithDeviceId{
 			resourceName: v1.ResourceName(d.GetResourceName()),
@@ -150,7 +151,7 @@ func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (Devic
 	return c.extractMigDevices(ctx, resources)
 }
 
-func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]DeviceResource, error) {
+func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]DeviceResource, gpu.Error) {
 	logger := klog.FromContext(ctx)
 
 	// Extract MIG devices
