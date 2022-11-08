@@ -117,6 +117,16 @@ func InSlice[K comparable](item K, slice []K) bool {
 	return false
 }
 
+func Filter[K any](slice []K, filter func(k K) bool) []K {
+	var res = make([]K, 0)
+	for _, k := range slice {
+		if filter(k) {
+			res = append(res, k)
+		}
+	}
+	return res
+}
+
 // LocalEndpoint returns the full path to a unix socket at the given endpoint
 func LocalEndpoint(path, file string) (string, error) {
 	u := url.URL{

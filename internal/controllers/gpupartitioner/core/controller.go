@@ -142,13 +142,12 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 
 func (c *Controller) fetchPendingPods(ctx context.Context) ([]v1.Pod, error) {
 	var podList v1.PodList
-	if err := c.List(ctx, &podList, client.MatchingFields{
-		constant.PodNodeNameKey: "",
-		constant.PodPhaseKey:    string(v1.PodPending),
-	}); err != nil {
+	if err := c.List(ctx, &podList, client.MatchingFields{constant.PodPhaseKey: string(v1.PodPending)}); err != nil {
 		return nil, err
 	}
-	return podList.Items, nil
+	return util.Filter(podList.Items, func(pod v1.Pod) bool {
+		return pod.Spec.NodeName == ""
+	}), nil
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {
