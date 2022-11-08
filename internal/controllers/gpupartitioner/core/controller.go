@@ -57,7 +57,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// If Pod is not pending then don't add it to the current batch
-	if instance.Status.Phase != v1.PodPending {
+	if !isPodPending(instance) {
 		c.logger.V(3).Info("pod is not pending, skipping it", "pod", instance.Name, "namespace", instance.Namespace)
 		return ctrl.Result{}, nil
 	}
@@ -96,7 +96,7 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 	// extra resources created through GPU partitioning
 	pendingCandidates := make([]v1.Pod, 0)
 	for _, p := range pods {
-		if p.Status.Phase != v1.PodPending {
+		if !isPodPending(p) {
 			continue
 		}
 		if pod.ExtraResourcesCouldHelpScheduling(p) {
@@ -129,6 +129,10 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func isPodPending(pod v1.Pod) bool {
+	return pod.Spec.NodeName == "" && pod.Status.Phase == v1.PodPending
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {
