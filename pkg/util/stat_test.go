@@ -1,7 +1,7 @@
-package iter_test
+package util_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/util/iter"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -44,11 +44,10 @@ func TestPermutationGenerator(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		generator := iter.NewPermutationGenerator[string](tt.sourceSlice)
+		generator := util.NewPermutationGenerator[string](tt.sourceSlice)
 		t.Run(tt.name, func(t *testing.T) {
 			perms := make([][]string, 0)
-			for i := 0; i < len(tt.expectedPermutations); i++ {
-				assert.True(t, generator.Next())
+			for i := 0; generator.Next(); i++ {
 				perms = append(perms, generator.Permutation())
 			}
 			assert.False(t, generator.Next())

@@ -59,6 +59,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 
 	// Compute MIG config plan
 	configPlan, err := a.plan(ctx, specAnnotations)
+
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -124,15 +125,13 @@ func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.
 	}
 
 	// Apply create operations
-	for _, op := range plan.CreateOperations {
-		status := a.applyCreateOp(ctx, op)
-		if status.Err != nil {
-			logger.Error(status.Err, "unable to fulfill create operation", "op", op)
-			atLeastOneErr = true
-		}
-		if status.PluginRestartRequired {
-			restartRequired = true
-		}
+	status := a.applyCreateOps(ctx, plan.CreateOperations)
+	if status.Err != nil {
+		logger.Error(status.Err, "unable to fulfill create operations")
+		atLeastOneErr = true
+	}
+	if status.PluginRestartRequired {
+		restartRequired = true
 	}
 
 	// Restart the NVIDIA device plugin if necessary
@@ -265,6 +264,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 		}
 		if gpu.IsNotFound(err) {
 			logger.Error(err, "unable to delete MIG resource", "resource", r)
+			restartRequired = true
 			continue
 		}
 		logger.Info("deleted MIG resource", "resource", r)
@@ -291,40 +291,26 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 	}
 }
 
-func (a *MigActuator) applyCreateOp(ctx context.Context, op plan.CreateOperation) plan.OperationStatus {
+func (a *MigActuator) applyCreateOps(ctx context.Context, ops plan.CreateOperationList) plan.OperationStatus {
 	logger := a.newLogger(ctx)
-	logger.Info("applying create operation for MigProfile", "migProfile", op.MigProfile)
+	logger.Info("applying create operations", "migProfiles", ops)
 
-	var restartRequired bool
-	var nCreated int
-	var i int
-	for i = 0; i < op.Quantity; i++ {
-		err := a.migClient.CreateMigResource(ctx, op.MigProfile)
-		if gpu.IgnoreNotFound(err) != nil {
-			logger.Error(err, "unable to create MIG resource", "migProfile", op.MigProfile)
-			continue
-		}
-		if gpu.IsNotFound(err) {
-			logger.Error(err, "unable to create MIG resource", "migProfile", op.MigProfile)
-			restartRequired = true
-			continue
-		}
-		logger.Info("created MIG resource", "migProfile", op.MigProfile)
-		nCreated++
-	}
-
-	if nCreated > 0 {
-		restartRequired = true
-	}
-
-	if nCreated < op.Quantity {
+	profileList := ops.Flatten()
+	created, err := a.migClient.CreateMigResources(ctx, profileList)
+	if err != nil {
+		nCreated := len(created)
 		return plan.OperationStatus{
-			PluginRestartRequired: restartRequired,
-			Err:                   fmt.Errorf("could create only %d out of %d MIG resources", nCreated, op.Quantity),
+			PluginRestartRequired: nCreated > 0,
+			Err: fmt.Errorf(
+				"could create only %d out of %d MIG resources: %s",
+				nCreated,
+				len(profileList),
+				err,
+			),
 		}
 	}
 	return plan.OperationStatus{
-		PluginRestartRequired: restartRequired,
+		PluginRestartRequired: true,
 		Err:                   nil,
 	}
 }

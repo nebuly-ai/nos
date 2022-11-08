@@ -15,6 +15,6 @@ func (c MockedNvmlClient) DeleteMigDevice(_ string) gpu.Error {
 	return c.ReturnedError
 }
 
-func (c MockedNvmlClient) CreateMigDevice(_ string, _ int) gpu.Error {
+func (c MockedNvmlClient) CreateMigDevices(_ []string, _ int) gpu.Error {
 	return c.ReturnedError
 }

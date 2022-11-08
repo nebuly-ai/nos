@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	nvlibdevice "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvlib/device"
 	nvlibNvml "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 	"k8s.io/klog/v2"
@@ -164,21 +165,28 @@ func (c *clientImpl) DeleteMigDevice(id string) gpu.Error {
 	return nil
 }
 
-func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) gpu.Error {
+func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gpu.Error {
 	r := nvml.Init()
 	if r != nvml.SUCCESS {
 		return gpu.GenericError.Errorf("error initializing nvml client: %s", nvml.ErrorString(r))
 	}
 	defer nvml.Shutdown()
 
-	// Parse MIG profile
-	mp, err := c.nvlibClient.ParseMigProfile(migProfileName)
-	if err != nil {
-		return gpu.GenericError.Errorf("invalid MIG profile: %s", err.Error())
+	// Parse MIG profiles
+	mps := make([]nvlibdevice.MigProfile, 0)
+	for _, profileName := range migProfileNames {
+		mp, err := c.nvlibClient.ParseMigProfile(profileName)
+		if err != nil {
+			return gpu.GenericError.Errorf("invalid MIG profile: %s", err.Error())
+		}
+		mps = append(mps, mp)
 	}
 
 	// Check if GPU is MIG-enabled
 	d, ret := c.nvmlClient.DeviceGetHandleByIndex(gpuIndex)
+	if ret == nvlibNvml.ERROR_NOT_FOUND {
+		return gpu.NotFoundError.Errorf("GPU with index %d not found", gpuIndex)
+	}
 	if ret != nvlibNvml.SUCCESS {
 		return gpu.GenericError.Errorf("error getting GPU with index %d: %s", gpuIndex, ret.Error())
 	}
@@ -194,50 +202,71 @@ func (c *clientImpl) CreateMigDevice(migProfileName string, gpuIndex int) gpu.Er
 		return gpu.GenericError.Errorf("MIG is not enabled on GPU with index %d", gpuIndex)
 	}
 
-	// Fetch nvml Device
-	// Todo: from now on we have to work with github.com/NVIDIA/go-nvml/pkg/nvml types because
-	// at the moment the types from nvlib does not provide methods for creating GPU instances.
-	// This won't be necessary anymore when the missing methods will be added to nvlib.
-	nvmlDevice, r := nvml.DeviceGetHandleByIndex(gpuIndex)
-	if r != nvml.SUCCESS {
-		return gpu.GenericError.Errorf(nvml.ErrorString(r))
-	}
-
-	// Create GPU Instance
-	giProfileInfo, ret := device.GetGpuInstanceProfileInfo(mp.GetInfo().GIProfileID)
-	if ret != nvlibNvml.SUCCESS {
-		return gpu.GenericError.Errorf("error getting GPU instance profile info: %s", ret.Error())
-	}
-	gi, r := nvmlDevice.CreateGpuInstance((*nvml.GpuInstanceProfileInfo)(&giProfileInfo))
-	if r != nvml.SUCCESS {
-		return gpu.GenericError.Errorf("error creating GPU instance: %s", nvml.ErrorString(r))
-	}
-	klog.V(1).InfoS("created GPU instance", "giProfileInfo", giProfileInfo)
-
-	// Create Compute Instance
-	ciProfileInfo, r := gi.GetComputeInstanceProfileInfo(mp.GetInfo().CIProfileID, mp.GetInfo().CIEngProfileID)
-	if r != nvml.SUCCESS {
-		// Cleanup created GPU instance
-		klog.V(1).InfoS("error getting GPU instance profile info, destroying previously created GPU instance")
-		r := gi.Destroy()
-		if r != nvml.SUCCESS {
-			klog.Errorf("error destroying GPU instance: %v", gi)
+	// Function for destroying the CIs and GIs created while trying MIG profiles permutations
+	cleanup := func(gis []nvlibNvml.GpuInstance, cis []nvlibNvml.ComputeInstance) error {
+		klog.V(3).InfoS("cleaning up created resources")
+		var anyErrorCleaningUp bool
+		// cleanup compute instances
+		for _, ci := range cis {
+			if ret = ci.Destroy(); ret != nvlibNvml.SUCCESS {
+				klog.Errorf("error deleting compute instance: %s", ret.Error())
+				anyErrorCleaningUp = true
+			}
 		}
-		gi.Destroy()
-		return gpu.GenericError.Errorf("error getting Compute Instance profile info: %s", nvml.ErrorString(r))
-	}
-	_, r = gi.CreateComputeInstance(&ciProfileInfo)
-	if r != nvml.SUCCESS {
-		// Cleanup created GPU instance
-		klog.V(1).InfoS("error creating Compute Instance, destroying previously created GPU instance")
-		r := gi.Destroy()
-		if r != nvml.SUCCESS {
-			klog.Errorf("error destroying GPU instance: %v", gi)
+		// cleanup GPU instances
+		for _, gi := range gis {
+			if ret = gi.Destroy(); ret != nvlibNvml.SUCCESS {
+				klog.Errorf("error deleting GPU instance: %s", ret.Error())
+				anyErrorCleaningUp = true
+			}
 		}
-		return gpu.GenericError.Errorf("error creating Compute Instance: %s", nvml.ErrorString(r))
+		if anyErrorCleaningUp {
+			return fmt.Errorf("error cleaning up created resources, some resources might not have been deleted")
+		}
+		return nil
 	}
-	klog.V(1).InfoS("created compute instance", "ciProfileInfo", ciProfileInfo)
 
+	// Iterate permutations until success
+	// (MIG profile creation success depends on the order on which they are created)
+	err = util.IterPermutations(mps, func(mps []nvlibdevice.MigProfile) (bool, error) {
+		klog.V(3).InfoS("trying to create MIG profiles", "permutation", mps)
+		createdGIs := make([]nvlibNvml.GpuInstance, 0)
+		createdCIs := make([]nvlibNvml.ComputeInstance, 0)
+		for _, mp := range mps {
+			// Create GPU Instance
+			giProfileInfo, ret := device.GetGpuInstanceProfileInfo(mp.GetInfo().GIProfileID)
+			if ret != nvlibNvml.SUCCESS {
+				return false, gpu.GenericError.Errorf("error getting GPU instance profile info: %s", ret.Error())
+			}
+			gi, ret := device.CreateGpuInstance(&giProfileInfo)
+			if ret != nvlibNvml.SUCCESS {
+				klog.V(3).InfoS("error creating GPU instance", "error", ret.Error())
+				return true, cleanup(createdGIs, createdCIs)
+			}
+			klog.V(3).InfoS("created GPU Instance", "GpuInstanceID", mp.GetInfo().GIProfileID)
+			createdGIs = append(createdGIs, gi)
+
+			// Create Compute Instance
+			ciProfileInfo, ret := gi.GetComputeInstanceProfileInfo(mp.GetInfo().CIProfileID, mp.GetInfo().CIEngProfileID)
+			if ret != nvlibNvml.SUCCESS {
+				return false, gpu.GenericError.Errorf("error getting compute instance profile info: %s", ret.Error())
+			}
+			ci, ret := gi.CreateComputeInstance(&ciProfileInfo)
+			if ret != nvlibNvml.SUCCESS {
+				klog.V(3).InfoS("error creating compute instance", "error", ret.Error())
+				return true, cleanup(createdGIs, createdCIs)
+			}
+			klog.V(3).InfoS("created compute Instance", "ComputeInstanceId", mp.GetInfo().CIProfileID)
+			createdCIs = append(createdCIs, ci)
+		}
+		// all MIG profiles of the permutation have been created, stop iterating
+		klog.V(3).InfoS("MIG profiles successfully created", "permutations", mps)
+		return false, nil
+	})
+
+	if err != nil {
+		return gpu.NewGenericError(err)
+	}
 	return nil
 }
 

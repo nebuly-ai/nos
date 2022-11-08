@@ -146,76 +146,86 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 	}
 }
 
-func TestMigActuator_applyCreateOp(t *testing.T) {
-	testCases := []struct {
-		name                string
-		op                  plan.CreateOperation
-		clientReturnedError gpu.Error
-
-		expectedCreateCalls uint
-		errorExpected       bool
-		restartExpected     bool
-	}{
-		{
-			name: "Empty create operation",
-			op: plan.CreateOperation{
-				MigProfile: mig.Profile{
-					GpuIndex: 0,
-					Name:     "1g.10gb",
-				},
-				Quantity: 0,
-			},
-			clientReturnedError: nil,
-			expectedCreateCalls: 0,
-			errorExpected:       false,
-			restartExpected:     false,
-		},
-		{
-			name: "MIG client returns error",
-			op: plan.CreateOperation{
-				MigProfile: mig.Profile{
-					GpuIndex: 0,
-					Name:     "1g.10gb",
-				},
-				Quantity: 1,
-			},
-			clientReturnedError: gpu.GenericError.Errorf("an error"),
-			expectedCreateCalls: 1,
-			errorExpected:       true,
-			restartExpected:     false,
-		},
-		{
-			name: "Create success, quantity > 1",
-			op: plan.CreateOperation{
-				MigProfile: mig.Profile{
-					GpuIndex: 0,
-					Name:     "1g.10gb",
-				},
-				Quantity: 4,
-			},
-			clientReturnedError: nil,
-			expectedCreateCalls: 4,
-			errorExpected:       false,
-			restartExpected:     true,
-		},
-	}
-
-	var migClient = migtest.MockedMigClient{}
-	var actuator = MigActuator{migClient: &migClient}
-
-	for _, tt := range testCases {
-		migClient.Reset()
-		migClient.ReturnedError = tt.clientReturnedError
-		t.Run(tt.name, func(t *testing.T) {
-			status := actuator.applyCreateOp(context.TODO(), tt.op)
-			if tt.errorExpected {
-				assert.Error(t, status.Err)
-			}
-			if !tt.errorExpected {
-				assert.NoError(t, status.Err)
-			}
-			assert.Equal(t, tt.restartExpected, status.PluginRestartRequired)
-			assert.Equal(t, tt.expectedCreateCalls, migClient.NumCallsCreateMigResource)
-		})
-	}
-}
+//func TestMigActuator_applyCreateOps(t *testing.T) {
+//	testCases := []struct {
+//		name                string
+//		ops                 plan.CreateOperationList
+//		clientReturnedError gpu.Error
+//
+//		expectedCreateCalls uint
+//		errorExpected       bool
+//		restartExpected     bool
+//	}{
+//		{
+//			name:                "Empty list",
+//			ops:                 plan.CreateOperationList{},
+//			clientReturnedError: nil,
+//			expectedCreateCalls: 0,
+//			errorExpected:       false,
+//			restartExpected:     false,
+//		},
+//		{
+//			name: "Empty create operation",
+//			ops: plan.CreateOperationList{
+//				{
+//					MigProfile: mig.Profile{
+//						GpuIndex: 0,
+//						Name:     "1g.10gb",
+//					},
+//					Quantity: 0,
+//				},
+//			},
+//			clientReturnedError: nil,
+//			expectedCreateCalls: 0,
+//			errorExpected:       false,
+//			restartExpected:     false,
+//		},
+//		{
+//			name: "MIG client returns error",
+//			op: plan.CreateOperation{
+//				MigProfile: mig.Profile{
+//					GpuIndex: 0,
+//					Name:     "1g.10gb",
+//				},
+//				Quantity: 1,
+//			},
+//			clientReturnedError: gpu.GenericError.Errorf("an error"),
+//			expectedCreateCalls: 1,
+//			errorExpected:       true,
+//			restartExpected:     false,
+//		},
+//		{
+//			name: "Create success, quantity > 1",
+//			op: plan.CreateOperation{
+//				MigProfile: mig.Profile{
+//					GpuIndex: 0,
+//					Name:     "1g.10gb",
+//				},
+//				Quantity: 4,
+//			},
+//			clientReturnedError: nil,
+//			expectedCreateCalls: 4,
+//			errorExpected:       false,
+//			restartExpected:     true,
+//		},
+//	}
+//
+//	var migClient = migtest.MockedMigClient{}
+//	var actuator = MigActuator{migClient: &migClient}
+//
+//	for _, tt := range testCases {
+//		migClient.Reset()
+//		migClient.ReturnedError = tt.clientReturnedError
+//		t.Run(tt.name, func(t *testing.T) {
+//			status := actuator.applyCreateOps(context.TODO(), tt.op)
+//			if tt.errorExpected {
+//				assert.Error(t, status.Err)
+//			}
+//			if !tt.errorExpected {
+//				assert.NoError(t, status.Err)
+//			}
+//			assert.Equal(t, tt.restartExpected, status.PluginRestartRequired)
+//			assert.Equal(t, tt.expectedCreateCalls, migClient.NumCallsCreateMigResources)
+//		})
+//	}
+//}

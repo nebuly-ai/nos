@@ -114,7 +114,7 @@ var _ = Describe("MigAgent - Actuator", func() {
 			Expect(actuatorMigClient.NumCallsDeleteMigResource).To(BeZero())
 
 			By("Do not calling the create method on the MIG client")
-			Expect(actuatorMigClient.NumCallsCreateMigResource).To(BeZero())
+			Expect(actuatorMigClient.NumCallsCreateMigResources).To(BeZero())
 		})
 	})
 	When("The node annotation gets updated reducing MIG resource number, but all the MIG resources are being used", func() {
@@ -174,7 +174,7 @@ var _ = Describe("MigAgent - Actuator", func() {
 			Expect(actuatorMigClient.NumCallsDeleteMigResource).To(BeZero())
 
 			By("Do not calling the create method on the MIG client")
-			Expect(actuatorMigClient.NumCallsCreateMigResource).To(BeZero())
+			Expect(actuatorMigClient.NumCallsCreateMigResources).To(BeZero())
 		})
 	})
 })

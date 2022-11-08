@@ -26,6 +26,9 @@ require (
 	sigs.k8s.io/controller-runtime v0.12.3
 )
 
+// TODO: remove this replace when PR !22 adding Create methods will be merged into go-nvilib
+replace gitlab.com/nvidia/cloud-native/go-nvlib => gitlab.com/Telemaco019/go-nvlib v0.0.0-20221108194233-54ab63a99eb3
+
 replace (
 	k8s.io/api => k8s.io/api v0.24.7
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.7

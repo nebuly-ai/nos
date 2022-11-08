@@ -10,7 +10,7 @@ import (
 // Todo: use some tool for auto-generating mocks
 type MockedMigClient struct {
 	NumCallsDeleteMigResource     uint
-	NumCallsCreateMigResource     uint
+	NumCallsCreateMigResources    uint
 	NumCallsGetMigDeviceResources uint
 
 	ReturnedMigDeviceResources mig.DeviceResourceList
@@ -26,7 +26,7 @@ func (m *MockedMigClient) Reset() {
 	m.lockReset.Lock()
 	defer m.lockReset.Unlock()
 	m.NumCallsDeleteMigResource = 0
-	m.NumCallsCreateMigResource = 0
+	m.NumCallsCreateMigResources = 0
 	m.NumCallsGetMigDeviceResources = 0
 }
 
@@ -37,11 +37,11 @@ func (m *MockedMigClient) GetMigDeviceResources(_ context.Context) (mig.DeviceRe
 	return m.ReturnedMigDeviceResources, m.ReturnedError
 }
 
-func (m *MockedMigClient) CreateMigResource(_ context.Context, _ mig.Profile) gpu.Error {
+func (m *MockedMigClient) CreateMigResources(_ context.Context, _ mig.ProfileList) (mig.ProfileList, gpu.Error) {
 	m.lockCreateMigResource.Lock()
 	defer m.lockCreateMigResource.Unlock()
-	m.NumCallsCreateMigResource++
-	return m.ReturnedError
+	m.NumCallsCreateMigResources++
+	return nil, m.ReturnedError
 }
 
 func (m *MockedMigClient) DeleteMigResource(_ context.Context, _ mig.DeviceResource) gpu.Error {

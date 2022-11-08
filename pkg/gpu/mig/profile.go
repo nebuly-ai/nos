@@ -66,3 +66,9 @@ type Profile struct {
 	GpuIndex int
 	Name     ProfileName
 }
+
+type ProfileList []Profile
+
+func (p ProfileList) GroupByGPU() map[int]ProfileList {
+	return nil // todo
+}

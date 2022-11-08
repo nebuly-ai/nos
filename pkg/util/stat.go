@@ -1,4 +1,4 @@
-package iter
+package util
 
 import (
 	"gonum.org/v1/gonum/stat/combin"
@@ -33,4 +33,22 @@ func (p *PermutationGenerator[K]) Next() bool {
 		return false
 	}
 	return p.generator.Next()
+}
+
+// IterPermutations calls `f` providing as argument each possible permutation `slice`.
+// It stops iterating if `f` returns either `false` or an error, and
+// it returns an error if any call to `f` returns error.
+func IterPermutations[K any](slice []K, f func(k []K) (bool, error)) error {
+	gen := NewPermutationGenerator(slice)
+	for i := 0; gen.Next(); i++ {
+		perm := gen.Permutation()
+		continueIterating, err := f(perm)
+		if err != nil {
+			return err
+		}
+		if !continueIterating {
+			return nil
+		}
+	}
+	return nil
 }

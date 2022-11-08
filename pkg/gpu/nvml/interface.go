@@ -9,5 +9,5 @@ type Client interface {
 
 	DeleteMigDevice(id string) gpu.Error
 
-	CreateMigDevice(migProfile string, gpuIndex int) gpu.Error
+	CreateMigDevices(migProfileNames []string, gpuIndex int) gpu.Error
 }

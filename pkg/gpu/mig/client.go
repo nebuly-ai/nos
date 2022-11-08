@@ -25,7 +25,7 @@ type Client interface {
 	GetMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
 	GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
 	GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
-	CreateMigResource(ctx context.Context, profile Profile) gpu.Error
+	CreateMigResources(ctx context.Context, profiles ProfileList) (ProfileList, gpu.Error)
 	DeleteMigResource(ctx context.Context, resource DeviceResource) gpu.Error
 }
 
@@ -38,8 +38,16 @@ func NewClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Cl
 	return &clientImpl{lister: lister, nvmlClient: nvmlClient}
 }
 
-func (c clientImpl) CreateMigResource(_ context.Context, profile Profile) gpu.Error {
-	return c.nvmlClient.CreateMigDevice(profile.Name.AsString(), profile.GpuIndex)
+// CreateMigResources creates the MIG resources provided as argument, which can span multiple GPUs, and returns
+// the resources that were actually created.
+//
+// If any error happens, and it is not possible to create the required resources on a certain GPUs,
+// CreateMigResources still tries to create the resources on the other GPUs and returns the ones that
+// it possible to create. This means that if any error happens, the returned ProfileList will be a subset
+// of the input list, otherwise the two lists will have the same length and items.
+func (c clientImpl) CreateMigResources(_ context.Context, profiles ProfileList) (ProfileList, gpu.Error) {
+	// todo
+	return nil, nil
 }
 
 func (c clientImpl) DeleteMigResource(_ context.Context, resource DeviceResource) gpu.Error {
