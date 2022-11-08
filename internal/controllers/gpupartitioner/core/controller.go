@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/pod"
 	v1 "k8s.io/api/core/v1"
@@ -74,10 +75,10 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// If batch is ready then process pending pods
 	select {
-	case batch := <-c.podBatcher.Ready():
+	case <-c.podBatcher.Ready():
 		logger.V(1).Info("batch ready")
 		c.currentBatch = make(map[string]v1.Pod)
-		return c.processPendingPods(ctx, batch)
+		return c.processPendingPods(ctx)
 	default:
 		logger.V(1).Info("batch not ready")
 	}
@@ -88,13 +89,31 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return ctrl.Result{}, nil
 }
 
-func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctrl.Result, error) {
+func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.V(1).Info("*** processing pending pods ***")
 	defer logger.V(1).Info("*** end processing pending pods ***")
 
-	logger.Info(fmt.Sprintf("processing %d pods", len(pods)))
-	if len(pods) == 0 {
+	// Fetch pending pods
+	allPendingPods, err := c.fetchPendingPods(ctx)
+	if err != nil {
+		logger.Error(err, "unable to fetch pending pods")
+		return ctrl.Result{}, err
+	}
+	logger.Info(fmt.Sprintf("processing %d pending pods", len(allPendingPods)))
+	if len(allPendingPods) == 0 {
+		return ctrl.Result{}, nil
+	}
+
+	// Extract pods that can be helped with extra resources
+	var pods = make([]v1.Pod, 0)
+	for _, p := range allPendingPods {
+		if pod.ExtraResourcesCouldHelpScheduling(p) {
+			pods = append(pods, p)
+		}
+	}
+	logger.Info(fmt.Sprintf("%d out of %d pending pods can be helped", len(allPendingPods), len(pods)))
+	if len(allPendingPods) == 0 {
 		return ctrl.Result{}, nil
 	}
 
@@ -119,6 +138,17 @@ func (c *Controller) processPendingPods(ctx context.Context, pods []v1.Pod) (ctr
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (c *Controller) fetchPendingPods(ctx context.Context) ([]v1.Pod, error) {
+	var podList v1.PodList
+	if err := c.List(ctx, &podList, client.MatchingFields{
+		constant.PodNodeNameKey: "",
+		constant.PodPhaseKey:    string(v1.PodPending),
+	}); err != nil {
+		return nil, err
+	}
+	return podList.Items, nil
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {
