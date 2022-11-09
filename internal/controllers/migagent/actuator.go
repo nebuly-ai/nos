@@ -145,6 +145,7 @@ func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.
 			logger.Error(err, "unable to restart nvidia device plugin")
 			return ctrl.Result{}, err
 		}
+		a.sharedState.OnApplyDone()
 	}
 
 	// Check if any error happened
