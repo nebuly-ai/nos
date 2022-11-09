@@ -70,5 +70,12 @@ type Profile struct {
 type ProfileList []Profile
 
 func (p ProfileList) GroupByGPU() map[int]ProfileList {
-	return nil // todo
+	res := make(map[int]ProfileList)
+	for _, profile := range p {
+		if res[profile.GpuIndex] == nil {
+			res[profile.GpuIndex] = make(ProfileList, 0)
+		}
+		res[profile.GpuIndex] = append(res[profile.GpuIndex], profile)
+	}
+	return res
 }
