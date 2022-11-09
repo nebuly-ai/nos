@@ -79,7 +79,7 @@ func TestBatcher__Ready(t *testing.T) {
 		case batch := <-podBatcher.Ready():
 			now := time.Now()
 			assert.Len(t, batch, 1)
-			assert.WithinDuration(t, now, start.Add(idleDuration), 5*time.Millisecond)
+			assert.WithinDuration(t, now, start.Add(idleDuration), 8*time.Millisecond)
 		case <-time.NewTimer(testTimeout).C:
 			assert.Fail(t, "test timed out")
 		}

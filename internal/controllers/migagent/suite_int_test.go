@@ -26,11 +26,13 @@ var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
 var (
-	ctx               context.Context
-	cancel            context.CancelFunc
-	actuatorMigClient *mockedmig.Client
-	reporterMigClient *mockedmig.Client
-	logger            logr.Logger
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	actuatorMigClient   *mockedmig.Client
+	reporterMigClient   *mockedmig.Client
+	logger              logr.Logger
+	actuatorSharedState *SharedState
+	reporterSharedState *SharedState
 )
 
 const (
@@ -100,14 +102,16 @@ var _ = BeforeSuite(func() {
 	// Create Reporter and Actuator
 	actuatorMigClient = &mockedmig.Client{}
 	reporterMigClient = &mockedmig.Client{}
+	actuatorSharedState = NewSharedState()
+	reporterSharedState = NewSharedState()
 
 	// Setup Reporter
-	reporter := NewReporter(k8sClient, reporterMigClient, NewSharedState(), 3*time.Second)
+	reporter := NewReporter(k8sClient, reporterMigClient, reporterSharedState, 3*time.Second)
 	err = reporter.SetupWithManager(k8sManager, "MIGReporter", reporterNodeName)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup Actuator
-	actuator := NewActuator(k8sClient, actuatorMigClient, NewSharedState(), actuatorNodeName)
+	actuator := NewActuator(k8sClient, actuatorMigClient, actuatorSharedState, actuatorNodeName)
 	err = actuator.SetupWithManager(k8sManager, "MIGActuator")
 	Expect(err).ToNot(HaveOccurred())
 

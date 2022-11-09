@@ -32,6 +32,10 @@ var _ = Describe("MigAgent - Actuator", func() {
 		updated := node.DeepCopy()
 		updated.Annotations = map[string]string{}
 		Expect(k8sClient.Patch(ctx, updated, client.MergeFrom(&node))).To(Succeed())
+
+		// Simulate configuration reported
+		actuatorSharedState.OnApplyDone()
+		actuatorSharedState.OnReportDone()
 	})
 
 	AfterEach(func() {
