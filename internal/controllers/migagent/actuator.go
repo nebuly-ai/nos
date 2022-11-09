@@ -256,6 +256,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 
 	// Delete resources choosing from candidates
 	var nDeleted int
+	var nToDelete = len(candidateResources)
 	for _, r := range candidateResources {
 		err := a.migClient.DeleteMigResource(ctx, r)
 		if gpu.IgnoreNotFound(err) != nil {
@@ -269,7 +270,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 		}
 		logger.Info("deleted MIG resource", "resource", r)
 		nDeleted++
-		if nDeleted >= op.Quantity {
+		if nDeleted >= nToDelete {
 			break
 		}
 	}
@@ -279,7 +280,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 	}
 
 	// Return error if we couldn't delete the amount of resources specified by the Delete Operation
-	if nDeleted < op.Quantity {
+	if nDeleted < nToDelete {
 		return plan.OperationStatus{
 			PluginRestartRequired: restartRequired,
 			Err:                   fmt.Errorf("could delete only %d out of %d MIG resources", nDeleted, op.Quantity),
