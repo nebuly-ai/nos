@@ -91,8 +91,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.V(1).Info("*** processing pending pods ***")
-	defer logger.V(1).Info("*** end processing pending pods ***")
+	logger.Info("processing pending pods")
 
 	// Fetch pending pods
 	allPendingPods, err := c.fetchPendingPods(ctx)
@@ -100,7 +99,7 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 		logger.Error(err, "unable to fetch pending pods")
 		return ctrl.Result{}, err
 	}
-	logger.Info(fmt.Sprintf("processing %d pending pods", len(allPendingPods)))
+	logger.Info(fmt.Sprintf("found %d pending pods", len(allPendingPods)))
 	if len(allPendingPods) == 0 {
 		return ctrl.Result{}, nil
 	}

@@ -1,13 +1,11 @@
 package pod
 
 import (
-	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/component-helpers/scheduling/corev1"
-	"k8s.io/klog/v2"
 )
 
 // IsOverQuota returns true if the pod is "over-quota", false otherwise.
@@ -25,12 +23,6 @@ func IsOverQuota(pod v1.Pod) bool {
 // and there a possibility that adding to the cluster additional resources
 // could allow the Pod to be scheduled. Returns false otherwise.
 func ExtraResourcesCouldHelpScheduling(pod v1.Pod) bool {
-	klog.Info(fmt.Sprintf("IsScheduled: %v", IsScheduled(pod)))
-	klog.Info(fmt.Sprintf("IsPending: %v", IsPending(pod)))
-	klog.Info(fmt.Sprintf("IsUnschedulable: %v", IsUnschedulable(pod)))
-	klog.Info(fmt.Sprintf("IsPreempting: %v", IsPreempting(pod)))
-	klog.Info(fmt.Sprintf("IsOwnedByDaemonSet: %v", IsOwnedByDaemonSet(pod)))
-	klog.Info(fmt.Sprintf("IsOwnedByNode: %v", IsOwnedByNode(pod)))
 	return !IsScheduled(pod) &&
 		IsPending(pod) &&
 		IsUnschedulable(pod) &&
