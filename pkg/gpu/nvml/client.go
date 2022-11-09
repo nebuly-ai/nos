@@ -5,23 +5,25 @@ package nvml
 import (
 	"fmt"
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	nvlibdevice "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvlib/device"
 	nvlibNvml "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
-	"k8s.io/klog/v2"
 )
 
 type clientImpl struct {
 	nvmlClient  nvlibNvml.Interface
 	nvlibClient nvlibdevice.Interface
+	logger      logr.Logger
 }
 
-func NewClient() Client {
+func NewClient(logger logr.Logger) Client {
 	nvmlClient := nvlibNvml.New()
 	return &clientImpl{
 		nvmlClient:  nvmlClient,
 		nvlibClient: nvlibdevice.New(nvlibdevice.WithNvml(nvmlClient)),
+		logger:      logger,
 	}
 }
 
@@ -34,7 +36,7 @@ func (c *clientImpl) init() gpu.Error {
 
 func (c *clientImpl) shutdown() {
 	if ret := c.nvmlClient.Shutdown(); ret != nvlibNvml.SUCCESS {
-		klog.Errorf("unable to shut down NVML: %s", ret.Error())
+		c.logger.Error(gpu.GenericError.Errorf(ret.Error()), "unable to shut down NVML")
 	}
 }
 
@@ -47,7 +49,7 @@ func (c *clientImpl) GetGpuIndex(migDeviceId string) (int, gpu.Error) {
 	}
 	defer c.shutdown()
 
-	klog.V(1).InfoS("retrieving GPU index of MIG device", "MIGDeviceUUID", migDeviceId)
+	c.logger.V(1).Info("retrieving GPU index of MIG device", "MIGDeviceUUID", migDeviceId)
 	var result int
 	var err error
 	var found bool
@@ -64,7 +66,7 @@ func (c *clientImpl) GetGpuIndex(migDeviceId string) (int, gpu.Error) {
 				ret.Error(),
 			)
 		}
-		klog.V(3).InfoS(
+		c.logger.V(3).Info(
 			"visiting MIG device",
 			"GPUIndex",
 			gpuIndex,
@@ -135,7 +137,7 @@ func (c *clientImpl) DeleteMigDevice(id string) gpu.Error {
 	var numVisitedCi uint8
 	err := visitComputeInstances(gi, func(ci nvlibNvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvlibNvml.ComputeInstanceProfileInfo) gpu.Error {
 		numVisitedCi++
-		klog.V(1).InfoS(
+		c.logger.V(1).Info(
 			"deleting compute instance",
 			"profileInfo",
 			ciProfileInfo,
@@ -157,7 +159,7 @@ func (c *clientImpl) DeleteMigDevice(id string) gpu.Error {
 	}
 
 	// Delete GPU Instance
-	klog.V(1).InfoS("deleting GPU instance")
+	c.logger.V(1).Info("deleting GPU instance")
 	if ret = gi.Destroy(); ret != nvlibNvml.SUCCESS {
 		return gpu.GenericError.Errorf("error deleting GPU instance: %s", ret.Error())
 	}
@@ -204,19 +206,19 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 
 	// Function for destroying the CIs and GIs created while trying MIG profiles permutations
 	cleanup := func(gis []nvlibNvml.GpuInstance, cis []nvlibNvml.ComputeInstance) error {
-		klog.V(3).InfoS("cleaning up created resources")
+		c.logger.V(1).Info("cleaning up created resources")
 		var anyErrorCleaningUp bool
 		// cleanup compute instances
 		for _, ci := range cis {
 			if ret = ci.Destroy(); ret != nvlibNvml.SUCCESS {
-				klog.Errorf("error deleting compute instance: %s", ret.Error())
+				c.logger.Error(gpu.GenericError.Errorf(ret.Error()), "error deleting compute instance")
 				anyErrorCleaningUp = true
 			}
 		}
 		// cleanup GPU instances
 		for _, gi := range gis {
 			if ret = gi.Destroy(); ret != nvlibNvml.SUCCESS {
-				klog.Errorf("error deleting GPU instance: %s", ret.Error())
+				c.logger.Error(gpu.GenericError.Errorf(ret.Error()), "error deleting GPU instance")
 				anyErrorCleaningUp = true
 			}
 		}
@@ -229,7 +231,7 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 	// Iterate permutations until success
 	// (MIG profile creation success depends on the order on which they are created)
 	err = util.IterPermutations(mps, func(mps []nvlibdevice.MigProfile) (bool, error) {
-		klog.V(3).InfoS("trying to create MIG profiles", "permutation", mps)
+		c.logger.V(1).Info("trying to create MIG profiles", "permutation", mps)
 		createdGIs := make([]nvlibNvml.GpuInstance, 0)
 		createdCIs := make([]nvlibNvml.ComputeInstance, 0)
 		for _, mp := range mps {
@@ -240,10 +242,10 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 			}
 			gi, ret := device.CreateGpuInstance(&giProfileInfo)
 			if ret != nvlibNvml.SUCCESS {
-				klog.V(3).InfoS("error creating GPU instance", "error", ret.Error())
+				c.logger.V(1).Info("error creating GPU instance", "error", ret.Error())
 				return true, cleanup(createdGIs, createdCIs)
 			}
-			klog.V(3).InfoS("created GPU Instance", "GpuInstanceID", mp.GetInfo().GIProfileID)
+			c.logger.V(1).Info("created GPU Instance", "GpuInstanceID", mp.GetInfo().GIProfileID)
 			createdGIs = append(createdGIs, gi)
 
 			// Create Compute Instance
@@ -253,14 +255,14 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 			}
 			ci, ret := gi.CreateComputeInstance(&ciProfileInfo)
 			if ret != nvlibNvml.SUCCESS {
-				klog.V(3).InfoS("error creating compute instance", "error", ret.Error())
+				c.logger.V(1).Info("error creating compute instance", "error", ret.Error())
 				return true, cleanup(createdGIs, createdCIs)
 			}
-			klog.V(3).InfoS("created compute Instance", "ComputeInstanceId", mp.GetInfo().CIProfileID)
+			c.logger.V(1).Info("created compute Instance", "ComputeInstanceId", mp.GetInfo().CIProfileID)
 			createdCIs = append(createdCIs, ci)
 		}
 		// all MIG profiles of the permutation have been created, stop iterating
-		klog.V(3).InfoS("MIG profiles successfully created", "permutations", mps)
+		c.logger.V(1).Info("MIG profiles successfully created", "permutations", mps)
 		return false, nil
 	})
 
