@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-type errorCode uint
+type errorCode string
 
 const (
-	errorCodeNotFound = iota
-	errorCodeGeneric
+	errorCodeNotFound = "resource-not-found"
+	errorCodeGeneric  = "generic"
 )
 
 var (
@@ -27,7 +27,7 @@ type errorImpl struct {
 }
 
 func (e errorImpl) Error() string {
-	return e.err.Error()
+	return fmt.Sprintf("code: %s err: %s", e.code, e.err.Error())
 }
 
 func (e errorImpl) IsNotFound() bool {

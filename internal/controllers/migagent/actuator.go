@@ -233,7 +233,6 @@ func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, time
 
 func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) plan.OperationStatus {
 	logger := a.newLogger(ctx)
-	logger.Info("applying delete operation for MigProfile", "migProfile", op.GetMigProfileName())
 	var restartRequired bool
 
 	// Get resources candidate to be deleted
@@ -279,7 +278,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 		restartRequired = true
 	}
 
-	// Return error if we couldn't delete the amount of resources specified by the Delete Operation
+	// Return error if we couldn't delete all the resources that needed to be deleted
 	if nDeleted < nToDelete {
 		return plan.OperationStatus{
 			PluginRestartRequired: restartRequired,
