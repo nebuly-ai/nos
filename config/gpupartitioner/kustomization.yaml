@@ -1,19 +1,19 @@
 resources:
-  - rbac.yaml
-  - serviceaccount.yaml
-  - deployment.yaml
+- rbac.yaml
+- serviceaccount.yaml
+- deployment.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
-  - files:
-      - gpu_partitioner_config.yaml
-    name: gpu-partitioner-config
+- files:
+  - gpu_partitioner_config.yaml
+  name: gpu-partitioner-config
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-  - name: gpu-partitioner
-    newName: ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner
-    newTag: latest
+- name: gpu-partitioner
+  newName: ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner
+  newTag: latest

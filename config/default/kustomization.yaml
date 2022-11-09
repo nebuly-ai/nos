@@ -15,7 +15,7 @@ namePrefix: n8s-
 #    someName: someValue
 
 resources:
-  - ../crd
+- ../crd
 - ../rbac
 - ../manager
 - ../scheduler
