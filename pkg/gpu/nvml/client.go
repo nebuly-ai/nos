@@ -243,7 +243,7 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 			}
 			gi, ret := device.CreateGpuInstance(&giProfileInfo)
 			if ret != nvlibNvml.SUCCESS {
-				c.logger.V(1).Info("error creating GPU instance", "error", ret.Error())
+				c.logger.V(1).Info("could not create GPU instance", "error", ret.Error())
 				return true, cleanup(createdGIs, createdCIs)
 			}
 			c.logger.V(1).Info("created GPU Instance", "GpuInstanceID", mp.GetInfo().GIProfileID)
@@ -256,7 +256,7 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 			}
 			ci, ret := gi.CreateComputeInstance(&ciProfileInfo)
 			if ret != nvlibNvml.SUCCESS {
-				c.logger.V(1).Info("error creating compute instance", "error", ret.Error())
+				c.logger.V(1).Info("could not create compute instance", "error", ret.Error())
 				return true, cleanup(createdGIs, createdCIs)
 			}
 			c.logger.V(1).Info("created compute Instance", "ComputeInstanceId", mp.GetInfo().CIProfileID)
