@@ -46,7 +46,8 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	// If Pod is not assigned to any node then skip state update
-	if instance.Spec.NodeName == "" {
+	nodeName := instance.Spec.NodeName
+	if nodeName == "" {
 		logger.V(1).Info(
 			"pod is not assigned to any node, skipping cluster state update",
 			"pod",
@@ -58,18 +59,22 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 
 	// If node does not exist already exists in cluster state we need to add it
-	if _, found := c.clusterState.GetNode(instance.Spec.NodeName); !found {
-		logger.V(1).Info("pod's node not found in cluster state", "node", instance.Spec.NodeName)
+	if _, found := c.clusterState.GetNode(nodeName); !found {
+		logger.V(1).Info("pod's node not found in cluster state", "node", nodeName)
 		var podNode v1.Node
-		nodeKey := client.ObjectKey{Namespace: "", Name: instance.Spec.NodeName}
+		nodeKey := client.ObjectKey{Namespace: "", Name: nodeName}
 		if err = c.Client.Get(ctx, nodeKey, &podNode); err != nil {
+			if apierrors.IsNotFound(err) {
+				logger.V(1).Info("node does not exist anymore, removing it from state", "node", nodeName)
+				c.clusterState.deleteNode(nodeName)
+			}
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
 		var podList v1.PodList
-		if err = c.Client.List(ctx, &podList, client.MatchingFields{constant.PodNodeNameKey: instance.Spec.NodeName}); err != nil {
+		if err = c.Client.List(ctx, &podList, client.MatchingFields{constant.PodNodeNameKey: nodeName}); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
-		logger.V(1).Info("adding node", "node", instance.Spec.NodeName)
+		logger.V(1).Info("adding node", "node", nodeName)
 		c.clusterState.updateNode(podNode, podList.Items)
 
 		return ctrl.Result{}, nil
