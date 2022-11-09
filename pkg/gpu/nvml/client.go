@@ -230,6 +230,7 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 
 	// Iterate permutations until success
 	// (MIG profile creation success depends on the order on which they are created)
+	var anyPermutationApplied bool
 	err = util.IterPermutations(mps, func(mps []nvlibdevice.MigProfile) (bool, error) {
 		c.logger.V(1).Info("trying to create MIG profiles", "permutation", mps)
 		createdGIs := make([]nvlibNvml.GpuInstance, 0)
@@ -262,12 +263,16 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 			createdCIs = append(createdCIs, ci)
 		}
 		// all MIG profiles of the permutation have been created, stop iterating
+		anyPermutationApplied = true
 		c.logger.V(1).Info("MIG profiles successfully created", "permutations", mps)
 		return false, nil
 	})
 
 	if err != nil {
-		return gpu.NewGenericError(err)
+		return gpu.GenericError.Errorf("error while applying permutations: %s", err)
+	}
+	if !anyPermutationApplied {
+		return gpu.GenericError.Errorf("could not create MIG profiles: could not find any valid permutation")
 	}
 	return nil
 }
