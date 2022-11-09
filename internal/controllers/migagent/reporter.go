@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -20,15 +19,15 @@ type MigReporter struct {
 	client.Client
 	migClient       mig.Client
 	refreshInterval time.Duration
-	mutex           sync.Locker
+	sharedState     *SharedState
 }
 
-func NewReporter(client client.Client, migClient mig.Client, mutex sync.Locker, refreshInterval time.Duration) MigReporter {
+func NewReporter(client client.Client, migClient mig.Client, sharedState *SharedState, refreshInterval time.Duration) MigReporter {
 	reporter := MigReporter{
 		Client:          client,
 		migClient:       migClient,
+		sharedState:     sharedState,
 		refreshInterval: refreshInterval,
-		mutex:           mutex,
 	}
 	return reporter
 }
@@ -36,8 +35,8 @@ func NewReporter(client client.Client, migClient mig.Client, mutex sync.Locker, 
 func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := klog.FromContext(ctx).WithName("Reporter")
 
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.sharedState.Lock()
+	defer r.sharedState.Unlock()
 
 	var instance v1.Node
 	if err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
@@ -91,6 +90,8 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 
 	logger.Info("updated reported status - node annotations updated successfully")
+	r.sharedState.OnReportDone()
+
 	return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 }
 

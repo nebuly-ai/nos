@@ -18,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sync"
 	"testing"
 	"time"
 )
@@ -103,12 +102,12 @@ var _ = BeforeSuite(func() {
 	reporterMigClient = &mockedmig.Client{}
 
 	// Setup Reporter
-	reporter := NewReporter(k8sClient, reporterMigClient, &sync.Mutex{}, 3*time.Second)
+	reporter := NewReporter(k8sClient, reporterMigClient, NewSharedState(), 3*time.Second)
 	err = reporter.SetupWithManager(k8sManager, "MIGReporter", reporterNodeName)
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup Actuator
-	actuator := NewActuator(k8sClient, actuatorMigClient, &sync.Mutex{}, actuatorNodeName)
+	actuator := NewActuator(k8sClient, actuatorMigClient, NewSharedState(), actuatorNodeName)
 	err = actuator.SetupWithManager(k8sManager, "MIGActuator")
 	Expect(err).ToNot(HaveOccurred())
 

@@ -14,23 +14,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sync"
 	"time"
 )
 
 type MigActuator struct {
 	client.Client
-	migClient mig.Client
-	nodeName  string
-	mutex     sync.Locker
+	migClient   mig.Client
+	sharedState *SharedState
+	nodeName    string
 }
 
-func NewActuator(client client.Client, migClient mig.Client, mutex sync.Locker, nodeName string) MigActuator {
+func NewActuator(client client.Client, migClient mig.Client, sharedState *SharedState, nodeName string) MigActuator {
 	return MigActuator{
-		Client:    client,
-		migClient: migClient,
-		nodeName:  nodeName,
-		mutex:     mutex,
+		Client:      client,
+		migClient:   migClient,
+		nodeName:    nodeName,
+		sharedState: sharedState,
 	}
 }
 
@@ -41,8 +40,14 @@ func (a *MigActuator) newLogger(ctx context.Context) klog.Logger {
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := a.newLogger(ctx)
 
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
+	// If we haven't reported the last applied config, requeue and avoid acquiring lock
+	if !a.sharedState.AtLeastOneReportSinceLastApply() {
+		logger.Info("last applied config hasn't been reported yet, waiting...")
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+	}
+
+	a.sharedState.Lock()
+	defer a.sharedState.Unlock()
 
 	// Retrieve instance
 	var instance v1.Node
