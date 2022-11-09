@@ -1,4 +1,4 @@
-name: Build GPU Partitioner
+name: Build MIG agent
 
 on:
   workflow_dispatch:
