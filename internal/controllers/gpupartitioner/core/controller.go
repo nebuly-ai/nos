@@ -129,6 +129,7 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 		logger.Error(err, "unable to plan desired partitioning state")
 		return ctrl.Result{}, err
 	}
+	logger.Info("computed desired partitioning state", "partitioning", desiredState)
 
 	// Apply partitioning plan
 	if err = c.actuator.Apply(ctx, snapshot, desiredState); err != nil {
