@@ -6,7 +6,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
+	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/mig"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -126,7 +126,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		},
 	}
 
-	var migClient = migtest.MockedMigClient{}
+	var migClient = migtest.Client{}
 	var actuator = MigActuator{migClient: &migClient}
 
 	for _, tt := range testCases {
@@ -210,7 +210,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 //		},
 //	}
 //
-//	var migClient = migtest.MockedMigClient{}
+//	var migClient = migtest.Client{}
 //	var actuator = MigActuator{migClient: &migClient}
 //
 //	for _, tt := range testCases {

@@ -7,7 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
-	testmig "github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
+	mockedmig "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/mig"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -29,8 +29,8 @@ var testEnv *envtest.Environment
 var (
 	ctx               context.Context
 	cancel            context.CancelFunc
-	actuatorMigClient *testmig.MockedMigClient
-	reporterMigClient *testmig.MockedMigClient
+	actuatorMigClient *mockedmig.Client
+	reporterMigClient *mockedmig.Client
 	logger            logr.Logger
 )
 
@@ -99,8 +99,8 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient.Create(ctx, &reporterNvidiaDevicePluginPod)).To(Succeed())
 
 	// Create Reporter and Actuator
-	actuatorMigClient = &testmig.MockedMigClient{}
-	reporterMigClient = &testmig.MockedMigClient{}
+	actuatorMigClient = &mockedmig.Client{}
+	reporterMigClient = &mockedmig.Client{}
 
 	// Setup Reporter
 	reporter := NewReporter(k8sClient, reporterMigClient, &sync.Mutex{}, 3*time.Second)

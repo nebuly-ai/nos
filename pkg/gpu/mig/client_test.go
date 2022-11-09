@@ -6,7 +6,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	"github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
+	mockednvml "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/nvml"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
@@ -150,6 +150,9 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 					},
 				},
 			},
+			deviceIdToGPUIndex: map[string]int{
+				"1": -1,
+			},
 			getGpuIndexErr: gpu.GenericError.Errorf("error"),
 			expectedError:  true,
 		},
@@ -246,15 +249,15 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			nvmlClient := mocks.MockedNvmlClient{
-				MigDeviceIdToGPUIndex: tt.deviceIdToGPUIndex,
-				ReturnedError:         tt.getGpuIndexErr,
+			nvmlClient := mockednvml.Client{}
+			for migDevice, index := range tt.deviceIdToGPUIndex {
+				nvmlClient.On("GetGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
 			}
 			podResourcesListerClient := MockedPodResourcesListerClient{
 				ListResp:  tt.listPodResourcesResp,
 				ListError: tt.listPodResourcesErr,
 			}
-			client := mig.NewClient(podResourcesListerClient, nvmlClient)
+			client := mig.NewClient(podResourcesListerClient, &nvmlClient)
 
 			usedDevices, err := client.GetUsedMigDeviceResources(context.TODO())
 			if tt.expectedError {
@@ -312,8 +315,9 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 					},
 				},
 			},
-			getGpuIndexErr: gpu.GenericError.Errorf("error"),
-			expectedError:  true,
+			getGpuIndexErr:     gpu.GenericError.Errorf("error"),
+			deviceIdToGPUIndex: map[string]int{"1": -1},
+			expectedError:      true,
 		},
 		{
 			name: "Multiple GPUs, multiple MIG devices",
@@ -381,15 +385,15 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			nvmlClient := mocks.MockedNvmlClient{
-				MigDeviceIdToGPUIndex: tt.deviceIdToGPUIndex,
-				ReturnedError:         tt.getGpuIndexErr,
-			}
+			nvmlClient := mockednvml.Client{}
 			podResourcesListerClient := MockedPodResourcesListerClient{
 				GetAllocatableResp:  tt.allocatableResourcesResp,
 				GetAllocatableError: tt.allocatableResourcesErr,
 			}
-			client := mig.NewClient(podResourcesListerClient, nvmlClient)
+			for migDevice, index := range tt.deviceIdToGPUIndex {
+				nvmlClient.On("GetGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
+			}
+			client := mig.NewClient(podResourcesListerClient, &nvmlClient)
 
 			usedDevices, err := client.GetAllocatableMigDeviceResources(context.TODO())
 			if tt.expectedError {
