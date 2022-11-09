@@ -65,7 +65,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 			},
 			clientReturnedError: nil,
 			expectedDeleteCalls: 1,
-			errorExpected:       true,
+			errorExpected:       false,
 			restartExpected:     true,
 		},
 		{

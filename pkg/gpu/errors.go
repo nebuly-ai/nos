@@ -2,6 +2,7 @@ package gpu
 
 import (
 	"fmt"
+	"strings"
 )
 
 type errorCode string
@@ -19,6 +20,20 @@ var (
 type Error interface {
 	error
 	IsNotFound() bool
+}
+
+type ErrorList []Error
+
+func (l ErrorList) Error() string {
+	if len(l) == 0 {
+		return "no errors"
+	}
+	sb := strings.Builder{}
+	sb.WriteString("errors: ")
+	for _, e := range l {
+		sb.WriteString(fmt.Sprintf("{ %s } ", e))
+	}
+	return sb.String()
 }
 
 type errorImpl struct {

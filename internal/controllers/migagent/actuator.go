@@ -255,13 +255,16 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 
 	// Delete resources choosing from candidates
 	var nDeleted int
+	var deleteErrors = make(gpu.ErrorList, 0)
 	for _, r := range candidateResources {
 		err := a.migClient.DeleteMigResource(ctx, r)
 		if gpu.IgnoreNotFound(err) != nil {
+			deleteErrors = append(deleteErrors, err)
 			logger.Error(err, "unable to delete MIG resource", "resource", r)
 			continue
 		}
 		if gpu.IsNotFound(err) {
+			deleteErrors = append(deleteErrors, err)
 			logger.Error(err, "unable to delete MIG resource", "resource", r)
 			restartRequired = true
 			continue
@@ -276,14 +279,13 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 	if nDeleted > 0 {
 		restartRequired = true
 	}
-
-	// Return error if we couldn't delete the amount of resources specified by the Delete Operation
-	if nDeleted < op.Quantity {
+	if len(deleteErrors) > 0 {
 		return plan.OperationStatus{
 			PluginRestartRequired: restartRequired,
-			Err:                   fmt.Errorf("could delete only %d out of %d MIG resources", nDeleted, op.Quantity),
+			Err:                   deleteErrors,
 		}
 	}
+
 	return plan.OperationStatus{
 		PluginRestartRequired: restartRequired,
 		Err:                   nil,
