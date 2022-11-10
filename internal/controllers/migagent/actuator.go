@@ -268,13 +268,13 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 	if nDeleted > 0 {
 		restartRequired = true
 	}
+
 	if len(deleteErrors) > 0 {
 		return plan.OperationStatus{
 			PluginRestartRequired: restartRequired,
 			Err:                   deleteErrors,
 		}
 	}
-
 	return plan.OperationStatus{
 		PluginRestartRequired: restartRequired,
 		Err:                   nil,

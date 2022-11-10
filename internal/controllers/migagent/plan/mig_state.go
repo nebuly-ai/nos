@@ -11,7 +11,7 @@ import (
 // in the map)
 type MigState map[int]mig.DeviceResourceList
 
-func NewMigState(resources []mig.DeviceResource) MigState {
+func NewMigState(resources mig.DeviceResourceList) MigState {
 	res := make(MigState)
 	for _, r := range resources {
 		if res[r.GpuIndex] == nil {
@@ -60,7 +60,7 @@ func (s MigState) DeepCopy() MigState {
 // on the GPU index provided as inputs
 func (s MigState) WithoutMigProfiles(gpuIndex int, migProfiles []mig.ProfileName) MigState {
 	res := s.DeepCopy()
-	res[gpuIndex] = make([]mig.DeviceResource, 0)
+	res[gpuIndex] = make(mig.DeviceResourceList, 0)
 	for _, r := range s[gpuIndex] {
 		if !util.InSlice(r.GetMigProfileName(), migProfiles) {
 			res[gpuIndex] = append(res[gpuIndex], r)

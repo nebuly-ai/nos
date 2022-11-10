@@ -44,6 +44,27 @@ func (l DeviceResourceList) GroupBy(keyFunc func(resource DeviceResource) string
 	return result
 }
 
+func (l DeviceResourceList) GroupByGpuIndex() map[int]DeviceResourceList {
+	result := make(map[int]DeviceResourceList)
+	for _, r := range l {
+		if result[r.GpuIndex] == nil {
+			result[r.GpuIndex] = make(DeviceResourceList, 0)
+		}
+		result[r.GpuIndex] = append(result[r.GpuIndex], r)
+	}
+	return result
+}
+
+func (l DeviceResourceList) GetFree() DeviceResourceList {
+	result := make(DeviceResourceList, 0)
+	for _, r := range l {
+		if r.IsFree() {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
 func (l DeviceResourceList) GroupByMigProfile() map[Profile]DeviceResourceList {
 	result := make(map[Profile]DeviceResourceList)
 	for _, r := range l {

@@ -11,7 +11,10 @@ type MigConfigPlan struct {
 }
 
 func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConfigPlan {
-	plan := MigConfigPlan{}
+	plan := MigConfigPlan{
+		DeleteOperations: make(DeleteOperationList, 0),
+		CreateOperations: make(CreateOperationList, 0),
+	}
 
 	// Get resources present in current state which MIG profile is not included in spec
 	for _, resourceList := range getResourcesNotIncludedInSpec(state, desired).GroupByMigProfile() {
@@ -20,36 +23,38 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	}
 
 	// Compute plan for resources contained in spec annotations
-	stateResources := state.Flatten().GroupByMigProfile()
-	for migProfile, annotations := range desired.GroupByMigProfile() {
-		totalDesiredQuantity := 0
-		for _, a := range annotations {
-			totalDesiredQuantity += a.Quantity
-		}
-
-		actualResources := stateResources[migProfile]
-		if actualResources == nil {
-			actualResources = make(mig.DeviceResourceList, 0)
-		}
-
-		//for _, res := range actualResources{
-		//	if res in desired && res.Status == resource.StatusFree {
-		//
-		//	}
-		//}
-
-		diff := totalDesiredQuantity - len(actualResources)
-		if diff > 0 {
-			op := CreateOperation{
-				MigProfile: migProfile,
-				Quantity:   diff,
+	stateResourcesByGpu := state.Flatten().GroupByGpuIndex()
+	for gpuIndex, gpuAnnotations := range desired.GroupByGpuIndex() {
+		gpuStateResources := stateResourcesByGpu[gpuIndex].GroupByMigProfile()
+		for migProfile, migProfileAnnotations := range gpuAnnotations.GroupByMigProfile() {
+			// init actual resources of current GPU and current MIG profile
+			actualMigProfileResources := gpuStateResources[migProfile]
+			if actualMigProfileResources == nil {
+				actualMigProfileResources = make(mig.DeviceResourceList, 0)
 			}
-			plan.addCreateOp(op)
-		}
-		if diff < 0 {
-			toDelete := extractCandidatesForDeletion(actualResources, util.Abs(diff))
-			op := DeleteOperation{Resources: toDelete}
-			plan.addDeleteOp(op)
+
+			// compute total desired quantity
+			totalDesiredQuantity := 0
+			for _, a := range migProfileAnnotations {
+				totalDesiredQuantity += a.Quantity
+			}
+
+			diff := totalDesiredQuantity - len(actualMigProfileResources)
+			if diff > 0 {
+				// create missing MIG profiles and delete possible existing *free* resources corresponding to
+				// the same MIG profile, so that when applying the create operations the number of possible
+				// MIG permutations to try is larger
+				freeResources := actualMigProfileResources.GetFree()
+				if len(freeResources) > 0 {
+					plan.addDeleteOp(DeleteOperation{Resources: freeResources})
+				}
+				plan.addCreateOp(CreateOperation{MigProfile: migProfile, Quantity: diff})
+			}
+			if diff < 0 {
+				toDelete := extractCandidatesForDeletion(actualMigProfileResources, util.Abs(diff))
+				op := DeleteOperation{Resources: toDelete}
+				plan.addDeleteOp(op)
+			}
 		}
 	}
 

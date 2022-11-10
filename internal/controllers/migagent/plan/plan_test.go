@@ -56,7 +56,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 				0: {
 					{
 						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
 							DeviceId:     "1",
 							Status:       resource.StatusUsed,
 						},
@@ -64,7 +64,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 					},
 					{
 						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
 							DeviceId:     "2",
 							Status:       resource.StatusUsed,
 						},
@@ -88,7 +88,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 					Resources: []mig.DeviceResource{
 						{
 							Device: resource.Device{
-								ResourceName: "nvidia.com/mig-1g.10gb",
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
 								DeviceId:     "1",
 								Status:       resource.StatusUsed,
 							},
@@ -96,7 +96,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 						},
 						{
 							Device: resource.Device{
-								ResourceName: "nvidia.com/mig-1g.10gb",
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
 								DeviceId:     "2",
 								Status:       resource.StatusUsed,
 							},
@@ -132,7 +132,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 				0: {
 					{
 						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
 							DeviceId:     "1",
 							Status:       resource.StatusFree,
 						},
@@ -140,7 +140,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 					},
 					{
 						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
 							DeviceId:     "2",
 							Status:       resource.StatusUsed,
 						},
@@ -148,7 +148,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 					},
 					{
 						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
 							DeviceId:     "3",
 							Status:       resource.StatusFree,
 						},
@@ -165,7 +165,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 					Resources: mig.DeviceResourceList{
 						{
 							Device: resource.Device{
-								ResourceName: "nvidia.com/mig-1g.10gb",
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
 								DeviceId:     "1",
 								Status:       resource.StatusFree,
 							},
@@ -173,7 +173,81 @@ func TestNewMigConfigPlan(t *testing.T) {
 						},
 						{
 							Device: resource.Device{
-								ResourceName: "nvidia.com/mig-1g.10gb",
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
+								DeviceId:     "3",
+								Status:       resource.StatusFree,
+							},
+							GpuIndex: 0,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Creating new profiles on a GPU should delete all the existing **free** MIG profiles of the same type on that GPU",
+			state: MigState{
+				0: {
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "1",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 0,
+					},
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "2",
+							Status:       resource.StatusUsed,
+						},
+						GpuIndex: 0,
+					},
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "3",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 0,
+					},
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "1",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 1,
+					},
+				},
+			},
+			specAnnotations: map[string]string{
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "4",
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1",
+			},
+			expectedCreateOps: []CreateOperation{
+				{
+					MigProfile: mig.Profile{
+						GpuIndex: 0,
+						Name:     mig.Profile1g10gb,
+					},
+					Quantity: 1,
+				},
+			},
+			expectedDeleteOps: []DeleteOperation{
+				{
+					Resources: mig.DeviceResourceList{
+						{
+							Device: resource.Device{
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
+								DeviceId:     "1",
+								Status:       resource.StatusFree,
+							},
+							GpuIndex: 0,
+						},
+						{
+							Device: resource.Device{
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
 								DeviceId:     "3",
 								Status:       resource.StatusFree,
 							},
@@ -196,6 +270,50 @@ func TestNewMigConfigPlan(t *testing.T) {
 			plan := NewMigConfigPlan(tt.state, annotations)
 			assert.ElementsMatch(t, tt.expectedDeleteOps, plan.DeleteOperations)
 			assert.ElementsMatch(t, tt.expectedCreateOps, plan.CreateOperations)
+		})
+	}
+}
+
+func TestMigConfigPlan_IsEmpty(t *testing.T) {
+	testCases := []struct {
+		name     string
+		plan     MigConfigPlan
+		expected bool
+	}{
+		{
+			name: "Empty plan",
+			plan: MigConfigPlan{
+				DeleteOperations: make(DeleteOperationList, 0),
+				CreateOperations: make(CreateOperationList, 0),
+			},
+			expected: true,
+		},
+		{
+			name: "Plan with one CreateOperation is not empty",
+			plan: MigConfigPlan{
+				DeleteOperations: make(DeleteOperationList, 0),
+				CreateOperations: CreateOperationList{
+					CreateOperation{
+						MigProfile: mig.Profile{},
+						Quantity:   0,
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "Plan with one DeleteOperation is not empty",
+			plan: MigConfigPlan{
+				DeleteOperations: DeleteOperationList{{Resources: make(mig.DeviceResourceList, 0)}},
+				CreateOperations: make(CreateOperationList, 0),
+			},
+			expected: false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.plan.IsEmpty()
+			assert.Equal(t, tt.expected, res)
 		})
 	}
 }
