@@ -4,3 +4,16 @@
 run:
   timeout: 3m
   issues-exit-code: 1
+
+linters:
+  disable-all: true
+  enable:
+    - unused
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - exportloopref
