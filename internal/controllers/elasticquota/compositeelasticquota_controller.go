@@ -209,6 +209,7 @@ func (r *CompositeElasticQuotaReconciler) findCompositeElasticQuotaForPod(pod cl
 
 	var podCompositeEq *v1alpha1.CompositeElasticQuota
 	for _, compositeEq := range allCompositeEqList.Items {
+		compositeEq := compositeEq
 		if util.InSlice(pod.GetNamespace(), compositeEq.Spec.Namespaces) {
 			podCompositeEq = &compositeEq
 			break

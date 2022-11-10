@@ -13,8 +13,8 @@ const (
 )
 
 var (
-	NotFoundError = errorImpl{code: errorCodeNotFound}
-	GenericError  = errorImpl{code: errorCodeGeneric}
+	NotFoundErr = errorImpl{code: errorCodeNotFound}
+	GenericErr  = errorImpl{code: errorCodeGeneric}
 )
 
 type Error interface {

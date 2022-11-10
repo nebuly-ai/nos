@@ -153,7 +153,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 			deviceIdToGPUIndex: map[string]int{
 				"1": -1,
 			},
-			getGpuIndexErr: gpu.GenericError.Errorf("error"),
+			getGpuIndexErr: gpu.GenericErr.Errorf("error"),
 			expectedError:  true,
 		},
 		{
@@ -315,7 +315,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 					},
 				},
 			},
-			getGpuIndexErr:     gpu.GenericError.Errorf("error"),
+			getGpuIndexErr:     gpu.GenericErr.Errorf("error"),
 			deviceIdToGPUIndex: map[string]int{"1": -1},
 			expectedError:      true,
 		},

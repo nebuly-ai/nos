@@ -134,11 +134,9 @@ func (c *ClusterState) updateUsage(pod v1.Pod) {
 	cachedNodeName, bindingKnown := c.bindings[namespacedName]
 	if bindingKnown {
 		c.updateUsageForKnownPod(cachedNodeName, pod)
-	} else {
-		if pod.Status.Phase == v1.PodRunning {
-			nodeInfo.AddPod(&pod)
-			c.nodes[pod.Spec.NodeName] = nodeInfo
-		}
+	} else if pod.Status.Phase == v1.PodRunning {
+		nodeInfo.AddPod(&pod)
+		c.nodes[pod.Spec.NodeName] = nodeInfo
 	}
 
 	// Update lookup table
@@ -159,11 +157,9 @@ func (c *ClusterState) updateUsageForKnownPod(cachedNodeName string, pod v1.Pod)
 		if pod.Status.Phase == v1.PodRunning {
 			nodeInfo.AddPod(&pod)
 		}
-	} else {
+	} else if pod.Status.Phase != v1.PodRunning {
 		// pod is still on the same cached node, remove it if status changed
-		if pod.Status.Phase != v1.PodRunning {
-			_ = nodeInfo.RemovePod(&pod)
-		}
+		_ = nodeInfo.RemovePod(&pod)
 	}
 
 	c.nodes[pod.Spec.NodeName] = nodeInfo
