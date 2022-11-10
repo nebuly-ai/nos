@@ -20,3 +20,11 @@ type Device struct {
 	// Status represents the status of the k8s resource (e.g. free or used)
 	Status Status
 }
+
+func (d Device) IsUsed() bool {
+	return d.Status == StatusUsed
+}
+
+func (d Device) IsFree() bool {
+	return d.Status == StatusFree
+}

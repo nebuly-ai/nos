@@ -3,15 +3,15 @@ package plan
 import "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 
 type CreateOperation struct {
+	// MigProfile corresponds to the profile(s) that need to be created
 	MigProfile mig.Profile
-	Quantity   int
+	// Quantity is the amount of MigProfiles that need to be created
+	Quantity int
 }
 
 type DeleteOperation struct {
-	// Resources are the possible device resources that can be deleted. Must be >= Quantity.
+	// Resources are the MIG resources that needs to be deleted
 	Resources mig.DeviceResourceList
-	// Quantity is the amount of resources that need to be deleted. Must be <= len(Resources).
-	Quantity int
 }
 
 func (o DeleteOperation) GetMigProfileName() mig.ProfileName {

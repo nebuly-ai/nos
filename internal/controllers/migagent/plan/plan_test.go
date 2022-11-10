@@ -103,7 +103,6 @@ func TestNewMigConfigPlan(t *testing.T) {
 							GpuIndex: 0,
 						},
 					},
-					Quantity: 2,
 				},
 				{
 					Resources: []mig.DeviceResource{
@@ -116,7 +115,6 @@ func TestNewMigConfigPlan(t *testing.T) {
 							GpuIndex: 1,
 						},
 					},
-					Quantity: 1,
 				},
 			},
 			expectedCreateOps: []CreateOperation{},
@@ -127,6 +125,63 @@ func TestNewMigConfigPlan(t *testing.T) {
 			specAnnotations:   map[string]string{},
 			expectedCreateOps: []CreateOperation{},
 			expectedDeleteOps: []DeleteOperation{},
+		},
+		{
+			name: "Delete operations should use free devices when available",
+			state: MigState{
+				0: {
+					{
+						Device: resource.Device{
+							ResourceName: "nvidia.com/mig-1g.10gb",
+							DeviceId:     "1",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 0,
+					},
+					{
+						Device: resource.Device{
+							ResourceName: "nvidia.com/mig-1g.10gb",
+							DeviceId:     "2",
+							Status:       resource.StatusUsed,
+						},
+						GpuIndex: 0,
+					},
+					{
+						Device: resource.Device{
+							ResourceName: "nvidia.com/mig-1g.10gb",
+							DeviceId:     "3",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 0,
+					},
+				},
+			},
+			specAnnotations: map[string]string{
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "1",
+			},
+			expectedCreateOps: []CreateOperation{},
+			expectedDeleteOps: []DeleteOperation{
+				{
+					Resources: mig.DeviceResourceList{
+						{
+							Device: resource.Device{
+								ResourceName: "nvidia.com/mig-1g.10gb",
+								DeviceId:     "1",
+								Status:       resource.StatusFree,
+							},
+							GpuIndex: 0,
+						},
+						{
+							Device: resource.Device{
+								ResourceName: "nvidia.com/mig-1g.10gb",
+								DeviceId:     "3",
+								Status:       resource.StatusFree,
+							},
+							GpuIndex: 0,
+						},
+					},
+				},
+			},
 		},
 	}
 

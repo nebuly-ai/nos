@@ -7,7 +7,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -241,28 +240,15 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 	logger := a.newLogger(ctx)
 	var restartRequired bool
 
-	// Get resources candidate to be deleted
-	candidateResources := make([]mig.DeviceResource, 0)
-	for _, r := range op.Resources {
-		if r.Status == resource.StatusFree {
-			logger.Info("resource added to delete candidates", "resource", r)
-			candidateResources = append(candidateResources, r)
-		}
-		if r.Status != resource.StatusFree {
-			logger.Info(
-				"cannot add resource to delete candidates because status is not 'free'",
-				"status",
-				r.Status,
-				"resource",
-				r,
-			)
-		}
-	}
-
 	// Delete resources choosing from candidates
 	var nDeleted int
 	var deleteErrors = make(gpu.ErrorList, 0)
-	for _, r := range candidateResources {
+	for _, r := range op.Resources {
+		if !r.IsFree() {
+			err := fmt.Errorf("resource is not free")
+			logger.Error(err, "cannot delete MIG resource", "resource", r)
+			continue
+		}
 		err := a.migClient.DeleteMigResource(ctx, r)
 		if gpu.IgnoreNotFound(err) != nil {
 			deleteErrors = append(deleteErrors, err)
@@ -277,9 +263,6 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 		}
 		logger.Info("deleted MIG resource", "resource", r)
 		nDeleted++
-		if nDeleted >= op.Quantity {
-			break
-		}
 	}
 
 	if nDeleted > 0 {

@@ -15,10 +15,7 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 
 	// Get resources present in current state which MIG profile is not included in spec
 	for _, resourceList := range getResourcesNotIncludedInSpec(state, desired).GroupByMigProfile() {
-		op := DeleteOperation{
-			Resources: resourceList,
-			Quantity:  len(resourceList), // we want all of these resources to be deleted
-		}
+		op := DeleteOperation{Resources: resourceList}
 		plan.addDeleteOp(op)
 	}
 
@@ -35,6 +32,12 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 			actualResources = make(mig.DeviceResourceList, 0)
 		}
 
+		//for _, res := range actualResources{
+		//	if res in desired && res.Status == resource.StatusFree {
+		//
+		//	}
+		//}
+
 		diff := totalDesiredQuantity - len(actualResources)
 		if diff > 0 {
 			op := CreateOperation{
@@ -44,15 +47,38 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 			plan.addCreateOp(op)
 		}
 		if diff < 0 {
-			op := DeleteOperation{
-				Quantity:  util.Abs(diff),
-				Resources: actualResources,
-			}
+			toDelete := extractCandidatesForDeletion(actualResources, util.Abs(diff))
+			op := DeleteOperation{Resources: toDelete}
 			plan.addDeleteOp(op)
 		}
 	}
 
 	return plan
+}
+
+func extractCandidatesForDeletion(resources mig.DeviceResourceList, nToDelete int) mig.DeviceResourceList {
+	deleteCandidates := make(mig.DeviceResourceList, 0)
+	// add free devices first
+	for _, r := range resources {
+		if r.IsFree() {
+			deleteCandidates = append(deleteCandidates, r)
+		}
+		if len(deleteCandidates) == util.Abs(nToDelete) {
+			break
+		}
+	}
+	// if candidates are not enough, add not-free resources too
+	if len(deleteCandidates) < nToDelete {
+		for _, r := range resources {
+			if !r.IsFree() {
+				deleteCandidates = append(deleteCandidates, r)
+			}
+			if len(deleteCandidates) == util.Abs(nToDelete) {
+				break
+			}
+		}
+	}
+	return deleteCandidates
 }
 
 func (p *MigConfigPlan) addDeleteOp(op DeleteOperation) {

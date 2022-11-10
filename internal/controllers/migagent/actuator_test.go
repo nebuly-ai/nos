@@ -25,7 +25,6 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 			name: "Empty delete operation",
 			op: plan.DeleteOperation{
 				Resources: make(mig.DeviceResourceList, 0),
-				Quantity:  0,
 			},
 			clientReturnedError: nil,
 			expectedDeleteCalls: 0,
@@ -33,7 +32,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 			restartExpected:     false,
 		},
 		{
-			name: "Delete op does not have enough candidates",
+			name: "Delete op success with multiple resources",
 			op: plan.DeleteOperation{
 				Resources: mig.DeviceResourceList{
 					{
@@ -61,48 +60,11 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 						GpuIndex: 0,
 					},
 				},
-				Quantity: 2,
 			},
 			clientReturnedError: nil,
 			expectedDeleteCalls: 1,
 			errorExpected:       false,
 			restartExpected:     true,
-		},
-		{
-			name: "More candidates than required, the op should delete only Quantity resources",
-			op: plan.DeleteOperation{
-				Resources: mig.DeviceResourceList{
-					{
-						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
-							DeviceId:     "uid-1",
-							Status:       resource.StatusFree,
-						},
-						GpuIndex: 0,
-					},
-					{
-						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
-							DeviceId:     "uid-2",
-							Status:       resource.StatusFree,
-						},
-						GpuIndex: 0,
-					},
-					{
-						Device: resource.Device{
-							ResourceName: "nvidia.com/mig-1g.10gb",
-							DeviceId:     "uid-3",
-							Status:       resource.StatusFree,
-						},
-						GpuIndex: 0,
-					},
-				},
-				Quantity: 2,
-			},
-			clientReturnedError: nil,
-			expectedDeleteCalls: 2,
-			restartExpected:     true,
-			errorExpected:       false,
 		},
 		{
 			name: "MIG client returns error",
@@ -117,7 +79,6 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 						GpuIndex: 0,
 					},
 				},
-				Quantity: 1,
 			},
 			clientReturnedError: gpu.GenericError.Errorf("an error"),
 			expectedDeleteCalls: 1,
@@ -125,15 +86,12 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 			restartExpected:     false,
 		},
 	}
-
-	var migClient = migtest.Client{}
-	var actuator = MigActuator{migClient: &migClient}
-
 	for _, tt := range testCases {
-		migClient.Reset()
-		migClient.ReturnedError = tt.clientReturnedError
 		t.Run(tt.name, func(t *testing.T) {
-			status := actuator.applyDeleteOp(context.TODO(), tt.op)
+			var migClient = migtest.Client{}
+			var actuator = MigActuator{migClient: &migClient}
+			migClient.ReturnedError = tt.clientReturnedError
+			status := actuator.applyDeleteOp(context.Background(), tt.op)
 			if tt.errorExpected {
 				assert.Error(t, status.Err)
 			}

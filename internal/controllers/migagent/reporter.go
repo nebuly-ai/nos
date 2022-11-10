@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	"reflect"
@@ -52,10 +51,10 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	usedMigs := make([]mig.DeviceResource, 0)
 	freeMigs := make([]mig.DeviceResource, 0)
 	for _, res := range migResources {
-		if res.Status == resource.StatusUsed {
+		if res.IsUsed() {
 			usedMigs = append(usedMigs, res)
 		}
-		if res.Status == resource.StatusFree {
+		if res.IsFree() {
 			freeMigs = append(freeMigs, res)
 		}
 	}
