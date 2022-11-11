@@ -150,7 +150,7 @@ func (l GPUStatusAnnotationList) GetFree() GPUStatusAnnotationList {
 	})
 }
 
-func (l GPUStatusAnnotationList) Equals(other *GPUStatusAnnotationList) bool {
+func (l GPUStatusAnnotationList) Equal(other *GPUStatusAnnotationList) bool {
 	return util.UnorderedEqual(l, *other)
 }
 

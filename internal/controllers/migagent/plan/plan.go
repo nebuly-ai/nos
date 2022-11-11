@@ -24,7 +24,7 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	}
 
 	// Compute plan for resources contained in spec annotations
-	stateResourcesByGpu := state.Flatten().GroupByGpuIndex()
+	stateResourcesByGpu := state.Flatten().SortByDeviceId().GroupByGpuIndex()
 	for gpuIndex, gpuAnnotations := range desired.GroupByGpuIndex() {
 		gpuStateResources := stateResourcesByGpu[gpuIndex].GroupByMigProfile()
 		for migProfile, migProfileAnnotations := range gpuAnnotations.GroupByMigProfile() {

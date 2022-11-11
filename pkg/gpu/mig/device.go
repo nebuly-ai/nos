@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	"sort"
 	"strings"
 )
 
@@ -42,6 +43,17 @@ func (l DeviceResourceList) GroupBy(keyFunc func(resource DeviceResource) string
 		result[key] = append(result[key], r)
 	}
 	return result
+}
+
+func (l DeviceResourceList) SortByDeviceId() DeviceResourceList {
+	sorted := make(DeviceResourceList, len(l))
+	for i, r := range l {
+		sorted[i] = r
+	}
+	sort.SliceStable(sorted, func(i, j int) bool {
+		return sorted[i].DeviceId > sorted[j].DeviceId
+	})
+	return sorted
 }
 
 func (l DeviceResourceList) GroupByGpuIndex() map[int]DeviceResourceList {
