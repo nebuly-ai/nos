@@ -62,7 +62,7 @@ func TestBatcher__Ready(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		timeoutDuration := 20 * time.Millisecond
+		timeoutDuration := 200 * time.Millisecond
 		idleDuration := 10 * time.Millisecond
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
@@ -79,7 +79,7 @@ func TestBatcher__Ready(t *testing.T) {
 		case batch := <-podBatcher.Ready():
 			now := time.Now()
 			assert.Len(t, batch, 1)
-			assert.WithinDuration(t, now, start.Add(idleDuration), 8*time.Millisecond)
+			assert.WithinDuration(t, now, start.Add(idleDuration), 20*time.Millisecond)
 		case <-time.NewTimer(testTimeout).C:
 			assert.Fail(t, "test timed out")
 		}

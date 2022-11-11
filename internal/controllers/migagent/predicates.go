@@ -1,8 +1,8 @@
 package migagent
 
 import (
+	"github.com/google/go-cmp/cmp"
 	v1 "k8s.io/api/core/v1"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
@@ -35,10 +35,10 @@ type nodeResourcesChangedPredicate struct {
 func (p nodeResourcesChangedPredicate) Update(updateEvent event.UpdateEvent) bool {
 	newNode := updateEvent.ObjectNew.(*v1.Node)
 	oldNode := updateEvent.ObjectOld.(*v1.Node)
-	if !reflect.DeepEqual(newNode.Status.Allocatable, oldNode.Status.Allocatable) {
+	if !cmp.Equal(newNode.Status.Allocatable, oldNode.Status.Allocatable) {
 		return false
 	}
-	return !reflect.DeepEqual(newNode.Status.Capacity, oldNode.Status.Capacity)
+	return !cmp.Equal(newNode.Status.Capacity, oldNode.Status.Capacity)
 }
 
 // annotationsChangedPredicate
@@ -47,7 +47,7 @@ type annotationsChangedPredicate struct {
 }
 
 func (p annotationsChangedPredicate) Update(updateEvent event.UpdateEvent) bool {
-	return !reflect.DeepEqual(updateEvent.ObjectOld.GetAnnotations(), updateEvent.ObjectNew.GetAnnotations())
+	return !cmp.Equal(updateEvent.ObjectOld.GetAnnotations(), updateEvent.ObjectNew.GetAnnotations())
 }
 
 // excludeDeletePredicate

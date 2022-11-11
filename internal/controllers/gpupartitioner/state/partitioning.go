@@ -1,8 +1,8 @@
 package state
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
-	"reflect"
 )
 
 type GPUPartitioning struct {
@@ -18,7 +18,7 @@ func (n NodePartitioning) Equal(other NodePartitioning) bool {
 	if len(n.GPUs) != len(other.GPUs) {
 		return false
 	}
-	return reflect.DeepEqual(n.GPUs, other.GPUs)
+	return util.UnorderedEqual(n.GPUs, other.GPUs)
 }
 
 type PartitioningState map[string]NodePartitioning

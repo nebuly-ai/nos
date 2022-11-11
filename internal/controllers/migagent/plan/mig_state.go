@@ -2,9 +2,9 @@ package plan
 
 import (
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
-	"reflect"
 )
 
 // MigState represents the current state in terms of MIG resources of each GPU (which index is stored as key
@@ -41,7 +41,7 @@ func (s MigState) Matches(specAnnotations []mig.GPUSpecAnnotation) bool {
 		stateGpuIndexWithMigProfileQuantities[k] = len(v)
 	}
 
-	return reflect.DeepEqual(specGpuIndexWithMigProfileQuantities, stateGpuIndexWithMigProfileQuantities)
+	return cmp.Equal(specGpuIndexWithMigProfileQuantities, stateGpuIndexWithMigProfileQuantities)
 }
 
 func (s MigState) Flatten() mig.DeviceResourceList {

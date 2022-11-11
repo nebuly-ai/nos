@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"golang.org/x/exp/constraints"
 	"k8s.io/apimachinery/pkg/types"
 	"math/rand"
@@ -125,6 +126,36 @@ func Filter[K any](slice []K, filter func(k K) bool) []K {
 		}
 	}
 	return res
+}
+
+func UnorderedEqual[K any](first []K, second []K) bool {
+	firstLen := len(first)
+	secondLen := len(second)
+	if firstLen != secondLen {
+		return false
+	}
+
+	visited := make([]bool, firstLen)
+
+	for i := 0; i < firstLen; i++ {
+		found := false
+		element := first[i]
+		for j := 0; j < secondLen; j++ {
+			if visited[j] {
+				continue
+			}
+			if cmp.Equal(element, second[j]) {
+				visited[j] = true
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	return true
 }
 
 // LocalEndpoint returns the full path to a unix socket at the given endpoint

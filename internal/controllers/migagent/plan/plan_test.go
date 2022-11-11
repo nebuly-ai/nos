@@ -317,3 +317,185 @@ func TestMigConfigPlan_IsEmpty(t *testing.T) {
 		})
 	}
 }
+
+func TestMigConfigPlan__Equals(t *testing.T) {
+	testCases := []struct {
+		name     string
+		plan     MigConfigPlan
+		other    *MigConfigPlan
+		expected bool
+	}{
+		{
+			name: "other is nil",
+			plan: MigConfigPlan{
+				DeleteOperations: DeleteOperationList{{Resources: make(mig.DeviceResourceList, 0)}},
+				CreateOperations: make(CreateOperationList, 0),
+			},
+			other:    nil,
+			expected: false,
+		},
+		{
+			name: "other is equal",
+			plan: MigConfigPlan{
+				DeleteOperations: DeleteOperationList{
+					{
+						Resources: mig.DeviceResourceList{
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "1",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "3",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+						},
+					},
+				},
+				CreateOperations: CreateOperationList{
+					{
+						MigProfile: mig.Profile{
+							GpuIndex: 1,
+							Name:     mig.Profile1g10gb,
+						},
+						Quantity: 1,
+					},
+					{
+						MigProfile: mig.Profile{
+							GpuIndex: 1,
+							Name:     mig.Profile2g12gb,
+						},
+						Quantity: 1,
+					},
+				},
+			},
+			other: &MigConfigPlan{
+				DeleteOperations: DeleteOperationList{
+					{
+						Resources: mig.DeviceResourceList{
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "3",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "1",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+						},
+					},
+				},
+				CreateOperations: CreateOperationList{
+					{
+						MigProfile: mig.Profile{
+							GpuIndex: 1,
+							Name:     mig.Profile2g12gb,
+						},
+						Quantity: 1,
+					},
+					{
+						MigProfile: mig.Profile{
+							GpuIndex: 1,
+							Name:     mig.Profile1g10gb,
+						},
+						Quantity: 1,
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "other is *not* equal",
+			plan: MigConfigPlan{
+				DeleteOperations: DeleteOperationList{
+					{
+						Resources: mig.DeviceResourceList{
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "1",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "3",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+						},
+					},
+				},
+				CreateOperations: CreateOperationList{
+					{
+						MigProfile: mig.Profile{
+							GpuIndex: 1,
+							Name:     mig.Profile1g10gb,
+						},
+						Quantity: 0,
+					},
+				},
+			},
+			other: &MigConfigPlan{
+				DeleteOperations: DeleteOperationList{
+					{
+						Resources: mig.DeviceResourceList{
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "1",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+							{
+								Device: resource.Device{
+									ResourceName: mig.Profile1g10gb.AsResourceName(),
+									DeviceId:     "1",
+									Status:       resource.StatusFree,
+								},
+								GpuIndex: 0,
+							},
+						},
+					},
+				},
+				CreateOperations: CreateOperationList{
+					{
+						MigProfile: mig.Profile{
+							GpuIndex: 1,
+							Name:     mig.Profile1g10gb,
+						},
+						Quantity: 0,
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			res := tt.plan.Equal(tt.other)
+			swappedRes := tt.other.Equal(&tt.plan)
+			assert.Equal(t, res, swappedRes, "Equal function is not symmetric")
+			assert.Equal(t, tt.expected, res)
+		})
+	}
+}

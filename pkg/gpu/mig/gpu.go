@@ -2,9 +2,9 @@ package mig
 
 import (
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
-	"reflect"
 )
 
 // Geometry corresponds to the MIG Geometry of a GPU,
@@ -120,7 +120,7 @@ func (g *GPU) ApplyGeometry(geometry Geometry) error {
 // AllowsGeometry returns true if the geometry provided as argument is allowed by the GPU model
 func (g *GPU) AllowsGeometry(geometry Geometry) bool {
 	for _, allowedGeometry := range g.GetAllowedGeometries() {
-		if reflect.DeepEqual(geometry, allowedGeometry) {
+		if cmp.Equal(geometry, allowedGeometry) {
 			return true
 		}
 	}

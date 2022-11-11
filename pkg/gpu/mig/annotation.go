@@ -2,9 +2,9 @@ package mig
 
 import (
 	"fmt"
+	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	v1 "k8s.io/api/core/v1"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -149,6 +149,10 @@ func (l GPUStatusAnnotationList) GetFree() GPUStatusAnnotationList {
 	})
 }
 
+func (l GPUStatusAnnotationList) Equals(other *GPUStatusAnnotationList) bool {
+	return cmp.Equal(l, other)
+}
+
 type GPUStatusAnnotation struct {
 	Name     string
 	Quantity int
@@ -235,7 +239,7 @@ func SpecMatchesStatus(specAnnotations []GPUSpecAnnotation, statusAnnotations []
 		statusMigProfilesWithQuantity[a.GetGPUIndexWithMigProfile()] += a.Quantity
 	}
 
-	return reflect.DeepEqual(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
+	return cmp.Equal(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
 func ComputeStatusAnnotations(used []DeviceResource, free []DeviceResource) []GPUStatusAnnotation {

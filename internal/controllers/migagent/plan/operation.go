@@ -1,6 +1,9 @@
 package plan
 
-import "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
+)
 
 type CreateOperation struct {
 	// MigProfile corresponds to the profile(s) that need to be created
@@ -19,6 +22,10 @@ func (o DeleteOperation) GetMigProfileName() mig.ProfileName {
 		return o.Resources[0].GetMigProfileName()
 	}
 	return ""
+}
+
+func (o DeleteOperation) Equal(other DeleteOperation) bool {
+	return util.UnorderedEqual(o.Resources, other.Resources)
 }
 
 // OperationStatus represents the outcome of the execution of an operation
@@ -41,4 +48,18 @@ func (c CreateOperationList) Flatten() mig.ProfileList {
 	return res
 }
 
+func (c CreateOperationList) Equal(other CreateOperationList) bool {
+	if len(c) != len(other) {
+		return false
+	}
+	return util.UnorderedEqual(c, other)
+}
+
 type DeleteOperationList []DeleteOperation
+
+func (l DeleteOperationList) Equal(other DeleteOperationList) bool {
+	if len(l) != len(other) {
+		return false
+	}
+	return util.UnorderedEqual(l, other)
+}

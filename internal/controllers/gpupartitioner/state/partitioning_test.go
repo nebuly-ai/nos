@@ -150,7 +150,7 @@ func TestPartitioningState__Equal(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "Same partitioning",
+			name: "Same partitioning, different orders",
 			partitioningState: state.PartitioningState{
 				"node-1": {
 					GPUs: []state.GPUPartitioning{
@@ -185,17 +185,17 @@ func TestPartitioningState__Equal(t *testing.T) {
 				"node-1": {
 					GPUs: []state.GPUPartitioning{
 						{
-							GPUIndex: 0,
-							Resources: map[v1.ResourceName]int{
-								mig.Profile1g5gb.AsResourceName():  2,
-								mig.Profile4g24gb.AsResourceName(): 4,
-							},
-						},
-						{
 							GPUIndex: 1,
 							Resources: map[v1.ResourceName]int{
 								mig.Profile1g5gb.AsResourceName():  1,
 								mig.Profile2g12gb.AsResourceName(): 1,
+							},
+						},
+						{
+							GPUIndex: 0,
+							Resources: map[v1.ResourceName]int{
+								mig.Profile1g5gb.AsResourceName():  2,
+								mig.Profile4g24gb.AsResourceName(): 4,
 							},
 						},
 					},

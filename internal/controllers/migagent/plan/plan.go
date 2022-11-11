@@ -1,6 +1,7 @@
 package plan
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
@@ -96,6 +97,19 @@ func (p *MigConfigPlan) addCreateOp(op CreateOperation) {
 
 func (p *MigConfigPlan) IsEmpty() bool {
 	return len(p.DeleteOperations) == 0 && len(p.CreateOperations) == 0
+}
+
+func (p *MigConfigPlan) Equal(other *MigConfigPlan) bool {
+	if other == nil || p == nil {
+		return p == other
+	}
+	if !cmp.Equal(other.DeleteOperations, p.DeleteOperations) {
+		return false
+	}
+	if !cmp.Equal(other.CreateOperations, p.CreateOperations) {
+		return false
+	}
+	return true
 }
 
 func getResourcesNotIncludedInSpec(state MigState, specAnnotations mig.GPUSpecAnnotationList) mig.DeviceResourceList {

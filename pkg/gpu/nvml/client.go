@@ -49,7 +49,7 @@ func (c *clientImpl) GetGpuIndex(migDeviceId string) (int, gpu.Error) {
 	}
 	defer c.shutdown()
 
-	c.logger.V(1).Info("retrieving GPU index of MIG device", "MIGDeviceUUID", migDeviceId)
+	c.logger.V(3).Info("retrieving GPU index of MIG device", "MIGDeviceUUID", migDeviceId)
 	var result int
 	var err error
 	var found bool
