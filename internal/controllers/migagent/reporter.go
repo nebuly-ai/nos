@@ -36,6 +36,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 
 	r.sharedState.Lock()
 	defer r.sharedState.Unlock()
+	defer r.sharedState.OnReportDone()
 
 	var instance v1.Node
 	if err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
@@ -89,7 +90,6 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 
 	logger.Info("updated reported status - node annotations updated successfully")
-	r.sharedState.OnReportDone()
 
 	return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 }
