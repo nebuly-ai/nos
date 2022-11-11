@@ -33,9 +33,13 @@ var _ = Describe("MigAgent - Actuator", func() {
 		updated.Annotations = map[string]string{}
 		Expect(k8sClient.Patch(ctx, updated, client.MergeFrom(&node))).To(Succeed())
 
+		// Cleanup actuator state
+		actuator.lastAppliedStatus = nil
+		actuator.lastAppliedPlan = nil
+
 		// Simulate configuration reported
-		actuatorSharedState.OnApplyDone()
-		actuatorSharedState.OnReportDone()
+		actuator.sharedState.OnApplyDone()
+		actuator.sharedState.OnReportDone()
 	})
 
 	AfterEach(func() {
@@ -179,6 +183,59 @@ var _ = Describe("MigAgent - Actuator", func() {
 
 			By("Do not calling the create method on the MIG client")
 			Expect(actuatorMigClient.NumCallsCreateMigResources).To(BeZero())
+		})
+	})
+
+	When("The node annotation gets updated but plan and status are the same as the last reconcile", func() {
+		It("Should do nothing on the second reconcile", func() {
+			By("Fetching the node")
+			var node v1.Node
+			Expect(k8sClient.Get(ctx, types.NamespacedName{Name: actuatorNodeName, Namespace: ""}, &node)).To(Succeed())
+
+			By("Fetching the nvidia-device-plugin pod")
+			var nvidiaDevicePluginPod v1.Pod
+			Expect(
+				k8sClient.Get(
+					ctx,
+					types.NamespacedName{Name: actuatorNvidiaDevicePluginPodName, Namespace: nvidiaDevicePluginPodNamespace},
+					&nvidiaDevicePluginPod),
+			).To(Succeed())
+
+			By("Updating the node annotations")
+			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb")
+			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb")
+			updatedNode := node.DeepCopy()
+			updatedNode.Annotations = map[string]string{
+				specAnnotation:   "2",
+				statusAnnotation: "0",
+			}
+			Expect(k8sClient.Patch(ctx, updatedNode, client.MergeFrom(&node)))
+
+			By("Deleting the nvidia-device-plugin Pod on the node on the first reconcile")
+			Eventually(func() bool {
+				var updatedPod v1.Pod
+				err := k8sClient.Get(
+					ctx,
+					types.NamespacedName{Name: actuatorNvidiaDevicePluginPodName, Namespace: nvidiaDevicePluginPodNamespace},
+					&updatedPod,
+				)
+				if client.IgnoreNotFound(err) != nil {
+					return false
+				}
+				return updatedPod.DeletionTimestamp != nil
+			}, timeout, interval).Should(BeTrue())
+
+			By("Updating again the node annotations")
+			Expect(k8sClient.Patch(ctx, updatedNode, client.MergeFrom(&node)))
+
+			By("Do not deleting nvidia-device-plugin pod")
+			Consistently(func() error {
+				return k8sClient.Get(
+					ctx,
+					types.NamespacedName{Name: actuatorNvidiaDevicePluginPodName, Namespace: nvidiaDevicePluginPodNamespace},
+					&v1.Pod{},
+				)
+			}, 5*time.Second).Should(Succeed())
 		})
 	})
 })

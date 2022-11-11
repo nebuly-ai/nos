@@ -8,7 +8,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -21,6 +20,11 @@ type MigActuator struct {
 	migClient   mig.Client
 	sharedState *SharedState
 	nodeName    string
+
+	// lastAppliedPlan is the latest applied plan
+	lastAppliedPlan *plan.MigConfigPlan
+	// lastAppliedStatus is the MIG status of the GPUs at the time when the latest plan was applied
+	lastAppliedStatus *mig.GPUStatusAnnotationList
 }
 
 func NewActuator(client client.Client, migClient mig.Client, sharedState *SharedState, nodeName string) MigActuator {
@@ -32,12 +36,8 @@ func NewActuator(client client.Client, migClient mig.Client, sharedState *Shared
 	}
 }
 
-func (a *MigActuator) newLogger(ctx context.Context) klog.Logger {
-	return log.FromContext(ctx).WithName("Actuator")
-}
-
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := a.newLogger(ctx)
+	logger := log.FromContext(ctx)
 
 	// If we haven't reported the last applied config, requeue and avoid acquiring lock
 	if !a.sharedState.AtLeastOneReportSinceLastApply() {
@@ -63,21 +63,32 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 
 	// Compute MIG config plan
 	configPlan, err := a.plan(ctx, specAnnotations)
-
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
+	// Check if plan has to be applied
 	if configPlan.IsEmpty() {
 		logger.Info("MIG config plan is empty, nothing to do")
 		return ctrl.Result{}, nil
 	}
+	if configPlan.Equal(a.lastAppliedPlan) && statusAnnotations.Equals(a.lastAppliedStatus) {
+		logger.Info("MIG config plan already applied and state hasn't changed, nothing to do")
+	}
 
 	// Apply MIG config plan
-	return a.apply(ctx, configPlan)
+	res, err := a.apply(ctx, configPlan)
+
+	// Update last applied
+	a.lastAppliedPlan = &configPlan
+	a.lastAppliedStatus = &statusAnnotations
+	a.sharedState.OnApplyDone()
+
+	return res, err
 }
 
 func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
-	logger := a.newLogger(ctx)
+	logger := log.FromContext(ctx)
 
 	// Compute current state
 	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
@@ -104,7 +115,7 @@ func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnot
 }
 
 func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.Result, error) {
-	logger := a.newLogger(ctx)
+	logger := log.FromContext(ctx)
 	logger.Info(
 		"applying MIG config plan",
 		"createOperations",
@@ -144,7 +155,6 @@ func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.
 			logger.Error(err, "unable to restart nvidia device plugin")
 			return ctrl.Result{}, err
 		}
-		a.sharedState.OnApplyDone()
 	}
 
 	// Check if any error happened
@@ -158,7 +168,7 @@ func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.
 // restartNvidiaDevicePlugin deletes the Nvidia Device Plugin pod and blocks until it is successfully recreated by
 // its daemonset
 func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
-	logger := a.newLogger(ctx)
+	logger := log.FromContext(ctx)
 	logger.Info("restarting nvidia device plugin")
 
 	// delete pod on the current node
@@ -189,7 +199,7 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 }
 
 func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, timeout time.Duration) error {
-	logger := a.newLogger(ctx)
+	logger := log.FromContext(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -237,7 +247,7 @@ func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, time
 }
 
 func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) plan.OperationStatus {
-	logger := a.newLogger(ctx)
+	logger := log.FromContext(ctx)
 	var restartRequired bool
 
 	// Delete resources choosing from candidates
@@ -282,7 +292,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 }
 
 func (a *MigActuator) applyCreateOps(ctx context.Context, ops plan.CreateOperationList) plan.OperationStatus {
-	logger := a.newLogger(ctx)
+	logger := log.FromContext(ctx)
 	logger.Info("applying create operations", "migProfiles", ops)
 
 	profileList := ops.Flatten()
