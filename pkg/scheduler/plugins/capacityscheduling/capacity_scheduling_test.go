@@ -213,6 +213,7 @@ func TestPreFilter(t *testing.T) {
 
 			fwk, err := st.NewFramework(
 				registeredPlugins, "",
+				context.Background().Done(),
 				frameworkruntime.WithPodNominator(testutil.NewPodNominator(nil)),
 				frameworkruntime.WithSnapshotSharedLister(testutil.NewFakeSharedLister(make([]*v1.Pod, 0), make([]*v1.Node, 0))),
 			)
@@ -451,11 +452,12 @@ func TestDryRunPreemption(t *testing.T) {
 					return noderesources.NewFit(plArgs, fh, plfeature.Features{})
 				}, "Filter", "PreFilter"),
 			}
-
+			ctx := context.Background()
 			cs := clientsetfake.NewSimpleClientset()
 			fwk, err := st.NewFramework(
 				registeredPlugins,
 				"default-scheduler",
+				ctx.Done(),
 				frameworkruntime.WithClientSet(cs),
 				frameworkruntime.WithEventRecorder(&events.FakeRecorder{}),
 				frameworkruntime.WithPodNominator(testutil.NewPodNominator(nil)),
@@ -467,7 +469,6 @@ func TestDryRunPreemption(t *testing.T) {
 			}
 
 			state := framework.NewCycleState()
-			ctx := context.Background()
 
 			// Some tests rely on PreFilter plugin to compute its CycleState.
 			_, preFilterStatus := fwk.RunPreFilterPlugins(ctx, state, tt.pod)

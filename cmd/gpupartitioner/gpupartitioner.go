@@ -114,7 +114,7 @@ func main() {
 
 	// Setup MIG partitioner controller
 	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
-	schedulerFramework, err := newSchedulerFramework(k8sClient)
+	schedulerFramework, err := newSchedulerFramework(ctx, k8sClient)
 	if err != nil {
 		setupLog.Error(err, "unable to init k8s scheduler framework")
 		os.Exit(1)
@@ -192,7 +192,7 @@ func setupIndexer(ctx context.Context, mgr ctrl.Manager) error {
 	return nil
 }
 
-func newSchedulerFramework(kubeClient kubernetes.Interface) (framework.Framework, error) {
+func newSchedulerFramework(ctx context.Context, kubeClient kubernetes.Interface) (framework.Framework, error) {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
 	schedulerConfig, err := scheduler_config.Default()
 	if err != nil {
@@ -207,6 +207,7 @@ func newSchedulerFramework(kubeClient kubernetes.Interface) (framework.Framework
 	return scheduler_runtime.NewFramework(
 		scheduler_plugins.NewInTreeRegistry(),
 		&schedulerConfig.Profiles[0],
+		ctx.Done(),
 		scheduler_runtime.WithInformerFactory(informerFactory),
 		scheduler_runtime.WithSnapshotSharedLister(testutil.NewFakeSharedLister(make([]*v1.Pod, 0), make([]*v1.Node, 0))),
 	)

@@ -81,6 +81,10 @@ func (f *fakeSharedLister) NodeInfos() framework.NodeInfoLister {
 	return f
 }
 
+func (f *fakeSharedLister) StorageInfos() framework.StorageInfoLister {
+	return f
+}
+
 func (f *fakeSharedLister) List() ([]*framework.NodeInfo, error) {
 	return f.nodeInfos, nil
 }
@@ -95,6 +99,10 @@ func (f *fakeSharedLister) HavePodsWithRequiredAntiAffinityList() ([]*framework.
 
 func (f *fakeSharedLister) Get(nodeName string) (*framework.NodeInfo, error) {
 	return f.nodeInfoMap[nodeName], nil
+}
+
+func (f *fakeSharedLister) IsPVCUsedByPods(string) bool {
+	return false
 }
 
 /*
