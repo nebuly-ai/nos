@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"regexp"
 	"strconv"
@@ -150,7 +151,7 @@ func (l GPUStatusAnnotationList) GetFree() GPUStatusAnnotationList {
 }
 
 func (l GPUStatusAnnotationList) Equals(other *GPUStatusAnnotationList) bool {
-	return cmp.Equal(l, other)
+	return util.UnorderedEqual(l, *other)
 }
 
 type GPUStatusAnnotation struct {
