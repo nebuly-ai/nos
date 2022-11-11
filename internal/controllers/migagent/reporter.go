@@ -2,9 +2,9 @@ package migagent
 
 import (
 	"context"
-	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -64,7 +64,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 
 	// Get current status annotations and compare with new ones
 	oldStatusAnnotations, _ := mig.GetGPUAnnotationsFromNode(instance)
-	if cmp.Equal(newStatusAnnotations, oldStatusAnnotations) {
+	if util.UnorderedEqual(newStatusAnnotations, oldStatusAnnotations) {
 		logger.Info("current status is equal to last reported status, nothing to do")
 		return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 	}
