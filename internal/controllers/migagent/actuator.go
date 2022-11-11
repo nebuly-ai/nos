@@ -41,6 +41,11 @@ func (a *MigActuator) newLogger(ctx context.Context) logr.Logger {
 	return log.FromContext(ctx).WithName("Actuator")
 }
 
+func (a *MigActuator) updateLastApplied(currentPlan plan.MigConfigPlan, currentStatus mig.GPUStatusAnnotationList) {
+	a.lastAppliedPlan = &currentPlan
+	a.lastAppliedStatus = &currentStatus
+}
+
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := a.newLogger(ctx)
 
@@ -72,6 +77,9 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, err
 	}
 
+	// At the end of reconcile, update last applied status information
+	defer a.updateLastApplied(configPlan, statusAnnotations)
+
 	// Check if plan has to be applied
 	if configPlan.IsEmpty() {
 		logger.Info("MIG config plan is empty, nothing to do")
@@ -84,10 +92,6 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 
 	// Apply MIG config plan
 	res, err := a.apply(ctx, configPlan)
-
-	// Update last applied
-	a.lastAppliedPlan = &configPlan
-	a.lastAppliedStatus = &statusAnnotations
 	a.sharedState.OnApplyDone()
 
 	return res, err
