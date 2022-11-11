@@ -3,6 +3,7 @@ package migagent
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
@@ -36,8 +37,12 @@ func NewActuator(client client.Client, migClient mig.Client, sharedState *Shared
 	}
 }
 
+func (a *MigActuator) newLogger(ctx context.Context) logr.Logger {
+	return log.FromContext(ctx).WithName("Actuator")
+}
+
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	logger := a.newLogger(ctx)
 
 	// If we haven't reported the last applied config, requeue and avoid acquiring lock
 	if !a.sharedState.AtLeastOneReportSinceLastApply() {
@@ -74,6 +79,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 	if configPlan.Equal(a.lastAppliedPlan) && statusAnnotations.Equals(a.lastAppliedStatus) {
 		logger.Info("MIG config plan already applied and state hasn't changed, nothing to do")
+		return ctrl.Result{}, nil
 	}
 
 	// Apply MIG config plan
@@ -88,7 +94,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 }
 
 func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
-	logger := log.FromContext(ctx)
+	logger := a.newLogger(ctx)
 
 	// Compute current state
 	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
@@ -115,7 +121,7 @@ func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnot
 }
 
 func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	logger := a.newLogger(ctx)
 	logger.Info(
 		"applying MIG config plan",
 		"createOperations",
@@ -168,7 +174,7 @@ func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.
 // restartNvidiaDevicePlugin deletes the Nvidia Device Plugin pod and blocks until it is successfully recreated by
 // its daemonset
 func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
-	logger := log.FromContext(ctx)
+	logger := a.newLogger(ctx)
 	logger.Info("restarting nvidia device plugin")
 
 	// delete pod on the current node
@@ -199,7 +205,7 @@ func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
 }
 
 func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, timeout time.Duration) error {
-	logger := log.FromContext(ctx)
+	logger := a.newLogger(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -247,7 +253,7 @@ func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, time
 }
 
 func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) plan.OperationStatus {
-	logger := log.FromContext(ctx)
+	logger := a.newLogger(ctx)
 	var restartRequired bool
 
 	// Delete resources choosing from candidates
@@ -292,7 +298,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 }
 
 func (a *MigActuator) applyCreateOps(ctx context.Context, ops plan.CreateOperationList) plan.OperationStatus {
-	logger := log.FromContext(ctx)
+	logger := a.newLogger(ctx)
 	logger.Info("applying create operations", "migProfiles", ops)
 
 	profileList := ops.Flatten()
