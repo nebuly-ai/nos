@@ -3,10 +3,16 @@ name: Run tests
 on:
   push:
     branches: [ "main" ]
-    paths-ignore: [ ".github" ]
+    paths-ignore:
+    - ".github/**"
+    - "README.md"
+    - "doc/**"
   pull_request:
     branches: [ "main" ]
-    paths-ignore: [ ".github" ]
+    paths-ignore:
+    - ".github/**"
+    - "README.md"
+    - "doc/**"
 
 permissions:
   contents: read
@@ -15,6 +21,7 @@ permissions:
 jobs:
 
   test:
+    name: Test and Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
