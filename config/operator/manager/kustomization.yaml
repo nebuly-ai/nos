@@ -1,18 +1,16 @@
 resources:
-- rbac.yaml
-- service_account.yaml
-- deployment.yaml
+- manager.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
 - files:
-  - scheduler_config.yaml
-  name: scheduler-config
+  - operator_config.yaml
+  name: operator-config
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-- name: scheduler
-  newName: ghcr.io/nebuly-ai/nebulnetes-scheduler
+- name: controller
+  newName: ghcr.io/nebuly-ai/nebulnetes-controller
   newTag: latest

@@ -1,0 +1,11 @@
+resources:
+- gpu_partitioner.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- files:
+  - gpu_partitioner_config.yaml
+  name: gpu-partitioner-config
+apiVersion: kustomize.config.k8s.io/v1beta1

@@ -1,0 +1,13 @@
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mig-agent-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mig-agent-role
+subjects:
+  - kind: ServiceAccount
+    name: mig-agent
+    namespace: system

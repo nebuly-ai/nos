@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mig-agent
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+        - name: mig-agent
+          args:
+            - "--config=mig_agent_config.yaml"
+          volumeMounts:
+            - name: mig-agent-config
+              mountPath: /mig_agent_config.yaml
+              subPath: mig_agent_config.yaml
+      volumes:
+        - name: mig-agent-config
+          configMap:
+            name: mig-agent-config

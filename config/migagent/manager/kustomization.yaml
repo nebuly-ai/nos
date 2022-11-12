@@ -1,0 +1,11 @@
+resources:
+- mig_agent.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- files:
+  - mig_agent_config.yaml
+  name: mig-agent-config
+apiVersion: kustomize.config.k8s.io/v1beta1
