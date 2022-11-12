@@ -47,9 +47,7 @@ func (l DeviceResourceList) GroupBy(keyFunc func(resource DeviceResource) string
 
 func (l DeviceResourceList) SortByDeviceId() DeviceResourceList {
 	sorted := make(DeviceResourceList, len(l))
-	for i, r := range l {
-		sorted[i] = r
-	}
+	copy(sorted, l)
 	sort.SliceStable(sorted, func(i, j int) bool {
 		return sorted[i].DeviceId < sorted[j].DeviceId
 	})
