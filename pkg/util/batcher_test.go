@@ -6,10 +6,16 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"sync"
 	"testing"
 	"time"
 )
+
+func startBatcher[T any](t *testing.T, ctx context.Context, batcher *util.Batcher[T]) {
+	go func(b *util.Batcher[T]) {
+		assert.NoError(t, b.Start(ctx))
+	}(batcher)
+	time.Sleep(100 * time.Millisecond)
+}
 
 func TestBatcher__Ready(t *testing.T) {
 	const testTimeout = 3 * time.Second
@@ -44,17 +50,16 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher.Add(v1.Pod{})
 
 		// Start batcher
-		go func() {
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
+		startBatcher(t, ctx, &podBatcher)
 
-		// Batch is empty, so it should never be ready
-		timer := time.NewTimer(20 * time.Millisecond)
+		// Add item
+		podBatcher.Add(v1.Pod{})
+		timeoutTimer := time.NewTimer(1 * time.Second)
 		select {
-		case <-podBatcher.Ready():
-			assert.Fail(t, "Batch was not expected to be ready")
-		case <-timer.C:
-			cancel()
+		case batch := <-podBatcher.Ready():
+			assert.Len(t, batch, 1)
+		case <-timeoutTimer.C:
+			assert.Fail(t, "")
 		}
 	})
 
@@ -67,9 +72,7 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
 		// Start batcher
-		go func() {
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
+		startBatcher(t, ctx, &podBatcher)
 
 		// Start a batch
 		podBatcher.Add(v1.Pod{})
@@ -95,9 +98,7 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
 		// Start the batcher
-		go func() {
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
+		startBatcher(t, ctx, &podBatcher)
 
 		var start time.Time
 		var end time.Time
@@ -123,9 +124,7 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
 		// Start the batcher
-		go func() {
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
+		startBatcher(t, ctx, &podBatcher)
 
 		// Add some pods to the batch in order to reset the idle timer
 		var start time.Time
@@ -158,9 +157,7 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
 		// Start the batcher
-		go func() {
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
+		startBatcher(t, ctx, &podBatcher)
 
 		// Add some pods to the batch in order to reset the idle timer
 		var start time.Time
@@ -191,14 +188,8 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
 		// Start the batcher
-		wg := sync.WaitGroup{}
-		wg.Add(1)
-		go func() {
-			wg.Done()
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
+		startBatcher(t, ctx, &podBatcher)
 		// Start again the batcher
-		wg.Wait()
 		assert.Error(t, podBatcher.Start(ctx))
 	})
 
@@ -212,10 +203,7 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
 		// Start the batcher
-		go func() {
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
-		time.Sleep(100 * time.Millisecond)
+		startBatcher(t, ctx, &podBatcher)
 		// Stop the batcher
 		cancel()
 		time.Sleep(100 * time.Millisecond)
@@ -244,9 +232,7 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 5)
 
 		// Start the batcher
-		go func() {
-			assert.NoError(t, podBatcher.Start(ctx))
-		}()
+		startBatcher(t, ctx, &podBatcher)
 
 		// Add pods to batch
 		go func() {
