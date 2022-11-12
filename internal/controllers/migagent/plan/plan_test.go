@@ -14,8 +14,8 @@ func TestNewMigConfigPlan(t *testing.T) {
 		name              string
 		state             MigState
 		specAnnotations   map[string]string
-		expectedCreateOps []CreateOperation
-		expectedDeleteOps []DeleteOperation
+		expectedCreateOps CreateOperationList
+		expectedDeleteOps DeleteOperationList
 	}{
 		{
 			name:  "Empty state",
@@ -25,8 +25,8 @@ func TestNewMigConfigPlan(t *testing.T) {
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "2",
 			},
-			expectedDeleteOps: []DeleteOperation{},
-			expectedCreateOps: []CreateOperation{
+			expectedDeleteOps: DeleteOperationList{},
+			expectedCreateOps: CreateOperationList{
 				{
 					MigProfile: mig.Profile{
 						GpuIndex: 0,
@@ -83,7 +83,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{},
-			expectedDeleteOps: []DeleteOperation{
+			expectedDeleteOps: DeleteOperationList{
 				{
 					Resources: []mig.DeviceResource{
 						{
@@ -117,14 +117,14 @@ func TestNewMigConfigPlan(t *testing.T) {
 					},
 				},
 			},
-			expectedCreateOps: []CreateOperation{},
+			expectedCreateOps: CreateOperationList{},
 		},
 		{
 			name:              "Empty state, empty spec annotations",
 			state:             MigState{},
 			specAnnotations:   map[string]string{},
-			expectedCreateOps: []CreateOperation{},
-			expectedDeleteOps: []DeleteOperation{},
+			expectedCreateOps: CreateOperationList{},
+			expectedDeleteOps: DeleteOperationList{},
 		},
 		{
 			name: "Delete operations should use free devices when available",
@@ -159,8 +159,8 @@ func TestNewMigConfigPlan(t *testing.T) {
 			specAnnotations: map[string]string{
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "1",
 			},
-			expectedCreateOps: []CreateOperation{},
-			expectedDeleteOps: []DeleteOperation{
+			expectedCreateOps: CreateOperationList{},
+			expectedDeleteOps: DeleteOperationList{
 				{
 					Resources: mig.DeviceResourceList{
 						{
@@ -225,7 +225,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "4",
 				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1",
 			},
-			expectedCreateOps: []CreateOperation{
+			expectedCreateOps: CreateOperationList{
 				{
 					MigProfile: mig.Profile{
 						GpuIndex: 0,
@@ -234,7 +234,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 					Quantity: 1,
 				},
 			},
-			expectedDeleteOps: []DeleteOperation{
+			expectedDeleteOps: DeleteOperationList{
 				{
 					Resources: mig.DeviceResourceList{
 						{

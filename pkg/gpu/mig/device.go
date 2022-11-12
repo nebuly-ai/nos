@@ -51,7 +51,7 @@ func (l DeviceResourceList) SortByDeviceId() DeviceResourceList {
 		sorted[i] = r
 	}
 	sort.SliceStable(sorted, func(i, j int) bool {
-		return sorted[i].DeviceId > sorted[j].DeviceId
+		return sorted[i].DeviceId < sorted[j].DeviceId
 	})
 	return sorted
 }
