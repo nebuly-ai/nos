@@ -212,13 +212,10 @@ func TestBatcher__Ready(t *testing.T) {
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
 
 		// Start the batcher
-		wg := sync.WaitGroup{}
-		wg.Add(1)
 		go func() {
-			wg.Done()
 			assert.NoError(t, podBatcher.Start(ctx))
 		}()
-		wg.Wait()
+		time.Sleep(100 * time.Millisecond)
 		// Stop the batcher
 		cancel()
 		time.Sleep(100 * time.Millisecond)
