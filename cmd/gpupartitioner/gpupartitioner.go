@@ -7,6 +7,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	testutil "github.com/nebuly-ai/nebulnetes/pkg/test/util"
@@ -24,7 +25,6 @@ import (
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"time"
@@ -60,8 +60,9 @@ func main() {
 	options := ctrl.Options{
 		Scheme: scheme,
 	}
+	config := configv1alpha1.GpuPartitionerConfig{}
 	if configFile != "" {
-		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
+		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile).OfKind(&config))
 		if err != nil {
 			setupLog.Error(err, "unable to load the config file")
 			os.Exit(1)
@@ -113,7 +114,7 @@ func main() {
 	}
 
 	// Setup MIG partitioner controller
-	k8sClient := kubernetes.NewForConfigOrDie(config.GetConfigOrDie())
+	k8sClient := kubernetes.NewForConfigOrDie(ctrl.GetConfigOrDie())
 	schedulerFramework, err := newSchedulerFramework(ctx, k8sClient)
 	if err != nil {
 		setupLog.Error(err, "unable to init k8s scheduler framework")

@@ -8,19 +8,27 @@ import (
 
 //+kubebuilder:object:root=true
 
-type CustomControllerManagerConfig struct {
+type OperatorConfig struct {
 	metav1.TypeMeta                        `json:",inline"`
 	cfg.ControllerManagerConfigurationSpec `json:",inline"`
 	NvidiaGPUResourceMemoryGB              *int64 `json:"nvidiaGPUResourceMemoryGB,omitempty"`
 }
 
-func (c *CustomControllerManagerConfig) FillDefaultValues() {
+func (c *OperatorConfig) FillDefaultValues() {
 	if c.NvidiaGPUResourceMemoryGB == nil {
 		var defaultValue int64 = constant.DefaultNvidiaGPUResourceMemory
 		c.NvidiaGPUResourceMemoryGB = &defaultValue
 	}
 }
 
+// +kubebuilder:object:root=true
+
+type GpuPartitionerConfig struct {
+	metav1.TypeMeta                        `json:",inline"`
+	cfg.ControllerManagerConfigurationSpec `json:",inline"`
+}
+
 func init() {
-	SchemeBuilder.Register(&CustomControllerManagerConfig{})
+	SchemeBuilder.Register(&OperatorConfig{})
+	SchemeBuilder.Register(&GpuPartitionerConfig{})
 }

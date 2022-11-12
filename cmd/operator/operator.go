@@ -64,7 +64,7 @@ func main() {
 	options := ctrl.Options{
 		Scheme: scheme,
 	}
-	controllerConfig := configv1alpha1.CustomControllerManagerConfig{}
+	controllerConfig := configv1alpha1.OperatorConfig{}
 	var err error
 	if configFile != "" {
 		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile).OfKind(&controllerConfig))
