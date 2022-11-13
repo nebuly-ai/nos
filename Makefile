@@ -1,6 +1,6 @@
 
 # Image URL to use all building/pushing image targets
-CONTROLLER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-controller:latest
+OPERATOR_IMG ?= ghcr.io/nebuly-ai/nebulnetes-operator:latest
 SCHEDULER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-scheduler:latest
 GPU_PARTITIONER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner:latest
 MIGAGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-mig-agent:latest
@@ -86,27 +86,27 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build-gpu-partitioner
-docker-build-gpu-partitioner: ## Build docker image with the manager.
+docker-build-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 	docker build -t ${GPU_PARTITIONER_IMG} -f build/gpupartitioner/Dockerfile .
 
 .PHONY: docker-build-mig-agent
-docker-build-mig-agent: ## Build docker image with the manager.
+docker-build-mig-agent: ## Build docker image with the mig-agent.
 	docker buildx build --platform linux/amd64 -t ${MIGAGENT_IMG} -f build/migagent/Dockerfile .
 
-.PHONY: docker-build-controller
-docker-build-controller: ## Build docker image with the manager.
-	docker build -t ${CONTROLLER_IMG} -f build/controller/Dockerfile .
+.PHONY: docker-build-operator
+docker-build-operator: ## Build docker image with the operator.
+	docker build -t ${OPERATOR_IMG} -f build/operator/Dockerfile .
 
 .PHONY: docker-build-scheduler
 docker-build-scheduler: ## Build docker image with the scheduler.
 	docker build -t ${SCHEDULER_IMG} -f build/scheduler/Dockerfile .
 
-.PHONY: docker-push-controller
-docker-push-controller: ## Build docker image with the manager.
-	docker push ${CONTROLLER_IMG}
+.PHONY: docker-push-operator
+docker-push-operator: ## Build docker image with the operator.
+	docker push ${OPERATOR_IMG}
 
 .PHONY: docker-push-mig-agent
-docker-push-mig-agent: ## Build docker image with the manager.
+docker-push-mig-agent: ## Build docker image with the mig-agent.
 	docker push ${MIGAGENT_IMG}
 
 .PHONY: docker-push-scheduler
@@ -118,10 +118,10 @@ docker-push-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 	docker push ${GPU_PARTITIONER_IMG}
 
 .PHONY: docker-build
-docker-build: test docker-build-controller docker-build-scheduler docker-build-gpu-partitioner docker-build-mig-agent
+docker-build: test docker-build-mig-agent docker-build-scheduler docker-build-gpu-partitioner docker-build-mig-agent
 
 .PHONY: docker-push
-docker-push: docker-push-controller docker-push-scheduler docker-push-mig-agent docker-push-gpu-partitioner
+docker-push: docker-push-mig-agent docker-push-scheduler docker-push-mig-agent docker-push-gpu-partitioner
 
 ##@ Deployment
 
@@ -141,15 +141,15 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}
+deploy: manifests kustomize ## Deploy Nebulnetes to the K8s cluster specified in ~/.kube/config.
+	cd config/manager && $(KUSTOMIZE) edit set image operator=${OPERATOR_IMG}
 	cd config/scheduler && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
 	cd config/migagent && $(KUSTOMIZE) edit set image mig-agent=${MIGAGENT_IMG}
 	cd config/gpupartitioner && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
-undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+undeploy: ## Undeploy Nebulnetes from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 ##@ Build Dependencies
