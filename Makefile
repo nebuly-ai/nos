@@ -71,6 +71,14 @@ test: manifests generate fmt vet envtest ## Run tests.
 lint: golangci-lint ## Run Go linter.
 	$(GOLANGCI_LINT) run ./... -v
 
+.PHONY: license-check ## Check all files have the license header
+license-check: license-eye
+	$(LICENSE_EYE) header check
+
+.PHONY: license-fix
+license-fix: license-eye ## Add license header to files that still don't have it
+	$(LICENSE_EYE) header fix
+
 ##@ Build
 
 .PHONY: cluster
@@ -168,6 +176,7 @@ CODE_GEN ?= $(LOCALBIN)/code-generator
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 KIND ?= $(LOCALBIN)/kind
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
+LICENSE_EYE ?= $(LOCALBIN)/license-eye
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v4.5.5
@@ -201,13 +210,17 @@ envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
-.PHONY: kind
+.PHONY: kind ## Download Kind if necessary
 kind: $(KIND)
 $(KIND): $(LOCALBIN)
 	test -s $(LOCALBIN)/kind || GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@latest
 
-.PHONY: golangci-lint
+.PHONY: golangci-lint # Download golanci-lint if necessary
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(LOCALBIN)
 	test -s $(LOCALBIN)/golanci-lint || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI_LINT_VERSION}
 
+.PHONY: license-eye # Download license-eye if necessary
+license-eye: $(LICENSE_EYE)
+$(LICENSE_EYE): $(LOCALBIN)
+	test -s $(LOCALBIN)/license-eye || GOBIN=$(LOCALBIN) go install github.com/apache/skywalking-eyes/cmd/license-eye@latest

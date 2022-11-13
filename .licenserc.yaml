@@ -1,0 +1,30 @@
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: Nebuly.ai
+    software-name: Nebulnetes
+
+  paths-ignore:
+    - 'config/**'
+    - '.*'
+    - '.*/**'
+    - 'Makefile'
+    - 'bin/**'
+    - 'hack/**'
+    - 'dist'
+    - 'licenses'
+    - '**/*.md'
+    - '**/go.mod'
+    - '**/go.sum'
+    - 'LICENSE'
+    - 'NOTICE'
+
+  language:
+    Go:
+      extensions:
+        - ".go"
+      comment_style_id: SlashAsterisk
+
+dependency:
+  files:
+    - go.mod
