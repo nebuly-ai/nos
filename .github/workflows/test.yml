@@ -33,7 +33,7 @@ jobs:
           cache: true
 
       - name: Check license header
-        uses: apache/skywalking-eyes/dependency@main
+        uses: apache/skywalking-eyes/dependency@0.4.0
 
       - name: Test
         run: make test
