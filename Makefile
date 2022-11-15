@@ -43,9 +43,28 @@ help: ## Display this help.
 
 ##@ Development
 
+.PHONY: operator-manifests ## Generate manifests for the n8s operator (CRD, ClusterRole, WebhookConfig, etc.).
+operator-manifests: controller-gen ## Generate CustomResourceDefinition objects.
+	$(CONTROLLER_GEN) crd paths="./internal/controllers/elasticquota/;./pkg/api/..." \
+	webhook \
+	rbac:roleName=operator-role \
+	output:rbac:artifacts:config=config/operator/rbac \
+	output:crd:artifacts:config=config/operator/crd/bases
+
+.PHONY: gpu-partitioner-manifests ## Generate manifests for the gpu-partitioner (ClusterRole, etc.).
+gpu-partitioner-manifests: controller-gen
+	$(CONTROLLER_GEN) paths="./internal/controllers/gpupartitioner/core" \
+	rbac:roleName=gpu-partitioner-role \
+	output:rbac:artifacts:config=config/gpupartitioner/rbac
+
+.PHONY: mig-agent-manifests ## Generate manifests for the mig-agent (ClusterRole, etc.).
+mig-agent-manifests: controller-gen
+	$(CONTROLLER_GEN) paths="./internal/controllers/migagent/..." \
+	rbac:roleName=mig-agent-role \
+	output:rbac:artifacts:config=config/migagent/rbac
+
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+manifests: operator-manifests mig-agent-manifests gpu-partitioner-manifests
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -126,10 +145,10 @@ docker-push-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 	docker push ${GPU_PARTITIONER_IMG}
 
 .PHONY: docker-build
-docker-build: test docker-build-mig-agent docker-build-scheduler docker-build-gpu-partitioner docker-build-mig-agent
+docker-build: test docker-build-mig-agent docker-build-operator docker-build-scheduler docker-build-gpu-partitioner docker-build-mig-agent
 
 .PHONY: docker-push
-docker-push: docker-push-mig-agent docker-push-scheduler docker-push-mig-agent docker-push-gpu-partitioner
+docker-push: docker-push-mig-agent docker-push-operator docker-push-scheduler docker-push-mig-agent docker-push-gpu-partitioner
 
 ##@ Deployment
 
@@ -140,13 +159,13 @@ endif
 install-cert-manager:
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml
 
-.PHONY: install
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-
-.PHONY: uninstall
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+#.PHONY: install
+#install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+#	$(KUSTOMIZE) build config/operator/crd | kubectl apply -f -
+#
+#.PHONY: uninstall
+#uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+#	$(KUSTOMIZE) build config/operator/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy Nebulnetes to the K8s cluster specified in ~/.kube/config.

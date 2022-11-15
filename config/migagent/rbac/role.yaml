@@ -2,12 +2,25 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: mig-agent-role
 rules:
-  - apiGroups: [ "" ]
-    resources: [ "nodes" ]
-    verbs: [ "get", "list", "watch", "patch" ]
-  - apiGroups: [ "" ]
-    resources: [ "pods" ]
-    verbs: [ "list", "watch", "get", "delete" ]
-
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch

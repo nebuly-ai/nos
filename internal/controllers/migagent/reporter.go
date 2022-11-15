@@ -47,6 +47,9 @@ func NewReporter(client client.Client, migClient mig.Client, sharedState *Shared
 	return reporter
 }
 
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;patch
+
 func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := klog.FromContext(ctx).WithName("Reporter")
 

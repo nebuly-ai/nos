@@ -36,7 +36,7 @@ over-quota pods) can be preempted to make up space.
 * it is recommended to have [cert-manager](https://cert-manager.io/docs/installation/) installed on your cluster in
   order to automatically manage the SSL certificates of the HTTP endpoints of the webhook used for validating the
   custom resources. Alternatively, you can manually create these certificates and inject them in the n8s operator
-  controller manager.
+  controller manager. You can install it on your cluster by executing ``make install-cert-manager``.
 
 ### Installation
 You can install Elastic Resource Quotas management in your cluster using the two Makefile 

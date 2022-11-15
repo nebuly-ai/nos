@@ -60,6 +60,9 @@ func NewController(
 	}
 }
 
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;patch
+
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.V(3).Info("*** start reconcile ***")
