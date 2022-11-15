@@ -8,5 +8,5 @@ roleRef:
   name: operator-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
+  name: operator
   namespace: system

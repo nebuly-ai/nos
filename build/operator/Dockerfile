@@ -24,7 +24,7 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY cmd/controller/controller.go main.go
+COPY cmd/operator/operator.go main.go
 COPY pkg pkg/
 COPY internal internal/
 

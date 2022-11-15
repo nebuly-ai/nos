@@ -8,7 +8,7 @@ roleRef:
   name: leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: controller-manager
+  name: operator
   namespace: system
 - kind: ServiceAccount
   name: gpu-partitioner
