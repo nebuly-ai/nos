@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: controller-manager
+  name: operator
   namespace: system
 spec:
   template:
@@ -9,12 +9,12 @@ spec:
       containers:
       - name: manager
         args:
-        - "--config=controller_manager_config.yaml"
+        - "--config=operator_config.yaml"
         volumeMounts:
-        - name: manager-config
-          mountPath: /controller_manager_config.yaml
-          subPath: controller_manager_config.yaml
+        - name: operator-config
+          mountPath: /operator_config.yaml
+          subPath: operator_config.yaml
       volumes:
-      - name: manager-config
+      - name: operator-config
         configMap:
-          name: manager-config
+          name: operator-config
