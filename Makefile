@@ -49,7 +49,8 @@ operator-manifests: controller-gen ## Generate CustomResourceDefinition objects.
 	webhook \
 	rbac:roleName=operator-role \
 	output:rbac:artifacts:config=config/operator/rbac \
-	output:crd:artifacts:config=config/operator/crd/bases
+	output:crd:artifacts:config=config/operator/crd/bases \
+	output:webhook:artifacts:config=config/operator/webhook
 
 .PHONY: gpu-partitioner-manifests ## Generate manifests for the gpu-partitioner (ClusterRole, etc.).
 gpu-partitioner-manifests: controller-gen
