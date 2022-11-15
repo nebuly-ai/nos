@@ -1,3 +1,8 @@
+## Configuration
+TODO
+
+## TODO
+
 ### How it works
 Nebulnetes deploys the **MIG Agent** component on every node labelled with `n8s.nebuly.ai/auto-mig-enabled: "true"`.
 The MIG Agent exposes to Kubernetes the MIG geometry of all the GPUs of the node on which it is deployed by using

@@ -1,0 +1,2 @@
+# Elastic Resource Quota
+
