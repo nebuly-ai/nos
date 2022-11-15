@@ -18,7 +18,7 @@ spec:
   selector:
     matchLabels:
       control-plane: controller-manager
-    app.kubernetes.io/component: gpu-partitioner
+      app.kubernetes.io/component: gpu-partitioner
   replicas: 1
   template:
     metadata:

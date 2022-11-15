@@ -94,10 +94,18 @@ For further information regarding NVIDIA MIG partitioning and its integration in
 official documentation provided by NVIDIA.
 
 ### Installation
-You can install the GPU Partitioner by executing the Makefile target below, which deploys the GPU Partitioner on 
+You can install the GPU Partitioner by executing the Makefile targets below, which deploys the required components to 
 k8s cluster specified in your `~/.kube/config`.
+
+1. Deploy the GPU Partitioner
 ```shell
 make deploy-gpu-partitioner
+```
+
+2. Deploy the MIG Agent: the target creates a DaemonSet which deploys the MIG-agent on every MIG-enabled 
+node configured for automatic GPU partitioning on the cluster
+```shell
+make deploy-mig-agent
 ```
 
 For more information about how to configure the GPU Partitioner you can refer to 

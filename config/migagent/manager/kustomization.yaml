@@ -9,3 +9,8 @@ configMapGenerator:
   - mig_agent_config.yaml
   name: mig-agent-config
 apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: mig-agent
+  newName: ghcr.io/nebuly-ai/nebulnetes-mig-agent
+  newTag: latest

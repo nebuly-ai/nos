@@ -14,14 +14,19 @@ kind: DaemonSet
 metadata:
   name: mig-agent
   namespace: system
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/component: mig-agent
 spec:
   selector:
     matchLabels:
       name: mig-agent
+      app.kubernetes.io/component: mig-agent
   template:
     metadata:
       labels:
         name: mig-agent
+        app.kubernetes.io/component: mig-agent
     spec:
       nodeSelector:
         n8s.nebuly.ai/auto-mig-enabled: "true"

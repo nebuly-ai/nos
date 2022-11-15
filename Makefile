@@ -3,7 +3,7 @@
 OPERATOR_IMG ?= ghcr.io/nebuly-ai/nebulnetes-operator:latest
 SCHEDULER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-scheduler:latest
 GPU_PARTITIONER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner:latest
-MIGAGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-mig-agent:latest
+MIG_AGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-mig-agent:latest
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -91,8 +91,8 @@ test: manifests generate fmt vet envtest ## Run tests.
 lint: golangci-lint ## Run Go linter.
 	$(GOLANGCI_LINT) run ./... -v
 
-.PHONY: license-check ## Check all files have the license header
-license-check: license-eye
+.PHONY: license-check
+license-check: license-eye ## Check all files have the license header
 	$(LICENSE_EYE) header check
 
 .PHONY: license-fix
@@ -109,17 +109,13 @@ cluster: kind ## Create a KIND cluster for development
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
-.PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
-
 .PHONY: docker-build-gpu-partitioner
 docker-build-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 	docker build -t ${GPU_PARTITIONER_IMG} -f build/gpupartitioner/Dockerfile .
 
 .PHONY: docker-build-mig-agent
 docker-build-mig-agent: ## Build docker image with the mig-agent.
-	docker buildx build --platform linux/amd64 -t ${MIGAGENT_IMG} -f build/migagent/Dockerfile .
+	docker buildx build --platform linux/amd64 -t ${MIG_AGENT_IMG} -f build/migagent/Dockerfile .
 
 .PHONY: docker-build-operator
 docker-build-operator: ## Build docker image with the operator.
@@ -135,7 +131,7 @@ docker-push-operator: ## Build docker image with the operator.
 
 .PHONY: docker-push-mig-agent
 docker-push-mig-agent: ## Build docker image with the mig-agent.
-	docker push ${MIGAGENT_IMG}
+	docker push ${MIG_AGENT_IMG}
 
 .PHONY: docker-push-scheduler
 docker-push-scheduler: ## Build docker image with the scheduler.
@@ -156,8 +152,9 @@ docker-push: docker-push-mig-agent docker-push-operator docker-push-scheduler do
 ifndef ignore-not-found
   ignore-not-found = false
 endif
+
 .PHONY: install-cert-manager
-install-cert-manager:
+install-cert-manager: ## Deploy cert-manager on the K8s cluster specified in ~/.kube/config
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml
 
 #.PHONY: install
@@ -168,17 +165,41 @@ install-cert-manager:
 #uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 #	$(KUSTOMIZE) build config/operator/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
-.PHONY: deploy
-deploy: manifests kustomize ## Deploy Nebulnetes to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image operator=${OPERATOR_IMG}
-	cd config/scheduler && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
-	cd config/migagent && $(KUSTOMIZE) edit set image mig-agent=${MIGAGENT_IMG}
-	cd config/gpupartitioner && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+.PHONY: deploy-operator
+deploy-operator: operator-manifests kustomize ## Deploy the Nebulnetes Operator to the K8s cluster specified in ~/.kube/config.
+	cd config/operator/manager && $(KUSTOMIZE) edit set image controller=${OPERATOR_IMG}
+	$(KUSTOMIZE) build config/operator/default | kubectl apply -f -
 
-.PHONY: undeploy
-undeploy: ## Undeploy Nebulnetes from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+.PHONY: deploy-scheduler
+deploy-scheduler: kustomize ## Deploy the Nebulnetes scheduler to the K8s cluster specified in ~/.kube/config.
+	cd config/scheduler/deployment && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
+	$(KUSTOMIZE) build config/scheduler/default | kubectl apply -f -
+
+.PHONY: deploy-mig-agent
+deploy-mig-agent: kustomize ## Deploy the MIG Agent to the K8s cluster specified in ~/.kube/config.
+	cd config/migagent/manager && $(KUSTOMIZE) edit set image mig-agent=${MIG_AGENT_IMG}
+	$(KUSTOMIZE) build config/migagent/default | kubectl apply -f -
+
+.PHONY: deploy-gpu-partitioner
+deploy-gpu-partitioner: kustomize ## Deploy the GPU Partitioner to the K8s cluster specified in ~/.kube/config.
+	cd config/gpupartitioner/manager && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}
+	$(KUSTOMIZE) build config/gpupartitioner/default | kubectl apply -f -
+
+.PHONY: undeploy-operator
+undeploy-operator: ## Undeploy the Nebulnetes operator from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	$(KUSTOMIZE) build config/operator/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: undeploy-scheduler
+undeploy-scheduler: ## Undeploy the Nebulnetes scheduler from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	$(KUSTOMIZE) build config/scheduler/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: undeploy-mig-agent
+undeploy-mig-agent: ## Undeploy the MIG agent from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	$(KUSTOMIZE) build config/migagent/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: undeploy-gpu-partitioner
+undeploy-gpu-partitioner: ## Undeploy the GPU Partitioner from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	$(KUSTOMIZE) build config/gpupartitioner/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 ##@ Build Dependencies
 

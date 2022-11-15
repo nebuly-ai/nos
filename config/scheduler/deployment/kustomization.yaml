@@ -1,6 +1,4 @@
 resources:
-- rbac.yaml
-- service_account.yaml
 - deployment.yaml
 
 generatorOptions:
@@ -15,4 +13,4 @@ kind: Kustomization
 images:
 - name: scheduler
   newName: ghcr.io/nebuly-ai/nebulnetes-scheduler
-  newTag: latest
+  newTag: 0.0.1

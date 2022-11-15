@@ -13,3 +13,6 @@ subjects:
 - kind: ServiceAccount
   name: gpu-partitioner
   namespace: system
+- kind: ServiceAccount
+  name: scheduler
+  namespace: system
