@@ -104,32 +104,6 @@ func TestBatcher__Ready(t *testing.T) {
 		}
 	})
 
-	t.Run("Cancelling context should make the batch ready", func(t *testing.T) {
-		ctx := context.Background()
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-
-		timeoutDuration := 20 * time.Millisecond
-		idleDuration := 10 * time.Millisecond
-		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 1)
-
-		// Start the batcher
-		startBatcher(t, ctx, &podBatcher)
-
-		var start time.Time
-		var end time.Time
-		go func() {
-			start = time.Now()
-			<-podBatcher.Ready()
-			end = time.Now()
-		}()
-
-		cancel()
-		assert.NotNil(t, start)
-		assert.NotNil(t, end)
-		assert.WithinDuration(t, end, start, 10*time.Millisecond)
-	})
-
 	t.Run("Adding an item should reset idle timeout", func(t *testing.T) {
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
