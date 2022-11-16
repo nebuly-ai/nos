@@ -62,7 +62,7 @@ func (a *MigActuator) updateLastApplied(currentPlan plan.MigConfigPlan, currentS
 	a.lastAppliedStatus = &currentStatus
 }
 
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;patch
 
 func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
