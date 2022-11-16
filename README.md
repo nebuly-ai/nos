@@ -1,4 +1,4 @@
-# Nebulnetes
+ Nebulnetes
 
 ## Overview
 
@@ -16,9 +16,11 @@ automatically takes care of finding and applying the most proper MIG geometry fo
 #### Elastic resource quota management
 
 Nebulnetes extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
-by making them more flexible through two custom resources: `ElasticQuotas`  and `CompositeElasticQuotas`.
+and the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
+by adding more flexibility through two custom resources: `ElasticQuotas` and `CompositeElasticQuotas`.
+
 While standard Kubernetes resource quotas allow you only to define limits on the maximum
-overall resource allocation of each namespace, Nebulnetes elastic quota let you define two
+overall resource allocation of each namespace, Nebulnetes elastic quotas let you define two
 different limits:
 
 1. `min`: the minimum resources that are guaranteed to the namespace
@@ -28,6 +30,10 @@ In this way namespaces can borrow reserved resource quotas from other namespaces
 as long as they do not exceed their max limit (if any) and the namespaces lending the quotas do not need them.
 When a namespace claims back its reserved `min` resources, pods borrowing resources from other namespaces (e.g.
 over-quota pods) can be preempted to make up space.
+
+Moreover, while the standard Kubernetes quota management computes the used quotas as the aggregation of the resources 
+of the resource requests specified in the Pods spec, Nebulnetes computes the used quotas by taking into account 
+only running Pods in order to avoid lower resource utilization due to scheduled Pods that failed to start.
 
 ## Getting started with Elastic Resource Quotas
 
@@ -50,7 +56,10 @@ it deploys the controllers for managing them.
 make deploy-operator
 ```
 
-2. Deploy the Nebulnetes scheduler
+2. Deploy the Nebulnetes scheduler. The command deploys a Kubernetes scheduler that runs alongside the
+default one and that will be used only for scheduling Pods which specify its name in the "schedulerName"
+field of their specification. If you want to deploy the Nebulnetes scheduler as the default scheduler of
+your cluster, you can refer to [documentation](doc/elastic-quota.md) for detailed installation instructions.
 
 ```bash
 make deploy-scheduler
@@ -77,6 +86,26 @@ amount resources that can be created in the namespace
 * you can specify any resource you want in ``max`` and ``min`` fields
 
 For more details please refer to the [Elastic Resource Quota](doc/elastic-quota.md) documentation page.
+
+### Create Pods subject to Elastic Resource Quota 
+Unless you deployed the Nebulnetes scheduler as the default scheduler for your cluster, you need to instruct Kubernetes 
+to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas. 
+
+You can do that by setting the value of the `schedulerName` field of your Pods specification to `n8s-scheduler`, as shown in the 
+example below.
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  schedulerName: n8s-scheduler
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+```
 
 ## Getting started with GPU Partitioner
 
