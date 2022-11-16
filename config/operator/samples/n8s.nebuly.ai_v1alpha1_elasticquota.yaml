@@ -5,9 +5,9 @@ metadata:
   namespace: team-a
 spec:
   min:
-    cpu: 2m
+    cpu: 2
   max:
-    cpu: 3m
+    cpu: 10
 
 ---
 
@@ -18,4 +18,5 @@ metadata:
   namespace: team-b
 spec:
   min:
-    cpu: 6m
+    cpu: 2
+    n8s.nebuly.ai/gpu-memory: 16

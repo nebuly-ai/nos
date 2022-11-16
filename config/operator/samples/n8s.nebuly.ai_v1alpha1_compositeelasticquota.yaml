@@ -9,4 +9,5 @@ spec:
     - team-b
     - team-c
   min:
-    cpu: 10m
+    cpu: 10
+    n8s.nebuly.ai/gpu-memory: 24
