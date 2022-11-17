@@ -16,8 +16,8 @@ automatically takes care of finding and applying the most proper MIG geometry fo
 #### Elastic resource quota management
 
 Nebulnetes extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
-and the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
-by adding more flexibility through two custom resources: `ElasticQuotas` and `CompositeElasticQuotas`.
+by implementing the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md), 
+and adding more flexibility through two custom resources: `ElasticQuotas` and `CompositeElasticQuotas`.
 
 While standard Kubernetes resource quotas allow you only to define limits on the maximum
 overall resource allocation of each namespace, Nebulnetes elastic quotas let you define two

@@ -161,8 +161,8 @@ respectively.
 
 Nebulnetes automatically computes the GPU memory requested by each Pod from the GPU resources requested
 by the Pod containers and enforces the limits accordingly. The amount of memory GB corresponding to the
-generic resource `nvidia.com/gpu` is defined by the field `nvidiaGPUResourceMemoryGB` of the Nebulnetes Operator
-configuration, which is 16 by default. For instance, using the default configuration, the value of the
+generic resource `nvidia.com/gpu` is defined by the field `nvidiaGpuResourceMemoryGB` of the Nebulnetes Operator
+configuration, which is 32 by default. For instance, using the default configuration, the value of the
 resource `n8s.nebuly.ai/gpu-memory` computed from the Pod specification below is
 `(10 + 16 * 2) = 42`.
 
@@ -182,6 +182,9 @@ spec:
           nvidia.com/gpu: 2
 ```
 
+You can change the value of `nvidiaGpuResourceMemoryGB` by editing the 
+[Operator configuration](../config/operator/manager/operator_config.yaml) and the 
+[Capacity Scheduling scheduler plugin configuration](../config/scheduler/deployment/scheduler_config.yaml).
 
 
 
