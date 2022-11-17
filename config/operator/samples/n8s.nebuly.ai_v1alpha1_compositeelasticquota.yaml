@@ -2,7 +2,7 @@ apiVersion: n8s.nebuly.ai/v1alpha1
 kind: CompositeElasticQuota
 metadata:
   name: composite-quota-a
-  namespace: namespace-a
+  namespace: namespace-x # Could as well be any of the namespaces specified by field "namespaces"
 spec:
   namespaces:
     - team-a

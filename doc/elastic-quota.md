@@ -2,13 +2,11 @@
 
 ## Overview
 
-Nebulnetes Elastic Resource Quota management is based on the
+Elastic Resource Quota management is based on the
 [Capacity Scheduling](https://github.com/kubernetes-sigs/scheduler-plugins/tree/master/pkg/capacityscheduling) scheduler
 plugin, which implements
 the [Capacity Scheduling Kubernetes Enhancement Proposal](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
-.
-
-Nebulnetes extends the former implementation by adding the following features:
+. Nebulnetes extends the former implementation by adding the following features:
 
 * over-quota pods preemption
 * CompositeElasticQuota resources for defining limits on multiple namespaces
@@ -30,6 +28,20 @@ namespaces. Limits are specified through two fields:
   Pods of the namespace.
 
 You can find sample definitions of these resources under the [examples](../config/operator/samples) directory.
+
+Note that `ElasticQuota` and `CompositeElasticQuota` are treated by Nebulnetes in the same way, the only difference is 
+that the latter allows you to enforce limits on multiple namespaces. This means that a namespace subject to an 
+ElasticQuota can borrow resources from namespaces subject to either other ElasticQuotas or CompositeElasticQuotas and,
+vice-versa, the namespaces subject to a CompositeElasticQuota can borrow resources from namespaces subject to ther
+ElasticQuotas and CompositeElasticQuotas.
+
+### Constraints
+The following constraints are enforced over elastic quota resources:
+
+* you can create at most one `ElasticQuota` per namespace
+* a namespace can be subject either to one `ElasticQuota` or one `CompositeElasticQuota`, but not both
+* if a resource is defined both `max` and `min` fields, then its value in `max` must be greater or equal than the 
+one in `min`
 
 ### How used resources are computed
 
