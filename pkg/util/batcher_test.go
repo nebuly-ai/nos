@@ -34,7 +34,7 @@ func startBatcher[T any](t *testing.T, ctx context.Context, batcher *util.Batche
 }
 
 func TestBatcher__Ready(t *testing.T) {
-	const testTimeout = 3 * time.Second
+	const testTimeout = 10 * time.Second
 
 	t.Run("Adding items to batch should never block", func(t *testing.T) {
 		timeoutDuration := 10 * time.Millisecond
@@ -217,8 +217,8 @@ func TestBatcher__Ready(t *testing.T) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		timeoutDuration := 50 * time.Millisecond
-		idleDuration := 10 * time.Millisecond
+		timeoutDuration := 3 * time.Second
+		idleDuration := 1 * time.Second
 		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 5)
 
 		// Start the batcher
