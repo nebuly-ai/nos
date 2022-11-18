@@ -58,7 +58,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 		for _, n := range candidateNodes {
 			// If Pod already fits, move on to next pod
 			if p.addPodToSnapshot(ctx, pod, n.Name, snapshot) {
-				logger.V(3).Info(
+				logger.V(1).Info(
 					"pod fits node, cluster snapshot updated",
 					"namespace",
 					pod.Namespace,
@@ -73,7 +73,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			// Check if any MIG resource is lacking
 			lackingMig, isLacking := snapshot.GetLackingMigProfile(pod)
 			if !isLacking {
-				logger.V(3).Info(
+				logger.V(1).Info(
 					"no lacking MIG resources, skipping node",
 					"namespace",
 					pod.Namespace,
@@ -93,7 +93,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			// Try update the node MIG geometry
 			if err = n.UpdateGeometryFor(lackingMig); err != nil {
 				snapshot.Revert()
-				logger.V(3).Info(
+				logger.V(1).Info(
 					"cannot update node MIG geometry",
 					"reason",
 					err,
@@ -114,7 +114,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			if p.addPodToSnapshot(ctx, pod, n.Name, snapshot) {
 				snapshot.Commit()
 				partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
-				logger.V(3).Info(
+				logger.V(1).Info(
 					"pod fits node, state snapshot updated with new MIG geometry",
 					"namespace",
 					pod.Namespace,
@@ -127,7 +127,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			}
 
 			// Could not make the Pod fit, revert changes and move on
-			logger.V(3).Info("pod does not fit node", "namespace", pod.Namespace, "pod", pod.Name, "node", n.Name)
+			logger.V(1).Info("pod does not fit node, reverting changes", "namespace", pod.Namespace, "pod", pod.Name, "node", n.Name)
 			snapshot.Revert()
 		}
 	}
