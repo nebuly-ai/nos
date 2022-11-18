@@ -92,6 +92,10 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	if err = config.Validate(); err != nil {
+		setupLog.Error(err, "config is invalid")
+		os.Exit(1)
+	}
 
 	// Setup controller manager
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
@@ -140,7 +144,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Setup MIG partitioner controller
+	// Init scheduler and planner
 	k8sClient := kubernetes.NewForConfigOrDie(ctrl.GetConfigOrDie())
 	schedulerFramework, err := newSchedulerFramework(ctx, config, k8sClient)
 	if err != nil {
@@ -152,14 +156,32 @@ func main() {
 		setupLog.Error(err, "unable to create MIG planner")
 		os.Exit(1)
 	}
-	podBatcher := util.NewBatcher[v1.Pod](1*time.Minute, 5*time.Second) // TODO move to config
+
+	// Init and start Pods batcher
+	windowTimeoutDuration := config.BatchWindowTimeoutSeconds * time.Second
+	windowIdleDuration := config.BatchWindowIdleSeconds * time.Second
+	podBatcher := util.NewBatcher[v1.Pod](
+		windowTimeoutDuration,
+		windowIdleDuration,
+	)
+	setupLog.Info(
+		"pods batch window",
+		"timeout",
+		windowTimeoutDuration.String(),
+		"idle",
+		windowIdleDuration.String(),
+	)
 	go func() {
 		if err = podBatcher.Start(ctx); err != nil {
 			setupLog.Error(err, "unable to start pod batcher")
 			os.Exit(1)
 		}
 	}()
+
+	// Init actuator
 	migActuator := mig.NewActuator(mgr.GetClient())
+
+	// Setup MIG controller
 	migController := core.NewController(
 		mgr.GetScheme(),
 		mgr.GetClient(),

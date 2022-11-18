@@ -160,6 +160,6 @@ func newPodResourcesListerClient() (pdrv1.PodResourcesListerClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	client, _, err := podresources.GetV1Client(endpoint, defaultPodResourcesTimeout, defaultPodResourcesMaxSize)
-	return client, err
+	listerClient, _, err := podresources.GetV1Client(endpoint, defaultPodResourcesTimeout, defaultPodResourcesMaxSize)
+	return listerClient, err
 }

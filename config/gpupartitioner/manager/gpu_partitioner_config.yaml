@@ -20,6 +20,17 @@ leaderElection:
 # after the manager stops then its usage might be unsafe.
   leaderElectionReleaseOnCancel: true
 
+# Timeout of the window used by the GPU partitioner for batching pending Pods.
+#
+# Higher values make the GPU partitioner will potentially take into account more pending Pods when
+# deciding the GPU partitioning plan, but the partitioning will be performed less frequently
+batchWindowTimeoutSeconds: 60
+# Idle seconds before the GPU partitioner processes the current batch if no new pending Pods are created, and
+# the timeout has not been reached.
+#
+# Higher values make the GPU partitioner will potentially take into account more pending Pods when
+# deciding the GPU partitioning plan, but the partitioning will be performed less frequently
+batchWindowIdleSeconds: 5
 
 # Optional path to the configuration file of the k8s scheduler used internally by the GPU
 # partitioner for simulating Pods scheduling.
