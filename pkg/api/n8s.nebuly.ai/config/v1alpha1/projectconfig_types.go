@@ -17,7 +17,6 @@
 package v1alpha1
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cfg "sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 )
@@ -27,14 +26,7 @@ import (
 type OperatorConfig struct {
 	metav1.TypeMeta                        `json:",inline"`
 	cfg.ControllerManagerConfigurationSpec `json:",inline"`
-	NvidiaGPUResourceMemoryGB              *int64 `json:"nvidiaGPUResourceMemoryGB,omitempty"`
-}
-
-func (c *OperatorConfig) FillDefaultValues() {
-	if c.NvidiaGPUResourceMemoryGB == nil {
-		var defaultValue int64 = constant.DefaultNvidiaGPUResourceMemory
-		c.NvidiaGPUResourceMemoryGB = &defaultValue
-	}
+	NvidiaGpuResourceMemoryGB              int64 `json:"NvidiaGpuResourceMemoryGB"`
 }
 
 // +kubebuilder:object:root=true
@@ -42,7 +34,30 @@ func (c *OperatorConfig) FillDefaultValues() {
 type GpuPartitionerConfig struct {
 	metav1.TypeMeta                        `json:",inline"`
 	cfg.ControllerManagerConfigurationSpec `json:",inline"`
+	SchedulerConfigFile                    string `json:"schedulerConfigFile"`
 }
+
+//func (g *GpuPartitionerConfig) GetSchedulerConfig() (*schedulerconfig.KubeSchedulerConfiguration, error) {
+//	if g.SchedulerConfigData == nil {
+//		return nil, nil
+//	}
+//	res, err := json.Marshal(g.SchedulerConfigData)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to decode scheduler config: %v", err)
+//	}
+//	return decodeKubeSchedulerConfig(res)
+//}
+//
+//func decodeKubeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfiguration, error) {
+//	obj, gvk, err := schedulerscheme.Codecs.UniversalDecoder().Decode(data, nil, nil)
+//	if err != nil {
+//		return nil, err
+//	}
+//	if cfgObj, ok := obj.(*schedulerconfig.KubeSchedulerConfiguration); ok {
+//		return cfgObj, nil
+//	}
+//	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)
+//}
 
 func init() {
 	SchemeBuilder.Register(&OperatorConfig{})

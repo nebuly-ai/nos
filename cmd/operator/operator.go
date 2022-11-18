@@ -71,8 +71,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	controllerConfig.FillDefaultValues()
-	setupLog.Info(fmt.Sprintf("using nvidiaGPUResourceMemoryGB=%d", *controllerConfig.NvidiaGPUResourceMemoryGB))
+	setupLog.Info(fmt.Sprintf("using nvidiaGpuResourceMemoryGB=%d", controllerConfig.NvidiaGpuResourceMemoryGB))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
@@ -84,7 +83,7 @@ func main() {
 	elasticQuotaReconciler := elasticquota.NewElasticQuotaReconciler(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		*controllerConfig.NvidiaGPUResourceMemoryGB,
+		controllerConfig.NvidiaGpuResourceMemoryGB,
 	)
 	if err = elasticQuotaReconciler.SetupWithManager(mgr, constant.ElasticQuotaControllerName); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ElasticQuota")
@@ -99,7 +98,7 @@ func main() {
 	compositeElasticQuotaReconciler := elasticquota.NewCompositeElasticQuotaReconciler(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		*controllerConfig.NvidiaGPUResourceMemoryGB,
+		controllerConfig.NvidiaGpuResourceMemoryGB,
 	)
 	if err = compositeElasticQuotaReconciler.SetupWithManager(mgr, constant.CompositeElasticQuotaControllerName); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CompositeElasticQuota")

@@ -26,5 +26,5 @@ import (
 type CapacitySchedulingArgs struct {
 	metav1.TypeMeta `json:",inline"`
 
-	NvidiaGPUResourceMemoryGB *int64 `json:"nvidiaGPUResourceMemoryGB,omitempty"`
+	NvidiaGpuResourceMemoryGB *int64 `json:"nvidiaGpuResourceMemoryGB,omitempty"`
 }

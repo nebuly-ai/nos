@@ -30,3 +30,9 @@ patchesStrategicMerge:
 # Mount the controller config file for loading manager configurations
 # through a ComponentConfig type
 - gpu_partitioner_config_patch.yaml
+
+# Mount the n8s scheduler config file for making the GPU partitioner use the n8s scheduler
+# for simulating Pods scheduling.
+#
+# If you uncomment this, you also need to deploy the n8s operator and the n8s scheduler to your cluster.
+- gpu_partitioner_scheduler_config_patch.yaml

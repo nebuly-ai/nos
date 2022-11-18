@@ -45,8 +45,8 @@ type ElasticQuotaReconciler struct {
 	podsReconciler     *elasticQuotaPodsReconciler
 }
 
-func NewElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGPUResourceMemoryGB int64) ElasticQuotaReconciler {
-	resourceCalculator := gpu_util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB}
+func NewElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGpuResourceMemoryGB int64) ElasticQuotaReconciler {
+	resourceCalculator := gpu_util.ResourceCalculator{NvidiaGPUDeviceMemoryGB: nvidiaGpuResourceMemoryGB}
 	return ElasticQuotaReconciler{
 		Client:             client,
 		Scheme:             scheme,

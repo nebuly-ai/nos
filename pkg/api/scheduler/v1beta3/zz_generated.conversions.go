@@ -49,7 +49,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v1beta3_CapacitySchedulingArgs_To_scheduler_CapacitySchedulingArgs(in *CapacitySchedulingArgs, out *scheduler.CapacitySchedulingArgs, s conversion.Scope) error {
-	if err := v1.Convert_Pointer_int64_To_int64(&in.NvidiaGPUResourceMemoryGB, &out.NvidiaGPUResourceMemoryGB, s); err != nil {
+	if err := v1.Convert_Pointer_int64_To_int64(&in.NvidiaGpuResourceMemoryGB, &out.NvidiaGpuResourceMemoryGB, s); err != nil {
 		return err
 	}
 	return nil
@@ -61,7 +61,7 @@ func Convert_v1beta3_CapacitySchedulingArgs_To_scheduler_CapacitySchedulingArgs(
 }
 
 func autoConvert_scheduler_CapacitySchedulingArgs_To_v1beta3_CapacitySchedulingArgs(in *scheduler.CapacitySchedulingArgs, out *CapacitySchedulingArgs, s conversion.Scope) error {
-	if err := v1.Convert_int64_To_Pointer_int64(&in.NvidiaGPUResourceMemoryGB, &out.NvidiaGPUResourceMemoryGB, s); err != nil {
+	if err := v1.Convert_int64_To_Pointer_int64(&in.NvidiaGpuResourceMemoryGB, &out.NvidiaGpuResourceMemoryGB, s); err != nil {
 		return err
 	}
 	return nil

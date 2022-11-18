@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-partitioner
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+        - name: gpu-partitioner
+          volumeMounts:
+            - name: scheduler-config
+              mountPath: /scheduler_config.yaml
+              subPath: scheduler_config.yaml
+      volumes:
+        - name: scheduler-config
+          configMap:
+            name: n8s-scheduler-config

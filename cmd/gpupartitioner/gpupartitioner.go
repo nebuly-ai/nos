@@ -25,7 +25,10 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
+	schedulerv1beta3 "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/scheduler/plugins/capacityscheduling"
 	testutil "github.com/nebuly-ai/nebulnetes/pkg/test/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
@@ -34,16 +37,21 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	scheduler_config "k8s.io/kubernetes/pkg/scheduler/apis/config/latest"
+	"k8s.io/kubernetes/cmd/kube-scheduler/app"
+	schedulerconfig "k8s.io/kubernetes/pkg/scheduler/apis/config"
+	latestschedulerconfig "k8s.io/kubernetes/pkg/scheduler/apis/config/latest"
+	schedulerscheme "k8s.io/kubernetes/pkg/scheduler/apis/config/scheme"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
-	scheduler_plugins "k8s.io/kubernetes/pkg/scheduler/framework/plugins"
-	scheduler_runtime "k8s.io/kubernetes/pkg/scheduler/framework/runtime"
+	schedulerplugins "k8s.io/kubernetes/pkg/scheduler/framework/plugins"
+	schedulerruntime "k8s.io/kubernetes/pkg/scheduler/framework/runtime"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"time"
+	// Ensure scheduler package is initialized.
+	_ "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 )
 
 var (
@@ -54,6 +62,8 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(scheduler.AddToScheme(scheme))
+	utilruntime.Must(schedulerv1beta3.AddToScheme(scheme))
 }
 
 func main() {
@@ -70,7 +80,7 @@ func main() {
 
 	var err error
 
-	// Setup controller manager
+	// Load config
 	options := ctrl.Options{
 		Scheme: scheme,
 	}
@@ -82,6 +92,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	// Setup controller manager
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -89,13 +101,14 @@ func main() {
 	}
 	ctx := ctrl.SetupSignalHandler()
 
-	clusterState := state.NewClusterState()
-
 	// Setup indexer
 	if err = setupIndexer(ctx, mgr); err != nil {
 		setupLog.Error(err, "error configuring controller manager indexer")
 		os.Exit(1)
 	}
+
+	// Init state
+	clusterState := state.NewClusterState()
 
 	// Setup state controllers
 	nodeController := state.NewNodeController(
@@ -129,7 +142,7 @@ func main() {
 
 	// Setup MIG partitioner controller
 	k8sClient := kubernetes.NewForConfigOrDie(ctrl.GetConfigOrDie())
-	schedulerFramework, err := newSchedulerFramework(ctx, k8sClient)
+	schedulerFramework, err := newSchedulerFramework(ctx, config, k8sClient)
 	if err != nil {
 		setupLog.Error(err, "unable to init k8s scheduler framework")
 		os.Exit(1)
@@ -207,23 +220,79 @@ func setupIndexer(ctx context.Context, mgr ctrl.Manager) error {
 	return nil
 }
 
-func newSchedulerFramework(ctx context.Context, kubeClient kubernetes.Interface) (framework.Framework, error) {
+func newSchedulerFramework(ctx context.Context, config configv1alpha1.GpuPartitionerConfig, kubeClient kubernetes.Interface) (framework.Framework, error) {
 	informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
-	schedulerConfig, err := scheduler_config.Default()
+
+	// Configure scheduler profile
+	profile, err := getSchedulerProfile(config)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't create scheduler config: %v", err)
+		return nil, err
 	}
-	if len(schedulerConfig.Profiles) != 1 || schedulerConfig.Profiles[0].SchedulerName != v1.DefaultSchedulerName {
-		return nil, fmt.Errorf(
-			"unexpected scheduler config: expected default scheduler profile only (found %d profiles)",
-			len(schedulerConfig.Profiles),
+	setupLog.V(1).Info("scheduler profile", "profile", profile)
+
+	// Register capacity scheduling plugin
+	var registry = schedulerplugins.NewInTreeRegistry()
+	opt := app.WithPlugin(capacityscheduling.Name, capacityscheduling.New)
+	if err = opt(registry); err != nil {
+		return nil, fmt.Errorf("couldn't register Capacity Scheduling plugin: %v", err)
+	}
+
+	return schedulerruntime.NewFramework(
+		registry,
+		&profile,
+		ctx.Done(),
+		schedulerruntime.WithInformerFactory(informerFactory),
+		schedulerruntime.WithKubeConfig(ctrl.GetConfigOrDie()),
+		schedulerruntime.WithSnapshotSharedLister(testutil.NewFakeSharedLister(make([]*v1.Pod, 0), make([]*v1.Node, 0))),
+	)
+}
+
+func getSchedulerProfile(config configv1alpha1.GpuPartitionerConfig) (schedulerconfig.KubeSchedulerProfile, error) {
+	// If scheduler config is not provided, use default scheduler config
+	if config.SchedulerConfigFile == "" {
+		defaultSchedulerConfig, err := latestschedulerconfig.Default()
+		if err != nil {
+			return schedulerconfig.KubeSchedulerProfile{}, fmt.Errorf("couldn't create scheduler config: %v", err)
+		}
+		if len(defaultSchedulerConfig.Profiles) != 1 || defaultSchedulerConfig.Profiles[0].SchedulerName != v1.DefaultSchedulerName {
+			return schedulerconfig.KubeSchedulerProfile{}, fmt.Errorf(
+				"unexpected scheduler config: expected default scheduler profile only (found %d profiles)",
+				len(defaultSchedulerConfig.Profiles),
+			)
+		}
+		setupLog.Info("scheduler configured with default profile")
+		return defaultSchedulerConfig.Profiles[0], nil
+	}
+
+	// Otherwise, use the scheduler config provided in the GpuPartitionerConfig
+	schedulerConfig, err := loadSchedulerConfigFromFile(config.SchedulerConfigFile)
+	if err != nil {
+		return schedulerconfig.KubeSchedulerProfile{}, fmt.Errorf(
+			"couldn't load scheduler config: %v",
+			err,
 		)
 	}
-	return scheduler_runtime.NewFramework(
-		scheduler_plugins.NewInTreeRegistry(),
-		&schedulerConfig.Profiles[0],
-		ctx.Done(),
-		scheduler_runtime.WithInformerFactory(informerFactory),
-		scheduler_runtime.WithSnapshotSharedLister(testutil.NewFakeSharedLister(make([]*v1.Pod, 0), make([]*v1.Node, 0))),
-	)
+	profile := schedulerConfig.Profiles[0]
+	setupLog.Info("scheduler configured with custom profile")
+	return profile, nil
+}
+
+func loadSchedulerConfigFromFile(file string) (*schedulerconfig.KubeSchedulerConfiguration, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return decodeSchedulerConfig(data)
+}
+
+func decodeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfiguration, error) {
+	// The UniversalDecoder runs defaulting and returns the internal type by default.
+	obj, gvk, err := schedulerscheme.Codecs.UniversalDecoder().Decode(data, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	if cfgObj, ok := obj.(*schedulerconfig.KubeSchedulerConfiguration); ok {
+		return cfgObj, nil
+	}
+	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)
 }

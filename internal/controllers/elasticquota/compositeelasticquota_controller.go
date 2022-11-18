@@ -46,9 +46,9 @@ type CompositeElasticQuotaReconciler struct {
 	podsReconciler     *elasticQuotaPodsReconciler
 }
 
-func NewCompositeElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGPUResourceMemoryGB int64) CompositeElasticQuotaReconciler {
+func NewCompositeElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvidiaGpuResourceMemoryGB int64) CompositeElasticQuotaReconciler {
 	resourceCalculator := gpu_util.ResourceCalculator{
-		NvidiaGPUDeviceMemoryGB: nvidiaGPUResourceMemoryGB,
+		NvidiaGPUDeviceMemoryGB: nvidiaGpuResourceMemoryGB,
 	}
 	return CompositeElasticQuotaReconciler{
 		Client:             client,

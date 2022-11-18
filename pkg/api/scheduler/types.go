@@ -23,5 +23,5 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 type CapacitySchedulingArgs struct {
 	metav1.TypeMeta
 
-	NvidiaGPUResourceMemoryGB int64
+	NvidiaGpuResourceMemoryGB int64
 }

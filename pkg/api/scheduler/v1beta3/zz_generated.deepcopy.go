@@ -29,8 +29,8 @@ import (
 func (in *CapacitySchedulingArgs) DeepCopyInto(out *CapacitySchedulingArgs) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	if in.NvidiaGPUResourceMemoryGB != nil {
-		in, out := &in.NvidiaGPUResourceMemoryGB, &out.NvidiaGPUResourceMemoryGB
+	if in.NvidiaGpuResourceMemoryGB != nil {
+		in, out := &in.NvidiaGpuResourceMemoryGB, &out.NvidiaGpuResourceMemoryGB
 		*out = new(int64)
 		**out = **in
 	}

@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: gpu-partitioner
   newName: ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner
-  newTag: latest
+  newTag: 0.0.1

@@ -19,3 +19,11 @@ leaderElection:
 # if you are doing or is intended to do any operation such as perform cleanups
 # after the manager stops then its usage might be unsafe.
   leaderElectionReleaseOnCancel: true
+
+
+# Optional path to the configuration file of the k8s scheduler used internally by the GPU
+# partitioner for simulating Pods scheduling.
+#
+# Uncomment if you want to use a custom scheduler configuration file, otherwise the GPU partitioner
+# will use the default k8s scheduler profile
+schedulerConfigFile: scheduler_config.yaml

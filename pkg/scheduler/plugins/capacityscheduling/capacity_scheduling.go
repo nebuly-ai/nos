@@ -116,7 +116,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		return nil, fmt.Errorf("[CapacityScheduling] want args to be of type CapacitySchedulingArgs, got %T", obj)
 	}
 
-	klog.Info("using nvidiaGPUResourceMemoryGB=", args.NvidiaGPUResourceMemoryGB)
+	klog.Info("using nvidiaGpuResourceMemoryGB=", args.NvidiaGpuResourceMemoryGB)
 
 	c := &CapacityScheduling{
 		fh:                handle,
@@ -124,7 +124,7 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		podLister:         handle.SharedInformerFactory().Core().V1().Pods().Lister(),
 		pdbLister:         getPDBLister(handle.SharedInformerFactory()),
 		resourceCalculator: &gpu_util.ResourceCalculator{
-			NvidiaGPUDeviceMemoryGB: args.NvidiaGPUResourceMemoryGB,
+			NvidiaGPUDeviceMemoryGB: args.NvidiaGpuResourceMemoryGB,
 		},
 	}
 
