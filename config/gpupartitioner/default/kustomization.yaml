@@ -35,4 +35,4 @@ patchesStrategicMerge:
 # for simulating Pods scheduling.
 #
 # If you uncomment this, you also need to deploy the n8s operator and the n8s scheduler to your cluster.
-- gpu_partitioner_scheduler_config_patch.yaml
+#- gpu_partitioner_scheduler_config_patch.yaml

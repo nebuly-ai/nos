@@ -30,11 +30,11 @@ batchWindowTimeoutSeconds: 60
 #
 # Higher values make the GPU partitioner will potentially take into account more pending Pods when
 # deciding the GPU partitioning plan, but the partitioning will be performed less frequently
-batchWindowIdleSeconds: 5
+batchWindowIdleSeconds: 10
 
 # Optional path to the configuration file of the k8s scheduler used internally by the GPU
 # partitioner for simulating Pods scheduling.
 #
 # Uncomment if you want to use a custom scheduler configuration file, otherwise the GPU partitioner
 # will use the default k8s scheduler profile
-schedulerConfigFile: scheduler_config.yaml
+#schedulerConfigFile: scheduler_config.yaml
