@@ -147,10 +147,21 @@ func (p Planner) addPodToSnapshot(ctx context.Context, pod v1.Pod, node string, 
 }
 
 func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) bool {
+	logger := log.FromContext(ctx)
 	cycleState := framework.NewCycleState()
 	_, preFilterStatus := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod)
 	if !preFilterStatus.IsSuccess() {
 		return false
 	}
-	return p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge().IsSuccess()
+	if _, status := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod); status.Code() != framework.Success {
+		logger.V(1).Info("pod does not fit, PreFilter failed", "status", status)
+		return false
+	}
+	status := p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge()
+	if !status.IsSuccess() {
+		logger.V(1).Info("pod does not fit, Filter failed", "status", status)
+		return false
+	}
+
+	return true
 }
