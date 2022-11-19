@@ -140,7 +140,7 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 	snapshot := c.clusterState.GetSnapshot()
 
 	// Sort Pods by importance
-	sort.Slice(pods, func(i, j int) bool {
+	sort.SliceStable(pods, func(i, j int) bool {
 		return pod.IsMoreImportant(pods[i], pods[j])
 	})
 

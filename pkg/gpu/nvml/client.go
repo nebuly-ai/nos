@@ -82,7 +82,7 @@ func (c *clientImpl) GetGpuIndex(migDeviceId string) (int, gpu.Error) {
 				ret.Error(),
 			)
 		}
-		c.logger.V(3).Info(
+		c.logger.V(4).Info(
 			"visiting MIG device",
 			"GPUIndex",
 			gpuIndex,
