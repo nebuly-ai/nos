@@ -64,8 +64,8 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 				freeResources := actualMigProfileResources.GetFree()
 				if len(freeResources) > 0 {
 					plan.addDeleteOp(DeleteOperation{Resources: freeResources})
-					for profile, resources := range freeResources.GroupByMigProfile() {
-						plan.addCreateOp(CreateOperation{MigProfile: profile, Quantity: len(resources)})
+					for freeProfile, freeProfileResources := range freeResources.GroupByMigProfile() {
+						plan.addCreateOp(CreateOperation{MigProfile: freeProfile, Quantity: len(freeProfileResources)})
 					}
 				}
 				plan.addCreateOp(CreateOperation{MigProfile: migProfile, Quantity: diff})
