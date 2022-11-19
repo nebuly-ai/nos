@@ -200,7 +200,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 			},
 		},
 		{
-			name: "Creating new profiles on a GPU should delete all the existing **free** MIG profiles of the same type on that GPU",
+			name: "Creating new profiles on a GPU should delete and re-create all the existing **free** MIG profiles of the same type on that GPU",
 			state: MigState{
 				0: {
 					{
@@ -247,7 +247,14 @@ func TestNewMigConfigPlan(t *testing.T) {
 						GpuIndex: 0,
 						Name:     mig.Profile1g10gb,
 					},
-					Quantity: 1,
+					Quantity: 1, // op that creates the new device to create
+				},
+				{
+					MigProfile: mig.Profile{
+						GpuIndex: 0,
+						Name:     mig.Profile1g10gb,
+					},
+					Quantity: 2, // op for re-creating the existing free-device
 				},
 			},
 			expectedDeleteOps: DeleteOperationList{

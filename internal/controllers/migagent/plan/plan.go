@@ -58,12 +58,15 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 
 			diff := totalDesiredQuantity - len(actualMigProfileResources)
 			if diff > 0 {
-				// create missing MIG profiles and delete possible existing *free* resources corresponding to
-				// the same MIG profile, so that when applying the create operations the number of possible
-				// MIG permutations to try is larger
+				// create missing MIG profiles and delete and re-create possible existing *free* resources
+				// corresponding to the same MIG profile, so that when applying the create operations the number
+				// of possible MIG permutations to try is larger
 				freeResources := actualMigProfileResources.GetFree()
 				if len(freeResources) > 0 {
 					plan.addDeleteOp(DeleteOperation{Resources: freeResources})
+					for profile, resources := range freeResources.GroupByMigProfile() {
+						plan.addCreateOp(CreateOperation{MigProfile: profile, Quantity: len(resources)})
+					}
 				}
 				plan.addCreateOp(CreateOperation{MigProfile: migProfile, Quantity: diff})
 			}
