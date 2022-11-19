@@ -56,7 +56,7 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 	// If Pod does not exist then remove it from Cluster State
 	if apierrors.IsNotFound(err) {
-		logger.V(1).Info("deleting pod", "pod", req.Name, "namespace", req.Namespace)
+		logger.V(2).Info("deleting pod", "pod", req.Name, "namespace", req.Namespace)
 		_ = c.clusterState.deletePod(req.NamespacedName)
 		return ctrl.Result{}, nil
 	}
@@ -96,7 +96,7 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, nil
 	}
 
-	logger.V(1).Info("updating cluster state usage", "pod", req.Name, "namespace", req.Namespace)
+	logger.V(2).Info("updating cluster state usage", "pod", req.Name, "namespace", req.Namespace)
 	c.clusterState.updateUsage(instance)
 	return ctrl.Result{}, nil
 }

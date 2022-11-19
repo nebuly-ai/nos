@@ -54,7 +54,7 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 	if apierrors.IsNotFound(err) {
-		logger.V(1).Info("deleting node", "node", instance.Name)
+		logger.V(2).Info("deleting node", "node", instance.Name)
 		c.clusterState.deleteNode(instance.Name)
 		return ctrl.Result{}, nil
 	}
@@ -65,7 +65,7 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		logger.Error(err, "unable to list pods assigned to node")
 		return ctrl.Result{}, err
 	}
-	logger.V(1).Info("updating node", "node", instance.Name, "nPods", len(podList.Items))
+	logger.V(2).Info("updating node", "node", instance.Name, "nPods", len(podList.Items))
 	c.clusterState.updateNode(instance, podList.Items)
 
 	return ctrl.Result{}, nil

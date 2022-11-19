@@ -148,6 +148,7 @@ func (p Planner) addPodToSnapshot(ctx context.Context, pod v1.Pod, node string, 
 
 func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v1.Pod) bool {
 	logger := log.FromContext(ctx)
+	logger.V(1).Info("simulating Pod scheduling", "pod", pod.Name, "namespace", pod.Namespace)
 	cycleState := framework.NewCycleState()
 	_, preFilterStatus := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod)
 	logger.V(1).Info("scheduler PreFilter status", "status", preFilterStatus)

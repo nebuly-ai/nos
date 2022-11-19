@@ -37,7 +37,6 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 	schedulerconfig "k8s.io/kubernetes/pkg/scheduler/apis/config"
 	latestschedulerconfig "k8s.io/kubernetes/pkg/scheduler/apis/config/latest"
 	schedulerscheme "k8s.io/kubernetes/pkg/scheduler/apis/config/scheme"
@@ -254,8 +253,7 @@ func newSchedulerFramework(ctx context.Context, config configv1alpha1.GpuPartiti
 
 	// Register capacity scheduling plugin
 	var registry = schedulerplugins.NewInTreeRegistry()
-	opt := app.WithPlugin(capacityscheduling.Name, capacityscheduling.New)
-	if err = opt(registry); err != nil {
+	if err = registry.Register(capacityscheduling.Name, capacityscheduling.New); err != nil {
 		return nil, fmt.Errorf("couldn't register Capacity Scheduling plugin: %v", err)
 	}
 
