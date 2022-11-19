@@ -150,7 +150,7 @@ func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v
 	logger := log.FromContext(ctx)
 	cycleState := framework.NewCycleState()
 	_, preFilterStatus := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod)
-	if preFilterStatus.IsSuccess() {
+	if !preFilterStatus.IsSuccess() {
 		logger.V(1).Info("pod does not fit, PreFilter failed", "status", preFilterStatus)
 		return false
 	}
