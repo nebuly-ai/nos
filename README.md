@@ -2,7 +2,7 @@
 
 The open-source platform for running your AI workloads on Kubernetes maximizing resource utilization.
 
-![](doc/imgs/n8s.png)
+![](doc/imgs/n8s.jpg)
 
 ## Overview
 
