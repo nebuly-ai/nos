@@ -1,9 +1,10 @@
+N8S_VERSION ?= 0.0.1-alpha.1
 
 # Image URL to use all building/pushing image targets
-OPERATOR_IMG ?= ghcr.io/nebuly-ai/nebulnetes-operator:latest
-SCHEDULER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-scheduler:latest
-GPU_PARTITIONER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner:latest
-MIG_AGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-mig-agent:latest
+OPERATOR_IMG ?= ghcr.io/nebuly-ai/nebulnetes-operator:$(N8S_VERSION)
+SCHEDULER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-scheduler:$(N8S_VERSION)
+GPU_PARTITIONER_IMG ?= ghcr.io/nebuly-ai/nebulnetes-gpu-partitioner:$(N8S_VERSION)
+MIG_AGENT_IMG ?= ghcr.io/nebuly-ai/nebulnetes-mig-agent:$(N8S_VERSION)
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
