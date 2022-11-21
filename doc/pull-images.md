@@ -1,6 +1,6 @@
 # How to pull Nebulnetes images
 
-Since at the moment Nebulnetes is not publicly available, you need to use provide credentials for pulling the Docker
+Since at the moment Nebulnetes is not publicly available, you need to provide credentials for pulling the Docker
 images from our private GitHub container registry.
 
 The k8s manifests for deploying Nebulnetes components expect the Docker credentials to be stored in a secret
