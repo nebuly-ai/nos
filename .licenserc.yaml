@@ -18,6 +18,7 @@ header:
     - '**/go.sum'
     - 'LICENSE'
     - 'NOTICE'
+    - 'doc/**'
 
   language:
     Go:
