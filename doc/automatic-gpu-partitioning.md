@@ -22,8 +22,8 @@ partitioning state decided by the GPU Partitioner.
 
 ### MIG partitioning
 > ⚠️ Currently, the GPU Partitioner fully supports only Pods requesting a single MIG resource. If a pending Pod has
-> multiple containers requesting a MIG resource, only the resource requested by the first container will be considered
-> for computing the new partitioning.
+> multiple containers requesting a MIG resource, only the resource requested by the first container will be taken into 
+> account when analysing partitioning changes.
 
 
 In the case of MIG partitioning, the agent that creates/deletes the MIG resources is the [MIG Agent](../config/migagent)
@@ -43,8 +43,13 @@ the following format:
 
 `n8s.nebuly.ai/spec-gpu-<index>-<mig-profile>: <quantity>`
 
-Note that, before applying the desired status, the MIG Agent always checks whether the MIG resources that need to
-be deleted are not currently used by any pod. If this is the case, the MIG Agent will not delete the MIG resources.
+
+Note that in some cases the MIG Agent might not be able to apply the desired MIG geometry specified by the 
+GPU Partitioner. This can happen for two reasons:
+1. the MIG Agent never deletes MIG resources being in use by a Pod
+2. some MIG geometries require the MIG profiles to be created in a certain order, and due to reason (1) the MIG Agent 
+   might not be able to delete and re-create the existing MIG profiles in the order required by the new MIG geometry. 
+
 
 ## Configuration
 
@@ -86,3 +91,15 @@ are taken into account when performing the GPUs partitioning, you can follow the
 * uncomment the last patch of this [kustomization file](../config/gpupartitioner/default/kustomization.yaml), which
   mounts the n8s scheduler config file to the GPU partitioner pod filesystem
 * set the `schedulerConfigFile` value to `scheduler_config.yam`
+
+### Available MIG geometries
+The GPU Partitioner determines the most proper partitioning plan to apply by considering the possible MIG geometries 
+allowed by the GPUs of the cluster.
+
+The MIG geometries allowed by each known GPU model are specified in the configuration file 
+[known_mig_geometries.yaml](../config/gpupartitioner/manager/known_mig_geometries.yaml), 
+which is provided to the GPU partitioner through the configuration param `knownMigGeometriesFile`.
+
+You can edit this file to add new MIG geometries for new GPU models, or to edit the existing ones according 
+to your specific needs. For instance, you can remove some MIG geometries if you don't want to allow them to be used for a 
+certain GPU model.

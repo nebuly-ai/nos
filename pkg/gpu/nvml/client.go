@@ -248,7 +248,7 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 	// (MIG profile creation success depends on the order on which they are created)
 	var anyPermutationApplied bool
 	var nAttempts int
-	var maxAttempts = 50
+	var maxAttempts = 20
 	err = util.IterPermutations(mps, func(mps []nvlibdevice.MigProfile) (bool, error) {
 		// TODO: optimize permutation search instead of trying all of them and limiting the max attempts
 		if nAttempts > maxAttempts {
