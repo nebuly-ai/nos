@@ -21,12 +21,9 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/component-helpers/scheduling/corev1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sort"
 )
 
 type Planner struct {
@@ -49,34 +46,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 	}
 
 	// Sort candidates
-	sort.SliceStable(candidates, func(i, j int) bool {
-		// check priority first
-		firstPodPriority := corev1.PodPriority(&candidates[i])
-		secondPodPriority := corev1.PodPriority(&candidates[j])
-		if firstPodPriority != secondPodPriority {
-			return firstPodPriority < secondPodPriority
-		}
-
-		// if priority is equal, sort by requested MIG resources, placing first
-		// the pods that require smaller MIG profiles in order to
-		// maximize the number of pods that can be scheduled
-		firstPodMigResources := mig.GetRequestedMigResources(candidates[i])
-		if len(firstPodMigResources) == 0 {
-			return false
-		}
-		secondPodMigResources := mig.GetRequestedMigResources(candidates[j])
-		if len(secondPodMigResources) == 0 {
-			return false
-		}
-		for firstPodProfile := range firstPodMigResources {
-			for secondPodProfile := range secondPodMigResources {
-				// we assume that a Pod requests at most one MIG profile
-				return firstPodProfile.GreaterThan(secondPodProfile)
-			}
-		}
-
-		return false
-	})
+	candidates = SortCandidatePods(candidates)
 
 	partitioningState := snapshot.GetPartitioningState()
 	for _, pod := range candidates {

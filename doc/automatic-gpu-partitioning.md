@@ -21,6 +21,10 @@ to the GPU Partitioner the partitioning state of the GPUs of the node on which i
 partitioning state decided by the GPU Partitioner.
 
 ### MIG partitioning
+> ⚠️ Currently, the GPU Partitioner fully supports only Pods requesting a single MIG resource. If a pending Pod has
+> multiple containers requesting a MIG resource, only the resource requested by the first container will be considered
+> for computing the new partitioning.
+
 
 In the case of MIG partitioning, the agent that creates/deletes the MIG resources is the [MIG Agent](../config/migagent)
 ,
