@@ -67,14 +67,14 @@ func TestSortCandidatePods(t *testing.T) {
 				).Get(),
 				factory.BuildPod("ns-1", "pd-2").WithPriority(2).WithContainer(
 					factory.BuildContainer("c1", "test").
-						WithScalarResourceRequest(mig.Profile7g80gb.AsResourceName(), 1).
+						WithScalarResourceRequest(mig.Profile7g79gb.AsResourceName(), 1).
 						Get(),
 				).Get(),
 			},
 			expected: []v1.Pod{
 				factory.BuildPod("ns-1", "pd-2").WithPriority(2).WithContainer(
 					factory.BuildContainer("c1", "test").
-						WithScalarResourceRequest(mig.Profile7g80gb.AsResourceName(), 1).
+						WithScalarResourceRequest(mig.Profile7g79gb.AsResourceName(), 1).
 						Get(),
 				).Get(),
 				factory.BuildPod("ns-1", "pd-1").WithPriority(1).WithContainer(

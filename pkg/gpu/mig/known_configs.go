@@ -95,7 +95,7 @@ var (
 		},
 		GPUModel_A100_PCIe_80GB: {
 			{
-				Profile7g80gb: 1,
+				Profile7g79gb: 1,
 			},
 			{
 				Profile4g40gb: 1,

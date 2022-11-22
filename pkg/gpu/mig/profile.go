@@ -40,7 +40,7 @@ const (
 	Profile2g20gb ProfileName = "2g.20gb"
 	Profile3g40gb ProfileName = "3g.40gb"
 	Profile4g40gb ProfileName = "4g.40gb"
-	Profile7g80gb ProfileName = "7g.80gb"
+	Profile7g79gb ProfileName = "7g.79gb"
 )
 
 var (
