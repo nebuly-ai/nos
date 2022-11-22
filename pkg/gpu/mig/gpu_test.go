@@ -190,7 +190,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 		{
 			name: "Empty GPU: geometry should appear as free MIG devices",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SMX4_40GB,
+				mig.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),
@@ -199,7 +199,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				mig.Profile7g40gb: 1,
 			},
 			expected: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SMX4_40GB,
+				mig.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				map[mig.ProfileName]int{
@@ -211,7 +211,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 		{
 			name: "Invalid MIG geometry",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SMX4_40GB,
+				mig.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),
@@ -220,7 +220,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				mig.Profile1g10gb: 12,
 			},
 			expected: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SMX4_40GB,
+				mig.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),

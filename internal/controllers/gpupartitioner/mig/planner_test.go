@@ -310,7 +310,7 @@ func TestPlanner__Plan(t *testing.T) {
 						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile2g10gb): "1",
 					}).
 					WithLabels(map[string]string{
-						constant.LabelNvidiaProduct: string(mig.GPUModel_A100_SMX4_40GB),
+						constant.LabelNvidiaProduct: string(mig.GPUModel_A100_SXM4_40GB),
 						constant.LabelNvidiaCount:   strconv.Itoa(1),
 					}).
 					WithAllocatableResources(v1.ResourceList{

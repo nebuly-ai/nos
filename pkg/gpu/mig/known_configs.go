@@ -17,11 +17,12 @@
 package mig
 
 const (
-	GPUModel_A100_SMX4_40GB GPUModel = "A100-SMX4-40GB"
+	GPUModel_A100_SXM4_40GB GPUModel = "NVIDIA-A100-40GB-SXM4"
 	GPUModel_A100_PCIe_80GB GPUModel = "NVIDIA-A100-80GB-PCIe"
 	GPUModel_A30            GPUModel = "A30"
 )
 
+// TODO: move to yaml config file
 var (
 	gpuModelToAllowedMigGeometries = map[GPUModel][]Geometry{
 		GPUModel_A30: {
@@ -39,7 +40,7 @@ var (
 				Profile1g6gb: 4,
 			},
 		},
-		GPUModel_A100_SMX4_40GB: {
+		GPUModel_A100_SXM4_40GB: {
 			{
 				Profile7g40gb: 1,
 			},

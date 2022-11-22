@@ -40,7 +40,7 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Labels: map[string]string{
-						constant.LabelNvidiaProduct: string(GPUModel_A100_SMX4_40GB),
+						constant.LabelNvidiaProduct: string(GPUModel_A100_SXM4_40GB),
 					},
 				},
 			},
@@ -201,8 +201,8 @@ func TestNode__GetGeometry(t *testing.T) {
 					},
 					{
 						index:                1,
-						model:                GPUModel_A100_SMX4_40GB,
-						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A100_SMX4_40GB],
+						model:                GPUModel_A100_SXM4_40GB,
+						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A100_SXM4_40GB],
 						usedMigDevices: map[ProfileName]int{
 							Profile1g5gb:  3,
 							Profile2g10gb: 1,
@@ -265,7 +265,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					},
 				},
 				{
-					model: GPUModel_A100_SMX4_40GB,
+					model: GPUModel_A100_SXM4_40GB,
 					index: 1,
 					used:  map[ProfileName]int{},
 					free: map[ProfileName]int{
@@ -291,7 +291,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					free: map[ProfileName]int{},
 				},
 				{
-					model: GPUModel_A100_SMX4_40GB,
+					model: GPUModel_A100_SXM4_40GB,
 					index: 1,
 					used: map[ProfileName]int{
 						Profile7g40gb: 1,
