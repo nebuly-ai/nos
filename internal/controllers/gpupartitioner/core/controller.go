@@ -61,6 +61,10 @@ func NewController(
 }
 
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=persistentvolumes;persistentvolumeclaims;namespaces;services;replicationcontrollers,verbs=get;list;watch
+//+kubebuilder:rbac:groups=apps,resources=statefulsets;replicasets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=storage.k8s.io,resources=csinodes;storageclasses;csidrivers;csistoragecapacities,verbs=get;list;watch
+//+kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;patch
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=compositeelasticquotas,verbs=get;list;watch
@@ -132,7 +136,7 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 			pods = append(pods, p)
 		}
 	}
-	logger.Info(fmt.Sprintf("%d out of %d pending pods can be helped", len(allPendingPods), len(pods)))
+	logger.Info(fmt.Sprintf("%d out of %d pending pods could be helped", len(allPendingPods), len(pods)))
 	if len(allPendingPods) == 0 {
 		return ctrl.Result{}, nil
 	}
