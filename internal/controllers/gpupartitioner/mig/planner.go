@@ -151,11 +151,23 @@ func (p Planner) podFitsNode(ctx context.Context, node framework.NodeInfo, pod v
 	logger.V(1).Info("simulating pod scheduling", "pod", pod.Name, "namespace", pod.Namespace)
 	cycleState := framework.NewCycleState()
 	_, preFilterStatus := p.schedulerFramework.RunPreFilterPlugins(ctx, cycleState, &pod)
-	logger.V(1).Info("scheduler PreFilter status", "status", preFilterStatus)
+	logger.V(1).Info(
+		"scheduler PreFilter status",
+		"statusCode",
+		preFilterStatus.Code(),
+		"reasons",
+		preFilterStatus.Reasons(),
+	)
 	if !preFilterStatus.IsSuccess() {
 		return false
 	}
 	filterStatus := p.schedulerFramework.RunFilterPlugins(ctx, cycleState, &pod, &node).Merge()
-	logger.V(1).Info("scheduler Filter status", "status", filterStatus)
+	logger.V(1).Info(
+		"scheduler Filter status",
+		"statusCode",
+		filterStatus.Code(),
+		"reasons",
+		filterStatus.Reasons(),
+	)
 	return filterStatus.IsSuccess()
 }
