@@ -78,11 +78,11 @@ func (p ProfileName) getGiSlices() int {
 	return asInt
 }
 
-func (p ProfileName) GreaterThan(other ProfileName) bool {
-	if p.getMemorySlices() > other.getMemorySlices() {
+func (p ProfileName) SmallerThan(other ProfileName) bool {
+	if p.getMemorySlices() < other.getMemorySlices() {
 		return true
 	}
-	if p.getGiSlices() > other.getGiSlices() {
+	if p.getGiSlices() < other.getGiSlices() {
 		return true
 	}
 	return false

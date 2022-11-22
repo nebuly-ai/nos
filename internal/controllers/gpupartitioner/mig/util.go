@@ -16,7 +16,7 @@ func SortCandidatePods(candidates []v1.Pod) []v1.Pod {
 		firstPodPriority := corev1.PodPriority(&sorted[i])
 		secondPodPriority := corev1.PodPriority(&sorted[j])
 		if firstPodPriority != secondPodPriority {
-			return firstPodPriority < secondPodPriority
+			return firstPodPriority > secondPodPriority
 		}
 
 		// if priority is equal, sort by requested MIG resources, placing first
@@ -33,7 +33,7 @@ func SortCandidatePods(candidates []v1.Pod) []v1.Pod {
 		for firstPodProfile := range firstPodMigResources {
 			for secondPodProfile := range secondPodMigResources {
 				// we assume that a Pod requests at most one MIG profile
-				return firstPodProfile.GreaterThan(secondPodProfile)
+				return firstPodProfile.SmallerThan(secondPodProfile)
 			}
 		}
 

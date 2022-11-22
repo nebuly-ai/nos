@@ -100,21 +100,21 @@ func TestProfileName__GreaterThan(t *testing.T) {
 		},
 		{
 			name:     "Same memory, higher Gi",
-			profile:  Profile4g20gb,
-			other:    Profile3g20gb,
+			profile:  Profile3g20gb,
+			other:    Profile4g20gb,
 			expected: true,
 		},
 		{
 			name:     "Same Gi, higher memory",
-			profile:  Profile1g10gb,
-			other:    Profile1g5gb,
+			profile:  Profile1g5gb,
+			other:    Profile1g10gb,
 			expected: true,
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.profile.GreaterThan(tt.other))
+			assert.Equal(t, tt.expected, tt.profile.SmallerThan(tt.other))
 		})
 	}
 }
