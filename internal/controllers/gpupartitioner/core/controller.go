@@ -108,10 +108,14 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		logger.V(1).Info("batch not ready")
 	}
 
+	// If batch is not ready then requeue after 1 second
 	if len(c.currentBatch) > 0 {
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
 	}
-	return ctrl.Result{}, nil
+
+	// If batch is empty and there are no new pending pods, requeue after some time
+	// to try to process again the pending pods
+	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 }
 
 func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error) {
