@@ -28,7 +28,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sort"
 	"time"
 )
 
@@ -115,7 +114,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// If batch is empty and there are no new pending pods, requeue after some time
 	// to try to process again the pending pods
-	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil // TODO : fix reschedule time also when batch is processed
 }
 
 func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error) {
@@ -146,11 +145,6 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 	}
 
 	snapshot := c.clusterState.GetSnapshot()
-
-	// Sort Pods by importance
-	sort.SliceStable(pods, func(i, j int) bool {
-		return pod.IsMoreImportant(pods[i], pods[j])
-	})
 
 	// Compute desired state
 	desiredState, err := c.planner.Plan(ctx, snapshot, pods)

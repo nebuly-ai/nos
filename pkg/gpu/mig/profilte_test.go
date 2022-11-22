@@ -84,3 +84,37 @@ func TestProfileList__GroupByGpuIndex(t *testing.T) {
 		})
 	}
 }
+
+func TestProfileName__GreaterThan(t *testing.T) {
+	testCases := []struct {
+		name     string
+		profile  ProfileName
+		other    ProfileName
+		expected bool
+	}{
+		{
+			name:     "Profile are equals",
+			profile:  Profile1g6gb,
+			other:    Profile1g6gb,
+			expected: false,
+		},
+		{
+			name:     "Same memory, higher Gi",
+			profile:  Profile4g20gb,
+			other:    Profile3g20gb,
+			expected: true,
+		},
+		{
+			name:     "Same Gi, higher memory",
+			profile:  Profile1g10gb,
+			other:    Profile1g5gb,
+			expected: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.profile.GreaterThan(tt.other))
+		})
+	}
+}
