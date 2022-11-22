@@ -102,7 +102,7 @@ func TestNewNode(t *testing.T) {
 					{
 						index:                0,
 						model:                GPUModel_A30,
-						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A30],
+						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
 						usedMigDevices: map[ProfileName]int{
 							Profile2g10gb: 3,
 						},
@@ -113,7 +113,7 @@ func TestNewNode(t *testing.T) {
 					{
 						index:                1,
 						model:                GPUModel_A30,
-						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A30],
+						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
 						usedMigDevices:       map[ProfileName]int{},
 						freeMigDevices: map[ProfileName]int{
 							Profile3g20gb: 2,
@@ -140,14 +140,14 @@ func TestNewNode(t *testing.T) {
 					{
 						index:                0,
 						model:                GPUModel_A30,
-						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A30],
+						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
 						usedMigDevices:       map[ProfileName]int{},
 						freeMigDevices:       map[ProfileName]int{},
 					},
 					{
 						index:                1,
 						model:                GPUModel_A30,
-						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A30],
+						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
 						usedMigDevices:       map[ProfileName]int{},
 						freeMigDevices:       map[ProfileName]int{},
 					},
@@ -189,7 +189,7 @@ func TestNode__GetGeometry(t *testing.T) {
 					{
 						index:                0,
 						model:                GPUModel_A30,
-						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A30],
+						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
 						usedMigDevices: map[ProfileName]int{
 							Profile4g24gb: 2,
 							Profile1g5gb:  3,
@@ -202,7 +202,7 @@ func TestNode__GetGeometry(t *testing.T) {
 					{
 						index:                1,
 						model:                GPUModel_A100_SXM4_40GB,
-						allowedMigGeometries: gpuModelToAllowedMigGeometries[GPUModel_A100_SXM4_40GB],
+						allowedMigGeometries: GetKnownGeometries()[GPUModel_A100_SXM4_40GB],
 						usedMigDevices: map[ProfileName]int{
 							Profile1g5gb:  3,
 							Profile2g10gb: 1,

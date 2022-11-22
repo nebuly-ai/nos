@@ -38,3 +38,6 @@ batchWindowIdleSeconds: 10
 # Uncomment if you want to use a custom scheduler configuration file, otherwise the GPU partitioner
 # will use the default k8s scheduler profile
 #schedulerConfigFile: scheduler_config.yaml
+
+# Optional path to the file containing the possible MIG geometries of each known GPU model
+knownMigGeometriesFile: known_mig_geometries.yaml

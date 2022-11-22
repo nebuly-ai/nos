@@ -55,7 +55,7 @@ func NewGpuOrPanic(model GPUModel, index int, usedMigDevices, freeMigDevices map
 }
 
 func NewGPU(model GPUModel, index int, usedMigDevices, freeMigDevices map[ProfileName]int) (GPU, error) {
-	allowedGeometries, ok := gpuModelToAllowedMigGeometries[model]
+	allowedGeometries, ok := GetAllowedGeometries(model)
 	if !ok {
 		return GPU{}, fmt.Errorf("model %q is not associated with any known GPU", model)
 	}

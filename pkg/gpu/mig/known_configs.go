@@ -16,15 +16,18 @@
 
 package mig
 
+import (
+	"fmt"
+)
+
 const (
 	GPUModel_A100_SXM4_40GB GPUModel = "NVIDIA-A100-40GB-SXM4"
 	GPUModel_A100_PCIe_80GB GPUModel = "NVIDIA-A100-80GB-PCIe"
 	GPUModel_A30            GPUModel = "A30"
 )
 
-// TODO: move to yaml config file
 var (
-	gpuModelToAllowedMigGeometries = map[GPUModel][]Geometry{
+	defaultKnownMigGeometries = map[GPUModel][]Geometry{
 		GPUModel_A30: {
 			{
 				Profile4g24gb: 1,
@@ -142,3 +145,42 @@ var (
 		},
 	}
 )
+
+func SetKnownGeometries(configs map[GPUModel][]Geometry) error {
+	if err := validateConfigs(configs); err != nil {
+		return err
+	}
+	defaultKnownMigGeometries = configs
+	return nil
+}
+
+func GetKnownGeometries() map[GPUModel][]Geometry {
+	if defaultKnownMigGeometries == nil {
+		return map[GPUModel][]Geometry{}
+	}
+	return defaultKnownMigGeometries
+}
+
+func GetAllowedGeometries(model GPUModel) ([]Geometry, bool) {
+	configs, ok := GetKnownGeometries()[model]
+	return configs, ok
+}
+
+func validateConfigs(configs map[GPUModel][]Geometry) error {
+	if len(configs) == 0 {
+		return fmt.Errorf("no known configs provided")
+	}
+	for _, geometryList := range configs {
+		for _, geometry := range geometryList {
+			for profile, quantity := range geometry {
+				if !profile.isValid() {
+					return fmt.Errorf("invalid profile %s", profile)
+				}
+				if quantity < 1 {
+					return fmt.Errorf("invalid quantity %d for profile %s", quantity, profile)
+				}
+			}
+		}
+	}
+	return nil
+}

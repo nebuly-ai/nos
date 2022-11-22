@@ -28,12 +28,14 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 	schedulerv1beta3 "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	gpumig "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/scheduler/plugins/capacityscheduling"
 	testutil "github.com/nebuly-ai/nebulnetes/pkg/test/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -94,6 +96,20 @@ func main() {
 	if err = config.Validate(); err != nil {
 		setupLog.Error(err, "config is invalid")
 		os.Exit(1)
+	}
+
+	// Setup known MIG geometries
+	if config.KnownMigGeometriesFile != "" {
+		knownGeometries, err := loadKnownGeometriesFromFile(config.KnownMigGeometriesFile)
+		if err != nil {
+			setupLog.Error(err, "unable to load known MIG geometries")
+			os.Exit(1)
+		}
+		if err = gpumig.SetKnownGeometries(knownGeometries); err != nil {
+			setupLog.Error(err, "unable to set known MIG geometries")
+			os.Exit(1)
+		}
+		setupLog.Info("using known MIG geometries loaded from file", "geometries", knownGeometries)
 	}
 
 	// Setup controller manager
@@ -315,4 +331,14 @@ func decodeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfigura
 		return cfgObj, nil
 	}
 	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)
+}
+
+func loadKnownGeometriesFromFile(file string) (map[gpumig.GPUModel][]gpumig.Geometry, error) {
+	var knownGeometries = make(map[gpumig.GPUModel][]gpumig.Geometry)
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return knownGeometries, err
+	}
+	err = yaml.Unmarshal(data, &knownGeometries)
+	return knownGeometries, err
 }

@@ -61,5 +61,13 @@ spec:
             requests:
               cpu: 10m
               memory: 64Mi
+          volumeMounts:
+            - name: known-mig-geometries
+              mountPath: /known_mig_geometries.yaml
+              subPath: known_mig_geometries.yaml
+      volumes:
+        - name: known-mig-geometries
+          configMap:
+            name: gpu-partitioner-known-mig-geometries
       serviceAccountName: gpu-partitioner
       terminationGracePeriodSeconds: 10

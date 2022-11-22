@@ -29,6 +29,7 @@ type GpuPartitionerConfig struct {
 	metav1.TypeMeta                        `json:",inline"`
 	cfg.ControllerManagerConfigurationSpec `json:",inline"`
 	SchedulerConfigFile                    string        `json:"schedulerConfigFile,omitempty"`
+	KnownMigGeometriesFile                 string        `json:"knownMigGeometriesFile,omitempty"`
 	BatchWindowTimeoutSeconds              time.Duration `json:"batchWindowTimeoutSeconds"`
 	BatchWindowIdleSeconds                 time.Duration `json:"batchWindowIdleSeconds"`
 }
