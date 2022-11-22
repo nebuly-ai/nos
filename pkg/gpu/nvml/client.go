@@ -247,8 +247,15 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 	// Iterate permutations until success
 	// (MIG profile creation success depends on the order on which they are created)
 	var anyPermutationApplied bool
+	var nAttempts int
+	var maxAttempts = 50
 	err = util.IterPermutations(mps, func(mps []nvlibdevice.MigProfile) (bool, error) {
+		// TODO: optimize permutation search instead of trying all of them and limiting the max attempts
+		if nAttempts > maxAttempts {
+			return false, fmt.Errorf("could not find a valid permutation for creating MIG profiles: too many attempts")
+		}
 		c.logger.V(1).Info("trying to create MIG profiles", "permutation", mps)
+		nAttempts++
 		createdGIs := make([]nvlibNvml.GpuInstance, 0)
 		createdCIs := make([]nvlibNvml.ComputeInstance, 0)
 		for _, mp := range mps {
