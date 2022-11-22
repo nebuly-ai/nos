@@ -128,20 +128,20 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 		},
 	}
 
-	informer, err := NewElasticQuotaInfoInformer(handle.KubeConfig(), c.resourceCalculator)
+	eqInformer, err := NewElasticQuotaInfoInformer(handle.KubeConfig(), c.resourceCalculator)
 	if err != nil {
 		return nil, err
 	}
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	eqInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    c.addElasticQuotaInfo,
 		UpdateFunc: c.updateElasticQuotaInfo,
 		DeleteFunc: c.deleteElasticQuotaInfo,
 	})
-	informer.Start(nil)
-	if !cache.WaitForCacheSync(nil, informer.HasSynced) {
-		return nil, fmt.Errorf("timed out waiting for caches to sync %v", Name)
+	eqInformer.Start(nil)
+	if !cache.WaitForCacheSync(nil, eqInformer.HasSynced) {
+		return nil, fmt.Errorf("timed out waiting for ElasticQuotaInformer caches to sync %v", Name)
 	}
-	c.elasticQuotaInfoInformer = informer
+	c.elasticQuotaInfoInformer = eqInformer
 
 	podInformer := handle.SharedInformerFactory().Core().V1().Pods().Informer()
 	podInformer.AddEventHandler(
@@ -166,6 +166,10 @@ func New(obj runtime.Object, handle framework.Handle) (framework.Plugin, error) 
 			},
 		},
 	)
+	handle.SharedInformerFactory().Start(nil)
+	if !cache.WaitForCacheSync(nil, podInformer.HasSynced) {
+		return nil, fmt.Errorf("timed out waiting for PodInformer caches to sync %v", Name)
+	}
 	klog.InfoS("[CapacityScheduling] started")
 	return c, nil
 }
