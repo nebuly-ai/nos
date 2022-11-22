@@ -51,7 +51,7 @@ only running Pods in order to avoid lower resource utilization due to scheduled 
 
 * it is recommended to have [cert-manager](https://cert-manager.io/docs/installation/) installed on your cluster in
   order to automatically manage the SSL certificates of the HTTP endpoints of the webhook used for validating the
-  custom resources. You can install it on your k8s cluster by running `make install-cert-manager``. Alternatively, you
+  custom resources. You can install it on your k8s cluster by running `make install-cert-manager`. Alternatively, you
   can manually create the SSL certificates and inject them in the n8s operator controller manager.
 
 ### Installation
