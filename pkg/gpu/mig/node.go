@@ -121,6 +121,7 @@ func (n *Node) UpdateGeometryFor(profile ProfileName) error {
 			return nil
 		}
 		// Try to apply candidate geometries
+		// TODO: we should try more geometries and apply the one that allow to host more pods
 		for _, allowedGeometry := range gpu.GetAllowedGeometries() {
 			nFreeProfilesWithGeometry := allowedGeometry[profile] - gpu.usedMigDevices[profile]
 			if nFreeProfilesWithGeometry > 0 {
