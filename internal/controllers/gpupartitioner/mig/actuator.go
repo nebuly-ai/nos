@@ -57,7 +57,7 @@ func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, desiredSta
 	}
 
 	for node, partitioningState := range desiredState {
-		logger.V(1).Info("applying node partitioning", "node", node, "partitioning", partitioningState)
+		logger.Info("updating node", "node", node, "partitioning", partitioningState)
 		if err = a.applyNodePartitioning(ctx, node, partitioningState); err != nil {
 			return fmt.Errorf("error partitioning node %s: %v", node, err)
 		}
