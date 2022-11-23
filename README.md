@@ -23,9 +23,8 @@ The operating system layer is responsible for workloads scheduling and hardware 
 It orchestrates the workloads taking into account considerations specific for AI/ML workloads and leveraging 
 techniques typical of High-performance Computing (HPC), and it hides the underlying hardware complexities.
 
-Currently, this layer provides two features:
-- [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md)
-- [Elastic Resource Quota management](doc/elastic-quota.md)
+Currently, this layer provides two features [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md) and
+[Elastic Resource Quota management](doc/elastic-quota.md).
 
 ## Documentation
 
