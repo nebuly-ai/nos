@@ -76,11 +76,21 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 
 		// if there's any create op on the GPU, re-create existing *free* resources so that
 		// when applying the create operations the number of possible MIG permutations to try is larger
+		// TODO: make this more efficient
 		gpuFreeResources := stateResourcesByGpu[gpuIndex].GetFree()
-		if len(gpuFreeResources) > 0 {
-			plan.addDeleteOp(DeleteOperation{Resources: gpuFreeResources})
-			for freeProfile, freeProfileResources := range gpuFreeResources.GroupByMigProfile() {
-				plan.addCreateOp(CreateOperation{MigProfile: freeProfile, Quantity: len(freeProfileResources)})
+		planResourcesToDelete := plan.getResourcesToDelete()
+		resourcesToRecreate := make(mig.DeviceResourceList, 0)
+		for _, r := range gpuFreeResources {
+			if !util.InSlice(r, planResourcesToDelete) {
+				resourcesToRecreate = append(resourcesToRecreate, r)
+			}
+		}
+		if len(resourcesToRecreate) > 0 {
+			// delete free resources not already included in plan
+			plan.addDeleteOp(DeleteOperation{Resources: resourcesToRecreate})
+			// re-create free resources
+			for profile, resources := range resourcesToRecreate.GroupByMigProfile() {
+				plan.addCreateOp(CreateOperation{MigProfile: profile, Quantity: len(resources)})
 			}
 		}
 	}
@@ -99,7 +109,7 @@ func extractCandidatesForDeletion(resources mig.DeviceResourceList, nToDelete in
 			break
 		}
 	}
-	// if candidates are not enough, add not-free resources too
+	// if free devices are not enough, add used resources too
 	if len(deleteCandidates) < nToDelete {
 		for _, r := range resources {
 			if !r.IsFree() {
@@ -119,6 +129,14 @@ func (p *MigConfigPlan) addDeleteOp(op DeleteOperation) {
 
 func (p *MigConfigPlan) addCreateOp(op CreateOperation) {
 	p.CreateOperations = append(p.CreateOperations, op)
+}
+
+func (p *MigConfigPlan) getResourcesToDelete() mig.DeviceResourceList {
+	resources := make(mig.DeviceResourceList, 0)
+	for _, o := range p.DeleteOperations {
+		resources = append(resources, o.Resources...)
+	}
+	return resources
 }
 
 func (p *MigConfigPlan) IsEmpty() bool {
