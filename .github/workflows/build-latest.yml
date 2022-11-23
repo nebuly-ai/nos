@@ -1,4 +1,4 @@
-name: Build docker images
+name: Build and push docker images with tag "latest"
 
 on:
   workflow_dispatch:

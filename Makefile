@@ -1,3 +1,4 @@
+# Nebulnetes version. Used by release workflow, do not move this line.
 N8S_VERSION ?= 0.0.1-alpha.1
 
 # Image URL to use all building/pushing image targets
