@@ -178,24 +178,20 @@ information.
 
 ### Enable nodes for automatic partitioning
 
-#### 1. Enable MIG on the GPUs of the node
+> ⚠️ Prerequisite: to enable automatic MIG partitioning on a node, first you need to enable MIG mode on its GPUs. 
+You can do that by running the following command for each GPU want to enable,
+where `<index>` correspond to the index of the GPU: `sudo nvidia-smi -i <index> -mig 1`
 
-SSH to the node and run the following command for each GPU for which you want to enable MIG,
-where `<index>` correspond to the index of the GPU you want to enable:
+> ⚠️ Depending on the kind of machine you are using, it may be necessary to reboot the node after enabling MIG mode for 
+> one of its GPUs.
 
-```shell
-sudo nvidia-smi -i <index> -mig 1
-```
 
-Depending on the kind of machine you are using, it may be necessary to reboot the node.
-
-#### 2. Enable automatic MIG partitioning
-
-Add the following label to the node in order to let Nebulnetes automatically change the MIG geometry of its GPUs:
+You can enable automatic MIG partitioning of the GPUs of a node by adding the following label to the node:
 
 ```shell
-n8s.nebuly.ai/auto-mig-enabled: "true"
+kubectl label nodes <your-node-name> "n8s.nebuly.ai/auto-mig-enabled=true"
 ```
+
 
 ## Where to go from here
 
