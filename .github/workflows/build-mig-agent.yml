@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  MIGAGENT_IMG: "ghcr.io/${{ github.repository }}-mig-agent:latest"
+  MIG_AGENT_IMG: "ghcr.io/${{ github.repository }}-mig-agent:latest"
 
 jobs:
   docker-build:
