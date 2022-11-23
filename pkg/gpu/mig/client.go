@@ -25,7 +25,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"strings"
 )
 
@@ -42,7 +41,7 @@ type Client interface {
 	GetMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
 	GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
 	GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
-	CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, gpu.Error)
+	CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, error)
 	DeleteMigResource(ctx context.Context, resource DeviceResource) gpu.Error
 }
 
@@ -62,22 +61,24 @@ func NewClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Cl
 // CreateMigResources still tries to create the resources on the other GPUs and returns the ones that
 // it possible to create. This means that if any error happens, the returned ProfileList will be a subset
 // of the input list, otherwise the two lists will have the same length and items.
-func (c clientImpl) CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, gpu.Error) {
-	var err gpu.Error
-	var logger = log.FromContext(ctx)
+func (c clientImpl) CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, error) {
+	var errors = make(gpu.ErrorList, 0)
 	var createdProfiles = make(ProfileList, 0)
 	for gpuIndex, profiles := range profileList.GroupByGPU() {
 		profileNames := make([]string, 0)
 		for _, p := range profiles {
 			profileNames = append(profileNames, p.Name.AsString())
 		}
-		if err = c.nvmlClient.CreateMigDevices(profileNames, gpuIndex); err != nil {
-			logger.Error(err, "could not create MIG devices for GPU", "GPU", gpuIndex)
+		if err := c.nvmlClient.CreateMigDevices(profileNames, gpuIndex); err != nil {
+			errors = append(errors, err)
 			continue
 		}
 		createdProfiles = append(createdProfiles, profiles...)
 	}
-	return createdProfiles, err
+	if len(errors) > 0 {
+		return createdProfiles, errors
+	}
+	return createdProfiles, nil
 }
 
 func (c clientImpl) DeleteMigResource(_ context.Context, resource DeviceResource) gpu.Error {

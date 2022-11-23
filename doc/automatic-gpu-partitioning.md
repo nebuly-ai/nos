@@ -49,7 +49,9 @@ GPU Partitioner. This can happen for two reasons:
 1. the MIG Agent never deletes MIG resources being in use by a Pod
 2. some MIG geometries require the MIG profiles to be created in a certain order, and due to reason (1) the MIG Agent 
    might not be able to delete and re-create the existing MIG profiles in the order required by the new MIG geometry. 
-
+ 
+In these cases, the MIG Agent tries to apply the desired partitioning only partially, creating the most possible 
+required MIG resources. 
 
 ## Configuration
 

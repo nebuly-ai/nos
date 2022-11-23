@@ -53,7 +53,7 @@ func (m *Client) GetMigDeviceResources(_ context.Context) (mig.DeviceResourceLis
 	return m.ReturnedMigDeviceResources, m.ReturnedError
 }
 
-func (m *Client) CreateMigResources(_ context.Context, _ mig.ProfileList) (mig.ProfileList, gpu.Error) {
+func (m *Client) CreateMigResources(_ context.Context, _ mig.ProfileList) (mig.ProfileList, error) {
 	m.lockCreateMigResource.Lock()
 	defer m.lockCreateMigResource.Unlock()
 	m.NumCallsCreateMigResources++
