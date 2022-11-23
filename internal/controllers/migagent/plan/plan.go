@@ -33,7 +33,7 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 		CreateOperations: make(CreateOperationList, 0),
 	}
 
-	// Get resources present in current state which MIG profile is not included in spec
+	// Delete resources not included in spec
 	for _, resourceList := range getResourcesNotIncludedInSpec(state, desired).GroupByMigProfile() {
 		op := DeleteOperation{Resources: resourceList}
 		plan.addDeleteOp(op)
@@ -43,6 +43,7 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	stateResourcesByGpu := state.Flatten().SortByDeviceId().GroupByGpuIndex()
 	for gpuIndex, gpuAnnotations := range desired.GroupByGpuIndex() {
 		gpuStateResources := stateResourcesByGpu[gpuIndex].GroupByMigProfile()
+		nCreateOp := 0
 		for migProfile, migProfileAnnotations := range gpuAnnotations.GroupByMigProfile() {
 			// init actual resources of current GPU and current MIG profile
 			actualMigProfileResources := gpuStateResources[migProfile]
@@ -58,22 +59,28 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 
 			diff := totalDesiredQuantity - len(actualMigProfileResources)
 			if diff > 0 {
-				// create missing MIG profiles and delete and re-create possible existing *free* resources
-				// corresponding to the same MIG profile, so that when applying the create operations the number
-				// of possible MIG permutations to try is larger
-				freeResources := actualMigProfileResources.GetFree()
-				if len(freeResources) > 0 {
-					plan.addDeleteOp(DeleteOperation{Resources: freeResources})
-					for freeProfile, freeProfileResources := range freeResources.GroupByMigProfile() {
-						plan.addCreateOp(CreateOperation{MigProfile: freeProfile, Quantity: len(freeProfileResources)})
-					}
-				}
 				plan.addCreateOp(CreateOperation{MigProfile: migProfile, Quantity: diff})
+				nCreateOp++
 			}
 			if diff < 0 {
 				toDelete := extractCandidatesForDeletion(actualMigProfileResources, util.Abs(diff))
 				op := DeleteOperation{Resources: toDelete}
 				plan.addDeleteOp(op)
+			}
+		}
+
+		// no create operations on this GPU, we don't need to clean up free devices
+		if nCreateOp == 0 {
+			continue
+		}
+
+		// if there's any create op on the GPU, re-create existing *free* resources so that
+		// when applying the create operations the number of possible MIG permutations to try is larger
+		gpuFreeResources := stateResourcesByGpu[gpuIndex].GetFree()
+		if len(gpuFreeResources) > 0 {
+			plan.addDeleteOp(DeleteOperation{Resources: gpuFreeResources})
+			for freeProfile, freeProfileResources := range gpuFreeResources.GroupByMigProfile() {
+				plan.addCreateOp(CreateOperation{MigProfile: freeProfile, Quantity: len(freeProfileResources)})
 			}
 		}
 	}

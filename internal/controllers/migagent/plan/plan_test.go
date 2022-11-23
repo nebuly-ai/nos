@@ -143,7 +143,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 			expectedDeleteOps: DeleteOperationList{},
 		},
 		{
-			name: "Delete operations should use free devices when available",
+			name: "Free devices should not be re-created if there aren't create op on the GPU",
 			state: MigState{
 				0: {
 					{
@@ -227,6 +227,8 @@ func TestNewMigConfigPlan(t *testing.T) {
 						},
 						GpuIndex: 0,
 					},
+				},
+				1: {
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -255,6 +257,96 @@ func TestNewMigConfigPlan(t *testing.T) {
 						Name:     mig.Profile1g10gb,
 					},
 					Quantity: 2, // op for re-creating the existing free-device
+				},
+			},
+			expectedDeleteOps: DeleteOperationList{
+				{
+					Resources: mig.DeviceResourceList{
+						{
+							Device: resource.Device{
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
+								DeviceId:     "1",
+								Status:       resource.StatusFree,
+							},
+							GpuIndex: 0,
+						},
+						{
+							Device: resource.Device{
+								ResourceName: mig.Profile1g10gb.AsResourceName(),
+								DeviceId:     "3",
+								Status:       resource.StatusFree,
+							},
+							GpuIndex: 0,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "All free devices should be re-created if there's any create op on the GPU",
+			state: MigState{
+				// 0:
+				// 	1g.10gb-free -> 2
+				//  1g.10gb-used -> 1
+				//
+				// 1:
+				//  1g.10gb-free -> 1
+				0: {
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "1",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 0,
+					},
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "2",
+							Status:       resource.StatusUsed,
+						},
+						GpuIndex: 0,
+					},
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "3",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 0,
+					},
+				},
+				1: {
+					{
+						Device: resource.Device{
+							ResourceName: mig.Profile1g10gb.AsResourceName(),
+							DeviceId:     "1",
+							Status:       resource.StatusFree,
+						},
+						GpuIndex: 1,
+					},
+				},
+			},
+			specAnnotations: map[string]string{
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "3", // unchanged
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.20gb"): "1", // new device
+				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1", // unchanged
+			},
+			expectedCreateOps: CreateOperationList{
+				{
+					MigProfile: mig.Profile{
+						GpuIndex: 0,
+						Name:     mig.Profile1g10gb,
+					},
+					Quantity: 2, // op that re-creates the existing devices
+				},
+				{
+					MigProfile: mig.Profile{
+						GpuIndex: 0,
+						Name:     mig.Profile2g20gb,
+					},
+					Quantity: 1, // that creates the new device
 				},
 			},
 			expectedDeleteOps: DeleteOperationList{
