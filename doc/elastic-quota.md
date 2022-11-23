@@ -238,8 +238,6 @@ import (
 
 	// Ensure n8s.nebuly.ai/v1alpha1 package is initialized
 	_ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	// Ensure scheduler package is initialized.
-	_ "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 )
 
 func main() {

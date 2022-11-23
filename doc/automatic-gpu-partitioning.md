@@ -7,6 +7,8 @@
 ## Table of contents
 - [Overview](#overview)
 - [Getting started](#getting-started)
+- [Enable nodes for automatic partitioning](#enable-nodes-for-automatic-partitioning)
+- [MIG partitioning](#mig-partitioning)
 - [Configuration](#configuration)
   - [Pods batch size](#pods-batch-size)
   - [Scheduler configuration](#scheduler-configuration)
@@ -79,24 +81,28 @@ The targets above deploy the components using their default configuration. If yo
 you can refer to the [GPU Partitioner Configuration](doc/automatic-gpu-partitioning.md#configuration) page for more
 information.
 
-### Enable nodes for automatic partitioning
+## How to enable automatic GPU partitioning on a Node
 
 > ⚠️ Prerequisite: to enable automatic MIG partitioning on a node, first you need to enable MIG mode on its GPUs.
 You can do that by running the following command for each GPU want to enable,
 where `<index>` correspond to the index of the GPU: `sudo nvidia-smi -i <index> -mig 1`
-
-> ⚠️ Depending on the kind of machine you are using, it may be necessary to reboot the node after enabling MIG mode for
+> 
+> Depending on the kind of machine you are using, it may be necessary to reboot the node after enabling MIG mode for
 > one of its GPUs.
 
 
-You can enable automatic MIG partitioning of the GPUs of a node by adding the following label to the node:
+You can enable automatic MIG partitioning on a node by adding to it the following label:
 
 ```shell
-kubectl label nodes <your-node-name> "n8s.nebuly.ai/auto-mig-enabled=true"
+kubectl label nodes <node-name> "n8s.nebuly.ai/auto-mig-enabled=true"
 ```
 
+The label delegates to Nebulnetes the management of the MIG resources of all the GPUs of that node, so you don't have 
+to manually configure the MIG geometry of the GPUs anymore: n8s will dynamically apply the most proper geometry 
+according to the resources requested by the pods submitted to the cluster.
 
-### MIG partitioning
+
+## MIG partitioning
 > ⚠️ Currently, the GPU Partitioner fully supports only Pods requesting a single MIG resource. If a pending Pod has
 > multiple containers requesting a MIG resource, only the resource requested by the first container will be taken into 
 > account when analysing partitioning changes.
@@ -126,8 +132,9 @@ GPU Partitioner. This can happen for two reasons:
 2. some MIG geometries require the MIG profiles to be created in a certain order, and due to reason (1) the MIG Agent 
    might not be able to delete and re-create the existing MIG profiles in the order required by the new MIG geometry. 
  
-In these cases, the MIG Agent tries to apply the desired partitioning only partially, creating the most possible 
-required MIG resources. 
+In these cases, the MIG Agent tries to apply the desired partitioning by creating as many required resources as 
+possible, in order to maximize the number of schedulable Pods. This can result in the MIG Agent applying the 
+desired MIG geometry only partially.
 
 ## Configuration
 
