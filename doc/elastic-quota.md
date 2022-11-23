@@ -4,7 +4,6 @@
 
 * [Overview](#overview)
 * [How to define resource quotas](#how-to-define-resource-quotas)
-* [Configuration](#configuration)
 * [Scheduler installation options](#scheduler-installation-options)
 * [Over-quotas and GPU memory limits](#over-quotas-and-gpu-memory-limits)
     * [Over-quota fair sharing](#over-quota-fair-sharing)
@@ -65,10 +64,6 @@ the status of the respective quota object gets updated with the new amount of us
 
 You can check how many resources have been consumed by each namespace by looking at the field `used`
 of the `ElasticQuota` and `CompositeElasticQuota` objects status.
-
-## Configuration
-You can customize the Elastic Quota management settings by editing the [Operator](../config/operator/manager/operator_config.yaml)
-and [Scheduler](../config/scheduler/deployment/scheduler_config.yaml) configuration files.
 
 ## Scheduler installation options
 
