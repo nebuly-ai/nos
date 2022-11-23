@@ -31,7 +31,7 @@ jobs:
 
       - name: Check Version
         id: version
-        run: echo "Version is $(head -2 Makefile | cut -d "=" -f 2 | xargs)"
+        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
 
       - name: Build images
         run: make docker-build
