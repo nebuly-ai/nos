@@ -4,9 +4,22 @@
 > supports [Multi-instance GPU (MIG) partitioning](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html),
 > which is available only for NVIDIA GPUs based on Ampere and Hopper architectures.
 
+## Table of contents
+- [Overview](#overview)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+  - [Pods batch size](#pods-batch-size)
+  - [Scheduler configuration](#scheduler-configuration)
+  - [Integration with Nebulnetes scheduler](#integration-with-nebulnetes-scheduler)
+  - [Available MIG geometries](#available-mig-geometries)
+
 ## Overview
 
-The automatic GPU partitioning is performed by the [GPU Partitioner](../config/gpupartitioner) component, which
+Nebulnetes allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
+the partitioning is performed dynamically based on the pending and running Pods in your cluster, so that the GPUs
+are always fully utilized.
+
+The GPU partitioning is performed by the [GPU Partitioner](../config/gpupartitioner) component, which
 constantly watches the GPU resources of the cluster and finds the best possible partitioning of the available GPUs
 in order to schedule the highest number of pods requesting fractions of GPUs, which otherwise could not be scheduled
 due to the lack of available resources.
@@ -19,6 +32,69 @@ The actual partitioning of the GPUs is not performed directly by the GPU Partiti
 by an agent deployed on every node of the cluster eligible for automatic partitioning. This agent exposes
 to the GPU Partitioner the partitioning state of the GPUs of the node on which it is running, and applies the desired
 partitioning state decided by the GPU Partitioner.
+
+## Getting started 
+
+### Prerequisites
+
+* you need the [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) deployed on your cluster, configured to
+  use the `mixed` MIG strategy
+* you need at least one node with a GPU supporting [MIG](https://www.nvidia.com/en-us/technologies/multi-instance-gpu/)
+* if a node has multiple GPUs, all the GPUs must be of the same model
+
+For further information regarding NVIDIA MIG and its integration with Kubernetes, please refer to the
+[NVIDIA MIG User Guide](https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf) and to the
+[MIG Support in Kubernetes](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/mig-k8s.html)
+official documentation provided by NVIDIA.
+
+### Installation
+
+> ⚠️ At the moment Nebulnetes is not publicly available, so you need to provide credentials for pulling the required
+> Docker images. Please refer to [How to pull Nebulnetes Docker images](doc/pull-images.md) for more information.
+
+You can install the automatic GPU partitioning components by running the Makefile targets below, which deploys them
+required to the k8s cluster specified in your `~/.kube/config`.
+
+By default, all the resources are installed in the `n8s-system` namespace.
+
+1. Deploy the Nebulnetes operator
+
+```shell
+make deploy-operator
+```
+
+2. Deploy the GPU Partitioner
+
+```shell
+make deploy-gpu-partitioner
+```
+
+3. Deploy the MIG Agent
+
+```shell
+make deploy-mig-agent
+```
+
+The targets above deploy the components using their default configuration. If you want to customize their configuration,
+you can refer to the [GPU Partitioner Configuration](doc/automatic-gpu-partitioning.md#configuration) page for more
+information.
+
+### Enable nodes for automatic partitioning
+
+> ⚠️ Prerequisite: to enable automatic MIG partitioning on a node, first you need to enable MIG mode on its GPUs.
+You can do that by running the following command for each GPU want to enable,
+where `<index>` correspond to the index of the GPU: `sudo nvidia-smi -i <index> -mig 1`
+
+> ⚠️ Depending on the kind of machine you are using, it may be necessary to reboot the node after enabling MIG mode for
+> one of its GPUs.
+
+
+You can enable automatic MIG partitioning of the GPUs of a node by adding the following label to the node:
+
+```shell
+kubectl label nodes <your-node-name> "n8s.nebuly.ai/auto-mig-enabled=true"
+```
+
 
 ### MIG partitioning
 > ⚠️ Currently, the GPU Partitioner fully supports only Pods requesting a single MIG resource. If a pending Pod has
@@ -84,7 +160,7 @@ a candidate GPU partitioning plan would make the pending pods schedulable.
 You can provide a custom scheduler configuration by editing the `schedulerConfigFile` parameter, which is the path
 to a YAML file containing the scheduler configuration.
 
-#### GPU Partitioning with Nebulnetes scheduler
+### Integration with Nebulnetes scheduler
 
 If you want to use Automatic GPU partitioning together with the Nebulnetes scheduler so that Elastic Resource quotas
 are taken into account when performing the GPUs partitioning, you can follow these steps:

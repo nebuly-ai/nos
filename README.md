@@ -1,208 +1,37 @@
 # Nebulnetes (n8s)
 
-The open-source platform for running your AI workloads on Kubernetes maximizing resource utilization.
+Nebulnetes is the open-source platform for running your AI workloads on Kubernetes maximizing hardware utilization.
 
-![](doc/imgs/n8s.jpg)
+## Product design
 
-## Overview
+Nebulnetes is designed around 4 layers, each focusing on specific aspects of the stack required 
+for running AI workloads:
 
-### Automatic GPU partitioning
+1. AI Application
+2. Gateway
+3. Operating system
+4. Hardware
 
-Nebulnetes allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
-the partitioning is performed dynamically based on the pending and running Pods in your cluster, so that the GPUs
-are always fully utilized.
+## Operating system 
 
-> ⚠️ At the moment Nebulnetes only
-> supports [Multi-instance GPU (MIG) partitioning](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html),
-> which is available only for NVIDIA GPUs based on Ampere and Hopper architectures.
+The operating system layer is responsible for workloads scheduling and hardware abstraction. 
+Currently, this layer provides two main features:
+- [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md)
+- [Elastic Resource Quota management](doc/elastic-quota.md)
 
-You can make a node eligible for automatic GPU partitioning by labeling it with `n8s.nebuly.ai/auto-mig-enabled: "true"`
-.
+## Documentation
 
-You can then just submit Pods requesting MIG resources (like for instance `nvidia.com/mig-1g.5gb`), and Nebulnetes takes
-care of finding and applying the best possible MIG geometry for providing the requested resources.
+- [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md)
+  - [Getting started](doc/automatic-gpu-partitioning.md#getting-started)
+  - [Configuration](doc/automatic-gpu-partitioning.md#configuration)
+  - [Integration with Elastic Resource quota](doc/automatic-gpu-partitioning.md#integration-with-nebulnetes-scheduler)
+- [Elastic Resource Quota management](doc/elastic-quota.md)
+  - [Getting started](doc/elastic-quota.md#getting-started)
+  - [How to define Resource Quotas](doc/elastic-quota.md#how-to-define-resource-quotas)
+  - [Installation options](doc/elastic-quota.md#scheduler-installation-options)
 
-### Elastic resource quota management
+---
 
-Nebulnetes extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
-by implementing
-the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
-and adding more flexibility through two custom resources: `ElasticQuotas` and `CompositeElasticQuotas`.
-
-While standard Kubernetes resource quotas allow you only to define limits on the maximum
-overall resource allocation of each namespace, Nebulnetes elastic quotas let you define two
-different limits:
-
-1. `min`: the minimum resources that are guaranteed to the namespace
-2. `max`: the upper bound of the resources that the namespace can consume
-
-In this way namespaces can borrow reserved resource quotas from other namespaces that are not using them,
-as long as they do not exceed their max limit (if any) and the namespaces lending the quotas do not need them.
-When a namespace claims back its reserved `min` resources, pods borrowing resources from other namespaces (e.g.
-over-quota pods) are preempted to make up space.
-
-Moreover, while the standard Kubernetes quota management computes the used quotas as the aggregation of the resources
-of the resource requests specified in the Pods spec, Nebulnetes computes the used quotas by taking into account
-only running Pods in order to avoid lower resource utilization due to scheduled Pods that failed to start.
-
-## Getting started with Elastic Resource Quotas
-
-### Prerequisites
-
-* it is recommended to have [cert-manager](https://cert-manager.io/docs/installation/) installed on your cluster in
-  order to automatically manage the SSL certificates of the HTTP endpoints of the webhook used for validating the
-  custom resources. You can install it on your k8s cluster by running `make install-cert-manager`. Alternatively, you
-  can manually create the SSL certificates and inject them in the n8s operator controller manager.
-
-### Installation
-
-> ⚠️ At the moment Nebulnetes is not publicly available, so you need to provide credentials for pulling the required 
-> Docker images. Please refer to [How to pull Nebulnetes Docker images](doc/pull-images.md) for more information.
-
-You can install Elastic Resource Quotas management in your cluster running the two Makefile
-targets described below, which install and deploy the required resources to the k8s cluster
-specified in your `~/.kube/config`.
-
-By default, all the resources are installed in the `n8s-system` namespace.
-
-1. Deploy the Nebulnetes operator: the target installs the custom resource definitions (CRDs) and
-   it deploys the controllers for managing them.
-
-```bash
-make deploy-operator
-```
-
-2. Deploy the Nebulnetes scheduler. The target deploys a Kubernetes scheduler that runs alongside the
-   default one and schedules Pods which specify its profile name in the "schedulerName"
-   field of their specification. If you want to deploy the Nebulnetes scheduler as the default scheduler of
-   your cluster, you can refer to [documentation](doc/elastic-quota.md#installation-options) for detailed installation
-   instructions.
-
-```bash
-make deploy-scheduler
-```
-
-### Create elastic quotas
-
-```yaml
-apiVersion: n8s.nebuly.ai/v1alpha1
-kind: ElasticQuota
-metadata:
-  name: quota-a
-  namespace: team-a
-spec:
-  min:
-    cpu: 2
-    n8s.nebuly.ai/gpu-memory: 16
-  max:
-    cpu: 10
-```
-
-The example above creates a quota for the namespace ``team-a``, guaranteeing it 2 CPUs and 16 GB of GPU memory,
-and limiting the maximum number of CPUs it can use to 10. Note that:
-
-* the ``max`` field is optional. If it is not specified, then the Elastic Quota does not enforce any upper limits on the
-  amount resources that can be created in the namespace
-* you can specify any resource you want in ``max`` and ``min`` fields
-
-For more details please refer to the [Elastic Resource Quota](doc/elastic-quota.md) documentation page.
-
-### Create Pods subject to Elastic Resource Quota
-
-Unless you deployed the Nebulnetes scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
-to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas.
-
-You can do that by setting the value of the `schedulerName` field of your Pods specification to `n8s-scheduler`, as
-shown in the
-example below.
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-pod
-spec:
-  schedulerName: n8s-scheduler
-  containers:
-    - name: nginx
-      image: nginx:1.14.2
-      ports:
-        - containerPort: 80
-```
-
-## Getting started with automatic GPU partitioning
-
-### Prerequisites
-
-* you need the [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) deployed on your cluster, configured to
-  use the `mixed` MIG strategy
-* you need at least one node with a GPU supporting [MIG](https://www.nvidia.com/en-us/technologies/multi-instance-gpu/)
-* if a node has multiple GPUs, all the GPUs must be of the same model
-
-For further information regarding NVIDIA MIG and its integration with Kubernetes, please refer to the
-[NVIDIA MIG User Guide](https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf) and to the
-[MIG Support in Kubernetes](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/mig-k8s.html)
-official documentation provided by NVIDIA.
-
-### Installation
-
-> ⚠️ At the moment Nebulnetes is not publicly available, so you need to provide credentials for pulling the required
-> Docker images. Please refer to [How to pull Nebulnetes Docker images](doc/pull-images.md) for more information.
-
-You can install the automatic GPU partitioning components by running the Makefile targets below, which deploys them
-required to the k8s cluster specified in your `~/.kube/config`.
-
-By default, all the resources are installed in the `n8s-system` namespace.
-
-1. Deploy the Nebulnetes operator
-
-```shell
-make deploy-operator
-```
-
-2. Deploy the GPU Partitioner
-
-```shell
-make deploy-gpu-partitioner
-```
-
-3. Deploy the MIG Agent
-
-```shell
-make deploy-mig-agent
-```
-
-The targets above deploy the components using their default configuration. If you want to customize their configuration,
-you can refer to the [GPU Partitioner Configuration](doc/automatic-gpu-partitioning.md#configuration) page for more
-information.
-
-### Enable nodes for automatic partitioning
-
-> ⚠️ Prerequisite: to enable automatic MIG partitioning on a node, first you need to enable MIG mode on its GPUs. 
-You can do that by running the following command for each GPU want to enable,
-where `<index>` correspond to the index of the GPU: `sudo nvidia-smi -i <index> -mig 1`
-
-> ⚠️ Depending on the kind of machine you are using, it may be necessary to reboot the node after enabling MIG mode for 
-> one of its GPUs.
-
-
-You can enable automatic MIG partitioning of the GPUs of a node by adding the following label to the node:
-
-```shell
-kubectl label nodes <your-node-name> "n8s.nebuly.ai/auto-mig-enabled=true"
-```
-
-
-## Where to go from here
-
-### Documentation
-
-* [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md)
-* [Elastic resource quota](doc/elastic-quota.md)
-
-### Developer
-
-* [Overview](doc/developer/overview.md)
-* [Contributing to Nebulnetes]()
-* [Roadmap]()
-
+<p align="center">
+  <a href="https://discord.gg/RbeQMu886J">Join the community</a> 
+</p>
