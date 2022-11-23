@@ -1,4 +1,4 @@
-name: Build and push Docker images with current version tag
+name: Docker images - current version
 
 on:
   workflow_dispatch:
