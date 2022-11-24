@@ -220,7 +220,8 @@ func TestPlanner__Plan(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			name: "Cluster geometry gets changed by splitting up MIG profile and creating new ones from spare MIG capacity",
+			name: "Pods with multiple containers - Cluster geometry gets changed by splitting up MIG profile and " +
+				"creating new ones from spare MIG capacity",
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
@@ -250,26 +251,29 @@ func TestPlanner__Plan(t *testing.T) {
 						WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
 						Get(),
 				).Get(),
-				factory.BuildPod("ns-1", "pd-1").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
-				factory.BuildPod("ns-2", "pd-1").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
-				factory.BuildPod("ns-2", "pd-2").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
-				factory.BuildPod("ns-2", "pd-3").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+							Get(),
+					).
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-2", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+							Get(),
+					).
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+							Get(),
+					).Get(),
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),

@@ -74,8 +74,8 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			}
 
 			// Check if any MIG resource is lacking
-			lackingMig, isLacking := snapshot.GetLackingMigProfile(pod)
-			if !isLacking {
+			lackingMigProfiles := snapshot.GetLackingMigProfiles(pod)
+			if len(lackingMigProfiles) == 0 {
 				logger.V(1).Info(
 					"no lacking MIG resources, skipping node",
 					"namespace",
@@ -94,17 +94,27 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			}
 
 			// Try update the node MIG geometry
-			if err = n.UpdateGeometryFor(lackingMig); err != nil {
+			var atLeastOneChange bool
+			for _, profile := range lackingMigProfiles {
+				if err = n.UpdateGeometryFor(profile); err != nil {
+					snapshot.Revert()
+					logger.V(1).Info(
+						"cannot update node MIG geometry",
+						"reason",
+						err,
+						"node",
+						n.Name,
+						"lackingMig",
+						profile,
+					)
+					continue
+				}
+				atLeastOneChange = true
+			}
+
+			// If the node geometry can't be updated, revert the state and move on to next node
+			if !atLeastOneChange {
 				snapshot.Revert()
-				logger.V(1).Info(
-					"cannot update node MIG geometry",
-					"reason",
-					err,
-					"node",
-					n.Name,
-					"lackingMig",
-					lackingMig,
-				)
 				continue
 			}
 

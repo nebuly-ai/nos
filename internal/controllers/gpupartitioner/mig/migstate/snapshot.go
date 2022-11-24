@@ -94,23 +94,17 @@ func (s *MigClusterSnapshot) GetPartitioningState() state.PartitioningState {
 	return fromMigNodesToPartitioningState(migNodes)
 }
 
-// GetLackingMigProfile returns (if any) the MIG profile requested by the Pod but currently not
-// available in the ClusterSnapshot.
-//
-// As described in "Supporting MIG GPUs in Kubernetes" document
-// (https://docs.google.com/document/d/1mdgMQ8g7WmaI_XVVRrCvHPFPOMCm5LQD5JefgAh6N8g/edit),
-// it is assumed that containers request only one MIG device per time and with quantity 1, according to the
-// idea that users should ask for a larger, single instance as opposed to multiple smaller instances.
-//
-// TODO: we should support Pods with multiple containers requesting a single MIG device
-func (s *MigClusterSnapshot) GetLackingMigProfile(pod v1.Pod) (mig.ProfileName, bool) {
+// GetLackingMigProfiles returns (if any) the name of the profiles of the MIG resources requested by the Pod but
+// currently not available in the ClusterSnapshot.
+func (s *MigClusterSnapshot) GetLackingMigProfiles(pod v1.Pod) []mig.ProfileName {
+	profiles := make([]mig.ProfileName, 0)
 	for r := range s.GetLackingResources(pod).ScalarResources {
 		if mig.IsNvidiaMigDevice(r) {
 			profileName, _ := mig.ExtractMigProfile(r)
-			return profileName, true
+			profiles = append(profiles, profileName)
 		}
 	}
-	return "", false
+	return profiles
 }
 
 func (s *MigClusterSnapshot) SetNode(node mig.Node) error {

@@ -36,7 +36,7 @@ const (
 
 // Error messages
 const (
-	// InternalErrorMsg todo
+	// InternalErrorMsg is the error message shown in logs for internal errors
 	InternalErrorMsg = "internal error"
 )
 
