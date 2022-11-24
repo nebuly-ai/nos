@@ -51,8 +51,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          args:
-            - "--config=mig_agent_config.yaml"
           securityContext:
             privileged: true
           livenessProbe:

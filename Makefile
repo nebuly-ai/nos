@@ -152,7 +152,7 @@ docker-push: docker-push-mig-agent docker-push-operator docker-push-scheduler do
 ##@ Deployment
 
 ifndef ignore-not-found
-  ignore-not-found = false
+  ignore-not-found = true
 endif
 
 .PHONY: install-cert-manager

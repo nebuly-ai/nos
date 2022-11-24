@@ -14,6 +14,7 @@
   - [Scheduler configuration](#scheduler-configuration)
   - [Integration with Nebulnetes scheduler](#integration-with-nebulnetes-scheduler)
   - [Available MIG geometries](#available-mig-geometries)
+- [Troubleshooting](#troubleshooting)
 
 ## Overview
 
@@ -184,3 +185,26 @@ which is provided to the GPU partitioner through the configuration param `knownM
 You can edit this file to add new MIG geometries for new GPU models, or to edit the existing ones according 
 to your specific needs. For instance, you can remove some MIG geometries if you don't want to allow them to be used for a 
 certain GPU model.
+
+## Troubleshooting
+If you run into issues with Automatic GPU Partitioning, you can troubleshoot by checking the logs of the GPU Partitioner
+and MIG Agent pods. You can do that by running the following commands:
+
+Check GPU Partitioner logs:
+```shell
+ kubectl logs -n n8s-system -l app.kubernetes.io/component=gpu-partitioner -f
+```
+
+Check MIG Agent logs:
+```shell
+ kubectl logs -n n8s-system -l app.kubernetes.io/component=mig-agent -f
+```
+
+### How to increase log verbosity
+You can increase the log verbosity by providing the argument `--zap-log-level=<level>` to the 
+GPU Partitioner and MIG Agent containers, where `<level>` is an integer between 0 and 3. 
+Higher values means higher verbosity (0 is the default value, 1 corresponds to the DEBUG level).
+
+You can do that by editing the [MIG Agent](../config/migagent/default/mig_agent_config_patch.yaml) and 
+[GPU Partitioner](../config/gpupartitioner/default/gpu_partitioner_config_patch.yaml) Kustomize manifests and 
+re-deploying the two components.

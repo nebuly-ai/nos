@@ -10,6 +10,7 @@ spec:
         - name: gpu-partitioner
           args:
             - "--config=gpu_partitioner_config.yaml"
+#            - "--zap-log-level=1" # Uncomment this line to enable debug logging
           volumeMounts:
             - name: gpu-partitioner-config
               mountPath: /gpu_partitioner_config.yaml

@@ -21,8 +21,8 @@ spec:
           "--config",
           "/etc/kubernetes/scheduler_config.yaml",
           "--leader-elect",
-          "--v",
-          "1" # debug
+#          "--v",  # Uncomment these two lines to enable debug logging
+#          "1"
         ]
           image: scheduler:latest
           name: scheduler

@@ -15,6 +15,7 @@ namePrefix: n8s-
 #    someName: someValue
 
 resources:
+  - mig_agent_auth_proxy_role_binding.yaml
   - ../../common
   - ../rbac
   - ../manager

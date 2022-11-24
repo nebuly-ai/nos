@@ -10,6 +10,7 @@
     * [Over-quota fair sharing](#over-quota-fair-sharing)
     * [GPU memory limits](#gpu-memory-limits)
 * [Demo](#demo)
+* [Troubleshooting](#trouble-shooting)
 
 ## Overview
 Nebulnetes extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
@@ -388,3 +389,14 @@ configurations. The value used in both configurations must always be the same.
 
 ## Demo 
 Todo
+
+## Troubleshooting
+You can check the logs of the scheduler by running the following command: 
+
+```shell
+ kubectl logs -n n8s-system -l app.kubernetes.io/component=scheduler -f
+```
+
+### How to increase log verbosity
+You can increase the scheduler log verbosity by editing the Scheduler deployment manifest 
+[deployment.yaml](../config/scheduler/deployment/deployment.yaml).

@@ -34,10 +34,12 @@ Currently, this layer provides two features [Automatic GPU partitioning](doc/aut
   - [MIG Partitioning](doc/automatic-gpu-partitioning.md#mig-partitioning)
   - [Configuration](doc/automatic-gpu-partitioning.md#configuration)
   - [Integration with Nebulnetes scheduler](doc/automatic-gpu-partitioning.md#integration-with-nebulnetes-scheduler)
+  - [Troubleshooting](doc/automatic-gpu-partitioning.md#troubleshooting)
 - [Elastic Resource Quota management](doc/elastic-quota.md)
   - [Getting started](doc/elastic-quota.md#getting-started)
   - [How to define Resource Quotas](doc/elastic-quota.md#how-to-define-resource-quotas)
   - [Installation options](doc/elastic-quota.md#scheduler-installation-options)
+  - [Troubleshooting](doc/elastic-quota.md#troubleshooting)
 
 ---
 
