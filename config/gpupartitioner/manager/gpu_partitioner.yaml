@@ -28,8 +28,6 @@ spec:
         control-plane: controller-manager
         app.kubernetes.io/component: gpu-partitioner
     spec:
-      imagePullSecrets: # todo: remove me
-        - name: ghcr
       securityContext:
         runAsNonRoot: true
       containers:

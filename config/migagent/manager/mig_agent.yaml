@@ -43,8 +43,6 @@ spec:
       # be rescheduled after a failure.
       # See https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
       priorityClassName: "system-node-critical"
-      imagePullSecrets:
-        - name: ghcr # todo: remove me
       containers:
         - name: mig-agent
           image: mig-agent:latest

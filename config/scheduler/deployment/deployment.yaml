@@ -16,8 +16,6 @@ spec:
         app.kubernetes.io/component: scheduler
     spec:
       serviceAccountName: scheduler
-      imagePullSecrets:
-        - name: ghcr # todo: remove me
       containers:
         - args: [
           "--config",

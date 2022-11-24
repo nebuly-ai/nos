@@ -50,10 +50,6 @@ For further information regarding NVIDIA MIG and its integration with Kubernetes
 official documentation provided by NVIDIA.
 
 ### Installation
-
-> ⚠️ At the moment Nebulnetes is not publicly available, so you need to provide credentials for pulling the required
-> Docker images. Please refer to [How to pull Nebulnetes Docker images](doc/pull-images.md) for more information.
-
 You can install the automatic GPU partitioning components by running the Makefile targets below, which deploys them
 required to the k8s cluster specified in your `~/.kube/config`.
 

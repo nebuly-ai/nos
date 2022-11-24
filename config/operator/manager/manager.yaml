@@ -27,8 +27,6 @@ spec:
         control-plane: controller-manager
         app.kubernetes.io/component: operator
     spec:
-      imagePullSecrets: # todo: remove me
-        - name: ghcr
       securityContext:
         runAsNonRoot: true
         # TODO(user): For common cases that do not require escalating privileges

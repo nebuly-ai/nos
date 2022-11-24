@@ -55,10 +55,6 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
   can manually create the SSL certificates and inject them in the n8s operator controller manager.
 
 ### Installation
-
-> ⚠️ At the moment Nebulnetes is not publicly available, so you need to provide credentials for pulling the required
-> Docker images. Please refer to [How to pull Nebulnetes Docker images](doc/pull-images.md) for more information.
-
 You can install Elastic Resource Quotas management in your cluster running the two Makefile
 targets described below, which install and deploy the required resources to the k8s cluster
 specified in your `~/.kube/config`.
