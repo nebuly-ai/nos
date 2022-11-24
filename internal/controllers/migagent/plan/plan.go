@@ -74,17 +74,9 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 			continue
 		}
 
-		// if there's any create op on the GPU, re-create existing *free* resources so that
+		// if there's any create op on the GPU, then re-create existing *free* resources so that
 		// when applying the create operations the number of possible MIG permutations to try is larger
-		// TODO: make this more efficient
-		gpuFreeResources := stateResourcesByGpu[gpuIndex].GetFree()
-		planResourcesToDelete := plan.getResourcesToDelete()
-		resourcesToRecreate := make(mig.DeviceResourceList, 0)
-		for _, r := range gpuFreeResources {
-			if !util.InSlice(r, planResourcesToDelete) {
-				resourcesToRecreate = append(resourcesToRecreate, r)
-			}
-		}
+		resourcesToRecreate := extractResourcesToRecreate(stateResourcesByGpu[gpuIndex], plan)
 		if len(resourcesToRecreate) > 0 {
 			// delete free resources not already included in plan
 			plan.addDeleteOp(DeleteOperation{Resources: resourcesToRecreate})
@@ -96,6 +88,23 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	}
 
 	return plan
+}
+
+func extractResourcesToRecreate(resources mig.DeviceResourceList, currentPlan MigConfigPlan) mig.DeviceResourceList {
+	// lookup
+	alreadyToBeDeletedLookup := make(map[string]mig.DeviceResource)
+	for _, r := range currentPlan.getResourcesToDelete() {
+		alreadyToBeDeletedLookup[r.DeviceId] = r
+	}
+	// extract free resources not already included in plan delete operations
+	resourcesToRecreate := make(mig.DeviceResourceList, 0)
+	for _, r := range resources.GetFree() {
+		if _, toBeDeleted := alreadyToBeDeletedLookup[r.DeviceId]; !toBeDeleted {
+			resourcesToRecreate = append(resourcesToRecreate, r)
+		}
+	}
+
+	return resourcesToRecreate
 }
 
 func extractCandidatesForDeletion(resources mig.DeviceResourceList, nToDelete int) mig.DeviceResourceList {
