@@ -54,6 +54,7 @@ func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, desiredSta
 	}
 	if desiredState.IsEmpty() {
 		logger.Info("desired partitioning state is empty, nothing to do")
+		return nil
 	}
 
 	for node, partitioningState := range desiredState {
@@ -62,6 +63,7 @@ func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, desiredSta
 			return fmt.Errorf("error partitioning node %s: %v", node, err)
 		}
 	}
+	logger.Info("plan applied")
 
 	return nil
 }
