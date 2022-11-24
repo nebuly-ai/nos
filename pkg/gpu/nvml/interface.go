@@ -26,4 +26,6 @@ type Client interface {
 	DeleteMigDevice(id string) gpu.Error
 
 	CreateMigDevices(migProfileNames []string, gpuIndex int) gpu.Error
+
+	GetMigEnabledGPUs() ([]int, gpu.Error)
 }

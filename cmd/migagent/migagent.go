@@ -115,6 +115,23 @@ func main() {
 	nvmlClient := nvml.NewClient(ctrl.Log.WithName("NvmlClient"))
 	migClient := mig.NewClient(podResourcesClient, nvmlClient)
 
+	// Check if there's at least one MIG-enabled GPU
+	migGpus, err := nvmlClient.GetMigEnabledGPUs()
+	if err != nil {
+		setupLog.Error(err, "unable to get MIG enabled GPUs")
+		os.Exit(1)
+	}
+	if len(migGpus) == 0 {
+		mgr.GetEventRecorderFor("migagent").Eventf(
+			&v1.Node{},
+			v1.EventTypeWarning,
+			"NoMigGpu",
+			"No MIG-enabled GPUs found",
+		)
+		setupLog.Info("MIG Agent requires at least 1 MIG-enabled GPU, found 0")
+		os.Exit(1)
+	}
+
 	// Setup MIG Reporter
 	migReporter := migagent.NewReporter(
 		mgr.GetClient(),

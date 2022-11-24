@@ -300,6 +300,32 @@ func (c *clientImpl) CreateMigDevices(migProfileNames []string, gpuIndex int) gp
 	return nil
 }
 
+// GetMigEnabledGPUs returns the indexes of the GPUs that have MIG mode enabled
+func (c *clientImpl) GetMigEnabledGPUs() ([]int, gpu.Error) {
+	devices, err := c.nvlibClient.GetDevices()
+	if err != nil {
+		return nil, gpu.NewGenericError(err)
+	}
+
+	indexes := make([]int, 0)
+	for _, d := range devices {
+		isEnabled, err := d.IsMigEnabled()
+		if err != nil {
+			return nil, gpu.NewGenericError(err)
+		}
+		if !isEnabled {
+			continue
+		}
+		gpuIndex, err := d.GetIndex()
+		if err != nil {
+			return nil, gpu.NewGenericError(err)
+		}
+		indexes = append(indexes, gpuIndex)
+	}
+
+	return indexes, nil
+}
+
 func visitComputeInstances(
 	gpuInstance nvlibNvml.GpuInstance,
 	f func(ci nvlibNvml.ComputeInstance, ciProfileId int, ciEngProfileId int, ciProfileInfo nvlibNvml.ComputeInstanceProfileInfo) gpu.Error,
