@@ -22,6 +22,7 @@ import (
 	"context"
 	"flag"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent"
+	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
@@ -83,8 +84,9 @@ func main() {
 	options := ctrl.Options{
 		Scheme: scheme,
 	}
+	migAgentConfig := configv1alpha1.MigAgentConfig{}
 	if configFile != "" {
-		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile))
+		options, err = options.AndFrom(ctrl.ConfigFile().AtPath(configFile).OfKind(&migAgentConfig))
 		if err != nil {
 			setupLog.Error(err, "unable to load the config file")
 			os.Exit(1)
@@ -137,7 +139,7 @@ func main() {
 		mgr.GetClient(),
 		migClient,
 		sharedState,
-		10*time.Second,
+		migAgentConfig.ReportConfigIntervalSeconds*time.Second,
 	)
 	if err = migReporter.SetupWithManager(mgr, "MIGReporter", nodeName); err != nil {
 		setupLog.Error(err, "unable to create MIG Reporter")

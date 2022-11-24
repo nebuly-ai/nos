@@ -19,4 +19,5 @@ package v1alpha1
 func init() {
 	SchemeBuilder.Register(&OperatorConfig{})
 	SchemeBuilder.Register(&GpuPartitionerConfig{})
+	SchemeBuilder.Register(&MigAgentConfig{})
 }
