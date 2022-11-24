@@ -11,6 +11,7 @@
     * [GPU memory limits](#gpu-memory-limits)
 * [Demo](#demo)
 * [Troubleshooting](#trouble-shooting)
+* [Uninstall](#uninstall)
 
 ## Overview
 Nebulnetes extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
@@ -400,3 +401,14 @@ You can check the logs of the scheduler by running the following command:
 ### How to increase log verbosity
 You can increase the scheduler log verbosity by editing the Scheduler deployment manifest 
 [deployment.yaml](../config/scheduler/deployment/deployment.yaml).
+
+## Uninstall
+To uninstall the Nebulnetes Operator and Scheduler, run the following commands:
+
+```shell
+make undeploy-operator
+```
+
+```shell
+make undeploy-scheduler
+```

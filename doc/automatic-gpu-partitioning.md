@@ -15,6 +15,7 @@
   - [Integration with Nebulnetes scheduler](#integration-with-nebulnetes-scheduler)
   - [Available MIG geometries](#available-mig-geometries)
 - [Troubleshooting](#troubleshooting)
+- [Uninstall](#uninstall)
 
 ## Overview
 
@@ -190,7 +191,7 @@ certain GPU model.
 If you run into issues with Automatic GPU Partitioning, you can troubleshoot by checking the logs of the GPU Partitioner
 and MIG Agent pods. You can do that by running the following commands:
 
-Check GPU Partitioner logs:
+Check GPU Partitioner logs
 ```shell
  kubectl logs -n n8s-system -l app.kubernetes.io/component=gpu-partitioner -f
 ```
@@ -208,3 +209,10 @@ Higher values means higher verbosity (0 is the default value, 1 corresponds to t
 You can do that by editing the [MIG Agent](../config/migagent/default/mig_agent_config_patch.yaml) and 
 [GPU Partitioner](../config/gpupartitioner/default/gpu_partitioner_config_patch.yaml) Kustomize manifests and 
 re-deploying the two components.
+
+## Uninstall
+To uninstall Automatic GPU Partitioning, you can run the following command:
+
+```shell
+make undeploy-mig-agent ; make undeploy-gpu-partitioner
+```
