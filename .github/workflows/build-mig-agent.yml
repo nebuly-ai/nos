@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  MIG_AGENT_IMG: "ghcr.io/${{ github.repository }}-mig-agent:latest"
+  MIG_AGENT_IMG: "ghcr.io/telemaco019/nebulnetes-mig-agent:latest"
 
 jobs:
   docker-build:

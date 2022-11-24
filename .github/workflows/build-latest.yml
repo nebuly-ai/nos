@@ -5,10 +5,10 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  CONTROLLER_IMG: "ghcr.io/${{ github.repository }}-controller:latest"
-  SCHEDULER_IMG: "ghcr.io/${{ github.repository }}-scheduler:latest"
-  MIGAGENT_IMG: "ghcr.io/${{ github.repository }}-mig-agent:latest"
-  GPU_PARTITIONER_IMG: "ghcr.io/${{ github.repository }}-gpu-partitioner:latest"
+  OPERATOR_IMG: "ghcr.io/telemaco019/nebulnetes-operator:latest"
+  SCHEDULER_IMG: "ghcr.io/telemaco019/nebulnetes-scheduler:latest"
+  MIGAGENT_IMG: "ghcr.io/telemaco019/nebulnetes-mig-agent:latest"
+  GPU_PARTITIONER_IMG: "ghcr.io/telemaco019/nebulnetes-gpu-partitioner:latest"
 
 jobs:
   docker-build:

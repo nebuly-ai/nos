@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  GPU_PARTITIONER_IMG: "ghcr.io/${{ github.repository }}-gpu-partitioner:latest"
+  GPU_PARTITIONER_IMG: "ghcr.io/telemaco019/nebulnetes-gpu-partitioner:latest"
 
 jobs:
   docker-build:
