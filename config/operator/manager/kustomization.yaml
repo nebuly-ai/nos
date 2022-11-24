@@ -12,7 +12,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
-  newName: ghcr.io/nebuly-ai/nebulnetes-operator
+  newName: ghcr.io/telemaco019/nebulnetes-operator
   newTag: 0.0.1-alpha.1
 - name: operator
   newName: ghcr.io/nebuly-ai/nebulnetes-operator
