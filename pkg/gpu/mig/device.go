@@ -91,6 +91,16 @@ func (l DeviceResourceList) GetFree() DeviceResourceList {
 	return result
 }
 
+func (l DeviceResourceList) GetUsed() DeviceResourceList {
+	result := make(DeviceResourceList, 0)
+	for _, r := range l {
+		if r.IsUsed() {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
 func (l DeviceResourceList) GroupByMigProfile() map[Profile]DeviceResourceList {
 	result := make(map[Profile]DeviceResourceList)
 	for _, r := range l {

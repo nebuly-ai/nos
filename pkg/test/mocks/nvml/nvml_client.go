@@ -44,6 +44,22 @@ func (_m *Client) CreateMigDevices(migProfileNames []string, gpuIndex int) gpu.E
 	return r0
 }
 
+// DeleteAllExcept provides a mock function with given fields: migDeviceIds
+func (_m *Client) DeleteAllMigDevicesExcept(migDeviceIds []string) error {
+	ret := _m.Called(migDeviceIds)
+
+	var r0 gpu.Error
+	if rf, ok := ret.Get(0).(func([]string) gpu.Error); ok {
+		r0 = rf(migDeviceIds)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(gpu.Error)
+		}
+	}
+
+	return r0
+}
+
 // DeleteMigDevice provides a mock function with given fields: id
 func (_m *Client) DeleteMigDevice(id string) gpu.Error {
 	ret := _m.Called(id)

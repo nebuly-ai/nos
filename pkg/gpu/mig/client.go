@@ -43,6 +43,7 @@ type Client interface {
 	GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
 	CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, error)
 	DeleteMigResource(ctx context.Context, resource DeviceResource) gpu.Error
+	DeleteAllExcept(ctx context.Context, resources DeviceResourceList) error
 }
 
 type clientImpl struct {
@@ -188,6 +189,16 @@ func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (Devic
 	}
 
 	return c.extractMigDevices(ctx, resources)
+}
+
+// DeleteAllExcept deletes all the devices that are not in the list of devices to keep.
+func (c clientImpl) DeleteAllExcept(_ context.Context, resourcesToKeep DeviceResourceList) error {
+	nResources := len(resourcesToKeep)
+	idsToKeep := make([]string, nResources)
+	for i, r := range resourcesToKeep {
+		idsToKeep[i] = r.DeviceId
+	}
+	return c.nvmlClient.DeleteAllMigDevicesExcept(idsToKeep)
 }
 
 func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]DeviceResource, gpu.Error) {

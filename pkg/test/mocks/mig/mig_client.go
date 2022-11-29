@@ -74,3 +74,7 @@ func (m *Client) GetUsedMigDeviceResources(ctx context.Context) (mig.DeviceResou
 func (m *Client) GetAllocatableMigDeviceResources(ctx context.Context) (mig.DeviceResourceList, gpu.Error) {
 	return mig.DeviceResourceList{}, m.ReturnedError
 }
+
+func (m *Client) DeleteAllExcept(_ context.Context, resources mig.DeviceResourceList) error {
+	return m.ReturnedError
+}

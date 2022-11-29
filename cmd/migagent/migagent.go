@@ -21,6 +21,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent"
 	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
@@ -73,6 +74,8 @@ func main() {
 	flag.Parse()
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	ctx := ctrl.SetupSignalHandler()
+
 	// Get node name
 	nodeName, err := util.GetEnvOrError("NODE_NAME")
 	if err != nil {
@@ -99,7 +102,7 @@ func main() {
 	}
 
 	// Setup indexer
-	err = mgr.GetFieldIndexer().IndexField(context.Background(), &v1.Pod{}, constant.PodNodeNameKey, func(rawObj client.Object) []string {
+	err = mgr.GetFieldIndexer().IndexField(ctx, &v1.Pod{}, constant.PodNodeNameKey, func(rawObj client.Object) []string {
 		p := rawObj.(*v1.Pod)
 		return []string{p.Spec.NodeName}
 	})
@@ -117,20 +120,8 @@ func main() {
 	nvmlClient := nvml.NewClient(ctrl.Log.WithName("NvmlClient"))
 	migClient := mig.NewClient(podResourcesClient, nvmlClient)
 
-	// Check if there's at least one MIG-enabled GPU
-	migGpus, err := nvmlClient.GetMigEnabledGPUs()
-	if err != nil {
-		setupLog.Error(err, "unable to get MIG enabled GPUs")
-		os.Exit(1)
-	}
-	if len(migGpus) == 0 {
-		mgr.GetEventRecorderFor("migagent").Eventf(
-			&v1.Node{},
-			v1.EventTypeWarning,
-			"NoMigGpu",
-			"No MIG-enabled GPUs found",
-		)
-		setupLog.Info("MIG Agent requires at least 1 MIG-enabled GPU, found 0")
+	if err = initAgent(ctx, nvmlClient, migClient); err != nil {
+		setupLog.Error(err, "unable to initialize agent")
 		os.Exit(1)
 	}
 
@@ -170,10 +161,46 @@ func main() {
 
 	// Start manager
 	setupLog.Info("starting manager")
-	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err = mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func initAgent(ctx context.Context, nvmlClient nvml.Client, migClient mig.Client) error {
+	setupLog.Info("Checking MIG-enabled GPUs")
+	if err := checkAtLeastOneMigGpu(nvmlClient); err != nil {
+		return err
+	}
+
+	setupLog.Info("Cleaning up unused MIG resources")
+	if err := cleanupUnusedMigResources(ctx, migClient); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func checkAtLeastOneMigGpu(nvmlClient nvml.Client) error {
+	migGpus, err := nvmlClient.GetMigEnabledGPUs()
+	if err != nil {
+		return fmt.Errorf("unable to get MIG enabled GPUs: %s", err)
+	}
+	if len(migGpus) == 0 {
+		return fmt.Errorf("at least one MIG-enabled GPU is required, found 0")
+	}
+	return nil
+}
+
+// cleanupUnusedMigResources deletes all the GPU Instances and Compute Instances of the MIG Profiles that are not in
+// use, for all the MIG-enabled GPUs of the current node.
+func cleanupUnusedMigResources(ctx context.Context, migClient mig.Client) error {
+	resources, err := migClient.GetMigDeviceResources(ctx)
+	if err != nil {
+		return err
+	}
+	usedResources := resources.GetUsed()
+	return migClient.DeleteAllExcept(ctx, usedResources)
 }
 
 func newPodResourcesListerClient() (pdrv1.PodResourcesListerClient, error) {
