@@ -36,6 +36,14 @@ func (g Geometry) AsResources() map[v1.ResourceName]int {
 	return res
 }
 
+func (g Geometry) Id() string {
+	var name string
+	for profile, quantity := range g {
+		name += fmt.Sprintf("%s:%d", profile, quantity)
+	}
+	return name
+}
+
 type GPUModel string
 
 type GPU struct {
@@ -106,19 +114,30 @@ func (g *GPU) GetGeometry() Geometry {
 	return res
 }
 
-// ApplyGeometry applies the MIG geometry provided as argument by changing the free devices of the GPU.
-// It returns an error if the provided geometry is not allowed or if applying it would require to delete any used
-// device of the GPU.
-func (g *GPU) ApplyGeometry(geometry Geometry) error {
+// CanApplyGeometry returns true if the geometry provided as argument can be applied to the GPU, otherwise it
+// returns false and the reason why the geometry cannot be applied.
+func (g *GPU) CanApplyGeometry(geometry Geometry) (bool, string) {
 	// Check if geometry is allowed
 	if !g.AllowsGeometry(geometry) {
-		return fmt.Errorf("GPU model %s does not allow the provided MIG geometry", g.model)
+		return false, fmt.Sprintf("GPU model %s does not allow the provided MIG geometry", g.model)
 	}
 	// Check if new geometry deletes used devices
 	for usedProfile, usedQuantity := range g.usedMigDevices {
 		if geometry[usedProfile] < usedQuantity {
-			return fmt.Errorf("cannot apply MIG geometry: cannot delete MIG devices being used")
+			return false, fmt.Sprintf("cannot apply MIG geometry: cannot delete MIG devices being used")
 		}
+	}
+
+	return true, ""
+}
+
+// ApplyGeometry applies the MIG geometry provided as argument by changing the free devices of the GPU.
+// It returns an error if the provided geometry is not allowed or if applying it would require to delete any used
+// device of the GPU.
+func (g *GPU) ApplyGeometry(geometry Geometry) error {
+	canApply, reason := g.CanApplyGeometry(geometry)
+	if !canApply {
+		return fmt.Errorf(reason)
 	}
 	// Apply geometry by changing free devices
 	for profile, quantity := range geometry {
@@ -130,7 +149,76 @@ func (g *GPU) ApplyGeometry(geometry Geometry) error {
 			delete(g.freeMigDevices, profile)
 		}
 	}
+
 	return nil
+}
+
+// UpdateGeometryFor updates the geometry of the GPU in order to create the highest possible number of required
+// profiles provided as argument, without deleting any of the used profiles.
+// The method returns the required profiles that have been created by applying the new geometry.
+//
+// If multiple geometries provides the required profiles, the method chooses the one that allows to create
+// the highest number of new profiles.
+//
+// The GPU geometry gets updated only if it was possible to create at least one of the required profiles.
+func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) map[ProfileName]int {
+	var createdProfiles = make(map[ProfileName]int)
+	var geometryNumProvidedProfiles = make(map[string]int)
+	var geometryLookup = make(map[string]Geometry)
+	var bestGeometry *Geometry
+
+	// For each allowed geometry, compute the number of required profiles that it can provide
+	for _, candidate := range g.GetAllowedGeometries() {
+		for requiredProfile, requiredQuantity := range requiredProfiles {
+			// If Node already provides the profile resources then there's nothing to do
+			if g.freeMigDevices[requiredProfile] >= requiredQuantity {
+				continue
+			}
+			// If the candidate geometry does not provide the required profile, then skip it
+			nFreeProfilesForGeometry := candidate[requiredProfile] - g.usedMigDevices[requiredProfile]
+			if nFreeProfilesForGeometry <= 0 {
+				continue
+			}
+			// If we cannot apply the geometry, then skip it
+			if canApplyGeometry, _ := g.CanApplyGeometry(candidate); !canApplyGeometry {
+				continue
+			}
+			candidateGeometryId := candidate.Id()
+			geometryNumProvidedProfiles[candidateGeometryId] += nFreeProfilesForGeometry
+			geometryLookup[candidateGeometryId] = candidate
+		}
+	}
+
+	// Find, if any, the geometry that allows to create the highest number of required profiles
+	maxFreeProfiles := 0
+	for candidateId, nFreeProfiles := range geometryNumProvidedProfiles {
+		if nFreeProfiles > maxFreeProfiles {
+			maxFreeProfiles = nFreeProfiles
+			candidate := geometryLookup[candidateId]
+			bestGeometry = &candidate
+		}
+	}
+
+	// No geometry can provide the required profiles, we're done
+	if bestGeometry == nil {
+		return createdProfiles
+	}
+
+	// Compute the required profiles that the best geometry provides
+	currentGeometry := g.GetGeometry()
+	for profile, quantity := range *bestGeometry {
+		diff := quantity - currentGeometry[profile]
+		if diff > 0 {
+			createdProfiles[profile] = diff
+		}
+	}
+
+	// Apply the new geometry
+	if len(createdProfiles) > 0 {
+		_ = g.ApplyGeometry(*bestGeometry)
+	}
+
+	return createdProfiles
 }
 
 // AllowsGeometry returns true if the geometry provided as argument is allowed by the GPU model

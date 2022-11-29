@@ -19,6 +19,7 @@ package mig
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"strconv"
 )
@@ -102,38 +103,30 @@ func getGPUCount(node v1.Node) (int, bool) {
 	return 0, false
 }
 
-// UpdateGeometryFor tries to update the MIG geometry of one of the GPUs of the node in order to create the MIG profile
-// provided as argument. It does that by either creating a new MIG profile (if there is enough capacity) or by
-// deleting free (e.g. unused) MIG profiles to make up space and create the required profile, according to the
-// allowed MIG geometries of each GPU.
+// UpdateGeometryFor tries to update the MIG geometry of each single GPU of the node in order to create the MIG profiles
+// provided as argument.
 //
-// UpdateGeometryFor returns an error if is not possible to update the GPUs geometry for creating
-// the specified MIG profile.
-func (n *Node) UpdateGeometryFor(profile ProfileName) error {
+// The method returns true if it updates the MIG geometry of any GPU, false otherwise.
+func (n *Node) UpdateGeometryFor(profiles map[ProfileName]int) bool {
 	// If there are no GPUs, then there's nothing to do
 	if len(n.GPUs) == 0 {
-		return fmt.Errorf("cannot update geometry because node does not have any MIG GPU")
+		return false
 	}
 
+	var createdProfiles = make(map[ProfileName]int)
+	var profilesToCreate = util.CopyMap(profiles)
 	for _, gpu := range n.GPUs {
-		// If Node already provides required profiles, then there's nothing to do
-		if gpu.freeMigDevices[profile] > 0 {
-			return nil
+		if len(profilesToCreate) <= 0 {
+			break
 		}
-		// Try to apply candidate geometries
-		// TODO: we should try more geometries and apply the one that allow to host more pods
-		for _, allowedGeometry := range gpu.GetAllowedGeometries() {
-			nFreeProfilesWithGeometry := allowedGeometry[profile] - gpu.usedMigDevices[profile]
-			if nFreeProfilesWithGeometry > 0 {
-				if err := gpu.ApplyGeometry(allowedGeometry); err == nil {
-					// New geometry applied, we're done
-					return nil
-				}
-			}
+		gpuCreatedProfiles := gpu.UpdateGeometryFor(profilesToCreate)
+		for profile, quantity := range gpuCreatedProfiles {
+			profilesToCreate[profile] -= quantity
+			createdProfiles[profile] += quantity
 		}
 	}
 
-	return fmt.Errorf("cannot update MIG geometry for creating MIG device %q", profile)
+	return len(createdProfiles) > 0
 }
 
 // GetGeometry returns the overall MIG geometry of the node, which corresponds to the sum of the MIG geometry of all

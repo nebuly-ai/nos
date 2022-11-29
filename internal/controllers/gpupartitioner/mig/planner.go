@@ -45,10 +45,24 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 		return state.PartitioningState{}, fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
 	}
 
+	partitioningState := snapshot.GetPartitioningState()
+
+	//// Compute all lacking MIG profiles
+	//lackingMigProfiles := make(map[mig.ProfileName]int)
+	//for _, pod := range candidates {
+	//	for profile, quantity := range snapshot.GetLackingMigProfiles(pod) {
+	//		lackingMigProfiles[profile] += quantity
+	//	}
+	//}
+	//
+	//// No lacking MIG profiles, nothing to do
+	//if len(lackingMigProfiles) == 0 {
+	//	logger.V(1).Info("no lacking MIG profiles, nothing to do")
+	//	return partitioningState, nil
+	//}
+
 	// Sort candidates
 	candidates = SortCandidatePods(candidates)
-
-	partitioningState := snapshot.GetPartitioningState()
 	for _, pod := range candidates {
 		candidateNodes := snapshot.GetCandidateNodes()
 		logger.V(1).Info(
@@ -74,7 +88,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 			}
 
 			// Check if any MIG resource is lacking
-			lackingMigProfiles := snapshot.GetLackingMigProfiles(pod)
+			lackingMigProfiles := snapshot.GetLackingMigProfiles(pod) // TODO: we should the lacking MIG resources of all the Pods for more effective partitioning
 			if len(lackingMigProfiles) == 0 {
 				logger.V(1).Info(
 					"no lacking MIG resources, skipping node",
@@ -93,27 +107,9 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates [
 				return partitioningState, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
 			}
 
-			// Try update the node MIG geometry
-			var atLeastOneChange bool
-			for _, profile := range lackingMigProfiles {
-				if err = n.UpdateGeometryFor(profile); err != nil {
-					snapshot.Revert()
-					logger.V(1).Info(
-						"cannot update node MIG geometry",
-						"reason",
-						err,
-						"node",
-						n.Name,
-						"lackingMig",
-						profile,
-					)
-					continue
-				}
-				atLeastOneChange = true
-			}
-
-			// If the node geometry can't be updated, revert the state and move on to next node
-			if !atLeastOneChange {
+			// Try to update the node MIG geometry: if the node geometry can't be updated,
+			// revert the state and move on to next node
+			if updated := n.UpdateGeometryFor(lackingMigProfiles); !updated {
 				snapshot.Revert()
 				continue
 			}

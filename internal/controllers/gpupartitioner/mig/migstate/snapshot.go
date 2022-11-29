@@ -94,17 +94,17 @@ func (s *MigClusterSnapshot) GetPartitioningState() state.PartitioningState {
 	return fromMigNodesToPartitioningState(migNodes)
 }
 
-// GetLackingMigProfiles returns (if any) the name of the profiles of the MIG resources requested by the Pod but
+// GetLackingMigProfiles returns (if any) the name and the quantity of the MIG profiles requested by the Pod but
 // currently not available in the ClusterSnapshot.
-func (s *MigClusterSnapshot) GetLackingMigProfiles(pod v1.Pod) []mig.ProfileName {
-	profiles := make([]mig.ProfileName, 0)
+func (s *MigClusterSnapshot) GetLackingMigProfiles(pod v1.Pod) map[mig.ProfileName]int {
+	res := make(map[mig.ProfileName]int)
 	for r := range s.GetLackingResources(pod).ScalarResources {
 		if mig.IsNvidiaMigDevice(r) {
 			profileName, _ := mig.ExtractMigProfile(r)
-			profiles = append(profiles, profileName)
+			res[profileName]++
 		}
 	}
-	return profiles
+	return res
 }
 
 func (s *MigClusterSnapshot) SetNode(node mig.Node) error {

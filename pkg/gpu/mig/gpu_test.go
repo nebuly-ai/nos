@@ -292,6 +292,139 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 	}
 }
 
+func TestGPU__UpdateGeometryFor(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		gpu                     mig.GPU
+		profiles                map[mig.ProfileName]int
+		expectedGeometry        map[mig.ProfileName]int
+		expectedCreatedProfiles map[mig.ProfileName]int
+	}{
+		{
+			name: "Empty required profiles map, should not change geometry",
+			gpu: mig.NewGpuOrPanic(
+				mig.GPUModel_A100_SXM4_40GB,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile2g20gb: 1,
+				},
+				map[mig.ProfileName]int{},
+			),
+			profiles: map[mig.ProfileName]int{},
+			expectedGeometry: map[mig.ProfileName]int{
+				mig.Profile2g20gb: 1, // unchanged
+			},
+			expectedCreatedProfiles: map[mig.ProfileName]int{},
+		},
+		{
+			name: "No geometries can provide the required profiles, should not change geometry",
+			gpu: mig.NewGpuOrPanic(
+				mig.GPUModel_A100_SXM4_40GB,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile2g20gb: 1,
+				},
+				map[mig.ProfileName]int{},
+			),
+			profiles: map[mig.ProfileName]int{
+				mig.Profile1g10gb: 1,
+			},
+			expectedGeometry: map[mig.ProfileName]int{
+				mig.Profile2g20gb: 1, // unchanged
+			},
+			expectedCreatedProfiles: map[mig.ProfileName]int{},
+		},
+		{
+			name: "One geometry could provide the required profiles, but applying it would delete used resources, should not change geometry",
+			gpu: mig.NewGpuOrPanic(
+				mig.GPUModel_A100_PCIe_80GB,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile2g20gb: 1,
+				},
+				map[mig.ProfileName]int{},
+			),
+			profiles: map[mig.ProfileName]int{
+				mig.Profile7g79gb: 1,
+			},
+			expectedGeometry: map[mig.ProfileName]int{
+				mig.Profile2g20gb: 1, // unchanged
+			},
+			expectedCreatedProfiles: map[mig.ProfileName]int{},
+		},
+		{
+			name: "Current geometry already provides the required profiles, should not change geometry",
+			gpu: mig.NewGpuOrPanic(
+				mig.GPUModel_A100_SXM4_40GB,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile2g20gb: 1,
+				},
+				map[mig.ProfileName]int{
+					mig.Profile2g20gb: 2,
+				},
+			),
+			profiles: map[mig.ProfileName]int{
+				mig.Profile2g20gb: 2,
+			},
+			expectedGeometry: map[mig.ProfileName]int{
+				mig.Profile2g20gb: 3, // unchanged
+			},
+			expectedCreatedProfiles: map[mig.ProfileName]int{},
+		},
+		{
+			name: "Multiple geometries allow to create some of the required profiles, should change geometry using the " +
+				"ones that allow to create the highest number of required profiles",
+			gpu: mig.NewGpuOrPanic(
+				mig.GPUModel_A100_PCIe_80GB,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile1g10gb: 2,
+				},
+				map[mig.ProfileName]int{},
+			),
+			profiles: map[mig.ProfileName]int{
+				mig.Profile1g10gb: 6,
+			},
+			expectedGeometry: map[mig.ProfileName]int{
+				mig.Profile1g10gb: 7,
+			},
+			expectedCreatedProfiles: map[mig.ProfileName]int{
+				mig.Profile1g10gb: 5,
+			},
+		},
+		{
+			name: "",
+			gpu: mig.NewGpuOrPanic(
+				mig.GPUModel_A100_PCIe_80GB,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile3g40gb: 1,
+				},
+				map[mig.ProfileName]int{
+					mig.Profile1g10gb: 3,
+				},
+			),
+			profiles: map[mig.ProfileName]int{
+				mig.Profile3g40gb: 1,
+			},
+			expectedGeometry: map[mig.ProfileName]int{
+				mig.Profile3g40gb: 2,
+			},
+			expectedCreatedProfiles: map[mig.ProfileName]int{
+				mig.Profile3g40gb: 1,
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			createdProfiles := tt.gpu.UpdateGeometryFor(tt.profiles)
+			assert.Equal(t, tt.expectedCreatedProfiles, createdProfiles)
+		})
+	}
+}
+
 func TestGeometry__AsResources(t *testing.T) {
 	testCases := []struct {
 		name     string

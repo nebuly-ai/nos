@@ -104,6 +104,14 @@ func GetKeys[K comparable, V any](maps ...map[K]V) []K {
 	return res
 }
 
+func CopyMap[K comparable, V any](m map[K]V) map[K]V {
+	var res = make(map[K]V, len(m))
+	for k, v := range m {
+		res[k] = v
+	}
+	return res
+}
+
 func Min[K constraints.Ordered](v1 K, v2 K) K {
 	if v1 < v2 {
 		return v1

@@ -279,12 +279,13 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
+					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
-						mig.Profile1g6gb.AsResourceName():  2,
-						mig.Profile2g12gb.AsResourceName(): 1,
+						mig.Profile1g6gb.AsResourceName(): 4,
 					},
 				},
 				{
+					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
 						mig.Profile1g6gb.AsResourceName(): 4,
 					},
