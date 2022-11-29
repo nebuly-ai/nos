@@ -58,7 +58,7 @@ type errorImpl struct {
 }
 
 func (e errorImpl) Error() string {
-	return fmt.Sprintf("code: %s err: %s", e.code, e.err.Error())
+	return fmt.Sprintf("[code: %s] [err: %s]", e.code, e.err.Error())
 }
 
 func (e errorImpl) IsNotFound() bool {
