@@ -9,7 +9,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.1.6
 	github.com/onsi/gomega v1.20.2
 	github.com/stretchr/testify v1.8.0
-	gitlab.com/nvidia/cloud-native/go-nvlib v0.0.0-20221103095758-0e8a479bd521
+	gitlab.com/nvidia/cloud-native/go-nvlib v0.0.0-20221121203940-a27e593595a0
 	golang.org/x/exp v0.0.0-20220915210609-840b3808d824
 	gonum.org/v1/gonum v0.6.2
 	google.golang.org/grpc v1.47.0
