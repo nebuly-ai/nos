@@ -124,7 +124,7 @@ func (g *GPU) CanApplyGeometry(geometry Geometry) (bool, string) {
 	// Check if new geometry deletes used devices
 	for usedProfile, usedQuantity := range g.usedMigDevices {
 		if geometry[usedProfile] < usedQuantity {
-			return false, fmt.Sprintf("cannot apply MIG geometry: cannot delete MIG devices being used")
+			return false, "cannot apply MIG geometry: cannot delete MIG devices being used"
 		}
 	}
 
