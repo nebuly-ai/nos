@@ -98,10 +98,10 @@ func (s *MigClusterSnapshot) GetPartitioningState() state.PartitioningState {
 // currently not available in the ClusterSnapshot.
 func (s *MigClusterSnapshot) GetLackingMigProfiles(pod v1.Pod) map[mig.ProfileName]int {
 	res := make(map[mig.ProfileName]int)
-	for r := range s.GetLackingResources(pod).ScalarResources {
+	for r, q := range s.GetLackingResources(pod).ScalarResources {
 		if mig.IsNvidiaMigDevice(r) {
 			profileName, _ := mig.ExtractMigProfile(r)
-			res[profileName]++
+			res[profileName] += int(q)
 		}
 	}
 	return res
