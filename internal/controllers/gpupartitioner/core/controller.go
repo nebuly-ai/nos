@@ -34,13 +34,12 @@ import (
 
 type Controller struct {
 	client.Client
-	Scheme            *runtime.Scheme
-	podBatcher        util.Batcher[v1.Pod]
-	clusterState      *state.ClusterState
-	currentBatch      map[string]v1.Pod
-	planner           Planner
-	actuator          Actuator
-	lastAppliedPlanId string
+	Scheme       *runtime.Scheme
+	podBatcher   util.Batcher[v1.Pod]
+	clusterState *state.ClusterState
+	currentBatch map[string]v1.Pod
+	planner      Planner
+	actuator     Actuator
 }
 
 func NewController(
@@ -82,11 +81,9 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// Check if last plan has been reported
-	if c.lastAppliedPlanId != "" {
-		if reported := c.lastPlanReportedByAllNodes(); !reported {
-			logger.Info("last partitioning plan has not been reported by all nodes yet, waiting...")
-			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-		}
+	if waiting := c.waitingAnyNodeToReportPlan(); waiting {
+		logger.Info("last partitioning plan has not been reported by all nodes yet, waiting...")
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
 	// Add pod to current batch only if it is pending and adding extra resources could make it schedulable
@@ -166,14 +163,10 @@ func (c *Controller) processPendingPods(ctx context.Context) error {
 	logger.Info("computed desired partitioning state", "partitioning", plan)
 
 	// Apply partitioning plan
-	applied, err := c.actuator.Apply(ctx, snapshot, plan)
+	_, err = c.actuator.Apply(ctx, snapshot, plan)
 	if err != nil {
 		logger.Error(err, "unable to apply desired partitioning state")
 		return err
-	}
-
-	if applied {
-		c.lastAppliedPlanId = plan.GetId()
 	}
 
 	return nil
@@ -189,22 +182,26 @@ func (c *Controller) fetchPendingPods(ctx context.Context) ([]v1.Pod, error) {
 	}), nil
 }
 
-func (c *Controller) lastPlanReportedByAllNodes() bool {
+func (c *Controller) waitingAnyNodeToReportPlan() bool {
 	nodes := c.clusterState.GetNodes()
 	for _, n := range nodes {
-		if !c.hasReportedLastPlan(*n.Node()) {
-			return false
+		if c.waitingToReportPlan(*n.Node()) {
+			return true
 		}
 	}
-	return true
+	return false
 }
 
-func (c *Controller) hasReportedLastPlan(n v1.Node) bool {
-	val, ok := n.Annotations[v1alpha1.AnnotationReportedPartitioningPlan]
+func (c *Controller) waitingToReportPlan(n v1.Node) bool {
+	plan, ok := n.Annotations[v1alpha1.AnnotationPartitioningPlan]
 	if !ok {
 		return false
 	}
-	return val == c.lastAppliedPlanId
+	reported, ok := n.Annotations[v1alpha1.AnnotationReportedPartitioningPlan]
+	if !ok {
+		return true
+	}
+	return plan != reported
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {
