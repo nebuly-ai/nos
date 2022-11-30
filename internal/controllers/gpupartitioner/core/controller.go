@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/pod"
@@ -33,13 +34,13 @@ import (
 
 type Controller struct {
 	client.Client
-	Scheme       *runtime.Scheme
-	podBatcher   util.Batcher[v1.Pod]
-	clusterState *state.ClusterState
-	currentBatch map[string]v1.Pod
-	planner      Planner
-	actuator     Actuator
-	lastPlanId   string
+	Scheme            *runtime.Scheme
+	podBatcher        util.Batcher[v1.Pod]
+	clusterState      *state.ClusterState
+	currentBatch      map[string]v1.Pod
+	planner           Planner
+	actuator          Actuator
+	lastAppliedPlanId string
 }
 
 func NewController(
@@ -74,17 +75,18 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	logger.V(3).Info("*** start reconcile ***")
 	defer logger.V(3).Info("*** end reconcile ***")
 
-	// Check if last plan has been reported
-	if c.lastPlanId != "" {
-		if reported := c.lastPlanReportedByAllNodes(); !reported {
-			return ctrl.Result{}, nil
-		}
-	}
-
 	// Fetch instance
 	var instance v1.Pod
 	if err := c.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Check if last plan has been reported
+	if c.lastAppliedPlanId != "" {
+		if reported := c.lastPlanReportedByAllNodes(); !reported {
+			logger.Info("last partitioning plan has not been reported by all nodes yet, waiting...")
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
 	}
 
 	// Add pod to current batch only if it is pending and adding extra resources could make it schedulable
@@ -110,9 +112,8 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	case <-c.podBatcher.Ready():
 		logger.V(1).Info("batch ready")
 		c.currentBatch = make(map[string]v1.Pod)
-		if err := c.processPendingPods(ctx); err != nil {
-			return ctrl.Result{}, err
-		}
+		err := c.processPendingPods(ctx)
+		return ctrl.Result{}, err
 	default:
 		logger.V(1).Info("batch not ready")
 	}
@@ -165,12 +166,15 @@ func (c *Controller) processPendingPods(ctx context.Context) error {
 	logger.Info("computed desired partitioning state", "partitioning", plan)
 
 	// Apply partitioning plan
-	if err = c.actuator.Apply(ctx, snapshot, plan); err != nil {
+	applied, err := c.actuator.Apply(ctx, snapshot, plan)
+	if err != nil {
 		logger.Error(err, "unable to apply desired partitioning state")
 		return err
 	}
 
-	c.lastPlanId = plan.GetId()
+	if applied {
+		c.lastAppliedPlanId = plan.GetId()
+	}
 
 	return nil
 }
@@ -188,19 +192,19 @@ func (c *Controller) fetchPendingPods(ctx context.Context) ([]v1.Pod, error) {
 func (c *Controller) lastPlanReportedByAllNodes() bool {
 	nodes := c.clusterState.GetNodes()
 	for _, n := range nodes {
-		if !c.isLastPlanReported(*n.Node()) {
+		if !c.hasReportedLastPlan(*n.Node()) {
 			return false
 		}
 	}
 	return true
 }
 
-func (c *Controller) isLastPlanReported(n v1.Node) bool {
-	val, ok := n.Annotations[constant.AnnotationReportedPartitioningPlan]
+func (c *Controller) hasReportedLastPlan(n v1.Node) bool {
+	val, ok := n.Annotations[v1alpha1.AnnotationReportedPartitioningPlan]
 	if !ok {
 		return false
 	}
-	return val == c.lastPlanId
+	return val == c.lastAppliedPlanId
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {

@@ -70,12 +70,6 @@ const (
 	LabelNvidiaCount = "nvidia.com/gpu.count"
 )
 
-// Annotations
-const (
-	AnnotationPartitioningPlan         = "n8s.nebuly.ai/partitioning-plan"
-	AnnotationReportedPartitioningPlan = "n8s.nebuly.ai/reported-partitioning-plan"
-)
-
 const (
 	// DefaultNvidiaGPUResourceMemory is the default memory value (in GigaByte) that is associated to
 	// nvidia.com/gpu resources. The value represents the GPU memory requirement of a single resource.

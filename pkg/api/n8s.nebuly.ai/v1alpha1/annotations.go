@@ -26,6 +26,11 @@ const (
 	AnnotationGPUStatusPrefix     = "n8s.nebuly.ai/status-gpu"
 	AnnotationGPUStatusFreeSuffix = "free"
 	AnnotationGPUStatusUsedSuffix = "used"
+
+	// AnnotationPartitioningPlan indicates the partitioning plan that was applied to the node.
+	AnnotationPartitioningPlan = "n8s.nebuly.ai/spec-partitioning-plan"
+	// AnnotationReportedPartitioningPlan indicates the last partitioning plan reported by the node.
+	AnnotationReportedPartitioningPlan = "n8s.nebuly.ai/status-partitioning-plan"
 )
 
 var (

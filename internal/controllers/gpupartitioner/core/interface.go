@@ -44,5 +44,5 @@ type Planner interface {
 }
 
 type Actuator interface {
-	Apply(ctx context.Context, snapshot state.ClusterSnapshot, plan PartitioningPlan) error
+	Apply(ctx context.Context, snapshot state.ClusterSnapshot, plan PartitioningPlan) (bool, error)
 }

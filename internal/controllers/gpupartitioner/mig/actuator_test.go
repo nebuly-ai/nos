@@ -23,6 +23,7 @@ import (
 	partitionermig "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -40,6 +41,7 @@ func TestActuator__Apply(t *testing.T) {
 		desiredState  state.PartitioningState
 
 		expectedAnnotations map[string]map[string]string
+		expectedApplied     bool
 		expectedErr         bool
 	}{
 		{
@@ -47,6 +49,7 @@ func TestActuator__Apply(t *testing.T) {
 			snapshotNodes:       map[string]v1.Node{},
 			desiredState:        map[string]state.NodePartitioning{},
 			expectedAnnotations: map[string]map[string]string{},
+			expectedApplied:     false,
 			expectedErr:         false,
 		},
 		{
@@ -65,6 +68,7 @@ func TestActuator__Apply(t *testing.T) {
 				},
 			},
 			expectedAnnotations: map[string]map[string]string{},
+			expectedApplied:     false,
 			expectedErr:         true,
 		},
 		{
@@ -74,6 +78,7 @@ func TestActuator__Apply(t *testing.T) {
 			},
 			desiredState:        map[string]state.NodePartitioning{},
 			expectedAnnotations: map[string]map[string]string{},
+			expectedApplied:     false,
 			expectedErr:         false,
 		},
 		{
@@ -82,11 +87,16 @@ func TestActuator__Apply(t *testing.T) {
 				"node-1": factory.BuildNode("node-1").WithAnnotations(map[string]string{
 					"annotation-1": "foo",
 				}).Get(),
-				"node-2": factory.BuildNode("node-2").WithAnnotations(map[string]string{
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile1g5gb):     "4",
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
-					fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
-				}).Get(),
+				"node-2": factory.BuildNode("node-2").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile1g5gb):     "4",
+						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
+					}).
+					WithLabels(map[string]string{
+						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+					}).
+					Get(),
 			},
 			desiredState: map[string]state.NodePartitioning{
 				"node-1": {
@@ -117,6 +127,7 @@ func TestActuator__Apply(t *testing.T) {
 					},
 				},
 			},
+			expectedApplied: true,
 			expectedAnnotations: map[string]map[string]string{
 				"node-1": {
 					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile1g6gb):  "1",
@@ -134,11 +145,16 @@ func TestActuator__Apply(t *testing.T) {
 		{
 			name: "Desired state equals current state, should do nothing",
 			snapshotNodes: map[string]v1.Node{
-				"node-2": factory.BuildNode("node-2").WithAnnotations(map[string]string{
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile1g5gb):     "4",
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
-					fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
-				}).Get(),
+				"node-2": factory.BuildNode("node-2").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb):  "4",
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
+					}).
+					WithLabels(map[string]string{
+						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+					}).
+					Get(),
 			},
 			desiredState: map[string]state.NodePartitioning{
 				"node-2": {
@@ -158,11 +174,12 @@ func TestActuator__Apply(t *testing.T) {
 					},
 				},
 			},
+			expectedApplied: false,
 			expectedAnnotations: map[string]map[string]string{
 				"node-2": {
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile1g5gb):     "4",
 					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
 					fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
+					fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb):  "4",
 				},
 			},
 			expectedErr: false,
@@ -185,18 +202,27 @@ func TestActuator__Apply(t *testing.T) {
 			fakeClient := fakeClientBuilder.Build()
 			actuator := partitionermig.NewActuator(fakeClient)
 			plan := core.NewPartitioningPlan(tt.desiredState)
-			err := actuator.Apply(context.Background(), snapshot, plan)
+			applied, err := actuator.Apply(context.Background(), snapshot, plan)
 
 			if tt.expectedErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
+			assert.Equal(t, tt.expectedApplied, applied)
 
 			var updatedNode v1.Node
 			for node, expectedNodeAnnotations := range tt.expectedAnnotations {
 				assert.NoError(t, fakeClient.Get(context.Background(), client.ObjectKey{Name: node}, &updatedNode))
-				assert.Equal(t, expectedNodeAnnotations, updatedNode.Annotations)
+
+				// Exclude plan ID annotation until we find a way to mock the ID generation
+				annotationsWithoutPlanId := make(map[string]string)
+				for k, v := range updatedNode.Annotations {
+					if k != v1alpha1.AnnotationPartitioningPlan {
+						annotationsWithoutPlanId[k] = v
+					}
+				}
+				assert.Equal(t, expectedNodeAnnotations, annotationsWithoutPlanId)
 			}
 		})
 	}

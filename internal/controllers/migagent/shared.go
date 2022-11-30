@@ -23,7 +23,8 @@ type empty struct{}
 // SharedState contains the information shared between the Actuator and the Reporter processes
 type SharedState struct {
 	sync.Mutex
-	reportsChan chan empty
+	lastParsedPlanId string
+	reportsChan      chan empty
 }
 
 func NewSharedState() *SharedState {

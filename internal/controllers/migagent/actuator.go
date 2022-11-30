@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
@@ -82,6 +83,9 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	if err := a.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	// Update last parsed plan ID
+	a.sharedState.lastParsedPlanId = instance.Annotations[v1alpha1.AnnotationPartitioningPlan]
 
 	// Check if reported status already matches spec
 	statusAnnotations, specAnnotations := mig.GetGPUAnnotationsFromNode(instance)

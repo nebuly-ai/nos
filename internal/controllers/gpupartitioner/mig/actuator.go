@@ -40,36 +40,37 @@ func NewActuator(client client.Client) Actuator {
 	}
 }
 
-func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, plan core.PartitioningPlan) error {
+func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, plan core.PartitioningPlan) (bool, error) {
 	var err error
 	var snapshot migstate.MigClusterSnapshot
 	logger := log.FromContext(ctx)
 	logger.Info("applying desired MIG partitioning")
 
 	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
-		return fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
+		return false, fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
 	}
 	if snapshot.GetPartitioningState().Equal(plan.DesiredState) {
 		logger.Info("current and desired partitioning states are equal, nothing to do")
-		return nil
+		return false, nil
 	}
 	if plan.DesiredState.IsEmpty() {
 		logger.Info("desired partitioning state is empty, nothing to do")
-		return nil
+		return false, nil
 	}
 
 	for node, partitioningState := range plan.DesiredState {
 		logger.Info("updating node", "node", node, "partitioning", partitioningState)
-		if err = a.applyNodePartitioning(ctx, node, partitioningState); err != nil {
-			return fmt.Errorf("error partitioning node %s: %v", node, err)
+		if err = a.applyNodePartitioning(ctx, node, plan.GetId(), partitioningState); err != nil {
+			return false, fmt.Errorf("error partitioning node %s: %v", node, err)
 		}
 	}
+
 	logger.Info("plan applied")
 
-	return nil
+	return true, nil
 }
 
-func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName string, partitioning state.NodePartitioning) error {
+func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName, planId string, partitioning state.NodePartitioning) error {
 	var err error
 	logger := log.FromContext(ctx)
 
@@ -98,6 +99,8 @@ func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName string, pa
 	for _, annotation := range gpuSpecAnnotationList {
 		node.Annotations[annotation.Name] = annotation.GetValue()
 	}
+	node.Annotations[v1alpha1.AnnotationPartitioningPlan] = planId
+
 	if err = a.Patch(ctx, &node, client.MergeFrom(original)); err != nil {
 		return fmt.Errorf("error patching node annotations: %v", err)
 	}

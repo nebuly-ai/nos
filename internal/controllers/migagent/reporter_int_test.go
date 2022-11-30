@@ -84,8 +84,9 @@ var _ = Describe("MigAgent - Reporter", func() {
 			expectedAnnotationOne := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb")
 			expectedAnnotationTwo := fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "2g.20gb")
 			expectedAnnotations := map[string]string{
-				expectedAnnotationOne: "1",
-				expectedAnnotationTwo: "1",
+				expectedAnnotationOne:                       "1",
+				expectedAnnotationTwo:                       "1",
+				v1alpha1.AnnotationReportedPartitioningPlan: "", // we're not using a real shared state in tests, so it does not get updated
 			}
 			Eventually(func() map[string]string {
 				var updatedNode v1.Node
