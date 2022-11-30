@@ -69,15 +69,6 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 			return core.NewPartitioningPlan(partitioningState), nil
 		}
 
-		// Get node info
-		nodeInfo, ok := snapshot.GetNode(n.Name)
-		if !ok {
-			return core.PartitioningPlan{}, fmt.Errorf(
-				"cluster snapshot is inconsistent: node %s not found, this should never happen",
-				n.Name,
-			)
-		}
-
 		// Fork the state
 		if err = snapshot.Fork(); err != nil {
 			return core.PartitioningPlan{}, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
@@ -95,7 +86,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 		// Try to add candidate pods to the node with the updated geometry
 		var addedPods int
 		for _, pod := range sortedCandidatePods {
-			if added := p.tryAddPod(ctx, pod, nodeInfo, &snapshot); !added {
+			if added := p.tryAddPod(ctx, pod, n.Name, &snapshot); !added {
 				logger.V(1).Info(
 					"pod does not fit node",
 					"namespace",
@@ -133,7 +124,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 	return core.NewPartitioningPlan(partitioningState), nil
 }
 
-func (p Planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeInfo framework.NodeInfo, snapshot *migstate.MigClusterSnapshot) bool {
+func (p Planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeName string, snapshot *migstate.MigClusterSnapshot) bool {
 	// First we check if there are any lacking MIG profiles,
 	// if so we avoid running a scheduler cycle
 	// since we already know that it is going to fail
@@ -141,11 +132,15 @@ func (p Planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeInfo framework.N
 		return false
 	}
 	// Simulate scheduling
+	nodeInfo, ok := snapshot.GetNode(nodeName)
+	if !ok {
+		return false
+	}
 	if !p.canSchedulePod(ctx, pod, nodeInfo) {
 		return false
 	}
 	// Add Pod to snapshot
-	if err := snapshot.AddPod(nodeInfo.Node().Name, pod); err != nil {
+	if err := snapshot.AddPod(nodeName, pod); err != nil {
 		return false
 	}
 	return true
