@@ -60,10 +60,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 
 	// Get candidate nodes
 	candidateNodes := snapshot.GetCandidateNodes()
-	logger.V(1).Info(
-		fmt.Sprintf("found %d candidate nodes", len(candidateNodes)),
-		"namespace",
-	)
+	logger.V(1).Info(fmt.Sprintf("found %d candidate nodes", len(candidateNodes)))
 
 	for _, n := range candidateNodes {
 		// If there are no more lacking MIG profiles we can stop
