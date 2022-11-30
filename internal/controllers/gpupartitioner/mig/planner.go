@@ -86,6 +86,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 		// Try to update MIG geometry
 		nodeGeometryUpdated := n.UpdateGeometryFor(lackingMigProfiles)
 		if nodeGeometryUpdated {
+			logger.V(1).Info("updated node MIG geometry", "node", n.Name, "geometry", n.GetGeometry())
 			if err = snapshot.SetNode(n); err != nil {
 				return core.PartitioningPlan{}, err
 			}
@@ -95,7 +96,6 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 		var addedPods int
 		for _, pod := range sortedCandidatePods {
 			if added := p.tryAddPod(ctx, pod, nodeInfo, &snapshot); !added {
-				// Pod does not fit, revert changes
 				logger.V(1).Info(
 					"pod does not fit node",
 					"namespace",
