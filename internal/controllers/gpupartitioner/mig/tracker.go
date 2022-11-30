@@ -53,6 +53,10 @@ func (t lackingMigProfilesTracker) GetLackingMigProfiles() map[mig.ProfileName]i
 	return t.allLackingMigProfiles
 }
 
+func (t lackingMigProfilesTracker) GetPodLackingMigProfiles(pod v1.Pod) map[mig.ProfileName]int {
+	return t.podsLackingMigProfiles[util.GetNamespacedName(&pod).String()]
+}
+
 func (t lackingMigProfilesTracker) Remove(pod v1.Pod) {
 	lackingMigProfiles, ok := t.podsLackingMigProfiles[util.GetNamespacedName(&pod).String()]
 	if !ok {

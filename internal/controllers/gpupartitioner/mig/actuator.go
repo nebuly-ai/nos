@@ -19,6 +19,7 @@ package mig
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
@@ -39,7 +40,7 @@ func NewActuator(client client.Client) Actuator {
 	}
 }
 
-func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, desiredState state.PartitioningState) error {
+func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, plan core.PartitioningPlan) error {
 	var err error
 	var snapshot migstate.MigClusterSnapshot
 	logger := log.FromContext(ctx)
@@ -48,16 +49,16 @@ func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, desiredSta
 	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
 		return fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
 	}
-	if snapshot.GetPartitioningState().Equal(desiredState) {
+	if snapshot.GetPartitioningState().Equal(plan.DesiredState) {
 		logger.Info("current and desired partitioning states are equal, nothing to do")
 		return nil
 	}
-	if desiredState.IsEmpty() {
+	if plan.DesiredState.IsEmpty() {
 		logger.Info("desired partitioning state is empty, nothing to do")
 		return nil
 	}
 
-	for node, partitioningState := range desiredState {
+	for node, partitioningState := range plan.DesiredState {
 		logger.Info("updating node", "node", node, "partitioning", partitioningState)
 		if err = a.applyNodePartitioning(ctx, node, partitioningState); err != nil {
 			return fmt.Errorf("error partitioning node %s: %v", node, err)

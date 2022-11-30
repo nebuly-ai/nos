@@ -112,21 +112,25 @@ func (n *Node) UpdateGeometryFor(profiles map[ProfileName]int) bool {
 	if len(n.GPUs) == 0 {
 		return false
 	}
+	if len(profiles) == 0 {
+		return false
+	}
 
-	var createdProfiles = make(map[ProfileName]int)
-	var profilesToCreate = util.CopyMap(profiles)
+	var requiredProfiles = util.CopyMap(profiles)
+	var anyGpuUpdated bool
+
 	for _, gpu := range n.GPUs {
-		if len(profilesToCreate) <= 0 {
-			break
-		}
-		gpuCreatedProfiles := gpu.UpdateGeometryFor(profilesToCreate)
-		for profile, quantity := range gpuCreatedProfiles {
-			profilesToCreate[profile] -= quantity
-			createdProfiles[profile] += quantity
+		updated := gpu.UpdateGeometryFor(requiredProfiles)
+		anyGpuUpdated = anyGpuUpdated || updated
+		for profile, quantity := range gpu.GetFreeMigDevices() {
+			requiredProfiles[profile] -= quantity
+			if requiredProfiles[profile] <= 0 {
+				delete(requiredProfiles, profile)
+			}
 		}
 	}
 
-	return len(createdProfiles) > 0
+	return anyGpuUpdated
 }
 
 // GetGeometry returns the overall MIG geometry of the node, which corresponds to the sum of the MIG geometry of all

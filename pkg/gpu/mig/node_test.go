@@ -326,7 +326,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 				},
 			},
 			migProfiles: map[ProfileName]int{
-				Profile1g6gb: 1,
+				Profile1g6gb: 2,
 			},
 			expectedUpdated: true,
 			expectedGeometry: Geometry{

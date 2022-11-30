@@ -39,6 +39,7 @@ type Controller struct {
 	currentBatch map[string]v1.Pod
 	planner      Planner
 	actuator     Actuator
+	lastPlanId   string
 }
 
 func NewController(
@@ -73,6 +74,13 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	logger.V(3).Info("*** start reconcile ***")
 	defer logger.V(3).Info("*** end reconcile ***")
 
+	// Check if last plan has been reported
+	if c.lastPlanId != "" {
+		if reported := c.lastPlanReportedByAllNodes(); !reported {
+			return ctrl.Result{}, nil
+		}
+	}
+
 	// Fetch instance
 	var instance v1.Pod
 	if err := c.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
@@ -102,7 +110,9 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	case <-c.podBatcher.Ready():
 		logger.V(1).Info("batch ready")
 		c.currentBatch = make(map[string]v1.Pod)
-		return c.processPendingPods(ctx)
+		if err := c.processPendingPods(ctx); err != nil {
+			return ctrl.Result{}, err
+		}
 	default:
 		logger.V(1).Info("batch not ready")
 	}
@@ -114,10 +124,10 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// If batch is empty and there are no new pending pods, requeue after some time
 	// to try to process again the pending pods
-	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil // TODO : fix reschedule time also when batch is processed
+	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 }
 
-func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error) {
+func (c *Controller) processPendingPods(ctx context.Context) error {
 	logger := log.FromContext(ctx)
 	logger.Info("processing pending pods")
 
@@ -125,11 +135,11 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 	allPendingPods, err := c.fetchPendingPods(ctx)
 	if err != nil {
 		logger.Error(err, "unable to fetch pending pods")
-		return ctrl.Result{}, err
+		return err
 	}
 	logger.Info(fmt.Sprintf("found %d pending pods", len(allPendingPods)))
 	if len(allPendingPods) == 0 {
-		return ctrl.Result{}, nil
+		return nil
 	}
 
 	// Extract pods that can be helped with extra resources
@@ -141,26 +151,28 @@ func (c *Controller) processPendingPods(ctx context.Context) (ctrl.Result, error
 	}
 	logger.Info(fmt.Sprintf("%d out of %d pending pods could be helped", len(allPendingPods), len(pods)))
 	if len(allPendingPods) == 0 {
-		return ctrl.Result{}, nil
+		return nil
 	}
 
 	snapshot := c.clusterState.GetSnapshot()
 
 	// Compute desired state
-	desiredState, err := c.planner.Plan(ctx, snapshot, pods)
+	plan, err := c.planner.Plan(ctx, snapshot, pods)
 	if err != nil {
 		logger.Error(err, "unable to plan desired partitioning state")
-		return ctrl.Result{}, err
+		return err
 	}
-	logger.Info("computed desired partitioning state", "partitioning", desiredState)
+	logger.Info("computed desired partitioning state", "partitioning", plan)
 
 	// Apply partitioning plan
-	if err = c.actuator.Apply(ctx, snapshot, desiredState); err != nil {
+	if err = c.actuator.Apply(ctx, snapshot, plan); err != nil {
 		logger.Error(err, "unable to apply desired partitioning state")
-		return ctrl.Result{}, err
+		return err
 	}
 
-	return ctrl.Result{}, nil
+	c.lastPlanId = plan.GetId()
+
+	return nil
 }
 
 func (c *Controller) fetchPendingPods(ctx context.Context) ([]v1.Pod, error) {
@@ -171,6 +183,24 @@ func (c *Controller) fetchPendingPods(ctx context.Context) ([]v1.Pod, error) {
 	return util.Filter(podList.Items, func(pod v1.Pod) bool {
 		return pod.Spec.NodeName == ""
 	}), nil
+}
+
+func (c *Controller) lastPlanReportedByAllNodes() bool {
+	nodes := c.clusterState.GetNodes()
+	for _, n := range nodes {
+		if !c.isLastPlanReported(*n.Node()) {
+			return false
+		}
+	}
+	return true
+}
+
+func (c *Controller) isLastPlanReported(n v1.Node) bool {
+	val, ok := n.Annotations[constant.AnnotationReportedPartitioningPlan]
+	if !ok {
+		return false
+	}
+	return val == c.lastPlanId
 }
 
 func (c *Controller) SetupWithManager(mgr ctrl.Manager, name string) error {

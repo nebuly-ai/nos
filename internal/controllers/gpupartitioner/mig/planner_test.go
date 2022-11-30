@@ -246,12 +246,24 @@ func TestPlanner__Plan(t *testing.T) {
 					Get(),
 			},
 			candidatePods: []v1.Pod{
-				factory.BuildPod("ns-1", "pd-2").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
+				factory.BuildPod("ns-1", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+							Get(),
+					).
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
 				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
+							Get(),
+					).
 					WithContainer(
 						factory.BuildContainer("test", "test").
 							WithScalarResourceRequest(mig.Profile1g6gb.AsResourceName(), 1).
@@ -325,21 +337,39 @@ func TestPlanner__Plan(t *testing.T) {
 					Get(),
 			},
 			candidatePods: []v1.Pod{
-				factory.BuildPod("ns-1", "pd-2").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile3g20gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
-				factory.BuildPod("ns-1", "pd-1").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile4g24gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
-				factory.BuildPod("ns-1", "pd-1").WithContainer(
-					factory.BuildContainer("test", "test").
-						WithScalarResourceRequest(mig.Profile2g12gb.AsResourceName(), 1).
-						Get(),
-				).Get(),
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile3g20gb.AsResourceName(), 1).
+							Get(),
+					).
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile3g20gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile4g24gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-3").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile2g12gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-4").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile2g12gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
@@ -387,7 +417,7 @@ func TestPlanner__Plan(t *testing.T) {
 
 			// Compute overall partitioning ignoring GPU index
 			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
-			for _, nodePartitioning := range plan {
+			for _, nodePartitioning := range plan.DesiredState {
 				for _, g := range nodePartitioning.GPUs {
 					g.GPUIndex = 0
 					overallGpuPartitioning = append(overallGpuPartitioning, g)
@@ -408,6 +438,63 @@ func TestPlanner__Plan(t *testing.T) {
 		})
 	}
 }
+
+// TODO: benchmark Plan
+//func BenchmarkPlanner_Plan(b *testing.B) {
+//	benchmarks := []struct {
+//		numSnapshotNodes int
+//		numCandidatePods int
+//	}{
+//		{
+//			numSnapshotNodes: 10,
+//			numCandidatePods: 10,
+//		},
+//		{
+//			numSnapshotNodes: 10,
+//			numCandidatePods: 1000,
+//		},
+//		{
+//			numSnapshotNodes: 100,
+//			numCandidatePods: 100,
+//		},
+//		{
+//			numSnapshotNodes: 1000,
+//			numCandidatePods: 10000,
+//		},
+//	}
+//
+//	mockedScheduler := scheduler_mock.NewFramework(b)
+//	mockedScheduler.On(
+//		"RunPreFilterPlugins",
+//		mock.Anything,
+//		mock.Anything,
+//		mock.Anything,
+//	).Return(nil, framework.NewStatus(framework.Success)).Maybe()
+//	mockedScheduler.On(
+//		"RunFilterPlugins",
+//		mock.Anything,
+//		mock.Anything,
+//		mock.Anything,
+//		mock.Anything,
+//	).Return(framework.PluginToStatus{"": framework.NewStatus(framework.Success)}).Maybe()
+//	planner := partitioner_mig.NewPlanner(mockedScheduler)
+//
+//	for _, bb := range benchmarks {
+//		ctx := context.Background()
+//		b.Run(fmt.Sprintf("snapshotNodes=%d,candidatePods=%d", bb.numSnapshotNodes, bb.numCandidatePods), func(b *testing.B) {
+//			for n := 0; n < b.N; n++ {
+//				_, err := planner.Plan(ctx, snapshot, candidates)
+//				assert.NoError(b, err)
+//			}
+//		})
+//	}
+//}
+//
+//func newRandomNode() framework.NodeInfo {
+//	name := util.RandomStringLowercase(10)
+//	node := factory.BuildNode(name).Get()
+//	nodeInfo := *framework.NewNodeInfo()
+//}
 
 func newSnapshotFromNodes(nodes []v1.Node) state.ClusterSnapshot {
 	nodeInfos := make(map[string]framework.NodeInfo)

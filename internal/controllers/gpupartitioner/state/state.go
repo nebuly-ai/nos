@@ -47,6 +47,18 @@ func (c *ClusterState) GetNode(nodeName string) (framework.NodeInfo, bool) {
 	return node, ok
 }
 
+func (c *ClusterState) GetNodes() []framework.NodeInfo {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
+
+	nodes := make([]framework.NodeInfo, 0, len(c.nodes))
+	for _, node := range c.nodes {
+		nodes = append(nodes, node)
+	}
+
+	return nodes
+}
+
 func (c *ClusterState) GetSnapshot() ClusterSnapshot {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()

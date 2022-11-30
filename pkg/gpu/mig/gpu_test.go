@@ -294,11 +294,11 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 
 func TestGPU__UpdateGeometryFor(t *testing.T) {
 	testCases := []struct {
-		name                    string
-		gpu                     mig.GPU
-		profiles                map[mig.ProfileName]int
-		expectedGeometry        map[mig.ProfileName]int
-		expectedCreatedProfiles map[mig.ProfileName]int
+		name             string
+		gpu              mig.GPU
+		profiles         map[mig.ProfileName]int
+		expectedGeometry map[mig.ProfileName]int
+		expectedUpdated  bool
 	}{
 		{
 			name: "Empty required profiles map, should not change geometry",
@@ -314,7 +314,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 			expectedGeometry: map[mig.ProfileName]int{
 				mig.Profile2g20gb: 1, // unchanged
 			},
-			expectedCreatedProfiles: map[mig.ProfileName]int{},
+			expectedUpdated: false,
 		},
 		{
 			name: "No geometries can provide the required profiles, should not change geometry",
@@ -332,7 +332,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 			expectedGeometry: map[mig.ProfileName]int{
 				mig.Profile2g20gb: 1, // unchanged
 			},
-			expectedCreatedProfiles: map[mig.ProfileName]int{},
+			expectedUpdated: false,
 		},
 		{
 			name: "One geometry could provide the required profiles, but applying it would delete used resources, should not change geometry",
@@ -350,7 +350,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 			expectedGeometry: map[mig.ProfileName]int{
 				mig.Profile2g20gb: 1, // unchanged
 			},
-			expectedCreatedProfiles: map[mig.ProfileName]int{},
+			expectedUpdated: false,
 		},
 		{
 			name: "Current geometry already provides the required profiles, should not change geometry",
@@ -370,7 +370,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 			expectedGeometry: map[mig.ProfileName]int{
 				mig.Profile2g20gb: 3, // unchanged
 			},
-			expectedCreatedProfiles: map[mig.ProfileName]int{},
+			expectedUpdated: false,
 		},
 		{
 			name: "Multiple geometries allow to create some of the required profiles, should change geometry using the " +
@@ -389,9 +389,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 			expectedGeometry: map[mig.ProfileName]int{
 				mig.Profile1g10gb: 7,
 			},
-			expectedCreatedProfiles: map[mig.ProfileName]int{
-				mig.Profile1g10gb: 5,
-			},
+			expectedUpdated: true,
 		},
 		{
 			name: "",
@@ -411,16 +409,14 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 			expectedGeometry: map[mig.ProfileName]int{
 				mig.Profile3g40gb: 2,
 			},
-			expectedCreatedProfiles: map[mig.ProfileName]int{
-				mig.Profile3g40gb: 1,
-			},
+			expectedUpdated: true,
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			createdProfiles := tt.gpu.UpdateGeometryFor(tt.profiles)
-			assert.Equal(t, tt.expectedCreatedProfiles, createdProfiles)
+			updated := tt.gpu.UpdateGeometryFor(tt.profiles)
+			assert.Equal(t, tt.expectedUpdated, updated)
 		})
 	}
 }

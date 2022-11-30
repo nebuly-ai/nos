@@ -27,8 +27,8 @@ const (
 
 // Controller names
 const (
-	ElasticQuotaControllerName          = "elasticquota-controller"
-	CompositeElasticQuotaControllerName = "composite-elasticquota-controller"
+	ElasticQuotaControllerName          = "eq-controller"
+	CompositeElasticQuotaControllerName = "ceq-controller"
 	ClusterStateNodeControllerName      = "clusterstate-node-controller"
 	ClusterStatePodControllerName       = "clusterstate-pod-controller"
 	MigPartitionerControllerName        = "mig-partitioner-controller"
@@ -68,6 +68,12 @@ const (
 	// LabelNvidiaCount is the name of the label assigned by the NVIDIA GPU Operator that identifies
 	// the number of NVIDIA GPUs on a certain node
 	LabelNvidiaCount = "nvidia.com/gpu.count"
+)
+
+// Annotations
+const (
+	AnnotationPartitioningPlan         = "n8s.nebuly.ai/partitioning-plan"
+	AnnotationReportedPartitioningPlan = "n8s.nebuly.ai/reported-partitioning-plan"
 )
 
 const (

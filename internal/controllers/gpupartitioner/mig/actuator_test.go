@@ -19,6 +19,7 @@ package mig_test
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	partitionermig "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
@@ -183,7 +184,8 @@ func TestActuator__Apply(t *testing.T) {
 			snapshot := state.NewClusterSnapshot(nodeInfos)
 			fakeClient := fakeClientBuilder.Build()
 			actuator := partitionermig.NewActuator(fakeClient)
-			err := actuator.Apply(context.Background(), snapshot, tt.desiredState)
+			plan := core.NewPartitioningPlan(tt.desiredState)
+			err := actuator.Apply(context.Background(), snapshot, plan)
 
 			if tt.expectedErr {
 				assert.Error(t, err)

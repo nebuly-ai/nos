@@ -20,12 +20,29 @@ import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	v1 "k8s.io/api/core/v1"
+	"time"
 )
 
+type PartitioningPlan struct {
+	DesiredState state.PartitioningState
+	id           string
+}
+
+func NewPartitioningPlan(state state.PartitioningState) PartitioningPlan {
+	return PartitioningPlan{
+		DesiredState: state,
+		id:           time.Now().UTC().String(),
+	}
+}
+
+func (p PartitioningPlan) GetId() string {
+	return p.id
+}
+
 type Planner interface {
-	Plan(ctx context.Context, snapshot state.ClusterSnapshot, pendingPods []v1.Pod) (state.PartitioningState, error)
+	Plan(ctx context.Context, snapshot state.ClusterSnapshot, pendingPods []v1.Pod) (PartitioningPlan, error)
 }
 
 type Actuator interface {
-	Apply(ctx context.Context, snapshot state.ClusterSnapshot, partitioning state.PartitioningState) error
+	Apply(ctx context.Context, snapshot state.ClusterSnapshot, plan PartitioningPlan) error
 }

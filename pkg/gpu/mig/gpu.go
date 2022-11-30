@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -153,16 +154,11 @@ func (g *GPU) ApplyGeometry(geometry Geometry) error {
 	return nil
 }
 
-// UpdateGeometryFor updates the geometry of the GPU in order to create the highest possible number of required
+// UpdateGeometryFor tries to update the geometry of the GPU in order to create the highest possible number of required
 // profiles provided as argument, without deleting any of the used profiles.
-// The method returns the required profiles that have been created by applying the new geometry.
 //
-// If multiple geometries provides the required profiles, the method chooses the one that allows to create
-// the highest number of new profiles.
-//
-// The GPU geometry gets updated only if it was possible to create at least one of the required profiles.
-func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) map[ProfileName]int {
-	var createdProfiles = make(map[ProfileName]int)
+// The method returns true if the GPU geometry gets updated, false otherwise.
+func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) bool {
 	var geometryNumProvidedProfiles = make(map[string]int)
 	var geometryLookup = make(map[string]Geometry)
 	var bestGeometry *Geometry
@@ -170,13 +166,16 @@ func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) map[Profil
 	// For each allowed geometry, compute the number of required profiles that it can provide
 	for _, candidate := range g.GetAllowedGeometries() {
 		for requiredProfile, requiredQuantity := range requiredProfiles {
-			// If Node already provides the profile resources then there's nothing to do
+			// If GPU already provides the profile resources then there's nothing to do
 			if g.freeMigDevices[requiredProfile] >= requiredQuantity {
 				continue
 			}
+			numProvidedProfiles := util.Min(
+				candidate[requiredProfile]-g.usedMigDevices[requiredProfile],
+				requiredQuantity,
+			)
 			// If the candidate geometry does not provide the required profile, then skip it
-			nFreeProfilesForGeometry := candidate[requiredProfile] - g.usedMigDevices[requiredProfile]
-			if nFreeProfilesForGeometry <= 0 {
+			if numProvidedProfiles <= 0 {
 				continue
 			}
 			// If we cannot apply the geometry, then skip it
@@ -184,16 +183,16 @@ func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) map[Profil
 				continue
 			}
 			candidateGeometryId := candidate.Id()
-			geometryNumProvidedProfiles[candidateGeometryId] += nFreeProfilesForGeometry
+			geometryNumProvidedProfiles[candidateGeometryId] += numProvidedProfiles
 			geometryLookup[candidateGeometryId] = candidate
 		}
 	}
 
-	// Find, if any, the geometry that allows to create the highest number of required profiles
-	maxFreeProfiles := 0
-	for candidateId, nFreeProfiles := range geometryNumProvidedProfiles {
-		if nFreeProfiles > maxFreeProfiles {
-			maxFreeProfiles = nFreeProfiles
+	// Find, if any, the geometry that provides the highest number of required profiles
+	maxProvidedProfiles := 0
+	for candidateId, nProvidedProfiles := range geometryNumProvidedProfiles {
+		if nProvidedProfiles > maxProvidedProfiles {
+			maxProvidedProfiles = nProvidedProfiles
 			candidate := geometryLookup[candidateId]
 			bestGeometry = &candidate
 		}
@@ -201,24 +200,13 @@ func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) map[Profil
 
 	// No geometry can provide the required profiles, we're done
 	if bestGeometry == nil {
-		return createdProfiles
-	}
-
-	// Compute the required profiles that the best geometry provides
-	currentGeometry := g.GetGeometry()
-	for profile, quantity := range *bestGeometry {
-		diff := quantity - currentGeometry[profile]
-		if diff > 0 {
-			createdProfiles[profile] = diff
-		}
+		return false
 	}
 
 	// Apply the new geometry
-	if len(createdProfiles) > 0 {
-		_ = g.ApplyGeometry(*bestGeometry)
-	}
+	_ = g.ApplyGeometry(*bestGeometry)
 
-	return createdProfiles
+	return true
 }
 
 // AllowsGeometry returns true if the geometry provided as argument is allowed by the GPU model

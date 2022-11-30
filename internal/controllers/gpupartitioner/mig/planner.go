@@ -19,6 +19,7 @@ package mig
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	v1 "k8s.io/api/core/v1"
@@ -36,105 +37,121 @@ func NewPlanner(scheduler framework.Framework) Planner {
 	}
 }
 
-func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidates []v1.Pod) (state.PartitioningState, error) {
+func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePods []v1.Pod) (core.PartitioningPlan, error) {
 	logger := log.FromContext(ctx)
-	logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidates))
+	logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidatePods))
 	var err error
 	var snapshot migstate.MigClusterSnapshot
 	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
-		return state.PartitioningState{}, fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
+		return core.PartitioningPlan{}, fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
 	}
 
 	partitioningState := snapshot.GetPartitioningState()
-	tracker := newLackingMigProfilesTracker(snapshot, candidates)
+	tracker := newLackingMigProfilesTracker(snapshot, candidatePods)
 
 	// No lacking MIG profiles, nothing to do
 	if len(tracker.GetLackingMigProfiles()) == 0 {
 		logger.V(1).Info("no lacking MIG profiles, nothing to do")
-		return partitioningState, nil
+		return core.NewPartitioningPlan(partitioningState), nil
 	}
 
-	// Sort candidates
-	candidates = SortCandidatePods(candidates)
-	for _, pod := range candidates {
-		candidateNodes := snapshot.GetCandidateNodes()
-		logger.V(1).Info(
-			fmt.Sprintf("found %d candidate nodes for pod", len(candidateNodes)),
-			"namespace",
-			pod.GetNamespace(),
-			"pod",
-			pod.GetName(),
-		)
+	// Sort candidate pods
+	sortedCandidatePods := SortCandidatePods(candidatePods)
 
-		for _, n := range candidateNodes {
-			// If Pod already fits, update state and move on to next pod
-			nodeInfo, ok := snapshot.GetNode(n.Name)
-			if !ok {
-				return partitioningState, fmt.Errorf(
-					"cluster snapshot is inconsistent: node %s not found - this should never happen",
+	// Get candidate nodes
+	candidateNodes := snapshot.GetCandidateNodes()
+	logger.V(1).Info(
+		fmt.Sprintf("found %d candidate nodes", len(candidateNodes)),
+		"namespace",
+	)
+
+	for _, n := range candidateNodes {
+		// If there are no more lacking MIG profiles we can stop
+		lackingMigProfiles := tracker.GetLackingMigProfiles()
+		if len(lackingMigProfiles) == 0 {
+			return core.NewPartitioningPlan(partitioningState), nil
+		}
+
+		// Get node info
+		nodeInfo, ok := snapshot.GetNode(n.Name)
+		if !ok {
+			return core.PartitioningPlan{}, fmt.Errorf(
+				"cluster snapshot is inconsistent: node %s not found, this should never happen",
+				n.Name,
+			)
+		}
+
+		// Fork the state
+		if err = snapshot.Fork(); err != nil {
+			return core.PartitioningPlan{}, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
+		}
+
+		// Try to update MIG geometry
+		nodeGeometryUpdated := n.UpdateGeometryFor(lackingMigProfiles)
+		if nodeGeometryUpdated {
+			if err = snapshot.SetNode(n); err != nil {
+				return core.PartitioningPlan{}, err
+			}
+		}
+
+		// Try to add candidate pods to the node with the updated geometry
+		var addedPods int
+		for _, pod := range sortedCandidatePods {
+			if added := p.tryAddPod(ctx, pod, nodeInfo, &snapshot); !added {
+				// Pod does not fit, revert changes
+				logger.V(1).Info(
+					"pod does not fit node",
+					"namespace",
+					pod.Namespace,
+					"pod",
+					pod.Name,
+					"node",
 					n.Name,
 				)
-			}
-			if p.canSchedulePod(ctx, pod, nodeInfo) {
-				if added := p.addPodToSnapshot(pod, n.Name, snapshot); added {
-					logger.V(1).Info(
-						"pod fits node, cluster snapshot updated",
-						"namespace",
-						pod.Namespace,
-						"pod",
-						pod.Name,
-						"node",
-						n.Name,
-					)
-					tracker.Remove(pod)
-					break
-				}
-			}
-
-			// Fork the state
-			if err = snapshot.Fork(); err != nil {
-				return partitioningState, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
-			}
-
-			// Try to update the node MIG geometry: if the node geometry can't be updated,
-			// revert the state and move on to next node
-			lackingMigProfiles := tracker.GetLackingMigProfiles()
-			if updated := n.UpdateGeometryFor(lackingMigProfiles); !updated {
-				snapshot.Revert()
 				continue
 			}
+			logger.V(1).Info(
+				"pod fits node",
+				"namespace",
+				pod.Namespace,
+				"pod",
+				pod.Name,
+				"node",
+				n.Name,
+			)
+			partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
+			tracker.Remove(pod)
+			addedPods++
+		}
 
-			// Update MIG nodes geometry and allocatable scalar resources according to the update MIG geometry
-			if err = snapshot.SetNode(n); err != nil {
-				return partitioningState, err
-			}
-
-			// Check if the Pod now fits the Node with the updated MIG geometry
-			if p.canSchedulePod(ctx, pod, nodeInfo) {
-				if added := p.addPodToSnapshot(pod, n.Name, snapshot); added {
-					snapshot.Commit()
-					partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
-					logger.V(1).Info(
-						"pod fits node, state snapshot updated with new MIG geometry",
-						"namespace",
-						pod.Namespace,
-						"pod",
-						pod.Name,
-						"node",
-						n.Name,
-					)
-					tracker.Remove(pod)
-					break
-				}
-			}
-
-			// Could not make the Pod fit, revert changes and move on
-			logger.V(1).Info("pod does not fit node, reverting changes", "namespace", pod.Namespace, "pod", pod.Name, "node", n.Name)
+		// If the new geometry allowed to add any pod then commit changes, otherwise revert
+		if addedPods == 0 {
 			snapshot.Revert()
+		}
+		if addedPods > 0 {
+			snapshot.Commit()
 		}
 	}
 
-	return partitioningState, nil
+	return core.NewPartitioningPlan(partitioningState), nil
+}
+
+func (p Planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeInfo framework.NodeInfo, snapshot *migstate.MigClusterSnapshot) bool {
+	// First we check if there are any lacking MIG profiles,
+	// if so we avoid running a scheduler cycle
+	// since we already know that it is going to fail
+	if len(snapshot.GetLackingMigProfiles(pod)) > 0 {
+		return false
+	}
+	// Simulate scheduling
+	if !p.canSchedulePod(ctx, pod, nodeInfo) {
+		return false
+	}
+	// Add Pod to snapshot
+	if err := snapshot.AddPod(nodeInfo.Node().Name, pod); err != nil {
+		return false
+	}
+	return true
 }
 
 // canSchedulePod runs a scheduler cycle to check whether the Pod can be scheduled on the specified Node
@@ -167,11 +184,4 @@ func (p Planner) canSchedulePod(ctx context.Context, pod v1.Pod, node framework.
 	)
 
 	return filterStatus.IsSuccess()
-}
-
-func (p Planner) addPodToSnapshot(pod v1.Pod, node string, snapshot migstate.MigClusterSnapshot) bool {
-	if err := snapshot.AddPod(node, pod); err == nil {
-		return true
-	}
-	return false
 }
