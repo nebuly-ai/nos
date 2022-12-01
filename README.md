@@ -41,8 +41,13 @@ Currently, this layer provides two features [Automatic GPU partitioning](doc/aut
   - [Installation options](doc/elastic-quota.md#scheduler-installation-options)
   - [Troubleshooting](doc/elastic-quota.md#troubleshooting)
 
+## Developer
+- [Getting started](doc/developer/get-started.md)
+- [Contribution guidelines](doc/developer/contribution-guidelines.md)
+- [Roadmap]()
+
 ---
 
 <p align="center">
-  <a href="https://discord.gg/RbeQMu886J">Join the community</a> 
+  <a href="https://discord.gg/RbeQMu886J">Join the community</a>  | <a href="https://nebuly.gitbook.io/nebuly/welcome/questions-and-contributions"> Contribute </a>
 </p>
