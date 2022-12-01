@@ -384,14 +384,21 @@ func (c *clientImpl) DeleteAllMigDevicesExcept(migDeviceIds []string) error {
 				c.logger.Info("deleted compute instance", "ComputeInstanceId", ciInfo.Id)
 				return nil
 			})
+			if err != nil {
+				return err
+			}
 
 			// Delete GPU instance
-			if ret = gi.Destroy(); ret != nvlibNvml.SUCCESS {
+			ret = gi.Destroy()
+			if ret == nvlibNvml.ERROR_INVALID_ARGUMENT {
+				return nil
+			}
+			if ret != nvlibNvml.SUCCESS {
 				return gpu.GenericErr.Errorf("error destroying GPU instance: %s", ret.Error())
 			}
 			c.logger.Info("deleted GPU instance", "GpuInstanceId", giInfo.Id)
 
-			return err
+			return nil
 		})
 
 		return err
@@ -405,16 +412,30 @@ func (c *clientImpl) DeleteAllMigDevicesExcept(migDeviceIds []string) error {
 
 func visitGpuInstances(device nvlibdevice.Device, f func(ci nvlibNvml.GpuInstance) error) error {
 	for i := 0; i < nvlibNvml.GPU_INSTANCE_PROFILE_COUNT; i++ {
-		gpuInstance, ret := device.GetGpuInstanceById(i)
+		profile, ret := device.GetGpuInstanceProfileInfo(i)
 		if ret == nvlibNvml.ERROR_NOT_FOUND {
 			continue
 		}
-		if ret != nvlibNvml.SUCCESS {
-			return fmt.Errorf("error getting GPU instance: %s", ret.Error())
+		if ret == nvlibNvml.ERROR_NOT_SUPPORTED {
+			continue
 		}
-		err := f(gpuInstance)
-		if err != nil {
-			return err
+		if ret == nvlibNvml.ERROR_INVALID_ARGUMENT {
+			continue
+		}
+		if ret != nvlibNvml.SUCCESS {
+			return fmt.Errorf("error getting GPU profile info: %s", ret.Error())
+		}
+
+		gis, ret := device.GetGpuInstances(&profile)
+		if ret != nvlibNvml.SUCCESS {
+			return fmt.Errorf("error getting GPU instances: %s", ret.Error())
+		}
+
+		for _, gi := range gis {
+			err := f(gi)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
