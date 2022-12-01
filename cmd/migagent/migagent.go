@@ -60,8 +60,6 @@ const (
 	defaultPodResourcesMaxSize = 1024 * 1024 * 16 // 16 Mb
 )
 
-// TODO: at startup we should clean-up all the Compute Instance and GPU Instance that are currently not being used
-// in order to recover from inconsistent geometries due to failures
 func main() {
 	// Setup CLI args
 	var configFile string
