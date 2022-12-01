@@ -14,4 +14,4 @@ kind: Kustomization
 images:
 - name: scheduler
   newName: ghcr.io/telemaco019/nebulnetes-scheduler
-  newTag: 0.0.1-alpha.1
+  newTag: 0.0.1-alpha.2
