@@ -101,14 +101,9 @@ according to the resources requested by the pods submitted to the cluster.
 
 
 ## MIG partitioning
-> ⚠️ Currently, the GPU Partitioner fully supports only Pods requesting a single MIG resource. If a pending Pod has
-> multiple containers requesting a MIG resource, only the resource requested by the first container will be taken into 
-> account when analysing partitioning changes.
-
-
-In the case of MIG partitioning, the agent that creates/deletes the MIG resources is the [MIG Agent](../config/migagent)
-,
-which is a daemonset running on every node labeled with `n8s.nebuly.ai/gpu-partitioning: mig`.
+In the case of MIG partitioning, the agent that creates/deletes the MIG resources is 
+the [MIG Agent](../config/migagent), which is a daemonset running on every node labeled 
+with `n8s.nebuly.ai/gpu-partitioning: mig`.
 
 The MIG Agent exposes to the GPU Partitioner the used/free MIG resources of all the GPUs of the node
 on which it is running through the following node annotations:
