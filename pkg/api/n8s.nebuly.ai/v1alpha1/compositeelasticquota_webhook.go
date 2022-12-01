@@ -29,7 +29,7 @@ import (
 )
 
 // log is for logging in this package.
-var ceqLog = logf.Log.WithName("compositeelasticquota-resource")
+var ceqLog = logf.Log.WithName("ceq-resource")
 
 func (r *CompositeElasticQuota) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	if client == nil {

@@ -29,7 +29,7 @@ import (
 )
 
 // log is for logging in this package.
-var eqlog = logf.Log.WithName("elasticquota-resource")
+var eqlog = logf.Log.WithName("eq-resource")
 
 func (r *ElasticQuota) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	if client == nil {

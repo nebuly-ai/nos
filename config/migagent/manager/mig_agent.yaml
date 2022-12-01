@@ -29,7 +29,7 @@ spec:
         app.kubernetes.io/component: mig-agent
     spec:
       nodeSelector:
-        n8s.nebuly.ai/auto-mig-enabled: "true"
+        n8s.nebuly.ai/gpu-partitioning: "mig"
       tolerations:
         - key: "kubernetes.azure.com/scalesetpriority"
           operator: "Equal"
