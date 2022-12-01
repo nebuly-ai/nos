@@ -121,38 +121,7 @@ func (c clientImpl) GetUsedMigDeviceResources(ctx context.Context) (DeviceResour
 	}
 
 	// Extract MIG devices
-	migResources := make([]resourceWithDeviceId, 0)
-	for _, r := range resources {
-		if r.isMigDevice() {
-			migResources = append(migResources, r)
-		}
-	}
-
-	// Retrieve MIG device ID and GPU index
-	migDevices := make([]DeviceResource, 0)
-	for _, r := range migResources {
-		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
-		if err != nil {
-			logger.Error(
-				err,
-				"unable to fetch GPU index of MIG resource",
-				"resourceName",
-				r.resourceName,
-			)
-			return nil, err
-		}
-		migDevice := DeviceResource{
-			Device: resource.Device{
-				ResourceName: r.resourceName,
-				DeviceId:     r.deviceId,
-				Status:       resource.StatusUsed,
-			},
-			GpuIndex: gpuIndex,
-		}
-		migDevices = append(migDevices, migDevice)
-	}
-
-	return migDevices, nil
+	return c.extractMigDevices(ctx, resources, resource.StatusUsed)
 }
 
 func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error) {
@@ -188,7 +157,7 @@ func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (Devic
 		resources = append(resources, res)
 	}
 
-	return c.extractMigDevices(ctx, resources)
+	return c.extractMigDevices(ctx, resources, resource.StatusUnknown)
 }
 
 // DeleteAllExcept deletes all the devices that are not in the list of devices to keep.
@@ -201,7 +170,7 @@ func (c clientImpl) DeleteAllExcept(_ context.Context, resourcesToKeep DeviceRes
 	return c.nvmlClient.DeleteAllMigDevicesExcept(idsToKeep)
 }
 
-func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId) ([]DeviceResource, gpu.Error) {
+func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId, devicesStatus resource.Status) ([]DeviceResource, gpu.Error) {
 	logger := klog.FromContext(ctx)
 
 	// Extract MIG devices
@@ -216,13 +185,17 @@ func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceW
 	migDevices := make([]DeviceResource, 0)
 	for _, r := range migResources {
 		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
+		if err.IsNotFound() {
+			logger.V(1).Info("could not find GPU index of MIG device", "MIG device ID", r.deviceId)
+			continue
+		}
 		if err != nil {
 			logger.Error(
 				err,
 				"unable to fetch GPU index",
-				"migResourceName",
+				"resourceName",
 				r.resourceName,
-				"migUUID",
+				"MIG device ID",
 				r.deviceId,
 			)
 			return nil, err
@@ -231,7 +204,7 @@ func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceW
 			Device: resource.Device{
 				ResourceName: r.resourceName,
 				DeviceId:     r.deviceId,
-				Status:       resource.StatusUnknown,
+				Status:       devicesStatus,
 			},
 			GpuIndex: gpuIndex,
 		}

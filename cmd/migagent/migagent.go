@@ -132,7 +132,7 @@ func main() {
 		sharedState,
 		migAgentConfig.ReportConfigIntervalSeconds*time.Second,
 	)
-	if err = migReporter.SetupWithManager(mgr, "MIGReporter", nodeName); err != nil {
+	if err = migReporter.SetupWithManager(mgr, "reporter", nodeName); err != nil {
 		setupLog.Error(err, "unable to create MIG Reporter")
 		os.Exit(1)
 	}
@@ -144,7 +144,7 @@ func main() {
 		sharedState,
 		nodeName,
 	)
-	if err = migActuator.SetupWithManager(mgr, "MIGActuator"); err != nil {
+	if err = migActuator.SetupWithManager(mgr, "actuator"); err != nil {
 		setupLog.Error(err, "unable to create MIG Actuator")
 		os.Exit(1)
 	}
