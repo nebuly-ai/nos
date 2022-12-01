@@ -186,10 +186,6 @@ func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceW
 	for _, r := range migResources {
 		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
 		if gpu.IgnoreNotFound(err) != nil {
-			logger.V(1).Info("could not find GPU index of MIG device", "MIG device ID", r.deviceId)
-			continue
-		}
-		if err != nil {
 			logger.Error(
 				err,
 				"unable to fetch GPU index",
@@ -199,6 +195,10 @@ func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceW
 				r.deviceId,
 			)
 			return nil, err
+		}
+		if gpu.IsNotFound(err) {
+			logger.V(1).Info("could not find GPU index of MIG device", "MIG device ID", r.deviceId)
+			continue
 		}
 		migDevice := DeviceResource{
 			Device: resource.Device{
