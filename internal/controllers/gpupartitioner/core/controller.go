@@ -83,7 +83,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	// Check if last plan has been reported
 	if waiting := c.waitingAnyNodeToReportPlan(); waiting {
 		logger.Info("last partitioning plan has not been reported by all nodes yet, waiting...")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	// Add pod to current batch only if it is pending and adding extra resources could make it schedulable
@@ -194,7 +194,7 @@ func (c *Controller) waitingAnyNodeToReportPlan() bool {
 
 func (c *Controller) waitingToReportPlan(n v1.Node) bool {
 	plan, ok := n.Annotations[v1alpha1.AnnotationPartitioningPlan]
-	if !ok {
+	if !ok || plan == "" {
 		return false
 	}
 	reported, ok := n.Annotations[v1alpha1.AnnotationReportedPartitioningPlan]

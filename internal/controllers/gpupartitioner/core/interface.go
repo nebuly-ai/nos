@@ -28,9 +28,9 @@ type PartitioningPlan struct {
 	id           string
 }
 
-func NewPartitioningPlan(state state.PartitioningState) PartitioningPlan {
+func NewPartitioningPlan(s state.PartitioningState) PartitioningPlan {
 	return PartitioningPlan{
-		DesiredState: state,
+		DesiredState: s,
 		id:           time.Now().UTC().String(),
 	}
 }

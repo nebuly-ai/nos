@@ -80,10 +80,6 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		var podNode v1.Node
 		nodeKey := client.ObjectKey{Namespace: "", Name: nodeName}
 		if err = c.Client.Get(ctx, nodeKey, &podNode); err != nil {
-			if apierrors.IsNotFound(err) {
-				logger.V(3).Info("node does not exist anymore, removing it from state", "node", nodeName)
-				c.clusterState.deleteNode(nodeName)
-			}
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
 		var podList v1.PodList
