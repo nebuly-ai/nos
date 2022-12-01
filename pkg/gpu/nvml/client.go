@@ -393,6 +393,9 @@ func (c *clientImpl) DeleteAllMigDevicesExcept(migDeviceIds []string) error {
 			if ret == nvlibNvml.ERROR_INVALID_ARGUMENT {
 				return nil
 			}
+			if ret == nvlibNvml.ERROR_IN_USE {
+				return nil
+			}
 			if ret != nvlibNvml.SUCCESS {
 				return gpu.GenericErr.Errorf("error destroying GPU instance: %s", ret.Error())
 			}
