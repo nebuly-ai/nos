@@ -19,6 +19,8 @@ package migstate
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
@@ -44,12 +46,30 @@ func (d migData) clone() *migData {
 }
 
 func NewClusterSnapshot(snapshot state.ClusterSnapshot) (MigClusterSnapshot, error) {
-	migNodes, err := asMigNodes(snapshot.GetNodes())
+	// Extract nodes with MIG partitioning enabled
+	nodes := make(map[string]framework.NodeInfo)
+	for k, v := range snapshot.GetNodes() {
+		if v.Node() == nil {
+			continue
+		}
+		partitioningKind, ok := v.Node().Labels[v1alpha1.LabelGpuPartitioning]
+		if !ok {
+			continue
+		}
+		if partitioningKind != gpu.PartitioningKindMig.String() {
+			continue
+		}
+		nodes[k] = v
+	}
+	filteredSnapshot := state.NewClusterSnapshot(nodes)
+
+	// Init MigClusterSnapshot
+	migNodes, err := asMigNodes(filteredSnapshot.GetNodes())
 	if err != nil {
 		return MigClusterSnapshot{}, err
 	}
 	return MigClusterSnapshot{
-		ClusterSnapshot: snapshot,
+		ClusterSnapshot: filteredSnapshot,
 		data:            &migData{migNodes: migNodes},
 	}, nil
 }
