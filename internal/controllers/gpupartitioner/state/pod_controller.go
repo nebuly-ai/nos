@@ -18,6 +18,7 @@ package state
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -81,6 +82,10 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		nodeKey := client.ObjectKey{Namespace: "", Name: nodeName}
 		if err = c.Client.Get(ctx, nodeKey, &podNode); err != nil {
 			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
+		// if GPU partitioning is not enabled on the node then ignore it
+		if _, ok := podNode.Labels[v1alpha1.LabelGpuPartitioning]; !ok {
+			return ctrl.Result{}, nil
 		}
 		var podList v1.PodList
 		if err = c.Client.List(ctx, &podList, client.MatchingFields{constant.PodNodeNameKey: nodeName}); err != nil {
