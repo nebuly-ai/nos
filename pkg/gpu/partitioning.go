@@ -16,6 +16,11 @@
 
 package gpu
 
+import (
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	v1 "k8s.io/api/core/v1"
+)
+
 type PartitioningKind string
 
 func (p PartitioningKind) String() string {
@@ -27,3 +32,12 @@ const (
 	PartitioningKindTimeSlicing PartitioningKind = "time-slicing"
 	PartitioningKindHybrid      PartitioningKind = "hybrid"
 )
+
+// IsMigPartitioningEnabled returns true if the node is enabled for automatic MIG GPU partitioning, false otherwise
+func IsMigPartitioningEnabled(node v1.Node) bool {
+	partitioningKind, ok := node.Labels[v1alpha1.LabelGpuPartitioning]
+	if !ok {
+		return false
+	}
+	return partitioningKind == PartitioningKindMig.String()
+}

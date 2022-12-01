@@ -19,7 +19,6 @@ package migstate
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
@@ -52,11 +51,7 @@ func NewClusterSnapshot(snapshot state.ClusterSnapshot) (MigClusterSnapshot, err
 		if v.Node() == nil {
 			continue
 		}
-		partitioningKind, ok := v.Node().Labels[v1alpha1.LabelGpuPartitioning]
-		if !ok {
-			continue
-		}
-		if partitioningKind != gpu.PartitioningKindMig.String() {
+		if !gpu.IsMigPartitioningEnabled(*v.Node()) {
 			continue
 		}
 		nodes[k] = v
