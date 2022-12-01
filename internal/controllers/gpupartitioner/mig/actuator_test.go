@@ -24,6 +24,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -74,7 +75,9 @@ func TestActuator__Apply(t *testing.T) {
 		{
 			name: "Empty desired state: should do nothing",
 			snapshotNodes: map[string]v1.Node{
-				"node-1": factory.BuildNode("node-1").Get(),
+				"node-1": factory.BuildNode("node-1").WithLabels(map[string]string{
+					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+				}).Get(),
 			},
 			desiredState:        map[string]state.NodePartitioning{},
 			expectedAnnotations: map[string]map[string]string{},
@@ -95,6 +98,7 @@ func TestActuator__Apply(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
 					}).
 					Get(),
 			},
@@ -153,6 +157,7 @@ func TestActuator__Apply(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
 					}).
 					Get(),
 			},
