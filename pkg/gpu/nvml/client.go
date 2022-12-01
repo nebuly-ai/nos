@@ -378,7 +378,11 @@ func (c *clientImpl) DeleteAllMigDevicesExcept(migDeviceIds []string) error {
 				if util.InSlice(ciDeviceId, migDeviceIds) {
 					return nil
 				}
-				if ret = gi.Destroy(); ret != nvlibNvml.SUCCESS {
+				ret = ci.Destroy()
+				if ret == nvlibNvml.ERROR_INVALID_ARGUMENT {
+					return nil
+				}
+				if ret != nvlibNvml.SUCCESS {
 					return gpu.GenericErr.Errorf("error destroying compute instance: %s", ret.Error())
 				}
 				c.logger.Info("deleted compute instance", "ComputeInstanceId", ciInfo.Id)
@@ -391,9 +395,6 @@ func (c *clientImpl) DeleteAllMigDevicesExcept(migDeviceIds []string) error {
 			// Delete GPU instance
 			ret = gi.Destroy()
 			if ret == nvlibNvml.ERROR_INVALID_ARGUMENT {
-				return nil
-			}
-			if ret == nvlibNvml.ERROR_IN_USE {
 				return nil
 			}
 			if ret != nvlibNvml.SUCCESS {
