@@ -401,6 +401,52 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			expectedErr: false,
 		},
+		{
+			name: "Geometry change with some MIG profiles in common",
+			snapshotNodes: []v1.Node{
+				factory.BuildNode("node-1").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g10gb): "1",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(mig.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						mig.Profile1g10gb.AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
+					Get(),
+			},
+			candidatePods: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile2g20gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile4g40gb.AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+			},
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					Resources: map[v1.ResourceName]int{
+						mig.Profile4g40gb.AsResourceName(): 1,
+						mig.Profile2g20gb.AsResourceName(): 1,
+						mig.Profile1g10gb.AsResourceName(): 1,
+					},
+				},
+			},
+			expectedErr: false,
+		},
 	}
 
 	for _, tt := range testCases {
