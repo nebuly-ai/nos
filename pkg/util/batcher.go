@@ -28,23 +28,35 @@ type Batcher[T any] struct {
 	timeoutDuration time.Duration
 	batchChan       chan []T
 	running         bool
+
+	batch        []T
+	idleTimer    *time.Timer
+	timeoutTimer *time.Timer
 }
 
 func NewBatcher[T any](timeoutDuration time.Duration, idleDuration time.Duration) Batcher[T] {
+	idleTimer := time.NewTimer(0 * time.Millisecond)
+	timeoutTimer := time.NewTimer(0 * time.Millisecond)
 	return Batcher[T]{
 		trigger:         make(chan T),
 		timeoutDuration: timeoutDuration,
 		idleDuration:    idleDuration,
-		batchChan:       make(chan []T),
+		batchChan:       make(chan []T, 1),
+		idleTimer:       idleTimer,
+		timeoutTimer:    timeoutTimer,
 	}
 }
 
 func NewBufferedBatcher[T any](timeoutDuration time.Duration, idleDuration time.Duration, bufferSize int) Batcher[T] {
+	idleTimer := time.NewTimer(0 * time.Millisecond)
+	timeoutTimer := time.NewTimer(0 * time.Millisecond)
 	return Batcher[T]{
 		trigger:         make(chan T, bufferSize),
 		timeoutDuration: timeoutDuration,
 		idleDuration:    idleDuration,
-		batchChan:       make(chan []T),
+		batchChan:       make(chan []T, 1),
+		idleTimer:       idleTimer,
+		timeoutTimer:    timeoutTimer,
 	}
 }
 
@@ -64,35 +76,34 @@ func (b *Batcher[T]) Start(ctx context.Context) error {
 	b.running = true
 
 	// Init
-	var batch []T
-	var idleTimer = time.NewTimer(0 * time.Millisecond)
-	var timeoutTimer = time.NewTimer(0 * time.Millisecond)
-	var reset = func() {
-		batch = make([]T, 0)
-		stopTimer(idleTimer)
-		stopTimer(timeoutTimer)
+	b.Reset()
+
+	sendBatch := func() {
+		select {
+		case b.batchChan <- b.batch:
+		default:
+		}
 	}
-	reset()
 
 	// Run
 	for {
 		select {
 		case item := <-b.trigger:
-			if len(batch) == 0 {
-				resetTimer(timeoutTimer, b.timeoutDuration)
+			if len(b.batch) == 0 {
+				ResetTimer(b.timeoutTimer, b.timeoutDuration)
 			}
-			batch = append(batch, item)
-			resetTimer(idleTimer, b.idleDuration)
-		case <-idleTimer.C:
-			b.batchChan <- batch
-			reset()
-		case <-timeoutTimer.C:
-			b.batchChan <- batch
-			reset()
+			b.batch = append(b.batch, item)
+			ResetTimer(b.idleTimer, b.idleDuration)
+		case <-b.idleTimer.C:
+			sendBatch()
+			b.stopTimersAndInitBatch()
+		case <-b.timeoutTimer.C:
+			sendBatch()
+			b.stopTimersAndInitBatch()
 		case <-ctx.Done():
 			// Stop
-			stopTimer(timeoutTimer)
-			stopTimer(idleTimer)
+			StopTimer(b.timeoutTimer)
+			StopTimer(b.idleTimer)
 			b.running = false
 			return nil
 		}
@@ -103,17 +114,17 @@ func (b *Batcher[T]) Ready() chan []T {
 	return b.batchChan
 }
 
-func resetTimer(timer *time.Timer, duration time.Duration) {
-	stopTimer(timer)
-	timer.Reset(duration)
+// Reset resets the batcher by resetting the timers and clearing the current batch
+func (b *Batcher[T]) Reset() {
+	b.stopTimersAndInitBatch()
+	select {
+	case <-b.batchChan:
+	default:
+	}
 }
 
-// stopTimer stops and drains the provided timer
-func stopTimer(timer *time.Timer) {
-	if !timer.Stop() {
-		select {
-		case <-timer.C:
-		default:
-		}
-	}
+func (b *Batcher[T]) stopTimersAndInitBatch() {
+	StopTimer(b.idleTimer)
+	StopTimer(b.timeoutTimer)
+	b.batch = make([]T, 0)
 }

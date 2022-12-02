@@ -75,7 +75,7 @@ func TestBatcher__Ready(t *testing.T) {
 		case batch := <-podBatcher.Ready():
 			assert.Len(t, batch, 1)
 		case <-timeoutTimer.C:
-			assert.Fail(t, "")
+			assert.Fail(t, "timeout")
 		}
 	})
 
@@ -246,5 +246,45 @@ func TestBatcher__Ready(t *testing.T) {
 			actualPodNames = append(actualPodNames, p.Name)
 		}
 		assert.Equal(t, expectedPodNames, actualPodNames)
+	})
+
+	t.Run("After batch is ready it can be consumed only one time", func(t *testing.T) {
+		pods := []v1.Pod{
+			factory.BuildPod("ns-1", "pd-1").Get(),
+			factory.BuildPod("ns-1", "pd-2").Get(),
+			factory.BuildPod("ns-1", "pd-3").Get(),
+		}
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		timeoutDuration := 3 * time.Second
+		idleDuration := 1 * time.Second
+		podBatcher := util.NewBufferedBatcher[v1.Pod](timeoutDuration, idleDuration, 5)
+
+		// Start the batcher
+		startBatcher(t, ctx, &podBatcher)
+
+		// Add pods to batch
+		go func() {
+			for _, p := range pods {
+				podBatcher.Add(p)
+			}
+		}()
+
+		// read the batch
+		var batch []v1.Pod
+		select {
+		case batch = <-podBatcher.Ready():
+		case <-time.NewTimer(testTimeout).C:
+			assert.Fail(t, "test timed out")
+		}
+
+		assert.Len(t, batch, 3)
+		select {
+		case <-podBatcher.Ready():
+			assert.Fail(t, "batch already consumed, it should not be possible to read it again")
+		default:
+		}
 	})
 }

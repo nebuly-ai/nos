@@ -80,12 +80,6 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Check if last plan has been reported
-	if waiting := c.waitingAnyNodeToReportPlan(); waiting {
-		logger.Info("last partitioning plan has not been reported by all nodes yet, waiting...")
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-	}
-
 	// Add pod to current batch only if it is pending and adding extra resources could make it schedulable
 	if !pod.ExtraResourcesCouldHelpScheduling(instance) {
 		logger.V(3).Info("pod does not require extra resources to be scheduled, skipping it",
@@ -95,6 +89,13 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			instance.Namespace,
 		)
 		return ctrl.Result{}, nil
+	}
+
+	// Check if last plan has been reported
+	if waiting := c.waitingAnyNodeToReportPlan(); waiting {
+		logger.V(1).Info("last partitioning plan has not been reported by all nodes yet, skipping reconcile")
+		c.podBatcher.Reset()
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	// Add Pod to current batch only if not already present
@@ -120,9 +121,8 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
 	}
 
-	// If batch is empty and there are no new pending pods, requeue after some time
-	// to try to process again the pending pods
-	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+	c.podBatcher.Reset()
+	return ctrl.Result{}, nil
 }
 
 func (c *Controller) processPendingPods(ctx context.Context) error {
