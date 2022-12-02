@@ -147,7 +147,7 @@ func (c *Controller) processPendingPods(ctx context.Context) error {
 			pods = append(pods, p)
 		}
 	}
-	logger.Info(fmt.Sprintf("%d out of %d pending pods could be helped", len(allPendingPods), len(pods)))
+	logger.Info(fmt.Sprintf("%d out of %d pending pods could be helped", len(pods), len(allPendingPods)))
 	if len(allPendingPods) == 0 {
 		return nil
 	}
