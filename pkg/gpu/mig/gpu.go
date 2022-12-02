@@ -23,6 +23,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"sort"
+	"strings"
 )
 
 // Geometry corresponds to the MIG Geometry of a GPU,
@@ -39,7 +40,12 @@ func (g Geometry) AsResources() map[v1.ResourceName]int {
 }
 
 func (g Geometry) Id() string {
-	return g.String() // todo: maybe better to use hash?
+	var builder strings.Builder
+	for p, q := range g {
+		builder.WriteString(fmt.Sprintf("%s%d", p, q))
+	}
+	str := builder.String()
+	return util.HashFnv32a(str)
 }
 
 func (g Geometry) String() string {
@@ -52,11 +58,11 @@ func (g Geometry) String() string {
 		return orderedProfiles[i] < orderedProfiles[j]
 	})
 	// Build string
-	var result string
+	var builder strings.Builder
 	for _, profile := range orderedProfiles {
-		result += fmt.Sprintf("%s:%d, ", profile, g[profile])
+		builder.WriteString(fmt.Sprintf("%s:%d, ", profile, g[profile]))
 	}
-	return result
+	return builder.String()
 }
 
 type GPUModel string

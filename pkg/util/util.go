@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/exp/constraints"
+	"hash/fnv"
 	"k8s.io/apimachinery/pkg/types"
 	"math/rand"
 	"net/url"
@@ -189,4 +190,10 @@ func LocalEndpoint(path, file string) (string, error) {
 		Path:   path,
 	}
 	return filepath.Join(u.String(), file+".sock"), nil
+}
+
+func HashFnv32a(str string) string {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(str))
+	return string(h.Sum(nil))
 }
