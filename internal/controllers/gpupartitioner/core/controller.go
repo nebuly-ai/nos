@@ -79,6 +79,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if err := c.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	var namespacedName = util.GetNamespacedName(&instance).String()
 
 	// Add pod to current batch only if it is pending and adding extra resources could make it schedulable
 	if !pod.ExtraResourcesCouldHelpScheduling(instance) {
@@ -88,6 +89,14 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 			"namespace",
 			instance.Namespace,
 		)
+		if _, ok := c.currentBatch[namespacedName]; !ok {
+			return ctrl.Result{}, nil
+		}
+		// Pod in is current batch but now is schedulable, remove it from current batch
+		delete(c.currentBatch, namespacedName)
+		if len(c.currentBatch) == 0 {
+			c.podBatcher.Reset()
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -99,9 +108,9 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	// Add Pod to current batch only if not already present
-	if _, ok := c.currentBatch[util.GetNamespacedName(&instance).String()]; !ok {
+	if _, ok := c.currentBatch[namespacedName]; !ok {
 		c.podBatcher.Add(instance)
-		c.currentBatch[util.GetNamespacedName(&instance).String()] = instance
+		c.currentBatch[namespacedName] = instance
 		logger.V(1).Info("batch updated", "pod", instance.Name, "namespace", instance.Namespace)
 	}
 
