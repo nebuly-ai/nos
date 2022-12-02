@@ -118,7 +118,7 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// If batch is not ready then requeue after 1 second
 	if len(c.currentBatch) > 0 {
-		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
 	c.podBatcher.Reset()
