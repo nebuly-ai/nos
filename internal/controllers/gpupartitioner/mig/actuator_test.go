@@ -97,7 +97,7 @@ func TestActuator__Apply(t *testing.T) {
 						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
 					}).
 					WithLabels(map[string]string{
-						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
 						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
 					}).
 					Get(),
@@ -156,7 +156,7 @@ func TestActuator__Apply(t *testing.T) {
 						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
 					}).
 					WithLabels(map[string]string{
-						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
 						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
 					}).
 					Get(),

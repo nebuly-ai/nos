@@ -18,17 +18,12 @@ package mig
 
 import (
 	"fmt"
-)
-
-const (
-	GPUModel_A100_SXM4_40GB GPUModel = "NVIDIA-A100-40GB-SXM4"
-	GPUModel_A100_PCIe_80GB GPUModel = "NVIDIA-A100-80GB-PCIe"
-	GPUModel_A30            GPUModel = "A30"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 )
 
 var (
-	defaultKnownMigGeometries = map[GPUModel][]Geometry{
-		GPUModel_A30: {
+	defaultKnownMigGeometries = map[gpu.Model][]Geometry{
+		gpu.GPUModel_A30: {
 			{
 				Profile4g24gb: 1,
 			},
@@ -43,7 +38,7 @@ var (
 				Profile1g6gb: 4,
 			},
 		},
-		GPUModel_A100_SXM4_40GB: {
+		gpu.GPUModel_A100_SXM4_40GB: {
 			{
 				Profile7g40gb: 1,
 			},
@@ -93,7 +88,7 @@ var (
 				Profile1g5gb: 7,
 			},
 		},
-		GPUModel_A100_PCIe_80GB: {
+		gpu.GPUModel_A100_PCIe_80GB: {
 			{
 				Profile7g79gb: 1,
 			},
@@ -146,7 +141,7 @@ var (
 	}
 )
 
-func SetKnownGeometries(configs map[GPUModel][]Geometry) error {
+func SetKnownGeometries(configs map[gpu.Model][]Geometry) error {
 	if err := validateConfigs(configs); err != nil {
 		return err
 	}
@@ -154,19 +149,19 @@ func SetKnownGeometries(configs map[GPUModel][]Geometry) error {
 	return nil
 }
 
-func GetKnownGeometries() map[GPUModel][]Geometry {
+func GetKnownGeometries() map[gpu.Model][]Geometry {
 	if defaultKnownMigGeometries == nil {
-		return map[GPUModel][]Geometry{}
+		return map[gpu.Model][]Geometry{}
 	}
 	return defaultKnownMigGeometries
 }
 
-func GetAllowedGeometries(model GPUModel) ([]Geometry, bool) {
+func GetAllowedGeometries(model gpu.Model) ([]Geometry, bool) {
 	configs, ok := GetKnownGeometries()[model]
 	return configs, ok
 }
 
-func validateConfigs(configs map[GPUModel][]Geometry) error {
+func validateConfigs(configs map[gpu.Model][]Geometry) error {
 	if len(configs) == 0 {
 		return fmt.Errorf("no known configs provided")
 	}
