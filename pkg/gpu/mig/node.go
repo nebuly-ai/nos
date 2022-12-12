@@ -18,11 +18,9 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
-	"strconv"
 )
 
 type Node struct {
@@ -39,11 +37,11 @@ type Node struct {
 //
 // If the v1.Node provided as arg does not have the GPU Product label, returned node will not contain any mig.GPU.
 func NewNode(n v1.Node) (Node, error) {
-	gpuModel, ok := getGPUModel(n)
+	gpuModel, ok := gpu.GetModel(n)
 	if !ok {
 		return Node{Name: n.Name, GPUs: make([]GPU, 0)}, nil
 	}
-	gpuCount, _ := getGPUCount(n)
+	gpuCount, _ := gpu.GetCount(n)
 
 	gpus, err := extractGPUs(n, gpuModel, gpuCount)
 	if err != nil {
@@ -86,22 +84,6 @@ func extractGPUs(node v1.Node, gpuModel gpu.Model, gpuCount int) ([]GPU, error) 
 	}
 
 	return result, nil
-}
-
-func getGPUModel(node v1.Node) (gpu.Model, bool) {
-	if val, ok := node.Labels[constant.LabelNvidiaProduct]; ok {
-		return gpu.Model(val), true
-	}
-	return "", false
-}
-
-func getGPUCount(node v1.Node) (int, bool) {
-	if val, ok := node.Labels[constant.LabelNvidiaCount]; ok {
-		if valAsInt, err := strconv.Atoi(val); err == nil {
-			return valAsInt, true
-		}
-	}
-	return 0, false
 }
 
 // UpdateGeometryFor tries to update the MIG geometry of each single GPU of the node in order to create the MIG profiles

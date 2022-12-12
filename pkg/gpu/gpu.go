@@ -9,7 +9,6 @@ const (
 )
 
 type GPU struct {
-	Index    int
 	Model    Model
 	MemoryGB int
 }
