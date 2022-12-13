@@ -69,6 +69,8 @@ github.com/Microsoft/go-winio v0.4.17 h1:iT12IBVClFevaf8PuVyi3UmZOVh4OqnaLxDTW2O
 github.com/Microsoft/go-winio v0.4.17/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
 github.com/NVIDIA/go-nvml v0.11.6-0.0.20220823120812-7e2082095e82 h1:x751Xx1tdxkiA/sdkv2J769n21UbYKzVOpe9S/h1M3k=
 github.com/NVIDIA/go-nvml v0.11.6-0.0.20220823120812-7e2082095e82/go.mod h1:hy7HYeQy335x6nEss0Ne3PYqleRa6Ct+VKD9RQ4nyFs=
+github.com/NVIDIA/k8s-device-plugin v0.13.0 h1:iFDYn7+JMckxBWNNvHfmEa1s0hBNNICJCVgsMwwUp3E=
+github.com/NVIDIA/k8s-device-plugin v0.13.0/go.mod h1:EvCILHqyuoq/QbNwpqxkM97fZ/R1U74HwNV0MRfy7OU=
 github.com/NYTimes/gziphandler v1.1.1 h1:ZUDjpQae29j0ryrS0u/B8HZfJBtBQHjqw2rQ2cqUQ3I=
 github.com/NYTimes/gziphandler v1.1.1/go.mod h1:n/CVRwUEOgIxrgPvAQhUUr9oeUtvrhMomdKFjzJNB0c=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=

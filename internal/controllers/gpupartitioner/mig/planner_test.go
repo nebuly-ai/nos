@@ -75,7 +75,7 @@ func TestPlanner__Plan(t *testing.T) {
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, mig.Profile4g20gb): "1", // node provides required MIG resource, but it's used
+						fmt.Sprintf(mig.AnnotationUsedMigStatusFormat, 0, mig.Profile4g20gb): "1", // node provides required MIG resource, but it's used
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
@@ -87,7 +87,7 @@ func TestPlanner__Plan(t *testing.T) {
 					Get(),
 				factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb): "1",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb): "1",
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
@@ -128,7 +128,7 @@ func TestPlanner__Plan(t *testing.T) {
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile4g24gb): "1",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile4g24gb): "1",
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
@@ -179,7 +179,7 @@ func TestPlanner__Plan(t *testing.T) {
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile4g24gb): "1",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile4g24gb): "1",
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
@@ -230,7 +230,7 @@ func TestPlanner__Plan(t *testing.T) {
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile4g24gb): "1",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile4g24gb): "1",
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
@@ -317,8 +317,8 @@ func TestPlanner__Plan(t *testing.T) {
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g6gb): "4",
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile1g6gb): "4",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile1g6gb): "4",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 1, mig.Profile1g6gb): "4",
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
@@ -331,8 +331,8 @@ func TestPlanner__Plan(t *testing.T) {
 					Get(),
 				factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb):  "5",
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile2g10gb): "1",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb):  "5",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile2g10gb): "1",
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
@@ -406,7 +406,7 @@ func TestPlanner__Plan(t *testing.T) {
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g10gb): "1",
+						fmt.Sprintf(mig.AnnotationFreeMigStatusFormat, 0, mig.Profile1g10gb): "1",
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),

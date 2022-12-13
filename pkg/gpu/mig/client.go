@@ -62,7 +62,7 @@ func NewClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Cl
 // CreateMigResources still tries to create the resources on the other GPUs and returns the ones that
 // it possible to create. This means that if any error happens, the returned ProfileList will be a subset
 // of the input list, otherwise the two lists will have the same length and items.
-func (c clientImpl) CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, error) {
+func (c clientImpl) CreateMigResources(_ context.Context, profileList ProfileList) (ProfileList, error) {
 	var errors = make(gpu.ErrorList, 0)
 	var createdProfiles = make(ProfileList, 0)
 	for gpuIndex, profiles := range profileList.GroupByGPU() {

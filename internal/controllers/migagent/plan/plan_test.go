@@ -18,7 +18,6 @@ package plan
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
@@ -37,9 +36,9 @@ func TestNewMigConfigPlan(t *testing.T) {
 			name:  "Empty state",
 			state: map[int]mig.DeviceResourceList{},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.20gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "2",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.20gb"): "1",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "2",
 			},
 			expectedDeleteOps: DeleteOperationList{},
 			expectedCreateOps: CreateOperationList{
@@ -173,7 +172,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "1",
 			},
 			expectedCreateOps: CreateOperationList{},
 			expectedDeleteOps: DeleteOperationList{
@@ -240,8 +239,8 @@ func TestNewMigConfigPlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "4",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "4",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1",
 			},
 			expectedCreateOps: CreateOperationList{
 				{
@@ -329,9 +328,9 @@ func TestNewMigConfigPlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "3", // unchanged
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.20gb"): "1", // new device
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1", // unchanged
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "3", // unchanged
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "2g.20gb"): "1", // new device
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1", // unchanged
 			},
 			expectedCreateOps: CreateOperationList{
 				{

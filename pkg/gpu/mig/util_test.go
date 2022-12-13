@@ -18,7 +18,6 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"
@@ -128,35 +127,35 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		{
 			name: "Matches",
 			status: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
 			},
 			expected: true,
 		},
 		{
 			name: "Do not matches",
 			status: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "4g.40gb"): "1",
+				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "4g.40gb"): "1",
 			},
 			expected: false,
 		},

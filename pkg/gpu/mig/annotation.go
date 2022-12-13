@@ -31,6 +31,20 @@ var (
 	numberBeginningLineRegex = regexp.MustCompile(`\d+`)
 )
 
+var (
+	AnnotationFreeMigStatusFormat = fmt.Sprintf(
+		"%s-%%d-%%s-%s",
+		v1alpha1.AnnotationGPUStatusPrefix,
+		v1alpha1.AnnotationGPUStatusFreeSuffix,
+	)
+	AnnotationUsedMigStatusFormat = fmt.Sprintf(
+		"%s-%%d-%%s-%s",
+		v1alpha1.AnnotationGPUStatusPrefix,
+		v1alpha1.AnnotationGPUStatusUsedSuffix,
+	)
+	AnnotationGPUMigSpecFormat = fmt.Sprintf("%s-%%d-%%s", v1alpha1.AnnotationGPUSpecPrefix)
+)
+
 type GPUSpecAnnotationList []GPUSpecAnnotation
 
 func (l GPUSpecAnnotationList) GroupByGpuIndex() map[int]GPUSpecAnnotationList {
@@ -79,7 +93,7 @@ func NewGPUSpecAnnotationFromNodeAnnotation(key, value string) (GPUSpecAnnotatio
 
 func NewGpuSpecAnnotation(gpuIndex int, profile ProfileName, quantity int) GPUSpecAnnotation {
 	return GPUSpecAnnotation{
-		Name:     fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, gpuIndex, profile),
+		Name:     fmt.Sprintf(AnnotationGPUMigSpecFormat, gpuIndex, profile),
 		Quantity: quantity,
 	}
 }
@@ -278,13 +292,13 @@ func ComputeStatusAnnotations(used []DeviceResource, free []DeviceResource) []GP
 	// Used annotations
 	for _, u := range used {
 		quantity := usedMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
+		key := fmt.Sprintf(AnnotationUsedMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
 		annotationToQuantity[key] = quantity
 	}
 	// Free annotations
 	for _, u := range free {
 		quantity := freeMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
+		key := fmt.Sprintf(AnnotationFreeMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
 		annotationToQuantity[key] = quantity
 	}
 

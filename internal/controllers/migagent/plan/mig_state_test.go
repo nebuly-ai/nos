@@ -18,7 +18,6 @@ package plan
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
@@ -74,9 +73,9 @@ func TestMigState_Matches(t *testing.T) {
 				},
 			},
 			spec: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "2",
 			},
 			expected: true,
 		},

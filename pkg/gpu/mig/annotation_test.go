@@ -18,7 +18,6 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -33,7 +32,7 @@ func TestGPUSpecAnnotation_GetGPUIndex(t *testing.T) {
 	}{
 		{
 			name:       "Get Index",
-			annotation: fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 			expected:   2,
 		},
 	}
@@ -55,7 +54,7 @@ func TestGPUSpecAnnotation_GetMigProfile(t *testing.T) {
 	}{
 		{
 			name:       "Get MIG profile",
-			annotation: fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 			expected:   "1g.10gb",
 		},
 	}
@@ -77,7 +76,7 @@ func TestGPUSpecAnnotation_GetGpuIndexWithMigProfile(t *testing.T) {
 	}{
 		{
 			name:       "Get GPU index with MIG profile",
-			annotation: fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 			expected:   "2-1g.10gb",
 		},
 	}
@@ -106,11 +105,11 @@ func TestGPUStatusAnnotationList_GetFree(t *testing.T) {
 			name: "Only used annotations",
 			list: GPUStatusAnnotationList{
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 			},
@@ -120,29 +119,29 @@ func TestGPUStatusAnnotationList_GetFree(t *testing.T) {
 			name: "Used and Free annotations, only Free are returned",
 			list: GPUStatusAnnotationList{
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 			},
 			expected: GPUStatusAnnotationList{
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 			},
@@ -172,11 +171,11 @@ func TestGPUStatusAnnotationList_GetUsed(t *testing.T) {
 			name: "Only free annotations",
 			list: GPUStatusAnnotationList{
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 			},
@@ -186,29 +185,29 @@ func TestGPUStatusAnnotationList_GetUsed(t *testing.T) {
 			name: "Used and Free annotations, only Used are returned",
 			list: GPUStatusAnnotationList{
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 			},
 			expected: GPUStatusAnnotationList{
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
 					Quantity: 2,
 				},
 				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
 					Quantity: 1,
 				},
 			},
@@ -241,9 +240,9 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 			node: factory.BuildNode("test").
 				WithAnnotations(
 					map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 2, "1g.10gb"): "1",
-						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "2g.10gb"): "2",
-						"n8s.nebuly.ai/status-gpu-0-1g.10gb-free":                      "3",
+						fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"): "1",
+						fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "2g.10gb"): "2",
+						"n8s.nebuly.ai/status-gpu-0-1g.10gb-free":             "3",
 					},
 				).
 				Get(),
@@ -255,11 +254,11 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 			},
 			expectedSpecAnnotations: []GPUSpecAnnotation{
 				{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+					Name:     fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 					Quantity: 1,
 				},
 				{
-					Name:     fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "2g.10gb"),
+					Name:     fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "2g.10gb"),
 					Quantity: 2,
 				},
 			},
