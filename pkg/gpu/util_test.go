@@ -30,13 +30,13 @@ func TestGetMemoryGB(t *testing.T) {
 		name        string
 		node        v1.Node
 		expectedVal int
-		expectedOk  bool
+		expectedErr bool
 	}{
 		{
 			name:        "no label",
 			node:        factory.BuildNode("node-1").Get(),
 			expectedVal: 0,
-			expectedOk:  false,
+			expectedErr: true,
 		},
 		{
 			name: "label with invalid value",
@@ -44,7 +44,7 @@ func TestGetMemoryGB(t *testing.T) {
 				constant.LabelNvidiaMemory: "invalid",
 			}).Get(),
 			expectedVal: 0,
-			expectedOk:  false,
+			expectedErr: true,
 		},
 		{
 			name: "memory value gets rounded up to the nearest GB",
@@ -52,15 +52,18 @@ func TestGetMemoryGB(t *testing.T) {
 				constant.LabelNvidiaMemory: "1100",
 			}).Get(),
 			expectedVal: 2,
-			expectedOk:  true,
+			expectedErr: false,
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			gb, ok := gpu.GetMemoryGB(tt.node)
-			assert.Equal(t, tt.expectedVal, gb)
-			assert.Equal(t, tt.expectedOk, ok)
+			gb, err := gpu.GetMemoryGB(tt.node)
+			if tt.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.Equal(t, tt.expectedVal, gb)
+			}
 		})
 	}
 }

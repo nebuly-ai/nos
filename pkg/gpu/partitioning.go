@@ -41,3 +41,13 @@ func IsMigPartitioningEnabled(node v1.Node) bool {
 	}
 	return partitioningKind == PartitioningKindMig.String()
 }
+
+// IsTimeSlicingPartitioningEnabled returns true if the node is enabled for
+// automatic time-slicing GPU partitioning, false otherwise
+func IsTimeSlicingPartitioningEnabled(node v1.Node) bool {
+	partitioningKind, ok := node.Labels[v1alpha1.LabelGpuPartitioning]
+	if !ok {
+		return false
+	}
+	return partitioningKind == PartitioningKindTimeSlicing.String()
+}

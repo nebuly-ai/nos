@@ -17,6 +17,7 @@
 package gpu
 
 import (
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"k8s.io/api/core/v1"
 	"math"
@@ -25,33 +26,46 @@ import (
 
 // GetModel returns the model of the GPUs on the node.
 // It is assumed that all the GPUs of the node are of the same model.
-func GetModel(node v1.Node) (Model, bool) {
-	if val, ok := node.Labels[constant.LabelNvidiaProduct]; ok {
-		return Model(val), true
+func GetModel(node v1.Node) (Model, error) {
+	val, ok := node.Labels[constant.LabelNvidiaProduct]
+	if !ok {
+		return "", fmt.Errorf(
+			"cannot get GPU model from node labels, missing label %s",
+			constant.LabelNvidiaProduct,
+		)
 	}
-	return "", false
+	return Model(val), nil
 }
 
 // GetCount returns the number of GPUs on the node.
-func GetCount(node v1.Node) (int, bool) {
-	if val, ok := node.Labels[constant.LabelNvidiaCount]; ok {
-		if valAsInt, err := strconv.Atoi(val); err == nil {
-			return valAsInt, true
-		}
+func GetCount(node v1.Node) (int, error) {
+	val, ok := node.Labels[constant.LabelNvidiaCount]
+	if !ok {
+		return 0, fmt.Errorf(
+			"cannot get GPU count from node labels, missing label %s",
+			constant.LabelNvidiaCount,
+		)
 	}
-	return 0, false
+	valAsInt, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, err
+	}
+	return valAsInt, nil
 }
 
 // GetMemoryGB returns the amount of memory GB of the GPUs on the node.
-func GetMemoryGB(node v1.Node) (int, bool) {
+func GetMemoryGB(node v1.Node) (int, error) {
 	memoryStr, ok := node.Labels[constant.LabelNvidiaMemory]
 	if !ok {
-		return 0, false
+		return 0, fmt.Errorf(
+			"cannot get GPU Memory GB from node labels, missing label %s",
+			constant.LabelNvidiaMemory,
+		)
 	}
 	memoryBytes, err := strconv.Atoi(memoryStr)
 	if err != nil {
-		return 0, false
+		return 0, err
 	}
 	memoryGb := math.Ceil(float64(memoryBytes) / 1000)
-	return int(memoryGb), true
+	return int(memoryGb), nil
 }

@@ -37,8 +37,8 @@ type Node struct {
 //
 // If the v1.Node provided as arg does not have the GPU Product label, returned node will not contain any mig.GPU.
 func NewNode(n v1.Node) (Node, error) {
-	gpuModel, ok := gpu.GetModel(n)
-	if !ok {
+	gpuModel, err := gpu.GetModel(n)
+	if err != nil {
 		return Node{Name: n.Name, GPUs: make([]GPU, 0)}, nil
 	}
 	gpuCount, _ := gpu.GetCount(n)

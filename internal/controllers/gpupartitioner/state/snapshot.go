@@ -112,14 +112,6 @@ func (c *ClusterSnapshot) GetNodes() map[string]framework.NodeInfo {
 	return c.getData().nodes
 }
 
-func (c *ClusterSnapshot) GetNodeNames() []string {
-	nodeNames := make([]string, 0, len(c.GetNodes()))
-	for node := range c.GetNodes() {
-		nodeNames = append(nodeNames, node)
-	}
-	return nodeNames
-}
-
 func (c *ClusterSnapshot) GetNode(name string) (framework.NodeInfo, bool) {
 	node, found := c.GetNodes()[name]
 	return node, found
