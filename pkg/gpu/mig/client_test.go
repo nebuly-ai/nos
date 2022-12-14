@@ -73,42 +73,6 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 			expectedError:        true,
 		},
 		{
-			name: "List pod resources returns a GPU associated with many device IDs",
-			listPodResourcesResp: pdrv1.ListPodResourcesResponse{
-				PodResources: []*pdrv1.PodResources{
-					{
-						Name:      "pod-1",
-						Namespace: "ns-1",
-						Containers: []*pdrv1.ContainerResources{
-							{
-								Name: "container-2",
-								Devices: []*pdrv1.ContainerDevices{
-									{
-										ResourceName: "nebuly.ai/custom-resource",
-										DeviceIds:    []string{"1", "2"},
-									},
-								},
-							},
-							{
-								Name: "container-1",
-								Devices: []*pdrv1.ContainerDevices{
-									{
-										ResourceName: "nvidia.com/gpu",
-										DeviceIds:    []string{"1", "2"},
-									},
-									{
-										ResourceName: "nvidia.com/another-gpu",
-										DeviceIds:    []string{"1"},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			expectedError: true,
-		},
-		{
 			name: "No GPU resources",
 			listPodResourcesResp: pdrv1.ListPodResourcesResponse{
 				PodResources: []*pdrv1.PodResources{
@@ -269,11 +233,12 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 			for migDevice, index := range tt.deviceIdToGPUIndex {
 				nvmlClient.On("GetGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
 			}
-			podResourcesListerClient := MockedPodResourcesListerClient{
+			lister := MockedPodResourcesListerClient{
 				ListResp:  tt.listPodResourcesResp,
 				ListError: tt.listPodResourcesErr,
 			}
-			client := mig.NewClient(podResourcesListerClient, &nvmlClient)
+			resourceClient := resource.NewClient(lister)
+			client := mig.NewClient(resourceClient, &nvmlClient)
 
 			usedDevices, err := client.GetUsedMigDeviceResources(context.TODO())
 			if tt.expectedError {
@@ -308,18 +273,6 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 			allocatableResourcesResp: pdrv1.AllocatableResourcesResponse{},
 			allocatableResourcesErr:  fmt.Errorf("error"),
 			expectedError:            true,
-		},
-		{
-			name: "List pod resources returns a GPU associated with many device IDs",
-			allocatableResourcesResp: pdrv1.AllocatableResourcesResponse{
-				Devices: []*pdrv1.ContainerDevices{
-					{
-						ResourceName: "nvidia.com/gpu",
-						DeviceIds:    []string{"1", "2"},
-					},
-				},
-			},
-			expectedError: true,
 		},
 		{
 			name: "Error fetching MIG resource GPU index",
@@ -402,14 +355,15 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			nvmlClient := mockednvml.Client{}
-			podResourcesListerClient := MockedPodResourcesListerClient{
+			lister := MockedPodResourcesListerClient{
 				GetAllocatableResp:  tt.allocatableResourcesResp,
 				GetAllocatableError: tt.allocatableResourcesErr,
 			}
 			for migDevice, index := range tt.deviceIdToGPUIndex {
 				nvmlClient.On("GetGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
 			}
-			client := mig.NewClient(podResourcesListerClient, &nvmlClient)
+			resourceClient := resource.NewClient(lister)
+			client := mig.NewClient(resourceClient, &nvmlClient)
 
 			usedDevices, err := client.GetAllocatableMigDeviceResources(context.TODO())
 			if tt.expectedError {

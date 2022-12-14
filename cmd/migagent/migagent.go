@@ -28,6 +28,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -113,10 +114,11 @@ func main() {
 	var sharedState = migagent.NewSharedState()
 
 	// Init MIG client
-	podResourcesClient, err := newPodResourcesListerClient()
+	lister, err := newPodResourcesListerClient()
+	resourceClient := resource.NewClient(lister)
 	setupLog.Info("Initializing NVML client")
 	nvmlClient := nvml.NewClient(ctrl.Log.WithName("NvmlClient"))
-	migClient := mig.NewClient(podResourcesClient, nvmlClient)
+	migClient := mig.NewClient(resourceClient, nvmlClient)
 
 	if err = initAgent(ctx, nvmlClient, migClient); err != nil {
 		setupLog.Error(err, "unable to initialize agent")

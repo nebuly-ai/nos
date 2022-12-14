@@ -21,6 +21,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -121,9 +122,9 @@ func (r *MigReporter) SetupWithManager(mgr ctrl.Manager, controllerName string, 
 		For(
 			&v1.Node{},
 			builder.WithPredicates(
-				excludeDeletePredicate{},
-				matchingNamePredicate{Name: nodeName},
-				nodeResourcesChangedPredicate{},
+				predicate.ExcludeDelete{},
+				predicate.MatchingName{Name: nodeName},
+				predicate.NodeResourcesChanged{},
 			),
 		).
 		Named(controllerName).

@@ -25,6 +25,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
 	v1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -353,9 +354,9 @@ func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string) 
 		For(
 			&v1.Node{},
 			builder.WithPredicates(
-				excludeDeletePredicate{},
-				matchingNamePredicate{Name: a.nodeName},
-				annotationsChangedPredicate{},
+				predicate.ExcludeDelete{},
+				predicate.MatchingName{Name: a.nodeName},
+				predicate.AnnotationsChangedPredicate{},
 			),
 		).
 		Named(controllerName).

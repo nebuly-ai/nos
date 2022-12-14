@@ -16,7 +16,10 @@
 
 package resource
 
-import "k8s.io/api/core/v1"
+import (
+	"k8s.io/api/core/v1"
+	"strings"
+)
 
 type Status string
 
@@ -43,4 +46,8 @@ func (d Device) IsUsed() bool {
 
 func (d Device) IsFree() bool {
 	return d.Status == StatusFree
+}
+
+func (d Device) IsNvidiaResource() bool {
+	return strings.HasPrefix(d.ResourceName.String(), "nvidia.com/")
 }
