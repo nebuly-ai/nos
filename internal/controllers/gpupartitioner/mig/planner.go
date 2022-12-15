@@ -75,7 +75,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 		}
 
 		// Try to update MIG geometry
-		nodeGeometryUpdated := n.UpdateGeometryFor(lackingMigProfiles)
+		nodeGeometryUpdated := n.UpdateGeometryFor(tracker.GetRequestedMigProfiles())
 		if nodeGeometryUpdated {
 			logger.V(1).Info("updated node MIG geometry", "node", n.Name, "geometry", n.GetGeometry())
 			if err = snapshot.SetNode(n); err != nil {
