@@ -425,6 +425,11 @@ func TestPlanner__Plan(t *testing.T) {
 							WithScalarResourceRequest(mig.Profile2g20gb.AsResourceName(), 1).
 							Get(),
 					).
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(mig.Profile1g10gb.AsResourceName(), 1).
+							Get(),
+					).
 					Get(),
 				factory.BuildPod("ns-1", "pd-2").
 					WithContainer(
