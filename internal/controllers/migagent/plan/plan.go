@@ -49,7 +49,7 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 			// init actual resources of current GPU and current MIG profile
 			actualMigProfileResources := gpuStateResources[migProfile]
 			if actualMigProfileResources == nil {
-				actualMigProfileResources = make(gpu.DeviceResourceList, 0)
+				actualMigProfileResources = make(gpu.DeviceList, 0)
 			}
 
 			// compute total desired quantity
@@ -91,14 +91,14 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	return plan
 }
 
-func extractResourcesToRecreate(resources gpu.DeviceResourceList, currentPlan MigConfigPlan) gpu.DeviceResourceList {
+func extractResourcesToRecreate(resources gpu.DeviceList, currentPlan MigConfigPlan) gpu.DeviceList {
 	// lookup
 	alreadyToBeDeletedLookup := make(map[string]gpu.Device)
 	for _, r := range currentPlan.getResourcesToDelete() {
 		alreadyToBeDeletedLookup[r.DeviceId] = r
 	}
 	// extract free resources not already included in plan delete operations
-	resourcesToRecreate := make(gpu.DeviceResourceList, 0)
+	resourcesToRecreate := make(gpu.DeviceList, 0)
 	for _, r := range resources.GetFree() {
 		if _, toBeDeleted := alreadyToBeDeletedLookup[r.DeviceId]; !toBeDeleted {
 			resourcesToRecreate = append(resourcesToRecreate, r)
@@ -108,8 +108,8 @@ func extractResourcesToRecreate(resources gpu.DeviceResourceList, currentPlan Mi
 	return resourcesToRecreate
 }
 
-func extractCandidatesForDeletion(resources gpu.DeviceResourceList, nToDelete int) gpu.DeviceResourceList {
-	deleteCandidates := make(gpu.DeviceResourceList, 0)
+func extractCandidatesForDeletion(resources gpu.DeviceList, nToDelete int) gpu.DeviceList {
+	deleteCandidates := make(gpu.DeviceList, 0)
 	// add free devices first
 	for _, r := range resources {
 		if r.IsFree() {
@@ -141,8 +141,8 @@ func (p *MigConfigPlan) addCreateOp(op CreateOperation) {
 	p.CreateOperations = append(p.CreateOperations, op)
 }
 
-func (p *MigConfigPlan) getResourcesToDelete() gpu.DeviceResourceList {
-	resources := make(gpu.DeviceResourceList, 0)
+func (p *MigConfigPlan) getResourcesToDelete() gpu.DeviceList {
+	resources := make(gpu.DeviceList, 0)
 	for _, o := range p.DeleteOperations {
 		resources = append(resources, o.Resources...)
 	}
@@ -166,7 +166,7 @@ func (p *MigConfigPlan) Equal(other *MigConfigPlan) bool {
 	return true
 }
 
-func getResourcesNotIncludedInSpec(state MigState, specAnnotations mig.GPUSpecAnnotationList) gpu.DeviceResourceList {
+func getResourcesNotIncludedInSpec(state MigState, specAnnotations mig.GPUSpecAnnotationList) gpu.DeviceList {
 	lookup := specAnnotations.GroupByGpuIndex()
 
 	updatedState := state

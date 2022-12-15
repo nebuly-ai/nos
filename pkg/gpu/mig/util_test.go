@@ -18,6 +18,7 @@ package mig
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"
@@ -127,12 +128,12 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		{
 			name: "Matches",
 			status: map[string]string{
-				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "1g.10gb", resource.StatusUsed): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "1g.10gb", resource.StatusFree): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "2g.40gb", resource.StatusFree): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "2g.40gb", resource.StatusUsed): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 1, "1g.20gb", resource.StatusFree): "2",
+				fmt.Sprintf(AnnotationMigStatusFormat, 1, "1g.20gb", resource.StatusUsed): "2",
 			},
 			spec: map[string]string{
 				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
@@ -144,12 +145,12 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		{
 			name: "Do not matches",
 			status: map[string]string{
-				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "1g.10gb", resource.StatusUsed): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "1g.10gb", resource.StatusFree): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "2g.40gb", resource.StatusFree): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 0, "2g.40gb", resource.StatusUsed): "1",
+				fmt.Sprintf(AnnotationMigStatusFormat, 1, "1g.20gb", resource.StatusFree): "2",
+				fmt.Sprintf(AnnotationMigStatusFormat, 1, "1g.20gb", resource.StatusUsed): "2",
 			},
 			spec: map[string]string{
 				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
@@ -171,7 +172,7 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 
 			statusAnnotations := make([]GPUStatusAnnotation, 0)
 			for k, v := range tt.status {
-				a, _ := NewGPUStatusAnnotation(k, v)
+				a, _ := ParseGPUStatusAnnotation(k, v)
 				statusAnnotations = append(statusAnnotations, a)
 			}
 

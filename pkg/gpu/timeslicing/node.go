@@ -78,3 +78,14 @@ func NewNode(n v1.Node, config deviceplugin.TimeSlicing) (Node, error) {
 		GPUs: gpus,
 	}, nil
 }
+
+func (n *Node) Clone() Node {
+	gpus := make([]GPU, len(n.GPUs))
+	for i, g := range n.GPUs {
+		gpus[i] = g.Clone()
+	}
+	return Node{
+		Name: n.Name,
+		GPUs: gpus,
+	}
+}

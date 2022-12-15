@@ -82,8 +82,8 @@ var _ = Describe("MigAgent - Reporter", func() {
 					GpuIndex: 1,
 				},
 			}
-			expectedAnnotationOne := fmt.Sprintf(migtypes.AnnotationFreeMigStatusFormat, 0, "1g.10gb")
-			expectedAnnotationTwo := fmt.Sprintf(migtypes.AnnotationUsedMigStatusFormat, 1, "2g.20gb")
+			expectedAnnotationOne := fmt.Sprintf(migtypes.AnnotationMigStatusFormat, 0, "1g.10gb", resource.StatusFree)
+			expectedAnnotationTwo := fmt.Sprintf(migtypes.AnnotationMigStatusFormat, 1, "2g.20gb", resource.StatusUsed)
 			expectedAnnotations := map[string]string{
 				expectedAnnotationOne:                       "1",
 				expectedAnnotationTwo:                       "1",

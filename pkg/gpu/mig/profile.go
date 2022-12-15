@@ -55,7 +55,7 @@ func (p ProfileName) isValid() bool {
 	return migProfileRegex.MatchString(string(p))
 }
 
-func (p ProfileName) AsString() string {
+func (p ProfileName) String() string {
 	return string(p)
 }
 

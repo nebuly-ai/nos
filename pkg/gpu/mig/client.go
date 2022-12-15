@@ -26,12 +26,12 @@ import (
 )
 
 type Client interface {
-	GetMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error)
-	GetUsedMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error)
-	GetAllocatableMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error)
-	CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, error)
-	DeleteMigResource(ctx context.Context, resource gpu.Device) gpu.Error
-	DeleteAllExcept(ctx context.Context, resources gpu.DeviceResourceList) error
+	GetMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error)
+	GetUsedMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error)
+	GetAllocatableMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error)
+	CreateMigDevices(ctx context.Context, profileList ProfileList) (ProfileList, error)
+	DeleteMigDevice(ctx context.Context, device gpu.Device) gpu.Error
+	DeleteAllExcept(ctx context.Context, resources gpu.DeviceList) error
 }
 
 type clientImpl struct {
@@ -46,20 +46,20 @@ func NewClient(resourceClient resource.Client, nvmlClient nvml.Client) Client {
 	}
 }
 
-// CreateMigResources creates the MIG resources provided as argument, which can span multiple GPUs, and returns
+// CreateMigDevices creates the MIG resources provided as argument, which can span multiple GPUs, and returns
 // the resources that were actually created.
 //
 // If any error happens, and it is not possible to create the required resources on a certain GPUs,
 // CreateMigResources still tries to create the resources on the other GPUs and returns the ones that
 // it possible to create. This means that if any error happens, the returned ProfileList will be a subset
 // of the input list, otherwise the two lists will have the same length and items.
-func (c clientImpl) CreateMigResources(_ context.Context, profileList ProfileList) (ProfileList, error) {
+func (c clientImpl) CreateMigDevices(_ context.Context, profileList ProfileList) (ProfileList, error) {
 	var errors = make(gpu.ErrorList, 0)
 	var createdProfiles = make(ProfileList, 0)
 	for gpuIndex, profiles := range profileList.GroupByGPU() {
 		profileNames := make([]string, 0)
 		for _, p := range profiles {
-			profileNames = append(profileNames, p.Name.AsString())
+			profileNames = append(profileNames, p.Name.String())
 		}
 		if err := c.nvmlClient.CreateMigDevices(profileNames, gpuIndex); err != nil {
 			errors = append(errors, err)
@@ -73,18 +73,18 @@ func (c clientImpl) CreateMigResources(_ context.Context, profileList ProfileLis
 	return createdProfiles, nil
 }
 
-func (c clientImpl) DeleteMigResource(_ context.Context, resource gpu.Device) gpu.Error {
+func (c clientImpl) DeleteMigDevice(_ context.Context, resource gpu.Device) gpu.Error {
 	return c.nvmlClient.DeleteMigDevice(resource.DeviceId)
 }
 
-func (c clientImpl) GetMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error) {
+func (c clientImpl) GetMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
 	// Get used
-	used, err := c.GetUsedMigDeviceResources(ctx)
+	used, err := c.GetUsedMigDevices(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// Get allocatable
-	allocatable, err := c.GetAllocatableMigDeviceResources(ctx)
+	allocatable, err := c.GetAllocatableMigDevices(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (c clientImpl) GetMigDeviceResources(ctx context.Context) (gpu.DeviceResour
 	return append(used, free...), nil
 }
 
-func (c clientImpl) GetUsedMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error) {
+func (c clientImpl) GetUsedMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
 	// Fetch used devices
 	usedResources, err := c.resourceClient.GetUsedDevices(ctx)
 	if err != nil {
@@ -111,7 +111,7 @@ func (c clientImpl) GetUsedMigDeviceResources(ctx context.Context) (gpu.DeviceRe
 	return c.extractMigDevices(ctx, usedGpus)
 }
 
-func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error) {
+func (c clientImpl) GetAllocatableMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
 	// Fetch used devices
 	allocatableResources, err := c.resourceClient.GetAllocatableDevices(ctx)
 	if err != nil {
@@ -129,7 +129,7 @@ func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (gpu.D
 }
 
 // DeleteAllExcept deletes all the devices that are not in the list of devices to keep.
-func (c clientImpl) DeleteAllExcept(_ context.Context, resourcesToKeep gpu.DeviceResourceList) error {
+func (c clientImpl) DeleteAllExcept(_ context.Context, resourcesToKeep gpu.DeviceList) error {
 	nResources := len(resourcesToKeep)
 	idsToKeep := make([]string, nResources)
 	for i, r := range resourcesToKeep {

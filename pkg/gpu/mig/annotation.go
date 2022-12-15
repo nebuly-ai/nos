@@ -21,6 +21,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"regexp"
@@ -33,15 +34,12 @@ var (
 )
 
 var (
-	AnnotationFreeMigStatusFormat = fmt.Sprintf(
-		"%s-%%d-%%s-%s",
+	// AnnotationMigStatusFormat is the format of the annotation used to expose MIG devices of a GPU
+	// Example:
+	// 		"n8s.nebuly.ai/status-gpu-0-1g.10gb-<status>"
+	AnnotationMigStatusFormat = fmt.Sprintf(
+		"%s-%%d-%%s-%%s",
 		v1alpha1.AnnotationGPUStatusPrefix,
-		v1alpha1.AnnotationGPUStatusFreeSuffix,
-	)
-	AnnotationUsedMigStatusFormat = fmt.Sprintf(
-		"%s-%%d-%%s-%s",
-		v1alpha1.AnnotationGPUStatusPrefix,
-		v1alpha1.AnnotationGPUStatusUsedSuffix,
 	)
 	AnnotationGPUMigSpecFormat = fmt.Sprintf("%s-%%d-%%s", v1alpha1.AnnotationGPUSpecPrefix)
 )
@@ -186,20 +184,40 @@ func (l GPUStatusAnnotationList) Equal(other *GPUStatusAnnotationList) bool {
 }
 
 type GPUStatusAnnotation struct {
-	Name     string
+	Profile  ProfileName
+	Index    int
+	Status   resource.Status
 	Quantity int
 }
 
-func NewGPUStatusAnnotation(key, value string) (GPUStatusAnnotation, error) {
+func ParseGPUStatusAnnotation(key, value string) (GPUStatusAnnotation, error) {
 	if !strings.HasPrefix(key, v1alpha1.AnnotationGPUStatusPrefix) {
 		err := fmt.Errorf("GPUStatusAnnotation prefix is %q, got %q", v1alpha1.AnnotationGPUStatusPrefix, key)
 		return GPUStatusAnnotation{}, err
+	}
+	parts := strings.Split(key, "-")
+	if len(parts) != 5 {
+		return GPUStatusAnnotation{}, fmt.Errorf("invalid GPUStatusAnnotation key %q", key)
 	}
 	quantity, err := strconv.Atoi(value)
 	if err != nil {
 		return GPUStatusAnnotation{}, err
 	}
-	return GPUStatusAnnotation{Name: key, Quantity: quantity}, nil
+	index, err := strconv.Atoi(parts[2])
+	if err != nil {
+		return GPUStatusAnnotation{}, fmt.Errorf("invalid GPU index: %s", err)
+	}
+	status, err := resource.ParseStatus(parts[len(parts)-1])
+	if err != nil {
+		return GPUStatusAnnotation{}, fmt.Errorf("invalid GPU status: %s", err)
+	}
+
+	return GPUStatusAnnotation{
+		Index:    index,
+		Profile:  ProfileName(parts[3]),
+		Status:   status,
+		Quantity: quantity,
+	}, nil
 }
 
 func (a GPUStatusAnnotation) GetValue() string {
@@ -207,24 +225,25 @@ func (a GPUStatusAnnotation) GetValue() string {
 }
 
 func (a GPUStatusAnnotation) GetGPUIndex() int {
-	trimmed := strings.TrimPrefix(a.Name, v1alpha1.AnnotationGPUStatusPrefix+"-")
-	indexStr := numberBeginningLineRegex.FindString(trimmed)
-	index, _ := strconv.Atoi(indexStr)
-	return index
+	return a.Index
+}
+
+func (a GPUStatusAnnotation) String() string {
+	return fmt.Sprintf(AnnotationMigStatusFormat, a.Index, a.Profile, a.Status)
 }
 
 // IsUsed returns true if the annotation refers to a used device
 func (a GPUStatusAnnotation) IsUsed() bool {
-	return strings.HasSuffix(a.Name, v1alpha1.AnnotationGPUStatusUsedSuffix)
+	return a.Status == resource.StatusUsed
 }
 
 // IsFree returns true if the annotation refers to a free device
 func (a GPUStatusAnnotation) IsFree() bool {
-	return strings.HasSuffix(a.Name, v1alpha1.AnnotationGPUStatusFreeSuffix)
+	return a.Status == resource.StatusFree
 }
 
 func (a GPUStatusAnnotation) GetMigProfileName() ProfileName {
-	return ProfileName(migProfileRegex.FindString(a.Name))
+	return a.Profile
 }
 
 // GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the
@@ -238,11 +257,7 @@ func (a GPUStatusAnnotation) GetMigProfileName() ProfileName {
 //
 //	"0-1g.10gb"
 func (a GPUStatusAnnotation) GetGPUIndexWithMigProfile() string {
-	result := strings.TrimPrefix(a.Name, v1alpha1.AnnotationGPUStatusPrefix)
-	result = strings.TrimSuffix(result, "-used")
-	result = strings.TrimSuffix(result, "-free")
-	result = strings.TrimPrefix(result, "-")
-	return result
+	return fmt.Sprintf("%d-%s", a.GetGPUIndex(), a.GetMigProfileName())
 }
 
 func GetGPUAnnotationsFromNode(node v1.Node) (GPUStatusAnnotationList, GPUSpecAnnotationList) {
@@ -253,7 +268,7 @@ func GetGPUAnnotationsFromNode(node v1.Node) (GPUStatusAnnotationList, GPUSpecAn
 			specAnnotations = append(specAnnotations, specAnnotation)
 			continue
 		}
-		if statusAnnotation, err := NewGPUStatusAnnotation(k, v); err == nil {
+		if statusAnnotation, err := ParseGPUStatusAnnotation(k, v); err == nil {
 			statusAnnotations = append(statusAnnotations, statusAnnotation)
 			continue
 		}
@@ -274,39 +289,16 @@ func SpecMatchesStatus(specAnnotations []GPUSpecAnnotation, statusAnnotations []
 	return cmp.Equal(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func ComputeStatusAnnotations(used []gpu.Device, free []gpu.Device) []GPUStatusAnnotation {
-	annotationToQuantity := make(map[string]int)
-
-	// Compute used MIG devices quantities
-	usedMigToQuantity := make(map[string]int)
-	for _, u := range used {
-		key := u.FullResourceName()
-		usedMigToQuantity[key]++
-	}
-	// Compute free MIG devices quantities
-	freeMigToQuantity := make(map[string]int)
-	for _, u := range free {
-		key := u.FullResourceName()
-		freeMigToQuantity[key]++
-	}
-
-	// Used annotations
-	for _, u := range used {
-		quantity := usedMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(AnnotationUsedMigStatusFormat, u.GpuIndex, GetMigProfileName(u))
-		annotationToQuantity[key] = quantity
-	}
-	// Free annotations
-	for _, u := range free {
-		quantity := freeMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(AnnotationFreeMigStatusFormat, u.GpuIndex, GetMigProfileName(u))
-		annotationToQuantity[key] = quantity
-	}
-
+func ComputeStatusAnnotations(devices gpu.DeviceList) []GPUStatusAnnotation {
 	res := make([]GPUStatusAnnotation, 0)
-	for k, v := range annotationToQuantity {
-		if a, err := NewGPUStatusAnnotation(k, fmt.Sprintf("%d", v)); err == nil {
-			res = append(res, a)
+	for profile, d := range GroupByMigProfile(devices) {
+		for status, groupedByStatus := range d.GroupByStatus() {
+			res = append(res, GPUStatusAnnotation{
+				Index:    profile.GpuIndex,
+				Profile:  profile.Name,
+				Status:   status,
+				Quantity: len(groupedByStatus),
+			})
 		}
 	}
 	return res

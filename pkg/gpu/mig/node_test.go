@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,7 +57,7 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
-						fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, Profile1g10gb): "1",
+						fmt.Sprintf(AnnotationMigStatusFormat, 0, Profile1g10gb, resource.StatusFree): "1",
 					},
 				},
 			},
@@ -72,7 +73,7 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
-						fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, Profile1g10gb): "1",
+						fmt.Sprintf(AnnotationMigStatusFormat, 0, Profile1g10gb, resource.StatusFree): "1",
 					},
 					Labels: map[string]string{
 						constant.LabelNvidiaProduct: "unknown-gpu-model",
@@ -87,9 +88,9 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
-						fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, Profile1g5gb):  "2",
-						fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, Profile2g20gb): "3",
-						fmt.Sprintf(AnnotationFreeMigStatusFormat, 1, Profile3g20gb): "2",
+						fmt.Sprintf(AnnotationMigStatusFormat, 0, Profile1g5gb, resource.StatusFree):  "2",
+						fmt.Sprintf(AnnotationMigStatusFormat, 0, Profile2g20gb, resource.StatusUsed): "3",
+						fmt.Sprintf(AnnotationMigStatusFormat, 1, Profile3g20gb, resource.StatusFree): "2",
 					},
 					Labels: map[string]string{
 						constant.LabelNvidiaProduct: string(gpu.GPUModel_A30),

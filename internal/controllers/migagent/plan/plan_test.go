@@ -35,7 +35,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 	}{
 		{
 			name:  "Empty state",
-			state: map[int]gpu.DeviceResourceList{},
+			state: map[int]gpu.DeviceList{},
 			specAnnotations: map[string]string{
 				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.20gb"): "1",
 				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
@@ -68,7 +68,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 		},
 		{
 			name: "Empty spec annotations",
-			state: map[int]gpu.DeviceResourceList{
+			state: map[int]gpu.DeviceList{
 				0: {
 					{
 						Device: resource.Device{
@@ -178,7 +178,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 			expectedCreateOps: CreateOperationList{},
 			expectedDeleteOps: DeleteOperationList{
 				{
-					Resources: gpu.DeviceResourceList{
+					Resources: gpu.DeviceList{
 						{
 							Device: resource.Device{
 								ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -261,7 +261,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 			},
 			expectedDeleteOps: DeleteOperationList{
 				{
-					Resources: gpu.DeviceResourceList{
+					Resources: gpu.DeviceList{
 						{
 							Device: resource.Device{
 								ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -351,7 +351,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 			},
 			expectedDeleteOps: DeleteOperationList{
 				{
-					Resources: gpu.DeviceResourceList{
+					Resources: gpu.DeviceList{
 						{
 							Device: resource.Device{
 								ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -419,7 +419,7 @@ func TestMigConfigPlan_IsEmpty(t *testing.T) {
 		{
 			name: "Plan with one DeleteOperation is not empty",
 			plan: MigConfigPlan{
-				DeleteOperations: DeleteOperationList{{Resources: make(gpu.DeviceResourceList, 0)}},
+				DeleteOperations: DeleteOperationList{{Resources: make(gpu.DeviceList, 0)}},
 				CreateOperations: make(CreateOperationList, 0),
 			},
 			expected: false,
@@ -443,7 +443,7 @@ func TestMigConfigPlan__Equals(t *testing.T) {
 		{
 			name: "other is nil",
 			plan: MigConfigPlan{
-				DeleteOperations: DeleteOperationList{{Resources: make(gpu.DeviceResourceList, 0)}},
+				DeleteOperations: DeleteOperationList{{Resources: make(gpu.DeviceList, 0)}},
 				CreateOperations: make(CreateOperationList, 0),
 			},
 			other:    nil,
@@ -454,7 +454,7 @@ func TestMigConfigPlan__Equals(t *testing.T) {
 			plan: MigConfigPlan{
 				DeleteOperations: DeleteOperationList{
 					{
-						Resources: gpu.DeviceResourceList{
+						Resources: gpu.DeviceList{
 							{
 								Device: resource.Device{
 									ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -494,7 +494,7 @@ func TestMigConfigPlan__Equals(t *testing.T) {
 			other: &MigConfigPlan{
 				DeleteOperations: DeleteOperationList{
 					{
-						Resources: gpu.DeviceResourceList{
+						Resources: gpu.DeviceList{
 							{
 								Device: resource.Device{
 									ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -538,7 +538,7 @@ func TestMigConfigPlan__Equals(t *testing.T) {
 			plan: MigConfigPlan{
 				DeleteOperations: DeleteOperationList{
 					{
-						Resources: gpu.DeviceResourceList{
+						Resources: gpu.DeviceList{
 							{
 								Device: resource.Device{
 									ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -571,7 +571,7 @@ func TestMigConfigPlan__Equals(t *testing.T) {
 			other: &MigConfigPlan{
 				DeleteOperations: DeleteOperationList{
 					{
-						Resources: gpu.DeviceResourceList{
+						Resources: gpu.DeviceList{
 							{
 								Device: resource.Device{
 									ResourceName: mig.Profile1g10gb.AsResourceName(),

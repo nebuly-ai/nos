@@ -17,35 +17,25 @@
 package timeslicing
 
 import (
-	"fmt"
+	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 )
 
-type GPU struct {
-	Model        gpu.Model
-	Index        int
-	Replicas     int
-	MemoryGB     int
-	usedMemoryGB int
+type tsClient struct {
+	resourceClient resource.Client
+	nvmlClient     nvml.Client
 }
 
-func (g GPU) Clone() GPU {
-	return GPU{
-		Model:    g.Model,
-		Index:    g.Index,
-		Replicas: g.Replicas,
-		MemoryGB: g.MemoryGB,
+func NewClient(resourceClient resource.Client, nvmlClient nvml.Client) gpu.Client {
+	return &tsClient{
+		resourceClient: resourceClient,
+		nvmlClient:     nvmlClient,
 	}
 }
 
-func (g GPU) ReserveMemory(memoryGB int) error {
-	if g.usedMemoryGB+memoryGB > g.MemoryGB {
-		return fmt.Errorf("not enough memory: requested %d, available %d", memoryGB, g.MemoryGB-g.usedMemoryGB)
-	}
-	g.usedMemoryGB += memoryGB
-	return nil
-}
-
-func (g GPU) GetSliceSize() {
-
+func (t tsClient) GetDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	//TODO implement me
+	panic("implement me")
 }

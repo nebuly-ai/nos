@@ -125,7 +125,7 @@ func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnot
 	logger := a.newLogger(ctx)
 
 	// Compute current state
-	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
+	migDeviceResources, err := a.migClient.GetMigDevices(ctx)
 	if gpu.IgnoreNotFound(err) != nil {
 		logger.Error(err, "unable to get MIG device resources")
 		return plan.MigConfigPlan{}, err
@@ -293,7 +293,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 			logger.Error(err, "cannot delete MIG resource", "resource", r)
 			continue
 		}
-		err := a.migClient.DeleteMigResource(ctx, r)
+		err := a.migClient.DeleteMigDevice(ctx, r)
 		if gpu.IgnoreNotFound(err) != nil {
 			deleteErrors = append(deleteErrors, err)
 			logger.Error(err, "unable to delete MIG resource", "resource", r)
@@ -330,7 +330,7 @@ func (a *MigActuator) applyCreateOps(ctx context.Context, ops plan.CreateOperati
 	logger.Info("applying create operations", "migProfiles", ops)
 
 	profileList := ops.Flatten()
-	created, err := a.migClient.CreateMigResources(ctx, profileList)
+	created, err := a.migClient.CreateMigDevices(ctx, profileList)
 	if err != nil {
 		nCreated := len(created)
 		return plan.OperationStatus{

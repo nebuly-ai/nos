@@ -18,7 +18,7 @@ package migagent
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -30,14 +30,14 @@ import (
 
 type Reporter struct {
 	client.Client
-	tsClient        timeslicing.Client
+	gpuClient       gpu.Client
 	refreshInterval time.Duration
 }
 
-func NewReporter(client client.Client, tsClient timeslicing.Client, refreshInterval time.Duration) Reporter {
+func NewReporter(client client.Client, tsClient gpu.Client, refreshInterval time.Duration) Reporter {
 	return Reporter{
 		Client:          client,
-		tsClient:        tsClient,
+		gpuClient:       tsClient,
 		refreshInterval: refreshInterval,
 	}
 }
@@ -46,7 +46,16 @@ func NewReporter(client client.Client, tsClient timeslicing.Client, refreshInter
 
 func (r *Reporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := klog.FromContext(ctx)
-	logger.V(1)
+
+	// Fetch GPUs
+	devices, err := r.gpuClient.GetDevices(ctx)
+	if err != nil {
+		logger.Error(err, "unable to fetch GPUs")
+		return ctrl.Result{}, err
+	}
+	logger.Info("", devices)
+
+	// Group by GPU index
 
 	return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 }

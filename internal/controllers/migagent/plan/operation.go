@@ -31,7 +31,7 @@ type CreateOperation struct {
 
 type DeleteOperation struct {
 	// Resources are the MIG resources that needs to be deleted
-	Resources gpu.DeviceResourceList
+	Resources gpu.DeviceList
 }
 
 func (o DeleteOperation) GetMigProfileName() mig.ProfileName {

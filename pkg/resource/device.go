@@ -17,11 +17,25 @@
 package resource
 
 import (
+	"fmt"
 	"k8s.io/api/core/v1"
 	"strings"
 )
 
 type Status string
+
+func ParseStatus(status string) (Status, error) {
+	if strings.ToLower(status) == "free" {
+		return StatusFree, nil
+	}
+	if strings.ToLower(status) == "used" {
+		return StatusUsed, nil
+	}
+	if strings.ToLower(status) == "unknown" {
+		return StatusUnknown, nil
+	}
+	return "", fmt.Errorf("invalid status %s", status)
+}
 
 const (
 	StatusUsed    Status = "used"

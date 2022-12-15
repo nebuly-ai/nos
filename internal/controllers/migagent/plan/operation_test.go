@@ -41,7 +41,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 		{
 			name: "Op are equals, different order",
 			deleteOp: plan.DeleteOperation{
-				Resources: gpu.DeviceResourceList{
+				Resources: gpu.DeviceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -61,7 +61,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 				},
 			},
 			other: plan.DeleteOperation{
-				Resources: gpu.DeviceResourceList{
+				Resources: gpu.DeviceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile2g20gb.AsResourceName(),
@@ -85,7 +85,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 		{
 			name: "Op are *not* equals",
 			deleteOp: plan.DeleteOperation{
-				Resources: gpu.DeviceResourceList{
+				Resources: gpu.DeviceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -105,7 +105,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 				},
 			},
 			other: plan.DeleteOperation{
-				Resources: gpu.DeviceResourceList{
+				Resources: gpu.DeviceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile1g10gb.AsResourceName(),

@@ -26,9 +26,9 @@ import (
 
 // MigState represents the current state in terms of MIG resources of each GPU (which index is stored as key
 // in the map)
-type MigState map[int]gpu.DeviceResourceList
+type MigState map[int]gpu.DeviceList
 
-func NewMigState(resources gpu.DeviceResourceList) MigState {
+func NewMigState(resources gpu.DeviceList) MigState {
 	res := make(MigState)
 	for _, r := range resources {
 		if res[r.GpuIndex] == nil {
@@ -61,8 +61,8 @@ func (s MigState) Matches(specAnnotations []mig.GPUSpecAnnotation) bool {
 	return cmp.Equal(specGpuIndexWithMigProfileQuantities, stateGpuIndexWithMigProfileQuantities)
 }
 
-func (s MigState) Flatten() gpu.DeviceResourceList {
-	allResources := make(gpu.DeviceResourceList, 0)
+func (s MigState) Flatten() gpu.DeviceList {
+	allResources := make(gpu.DeviceList, 0)
 	for _, r := range s {
 		allResources = append(allResources, r...)
 	}
@@ -77,7 +77,7 @@ func (s MigState) DeepCopy() MigState {
 // on the GPU index provided as inputs
 func (s MigState) WithoutMigProfiles(gpuIndex int, migProfiles []mig.ProfileName) MigState {
 	res := s.DeepCopy()
-	res[gpuIndex] = make(gpu.DeviceResourceList, 0)
+	res[gpuIndex] = make(gpu.DeviceList, 0)
 	for _, r := range s[gpuIndex] {
 		if !util.InSlice(mig.GetMigProfileName(r), migProfiles) {
 			res[gpuIndex] = append(res[gpuIndex], r)

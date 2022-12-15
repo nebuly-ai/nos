@@ -240,7 +240,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 			resourceClient := resource.NewClient(lister)
 			client := mig.NewClient(resourceClient, &nvmlClient)
 
-			usedDevices, err := client.GetUsedMigDeviceResources(context.TODO())
+			usedDevices, err := client.GetUsedMigDevices(context.TODO())
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -365,7 +365,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 			resourceClient := resource.NewClient(lister)
 			client := mig.NewClient(resourceClient, &nvmlClient)
 
-			usedDevices, err := client.GetAllocatableMigDeviceResources(context.TODO())
+			usedDevices, err := client.GetAllocatableMigDevices(context.TODO())
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {

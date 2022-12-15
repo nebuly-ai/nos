@@ -19,7 +19,6 @@ package migagent
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
@@ -65,24 +64,16 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	}
 
 	// Compute new status annotations
-	migResources, err := r.migClient.GetMigDeviceResources(ctx)
+	migResources, err := r.migClient.GetMigDevices(ctx)
 	if err != nil {
 		logger.Error(err, "unable to get MIG device resources")
 		return ctrl.Result{}, err
 	}
-	usedMigs := make([]gpu.Device, 0)
-	freeMigs := make([]gpu.Device, 0)
-	for _, res := range migResources {
-		if res.IsUsed() {
-			usedMigs = append(usedMigs, res)
-		}
-		if res.IsFree() {
-			freeMigs = append(freeMigs, res)
-		}
-	}
+	usedMigs := migResources.GetUsed()
+	freeMigs := migResources.GetFree()
 	logger.V(3).Info("loaded free MIG devices", "freeMIGs", freeMigs)
 	logger.V(3).Info("loaded used MIG devices", "usedMIGs", usedMigs)
-	newStatusAnnotations := mig.ComputeStatusAnnotations(usedMigs, freeMigs)
+	newStatusAnnotations := mig.ComputeStatusAnnotations(migResources)
 
 	// Get current status annotations and compare with new ones
 	oldStatusAnnotations, _ := mig.GetGPUAnnotationsFromNode(instance)
@@ -105,7 +96,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		}
 	}
 	for _, a := range newStatusAnnotations {
-		updated.Annotations[a.Name] = a.GetValue()
+		updated.Annotations[a.String()] = a.GetValue()
 	}
 	updated.Annotations[v1alpha1.AnnotationReportedPartitioningPlan] = r.sharedState.lastParsedPlanId
 	if err := r.Client.Patch(ctx, updated, client.MergeFrom(&instance)); err != nil {

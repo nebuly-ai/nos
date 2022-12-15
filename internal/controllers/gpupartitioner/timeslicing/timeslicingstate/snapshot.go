@@ -37,6 +37,15 @@ type timeSlicingData struct {
 	tsNodes map[string]timeslicing.Node
 }
 
+func (d timeSlicingData) clone() *timeSlicingData {
+	res := timeSlicingData{tsNodes: make(map[string]timeslicing.Node)}
+	for k, v := range d.tsNodes {
+		node := v.Clone()
+		res.tsNodes[k] = node
+	}
+	return &res
+}
+
 func NewSnapshot(snapshot state.ClusterSnapshot, nvidiaDevicePluginCm v1.ConfigMap) (TimeSlicingClusterSnapshot, error) {
 	// Extract nodes with MIG partitioning enabled
 	nodes := make(map[string]framework.NodeInfo)
@@ -107,3 +116,34 @@ func (s *TimeSlicingClusterSnapshot) getData() *timeSlicingData {
 func (s *TimeSlicingClusterSnapshot) GetNodes() map[string]timeslicing.Node {
 	return s.getData().tsNodes
 }
+
+func (s *TimeSlicingClusterSnapshot) Fork() error {
+	if err := s.ClusterSnapshot.Fork(); err != nil {
+		return err
+	}
+	s.forkedData = s.getData().clone()
+	return nil
+}
+
+func (s *TimeSlicingClusterSnapshot) Commit() {
+	s.ClusterSnapshot.Commit()
+	if s.forkedData != nil {
+		s.data = s.forkedData
+		s.forkedData = nil
+	}
+}
+
+//func (s *TimeSlicingClusterSnapshot) AddPod(nodeName string, pod v1.Pod) error {
+//	if err := s.ClusterSnapshot.AddPod(nodeName, pod); err != nil {
+//		return err
+//	}
+//	node, ok := s.getData().tsNodes[nodeName]
+//	if !ok {
+//		return fmt.Errorf("time-slicing node %s not found", nodeName)
+//	}
+//	if err := node.AddPod(pod); err != nil {
+//		return err
+//	}
+//	s.getData().tsNodes[nodeName] = node
+//	return nil
+//}

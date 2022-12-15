@@ -195,7 +195,7 @@ func checkAtLeastOneMigGpu(nvmlClient nvml.Client) error {
 // cleanupUnusedMigResources deletes all the GPU Instances and Compute Instances of the MIG Profiles that are not in
 // use, for all the MIG-enabled GPUs of the current node.
 func cleanupUnusedMigResources(ctx context.Context, migClient mig.Client) error {
-	resources, err := migClient.GetMigDeviceResources(ctx)
+	resources, err := migClient.GetMigDevices(ctx)
 	if err != nil {
 		return err
 	}

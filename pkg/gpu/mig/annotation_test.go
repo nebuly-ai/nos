@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package mig
+package mig_test
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -32,14 +35,14 @@ func TestGPUSpecAnnotation_GetGPUIndex(t *testing.T) {
 	}{
 		{
 			name:       "Get Index",
-			annotation: fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 			expected:   2,
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
+			annotation, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetGPUIndex())
 		})
@@ -50,18 +53,18 @@ func TestGPUSpecAnnotation_GetMigProfile(t *testing.T) {
 	testCases := []struct {
 		name       string
 		annotation string
-		expected   ProfileName
+		expected   mig.ProfileName
 	}{
 		{
 			name:       "Get MIG profile",
-			annotation: fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 			expected:   "1g.10gb",
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
+			annotation, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetMigProfileName())
 		})
@@ -76,14 +79,14 @@ func TestGPUSpecAnnotation_GetGpuIndexWithMigProfile(t *testing.T) {
 	}{
 		{
 			name:       "Get GPU index with MIG profile",
-			annotation: fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 			expected:   "2-1g.10gb",
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
+			annotation, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetGPUIndexWithMigProfile())
 		})
@@ -93,55 +96,71 @@ func TestGPUSpecAnnotation_GetGpuIndexWithMigProfile(t *testing.T) {
 func TestGPUStatusAnnotationList_GetFree(t *testing.T) {
 	testCases := []struct {
 		name     string
-		list     GPUStatusAnnotationList
-		expected GPUStatusAnnotationList
+		list     mig.GPUStatusAnnotationList
+		expected mig.GPUStatusAnnotationList
 	}{
 		{
 			name:     "Empty list",
-			list:     GPUStatusAnnotationList{},
-			expected: GPUStatusAnnotationList{},
+			list:     mig.GPUStatusAnnotationList{},
+			expected: mig.GPUStatusAnnotationList{},
 		},
 		{
 			name: "Only used annotations",
-			list: GPUStatusAnnotationList{
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+			list: mig.GPUStatusAnnotationList{
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile1g10gb,
+					Index:    0,
+					Status:   resource.StatusUsed,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile2g20gb,
+					Index:    0,
+					Status:   resource.StatusUsed,
 					Quantity: 1,
 				},
 			},
-			expected: GPUStatusAnnotationList{},
+			expected: mig.GPUStatusAnnotationList{},
 		},
 		{
 			name: "Used and Free annotations, only Free are returned",
-			list: GPUStatusAnnotationList{
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+			list: mig.GPUStatusAnnotationList{
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile1g10gb,
+					Index:    0,
+					Status:   resource.StatusUsed,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile2g20gb,
+					Index:    0,
+					Status:   resource.StatusUsed,
 					Quantity: 1,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile1g10gb,
+					Index:    0,
+					Status:   resource.StatusFree,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile2g20gb,
+					Index:    0,
+					Status:   resource.StatusFree,
 					Quantity: 1,
 				},
 			},
-			expected: GPUStatusAnnotationList{
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+			expected: mig.GPUStatusAnnotationList{
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile1g10gb,
+					Index:    0,
+					Status:   resource.StatusFree,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile2g20gb,
+					Index:    0,
+					Status:   resource.StatusFree,
 					Quantity: 1,
 				},
 			},
@@ -159,55 +178,71 @@ func TestGPUStatusAnnotationList_GetFree(t *testing.T) {
 func TestGPUStatusAnnotationList_GetUsed(t *testing.T) {
 	testCases := []struct {
 		name     string
-		list     GPUStatusAnnotationList
-		expected GPUStatusAnnotationList
+		list     mig.GPUStatusAnnotationList
+		expected mig.GPUStatusAnnotationList
 	}{
 		{
 			name:     "Empty list",
-			list:     GPUStatusAnnotationList{},
-			expected: GPUStatusAnnotationList{},
+			list:     mig.GPUStatusAnnotationList{},
+			expected: mig.GPUStatusAnnotationList{},
 		},
 		{
 			name: "Only free annotations",
-			list: GPUStatusAnnotationList{
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+			list: mig.GPUStatusAnnotationList{
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile1g10gb,
+					Status:   resource.StatusFree,
+					Index:    0,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Index:    0,
+					Profile:  mig.Profile2g20gb,
+					Status:   resource.StatusFree,
 					Quantity: 1,
 				},
 			},
-			expected: GPUStatusAnnotationList{},
+			expected: mig.GPUStatusAnnotationList{},
 		},
 		{
 			name: "Used and Free annotations, only Used are returned",
-			list: GPUStatusAnnotationList{
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+			list: mig.GPUStatusAnnotationList{
+				mig.GPUStatusAnnotation{
+					Status:   resource.StatusUsed,
+					Index:    0,
+					Profile:  mig.Profile1g10gb,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile2g20gb,
+					Status:   resource.StatusUsed,
+					Index:    0,
 					Quantity: 1,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "1g.10gb"),
+				mig.GPUStatusAnnotation{
+					Index:    0,
+					Profile:  mig.Profile1g10gb,
+					Status:   resource.StatusFree,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationFreeMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile2g20gb,
+					Index:    0,
+					Status:   resource.StatusFree,
 					Quantity: 1,
 				},
 			},
-			expected: GPUStatusAnnotationList{
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "1g.10gb"),
+			expected: mig.GPUStatusAnnotationList{
+				mig.GPUStatusAnnotation{
+					Status:   resource.StatusUsed,
+					Index:    0,
+					Profile:  mig.Profile1g10gb,
 					Quantity: 2,
 				},
-				GPUStatusAnnotation{
-					Name:     fmt.Sprintf(AnnotationUsedMigStatusFormat, 0, "2g.20gb"),
+				mig.GPUStatusAnnotation{
+					Profile:  mig.Profile2g20gb,
+					Status:   resource.StatusUsed,
+					Index:    0,
 					Quantity: 1,
 				},
 			},
@@ -226,39 +261,41 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 	testCases := []struct {
 		name                      string
 		node                      v1.Node
-		expectedStatusAnnotations []GPUStatusAnnotation
-		expectedSpecAnnotations   []GPUSpecAnnotation
+		expectedStatusAnnotations []mig.GPUStatusAnnotation
+		expectedSpecAnnotations   []mig.GPUSpecAnnotation
 	}{
 		{
 			name:                      "Node without annotations",
 			node:                      v1.Node{},
-			expectedStatusAnnotations: make([]GPUStatusAnnotation, 0),
-			expectedSpecAnnotations:   make([]GPUSpecAnnotation, 0),
+			expectedStatusAnnotations: make([]mig.GPUStatusAnnotation, 0),
+			expectedSpecAnnotations:   make([]mig.GPUSpecAnnotation, 0),
 		},
 		{
 			name: "Node with annotations",
 			node: factory.BuildNode("test").
 				WithAnnotations(
 					map[string]string{
-						fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"): "1",
-						fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "2g.10gb"): "2",
-						"n8s.nebuly.ai/status-gpu-0-1g.10gb-free":             "3",
+						fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"): "1",
+						fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "2g.10gb"): "2",
+						"n8s.nebuly.ai/status-gpu-0-1g.10gb-free":                 "3",
 					},
 				).
 				Get(),
-			expectedStatusAnnotations: []GPUStatusAnnotation{
+			expectedStatusAnnotations: []mig.GPUStatusAnnotation{
 				{
-					Name:     "n8s.nebuly.ai/status-gpu-0-1g.10gb-free",
+					Profile:  mig.Profile1g10gb,
+					Status:   resource.StatusFree,
+					Index:    0,
 					Quantity: 3,
 				},
 			},
-			expectedSpecAnnotations: []GPUSpecAnnotation{
+			expectedSpecAnnotations: []mig.GPUSpecAnnotation{
 				{
-					Name:     fmt.Sprintf(AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+					Name:     fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
 					Quantity: 1,
 				},
 				{
-					Name:     fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "2g.10gb"),
+					Name:     fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "2g.10gb"),
 					Quantity: 2,
 				},
 			},
@@ -267,9 +304,84 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			status, spec := GetGPUAnnotationsFromNode(tt.node)
+			status, spec := mig.GetGPUAnnotationsFromNode(tt.node)
 			assert.ElementsMatch(t, tt.expectedStatusAnnotations, status)
 			assert.ElementsMatch(t, tt.expectedSpecAnnotations, spec)
+		})
+	}
+}
+
+func TestParseGPUStatusAnnotation(t *testing.T) {
+	testCases := []struct {
+		name        string
+		key         string
+		value       string
+		expected    mig.GPUStatusAnnotation
+		expectedErr bool
+	}{
+		{
+			name:        "Empty key and value",
+			key:         "",
+			value:       "",
+			expected:    mig.GPUStatusAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Key without prefix",
+			key:         "n8s.nebuly.ai/foo",
+			value:       "1",
+			expected:    mig.GPUStatusAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Key with prefix, but without status",
+			key:         v1alpha1.AnnotationGPUStatusPrefix + "foo",
+			value:       "1",
+			expected:    mig.GPUStatusAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Quantity is not an integer",
+			key:         fmt.Sprintf(mig.AnnotationMigStatusFormat, 0, "1g.10gb", resource.StatusFree),
+			value:       "foo",
+			expected:    mig.GPUStatusAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Index is not an integer",
+			key:         "n8s.nebuly.ai/status-gpu-foo-1g.10gb-free",
+			value:       "1",
+			expected:    mig.GPUStatusAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Invalid status",
+			key:         "n8s.nebuly.ai/status-gpu-0-1g.10gb-foo",
+			value:       "1",
+			expected:    mig.GPUStatusAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:  "Valid annotation",
+			key:   "n8s.nebuly.ai/status-gpu-1-1g.10gb-used",
+			value: "1",
+			expected: mig.GPUStatusAnnotation{
+				Profile:  mig.Profile1g10gb,
+				Status:   resource.StatusUsed,
+				Index:    1,
+				Quantity: 1,
+			},
+			expectedErr: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			annotation, err := mig.ParseGPUStatusAnnotation(tt.key, tt.value)
+			if tt.expectedErr {
+				assert.Error(t, err)
+			}
+			assert.Equal(t, tt.expected, annotation)
 		})
 	}
 }
