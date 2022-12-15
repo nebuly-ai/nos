@@ -38,7 +38,7 @@ func (g GPU) Clone() GPU {
 	}
 }
 
-func (g GPU) ReserveMemory(memoryGB int) error {
+func (g *GPU) ReserveMemory(memoryGB int) error {
 	if g.usedMemoryGB+memoryGB > g.MemoryGB {
 		return fmt.Errorf("not enough memory: requested %d, available %d", memoryGB, g.MemoryGB-g.usedMemoryGB)
 	}
@@ -46,6 +46,6 @@ func (g GPU) ReserveMemory(memoryGB int) error {
 	return nil
 }
 
-func (g GPU) GetSliceSize() {
+func (g *GPU) GetSliceSize() {
 
 }
