@@ -41,12 +41,7 @@ func (g Geometry) AsResources() map[v1.ResourceName]int {
 }
 
 func (g Geometry) Id() string {
-	var builder strings.Builder
-	for p, q := range g {
-		builder.WriteString(fmt.Sprintf("%s%d", p, q))
-	}
-	str := builder.String()
-	return util.HashFnv32a(str)
+	return g.String()
 }
 
 func (g Geometry) String() string {
