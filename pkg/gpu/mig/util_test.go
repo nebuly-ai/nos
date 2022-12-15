@@ -136,9 +136,9 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 				fmt.Sprintf(AnnotationMigStatusFormat, 1, "1g.20gb", resource.StatusUsed): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(AnnotationGpuMigSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(AnnotationGpuMigSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(AnnotationGpuMigSpecFormat, 1, "1g.20gb"): "4",
 			},
 			expected: true,
 		},
@@ -153,10 +153,10 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 				fmt.Sprintf(AnnotationMigStatusFormat, 1, "1g.20gb", resource.StatusUsed): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
-				fmt.Sprintf(AnnotationGPUMigSpecFormat, 1, "4g.40gb"): "1",
+				fmt.Sprintf(AnnotationGpuMigSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(AnnotationGpuMigSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(AnnotationGpuMigSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(AnnotationGpuMigSpecFormat, 1, "4g.40gb"): "1",
 			},
 			expected: false,
 		},
@@ -166,7 +166,7 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			specAnnotations := make([]GPUSpecAnnotation, 0)
 			for k, v := range tt.spec {
-				a, _ := NewGPUSpecAnnotationFromNodeAnnotation(k, v)
+				a, _ := ParseGpuSpecAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 

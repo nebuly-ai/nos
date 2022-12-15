@@ -37,9 +37,9 @@ func TestNewMigConfigPlan(t *testing.T) {
 			name:  "Empty state",
 			state: map[int]gpu.DeviceList{},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.20gb"): "1",
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "4g.20gb"): "1",
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "2",
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "1g.20gb"): "1",
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "4g.20gb"): "1",
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, "1g.10gb"): "2",
 			},
 			expectedDeleteOps: DeleteOperationList{},
 			expectedCreateOps: CreateOperationList{
@@ -173,7 +173,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "1",
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "1g.10gb"): "1",
 			},
 			expectedCreateOps: CreateOperationList{},
 			expectedDeleteOps: DeleteOperationList{
@@ -240,8 +240,8 @@ func TestNewMigConfigPlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "4",
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1",
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "1g.10gb"): "4",
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, "1g.10gb"): "1",
 			},
 			expectedCreateOps: CreateOperationList{
 				{
@@ -329,9 +329,9 @@ func TestNewMigConfigPlan(t *testing.T) {
 				},
 			},
 			specAnnotations: map[string]string{
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "3", // unchanged
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 0, "2g.20gb"): "1", // new device
-				fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "1g.10gb"): "1", // unchanged
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "1g.10gb"): "3", // unchanged
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "2g.20gb"): "1", // new device
+				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, "1g.10gb"): "1", // unchanged
 			},
 			expectedCreateOps: CreateOperationList{
 				{
@@ -378,7 +378,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			annotations := make(mig.GPUSpecAnnotationList, 0)
 			for k, v := range tt.specAnnotations {
-				a, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(k, v)
+				a, err := mig.ParseGpuSpecAnnotation(k, v)
 				assert.NoError(t, err)
 				annotations = append(annotations, a)
 			}

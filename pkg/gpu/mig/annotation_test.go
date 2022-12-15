@@ -35,14 +35,14 @@ func TestGPUSpecAnnotation_GetGPUIndex(t *testing.T) {
 	}{
 		{
 			name:       "Get Index",
-			annotation: fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 2, "1g.10gb"),
 			expected:   2,
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
+			annotation, err := mig.ParseGpuSpecAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetGPUIndex())
 		})
@@ -57,14 +57,14 @@ func TestGPUSpecAnnotation_GetMigProfile(t *testing.T) {
 	}{
 		{
 			name:       "Get MIG profile",
-			annotation: fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 2, "1g.10gb"),
 			expected:   "1g.10gb",
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
+			annotation, err := mig.ParseGpuSpecAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetMigProfileName())
 		})
@@ -79,14 +79,14 @@ func TestGPUSpecAnnotation_GetGpuIndexWithMigProfile(t *testing.T) {
 	}{
 		{
 			name:       "Get GPU index with MIG profile",
-			annotation: fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+			annotation: fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 2, "1g.10gb"),
 			expected:   "2-1g.10gb",
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := mig.NewGPUSpecAnnotationFromNodeAnnotation(tt.annotation, "1")
+			annotation, err := mig.ParseGpuSpecAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetGPUIndexWithMigProfile())
 		})
@@ -275,8 +275,8 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 			node: factory.BuildNode("test").
 				WithAnnotations(
 					map[string]string{
-						fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"): "1",
-						fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "2g.10gb"): "2",
+						fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 2, "1g.10gb"): "1",
+						fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, "2g.10gb"): "2",
 						"n8s.nebuly.ai/status-gpu-0-1g.10gb-free":                 "3",
 					},
 				).
@@ -291,11 +291,13 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 			},
 			expectedSpecAnnotations: []mig.GPUSpecAnnotation{
 				{
-					Name:     fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 2, "1g.10gb"),
+					Profile:  mig.Profile1g10gb,
+					Index:    2,
 					Quantity: 1,
 				},
 				{
-					Name:     fmt.Sprintf(mig.AnnotationGPUMigSpecFormat, 1, "2g.10gb"),
+					Profile:  mig.Profile2g10gb,
+					Index:    1,
 					Quantity: 2,
 				},
 			},
@@ -380,6 +382,66 @@ func TestParseGPUStatusAnnotation(t *testing.T) {
 			annotation, err := mig.ParseGPUStatusAnnotation(tt.key, tt.value)
 			if tt.expectedErr {
 				assert.Error(t, err)
+			}
+			assert.Equal(t, tt.expected, annotation)
+		})
+	}
+}
+
+func TestParseGpuSpecAnnotation(t *testing.T) {
+	testCases := []struct {
+		name        string
+		key         string
+		value       string
+		expected    mig.GPUSpecAnnotation
+		expectedErr bool
+	}{
+		{
+			name:        "Empty key and value",
+			key:         "",
+			value:       "",
+			expected:    mig.GPUSpecAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Key without prefix",
+			key:         "n8s.nebuly.ai/foo",
+			value:       "1",
+			expected:    mig.GPUSpecAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Key with prefix, but without spec",
+			key:         v1alpha1.AnnotationGPUSpecPrefix + "foo",
+			value:       "1",
+			expected:    mig.GPUSpecAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:        "Quantity is not an integer",
+			key:         fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "1g.10gb"),
+			value:       "foo",
+			expected:    mig.GPUSpecAnnotation{},
+			expectedErr: true,
+		},
+		{
+			name:  "Valid annotation",
+			key:   fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, "1g.10gb"),
+			value: "1",
+			expected: mig.GPUSpecAnnotation{
+				Profile:  mig.Profile1g10gb,
+				Index:    1,
+				Quantity: 1,
+			},
+			expectedErr: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			annotation, value := mig.ParseGpuSpecAnnotation(tt.key, tt.value)
+			if tt.expectedErr {
+				assert.Error(t, value)
 			}
 			assert.Equal(t, tt.expected, annotation)
 		})

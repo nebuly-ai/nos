@@ -24,24 +24,24 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
-	"regexp"
 	"strconv"
 	"strings"
 )
 
 var (
-	numberBeginningLineRegex = regexp.MustCompile(`\d+`)
-)
-
-var (
-	// AnnotationMigStatusFormat is the format of the annotation used to expose MIG devices of a GPU
+	// AnnotationMigStatusFormat is the format of the annotation used to expose MIG devices the GPUs of a node
 	// Example:
 	// 		"n8s.nebuly.ai/status-gpu-0-1g.10gb-<status>"
 	AnnotationMigStatusFormat = fmt.Sprintf(
 		"%s-%%d-%%s-%%s",
 		v1alpha1.AnnotationGPUStatusPrefix,
 	)
-	AnnotationGPUMigSpecFormat = fmt.Sprintf("%s-%%d-%%s", v1alpha1.AnnotationGPUSpecPrefix)
+	// AnnotationGpuMigSpecFormat is the format of the annotation used to expose the required MIG devices of the GPUs of
+	// a node
+	AnnotationGpuMigSpecFormat = fmt.Sprintf(
+		"%s-%%d-%%s",
+		v1alpha1.AnnotationGPUSpecPrefix,
+	)
 )
 
 type GPUSpecAnnotationList []GPUSpecAnnotation
@@ -74,27 +74,33 @@ func (l GPUSpecAnnotationList) GroupByMigProfile() map[Profile]GPUSpecAnnotation
 }
 
 type GPUSpecAnnotation struct {
-	Name     string
+	Profile  ProfileName
+	Index    int
 	Quantity int
 }
 
-func NewGPUSpecAnnotationFromNodeAnnotation(key, value string) (GPUSpecAnnotation, error) {
+func ParseGpuSpecAnnotation(key, value string) (GPUSpecAnnotation, error) {
 	if !strings.HasPrefix(key, v1alpha1.AnnotationGPUSpecPrefix) {
 		err := fmt.Errorf("GPUSpecAnnotation prefix is %q, got %q", v1alpha1.AnnotationGPUSpecPrefix, key)
 		return GPUSpecAnnotation{}, err
+	}
+	parts := strings.Split(key, "-")
+	if len(parts) != 4 {
+		return GPUSpecAnnotation{}, fmt.Errorf("invalid GPUSpecAnnotation key %q", key)
 	}
 	quantity, err := strconv.Atoi(value)
 	if err != nil {
 		return GPUSpecAnnotation{}, err
 	}
-	return GPUSpecAnnotation{Name: key, Quantity: quantity}, nil
-}
-
-func NewGpuSpecAnnotation(gpuIndex int, profile ProfileName, quantity int) GPUSpecAnnotation {
-	return GPUSpecAnnotation{
-		Name:     fmt.Sprintf(AnnotationGPUMigSpecFormat, gpuIndex, profile),
-		Quantity: quantity,
+	index, err := strconv.Atoi(parts[2])
+	if err != nil {
+		return GPUSpecAnnotation{}, fmt.Errorf("invalid GPU index: %s", err)
 	}
+	return GPUSpecAnnotation{
+		Profile:  ProfileName(parts[len(parts)-1]),
+		Quantity: quantity,
+		Index:    index,
+	}, nil
 }
 
 func (a GPUSpecAnnotation) GetValue() string {
@@ -102,14 +108,11 @@ func (a GPUSpecAnnotation) GetValue() string {
 }
 
 func (a GPUSpecAnnotation) GetGPUIndex() int {
-	trimmed := strings.TrimPrefix(a.Name, v1alpha1.AnnotationGPUSpecPrefix+"-")
-	indexStr := numberBeginningLineRegex.FindString(trimmed)
-	index, _ := strconv.Atoi(indexStr)
-	return index
+	return a.Index
 }
 
 func (a GPUSpecAnnotation) GetMigProfileName() ProfileName {
-	return ProfileName(migProfileRegex.FindString(a.Name))
+	return a.Profile
 }
 
 // GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the
@@ -124,6 +127,10 @@ func (a GPUSpecAnnotation) GetMigProfileName() ProfileName {
 //	"0-1g.10gb"
 func (a GPUSpecAnnotation) GetGPUIndexWithMigProfile() string {
 	return fmt.Sprintf("%d-%s", a.GetGPUIndex(), a.GetMigProfileName())
+}
+
+func (a GPUSpecAnnotation) String() string {
+	return fmt.Sprintf(AnnotationGpuMigSpecFormat, a.GetGPUIndex(), a.GetMigProfileName())
 }
 
 type GPUStatusAnnotationList []GPUStatusAnnotation
@@ -264,7 +271,7 @@ func GetGPUAnnotationsFromNode(node v1.Node) (GPUStatusAnnotationList, GPUSpecAn
 	statusAnnotations := make(GPUStatusAnnotationList, 0)
 	specAnnotations := make(GPUSpecAnnotationList, 0)
 	for k, v := range node.Annotations {
-		if specAnnotation, err := NewGPUSpecAnnotationFromNodeAnnotation(k, v); err == nil {
+		if specAnnotation, err := ParseGpuSpecAnnotation(k, v); err == nil {
 			specAnnotations = append(specAnnotations, specAnnotation)
 			continue
 		}

@@ -97,7 +97,7 @@ func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName, planId st
 		}
 	}
 	for _, annotation := range gpuSpecAnnotationList {
-		node.Annotations[annotation.Name] = annotation.GetValue()
+		node.Annotations[annotation.String()] = annotation.GetValue()
 	}
 	node.Annotations[v1alpha1.AnnotationPartitioningPlan] = planId
 
@@ -117,7 +117,11 @@ func getGPUSpecAnnotationList(nodePartitioning state.NodePartitioning) (mig.GPUS
 			if err != nil {
 				return res, err
 			}
-			annotation := mig.NewGpuSpecAnnotation(gpu.GPUIndex, migProfile, q)
+			annotation := mig.GPUSpecAnnotation{
+				Profile:  migProfile,
+				Index:    gpu.GPUIndex,
+				Quantity: q,
+			}
 			res = append(res, annotation)
 		}
 	}
