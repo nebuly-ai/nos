@@ -21,6 +21,7 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	. "github.com/onsi/ginkgo/v2"
@@ -63,7 +64,7 @@ var _ = Describe("MigAgent - Reporter", func() {
 			Expect(node.Annotations).To(BeEmpty())
 
 			By("Checking that after some time the node will have the annotations exposing the new resources")
-			reporterMigClient.ReturnedMigDeviceResources = []migtypes.DeviceResource{
+			reporterMigClient.ReturnedMigDeviceResources = []gpu.Device{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.10gb",

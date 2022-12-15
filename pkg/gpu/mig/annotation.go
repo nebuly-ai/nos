@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"regexp"
@@ -273,7 +274,7 @@ func SpecMatchesStatus(specAnnotations []GPUSpecAnnotation, statusAnnotations []
 	return cmp.Equal(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func ComputeStatusAnnotations(used []DeviceResource, free []DeviceResource) []GPUStatusAnnotation {
+func ComputeStatusAnnotations(used []gpu.Device, free []gpu.Device) []GPUStatusAnnotation {
 	annotationToQuantity := make(map[string]int)
 
 	// Compute used MIG devices quantities
@@ -292,13 +293,13 @@ func ComputeStatusAnnotations(used []DeviceResource, free []DeviceResource) []GP
 	// Used annotations
 	for _, u := range used {
 		quantity := usedMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(AnnotationUsedMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
+		key := fmt.Sprintf(AnnotationUsedMigStatusFormat, u.GpuIndex, GetMigProfileName(u))
 		annotationToQuantity[key] = quantity
 	}
 	// Free annotations
 	for _, u := range free {
 		quantity := freeMigToQuantity[u.FullResourceName()]
-		key := fmt.Sprintf(AnnotationFreeMigStatusFormat, u.GpuIndex, u.GetMigProfileName())
+		key := fmt.Sprintf(AnnotationFreeMigStatusFormat, u.GpuIndex, GetMigProfileName(u))
 		annotationToQuantity[key] = quantity
 	}
 

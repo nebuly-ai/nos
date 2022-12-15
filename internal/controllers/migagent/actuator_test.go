@@ -20,7 +20,6 @@ import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/mig"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +39,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "Empty delete operation",
 			op: plan.DeleteOperation{
-				Resources: make(mig.DeviceResourceList, 0),
+				Resources: make(gpu.DeviceResourceList, 0),
 			},
 			clientReturnedError: nil,
 			expectedDeleteCalls: 0,
@@ -50,7 +49,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "Delete op success with multiple resources",
 			op: plan.DeleteOperation{
-				Resources: mig.DeviceResourceList{
+				Resources: gpu.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: "nvidia.com/mig-1g.10gb",
@@ -85,7 +84,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 		{
 			name: "MIG client returns error",
 			op: plan.DeleteOperation{
-				Resources: mig.DeviceResourceList{
+				Resources: gpu.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: "nvidia.com/mig-1g.10gb",

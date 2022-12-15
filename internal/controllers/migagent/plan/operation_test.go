@@ -18,6 +18,7 @@ package plan_test
 
 import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 		{
 			name: "Op are equals, different order",
 			deleteOp: plan.DeleteOperation{
-				Resources: mig.DeviceResourceList{
+				Resources: gpu.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -60,7 +61,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 				},
 			},
 			other: plan.DeleteOperation{
-				Resources: mig.DeviceResourceList{
+				Resources: gpu.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile2g20gb.AsResourceName(),
@@ -84,7 +85,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 		{
 			name: "Op are *not* equals",
 			deleteOp: plan.DeleteOperation{
-				Resources: mig.DeviceResourceList{
+				Resources: gpu.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile1g10gb.AsResourceName(),
@@ -104,7 +105,7 @@ func TestDeleteOperation__Equal(t *testing.T) {
 				},
 			},
 			other: plan.DeleteOperation{
-				Resources: mig.DeviceResourceList{
+				Resources: gpu.DeviceResourceList{
 					{
 						Device: resource.Device{
 							ResourceName: mig.Profile1g10gb.AsResourceName(),

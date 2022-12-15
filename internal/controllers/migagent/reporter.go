@@ -19,6 +19,7 @@ package migagent
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
@@ -69,8 +70,8 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		logger.Error(err, "unable to get MIG device resources")
 		return ctrl.Result{}, err
 	}
-	usedMigs := make([]mig.DeviceResource, 0)
-	freeMigs := make([]mig.DeviceResource, 0)
+	usedMigs := make([]gpu.Device, 0)
+	freeMigs := make([]gpu.Device, 0)
 	for _, res := range migResources {
 		if res.IsUsed() {
 			usedMigs = append(usedMigs, res)

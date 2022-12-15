@@ -17,6 +17,7 @@
 package plan
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
@@ -30,12 +31,12 @@ type CreateOperation struct {
 
 type DeleteOperation struct {
 	// Resources are the MIG resources that needs to be deleted
-	Resources mig.DeviceResourceList
+	Resources gpu.DeviceResourceList
 }
 
 func (o DeleteOperation) GetMigProfileName() mig.ProfileName {
 	if len(o.Resources) > 0 {
-		return o.Resources[0].GetMigProfileName()
+		return mig.GetMigProfileName(o.Resources[0])
 	}
 	return ""
 }

@@ -29,7 +29,7 @@ type Client struct {
 	NumCallsCreateMigResources    uint
 	NumCallsGetMigDeviceResources uint
 
-	ReturnedMigDeviceResources mig.DeviceResourceList
+	ReturnedMigDeviceResources gpu.DeviceResourceList
 	ReturnedError              gpu.Error
 
 	lockReset                 sync.Mutex
@@ -46,7 +46,7 @@ func (m *Client) Reset() {
 	m.NumCallsGetMigDeviceResources = 0
 }
 
-func (m *Client) GetMigDeviceResources(_ context.Context) (mig.DeviceResourceList, gpu.Error) {
+func (m *Client) GetMigDeviceResources(_ context.Context) (gpu.DeviceResourceList, gpu.Error) {
 	m.lockGetMigDeviceResources.Lock()
 	defer m.lockGetMigDeviceResources.Unlock()
 	m.NumCallsGetMigDeviceResources++
@@ -60,21 +60,21 @@ func (m *Client) CreateMigResources(_ context.Context, _ mig.ProfileList) (mig.P
 	return nil, m.ReturnedError
 }
 
-func (m *Client) DeleteMigResource(_ context.Context, _ mig.DeviceResource) gpu.Error {
+func (m *Client) DeleteMigResource(_ context.Context, _ gpu.Device) gpu.Error {
 	m.lockDeleteMigResource.Lock()
 	defer m.lockDeleteMigResource.Unlock()
 	m.NumCallsDeleteMigResource++
 	return m.ReturnedError
 }
 
-func (m *Client) GetUsedMigDeviceResources(ctx context.Context) (mig.DeviceResourceList, gpu.Error) {
-	return mig.DeviceResourceList{}, m.ReturnedError
+func (m *Client) GetUsedMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error) {
+	return gpu.DeviceResourceList{}, m.ReturnedError
 }
 
-func (m *Client) GetAllocatableMigDeviceResources(ctx context.Context) (mig.DeviceResourceList, gpu.Error) {
-	return mig.DeviceResourceList{}, m.ReturnedError
+func (m *Client) GetAllocatableMigDeviceResources(ctx context.Context) (gpu.DeviceResourceList, gpu.Error) {
+	return gpu.DeviceResourceList{}, m.ReturnedError
 }
 
-func (m *Client) DeleteAllExcept(_ context.Context, resources mig.DeviceResourceList) error {
+func (m *Client) DeleteAllExcept(_ context.Context, resources gpu.DeviceResourceList) error {
 	return m.ReturnedError
 }

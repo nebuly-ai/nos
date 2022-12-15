@@ -58,13 +58,13 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 		deviceIdToGPUIndex   map[string]int
 
 		expectedError   bool
-		expectedDevices []mig.DeviceResource
+		expectedDevices []gpu.Device
 	}{
 		{
 			name:                 "Empty list pod resources resp",
 			listPodResourcesResp: pdrv1.ListPodResourcesResponse{},
 			expectedError:        false,
-			expectedDevices:      make([]mig.DeviceResource, 0),
+			expectedDevices:      make([]gpu.Device, 0),
 		},
 		{
 			name:                 "List pod resources returns error",
@@ -107,7 +107,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 				},
 			},
 			expectedError:   false,
-			expectedDevices: make([]mig.DeviceResource, 0),
+			expectedDevices: make([]gpu.Device, 0),
 		},
 		{
 			name: "Error fetching Mig device GPU index",
@@ -198,7 +198,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 				"mig-device-2": 2,
 				"mig-device-3": 2,
 			},
-			expectedDevices: []mig.DeviceResource{
+			expectedDevices: []gpu.Device{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-2g.10gb",
@@ -260,13 +260,13 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 		deviceIdToGPUIndex       map[string]int
 
 		expectedError   bool
-		expectedDevices []mig.DeviceResource
+		expectedDevices []gpu.Device
 	}{
 		{
 			name:                     "Empty allocatable resources resp",
 			allocatableResourcesResp: pdrv1.AllocatableResourcesResponse{},
 			expectedError:            false,
-			expectedDevices:          make([]mig.DeviceResource, 0),
+			expectedDevices:          make([]gpu.Device, 0),
 		},
 		{
 			name:                     "Allocatable resources returns error",
@@ -323,7 +323,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 				"mig-2": 1,
 				"mig-3": 2,
 			},
-			expectedDevices: []mig.DeviceResource{
+			expectedDevices: []gpu.Device{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.20gb",

@@ -18,6 +18,7 @@ package plan
 
 import (
 	"github.com/google/go-cmp/cmp"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
@@ -34,7 +35,7 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	}
 
 	// Delete resources not included in spec
-	for _, resourceList := range getResourcesNotIncludedInSpec(state, desired).GroupByMigProfile() {
+	for _, resourceList := range mig.GroupByMigProfile(getResourcesNotIncludedInSpec(state, desired)) {
 		op := DeleteOperation{Resources: resourceList}
 		plan.addDeleteOp(op)
 	}
@@ -42,13 +43,13 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	// Compute plan for resources contained in spec annotations
 	stateResourcesByGpu := state.Flatten().SortByDeviceId().GroupByGpuIndex()
 	for gpuIndex, gpuAnnotations := range desired.GroupByGpuIndex() {
-		gpuStateResources := stateResourcesByGpu[gpuIndex].GroupByMigProfile()
+		gpuStateResources := mig.GroupByMigProfile(stateResourcesByGpu[gpuIndex])
 		nCreateOp := 0
 		for migProfile, migProfileAnnotations := range gpuAnnotations.GroupByMigProfile() {
 			// init actual resources of current GPU and current MIG profile
 			actualMigProfileResources := gpuStateResources[migProfile]
 			if actualMigProfileResources == nil {
-				actualMigProfileResources = make(mig.DeviceResourceList, 0)
+				actualMigProfileResources = make(gpu.DeviceResourceList, 0)
 			}
 
 			// compute total desired quantity
@@ -81,7 +82,7 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 			// delete free resources not already included in plan
 			plan.addDeleteOp(DeleteOperation{Resources: resourcesToRecreate})
 			// re-create free resources
-			for profile, resources := range resourcesToRecreate.GroupByMigProfile() {
+			for profile, resources := range mig.GroupByMigProfile(resourcesToRecreate) {
 				plan.addCreateOp(CreateOperation{MigProfile: profile, Quantity: len(resources)})
 			}
 		}
@@ -90,14 +91,14 @@ func NewMigConfigPlan(state MigState, desired mig.GPUSpecAnnotationList) MigConf
 	return plan
 }
 
-func extractResourcesToRecreate(resources mig.DeviceResourceList, currentPlan MigConfigPlan) mig.DeviceResourceList {
+func extractResourcesToRecreate(resources gpu.DeviceResourceList, currentPlan MigConfigPlan) gpu.DeviceResourceList {
 	// lookup
-	alreadyToBeDeletedLookup := make(map[string]mig.DeviceResource)
+	alreadyToBeDeletedLookup := make(map[string]gpu.Device)
 	for _, r := range currentPlan.getResourcesToDelete() {
 		alreadyToBeDeletedLookup[r.DeviceId] = r
 	}
 	// extract free resources not already included in plan delete operations
-	resourcesToRecreate := make(mig.DeviceResourceList, 0)
+	resourcesToRecreate := make(gpu.DeviceResourceList, 0)
 	for _, r := range resources.GetFree() {
 		if _, toBeDeleted := alreadyToBeDeletedLookup[r.DeviceId]; !toBeDeleted {
 			resourcesToRecreate = append(resourcesToRecreate, r)
@@ -107,8 +108,8 @@ func extractResourcesToRecreate(resources mig.DeviceResourceList, currentPlan Mi
 	return resourcesToRecreate
 }
 
-func extractCandidatesForDeletion(resources mig.DeviceResourceList, nToDelete int) mig.DeviceResourceList {
-	deleteCandidates := make(mig.DeviceResourceList, 0)
+func extractCandidatesForDeletion(resources gpu.DeviceResourceList, nToDelete int) gpu.DeviceResourceList {
+	deleteCandidates := make(gpu.DeviceResourceList, 0)
 	// add free devices first
 	for _, r := range resources {
 		if r.IsFree() {
@@ -140,8 +141,8 @@ func (p *MigConfigPlan) addCreateOp(op CreateOperation) {
 	p.CreateOperations = append(p.CreateOperations, op)
 }
 
-func (p *MigConfigPlan) getResourcesToDelete() mig.DeviceResourceList {
-	resources := make(mig.DeviceResourceList, 0)
+func (p *MigConfigPlan) getResourcesToDelete() gpu.DeviceResourceList {
+	resources := make(gpu.DeviceResourceList, 0)
 	for _, o := range p.DeleteOperations {
 		resources = append(resources, o.Resources...)
 	}
@@ -165,7 +166,7 @@ func (p *MigConfigPlan) Equal(other *MigConfigPlan) bool {
 	return true
 }
 
-func getResourcesNotIncludedInSpec(state MigState, specAnnotations mig.GPUSpecAnnotationList) mig.DeviceResourceList {
+func getResourcesNotIncludedInSpec(state MigState, specAnnotations mig.GPUSpecAnnotationList) gpu.DeviceResourceList {
 	lookup := specAnnotations.GroupByGpuIndex()
 
 	updatedState := state

@@ -18,6 +18,7 @@ package plan
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
@@ -28,19 +29,19 @@ import (
 func TestMigState_Matches(t *testing.T) {
 	testCases := []struct {
 		name           string
-		stateResources []mig.DeviceResource
+		stateResources []gpu.Device
 		spec           map[string]string
 		expected       bool
 	}{
 		{
 			name:           "Empty",
 			spec:           make(map[string]string),
-			stateResources: make([]mig.DeviceResource, 0),
+			stateResources: make([]gpu.Device, 0),
 			expected:       true,
 		},
 		{
 			name: "Matches",
-			stateResources: []mig.DeviceResource{
+			stateResources: []gpu.Device{
 				{
 					Device: resource.Device{
 						ResourceName: v1.ResourceName("nvidia.com/mig-1g.10gb"),
