@@ -25,13 +25,14 @@ import (
 
 // lackingMigProfilesTracker is a utility struct for tracking the lacking MIG resources of a list of pods
 type lackingMigProfilesTracker struct {
-	allLackingMigProfiles map[mig.ProfileName]int
-	// podsLackingMigProfiles is a lookup table that associates each pod namespaced name with the MIG profiles it lacks
-	podsLackingMigProfiles map[string]map[mig.ProfileName]int
+	requestedMigProfiles     map[mig.ProfileName]int
+	lackingMigProfiles       map[mig.ProfileName]int
+	lackingMigProfilesLookup map[string]map[mig.ProfileName]int // Pod => lacking MIG profiles
 }
 
 func newLackingMigProfilesTracker(snapshot migstate.MigClusterSnapshot, pods []v1.Pod) lackingMigProfilesTracker {
-	allLackingMigProfiles := make(map[mig.ProfileName]int)
+	requestedMigProfiles := make(map[mig.ProfileName]int)
+	lackingMigProfiles := make(map[mig.ProfileName]int)
 	podsLackingMigProfiles := make(map[string]map[mig.ProfileName]int)
 	for _, pod := range pods {
 		podKey := util.GetNamespacedName(&pod).String()
@@ -39,38 +40,47 @@ func newLackingMigProfilesTracker(snapshot migstate.MigClusterSnapshot, pods []v
 			podsLackingMigProfiles[podKey] = make(map[mig.ProfileName]int)
 		}
 		for profile, quantity := range snapshot.GetLackingMigProfiles(pod) {
-			allLackingMigProfiles[profile] += quantity
+			lackingMigProfiles[profile] += quantity
 			podsLackingMigProfiles[podKey][profile] += quantity
+		}
+		for profile, quantity := range mig.GetRequestedMigResources(pod) {
+			requestedMigProfiles[profile] += quantity
 		}
 	}
 	return lackingMigProfilesTracker{
-		allLackingMigProfiles:  allLackingMigProfiles,
-		podsLackingMigProfiles: podsLackingMigProfiles,
+		requestedMigProfiles:     requestedMigProfiles,
+		lackingMigProfiles:       lackingMigProfiles,
+		lackingMigProfilesLookup: podsLackingMigProfiles,
 	}
 }
 
 func (t lackingMigProfilesTracker) GetLackingMigProfiles() map[mig.ProfileName]int {
-	return t.allLackingMigProfiles
+	return t.lackingMigProfiles
 }
 
-func (t lackingMigProfilesTracker) GetPodLackingMigProfiles(pod v1.Pod) map[mig.ProfileName]int {
-	return t.podsLackingMigProfiles[util.GetNamespacedName(&pod).String()]
+func (t lackingMigProfilesTracker) GetRequestedMigProfiles() map[mig.ProfileName]int {
+	return t.requestedMigProfiles
 }
 
 func (t lackingMigProfilesTracker) Remove(pod v1.Pod) {
-	lackingMigProfiles, ok := t.podsLackingMigProfiles[util.GetNamespacedName(&pod).String()]
-	if !ok {
-		return
-	}
-
-	for profile, quantity := range lackingMigProfiles {
-		t.allLackingMigProfiles[profile] -= quantity
-		lackingMigProfiles[profile] -= quantity
-		if lackingMigProfiles[profile] <= 0 {
-			delete(lackingMigProfiles, profile)
+	// Update requested MIG profiles
+	for profile, quantity := range mig.GetRequestedMigResources(pod) {
+		t.requestedMigProfiles[profile] -= quantity
+		if t.requestedMigProfiles[profile] <= 0 {
+			delete(t.requestedMigProfiles, profile)
 		}
-		if t.allLackingMigProfiles[profile] <= 0 {
-			delete(t.allLackingMigProfiles, profile)
+	}
+	// Update lacking MIG profiles
+	if lackingMigProfiles, ok := t.lackingMigProfilesLookup[util.GetNamespacedName(&pod).String()]; ok {
+		for profile, quantity := range lackingMigProfiles {
+			t.lackingMigProfiles[profile] -= quantity
+			lackingMigProfiles[profile] -= quantity
+			if lackingMigProfiles[profile] <= 0 {
+				delete(lackingMigProfiles, profile)
+			}
+			if t.lackingMigProfiles[profile] <= 0 {
+				delete(t.lackingMigProfiles, profile)
+			}
 		}
 	}
 }

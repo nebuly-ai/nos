@@ -37,28 +37,31 @@ func newClusterSnapshotOrPanic(snapshot state.ClusterSnapshot) migstate.MigClust
 
 func TestLackingMigProfilesTracker_Remove(t *testing.T) {
 	testCases := []struct {
-		name                           string
-		snapshot                       migstate.MigClusterSnapshot
-		pods                           []v1.Pod
-		podToRemove                    v1.Pod
-		expectedAllLackingMigProfiles  map[mig.ProfileName]int
-		expectedPodsLackingMigProfiles map[string]map[mig.ProfileName]int
+		name                             string
+		snapshot                         migstate.MigClusterSnapshot
+		pods                             []v1.Pod
+		podToRemove                      v1.Pod
+		expectedRequestedMigProfiles     map[mig.ProfileName]int
+		expectedLackingMigProfiles       map[mig.ProfileName]int
+		expectedLackingMigProfilesLookup map[string]map[mig.ProfileName]int
 	}{
 		{
-			name:                           "Empty snapshot, empty tracker",
-			snapshot:                       newClusterSnapshotOrPanic(state.NewClusterSnapshot(map[string]framework.NodeInfo{})),
-			pods:                           []v1.Pod{},
-			podToRemove:                    v1.Pod{},
-			expectedAllLackingMigProfiles:  map[mig.ProfileName]int{},
-			expectedPodsLackingMigProfiles: map[string]map[mig.ProfileName]int{},
+			name:                             "Empty snapshot, empty tracker",
+			snapshot:                         newClusterSnapshotOrPanic(state.NewClusterSnapshot(map[string]framework.NodeInfo{})),
+			pods:                             []v1.Pod{},
+			podToRemove:                      v1.Pod{},
+			expectedRequestedMigProfiles:     map[mig.ProfileName]int{},
+			expectedLackingMigProfiles:       map[mig.ProfileName]int{},
+			expectedLackingMigProfilesLookup: map[string]map[mig.ProfileName]int{},
 		},
 		{
-			name:                           "Pod not tracked",
-			snapshot:                       newClusterSnapshotOrPanic(state.NewClusterSnapshot(map[string]framework.NodeInfo{})),
-			pods:                           []v1.Pod{},
-			podToRemove:                    factory.BuildPod("ns-1", "pd-1").Get(),
-			expectedAllLackingMigProfiles:  map[mig.ProfileName]int{},
-			expectedPodsLackingMigProfiles: map[string]map[mig.ProfileName]int{},
+			name:                             "Pod not tracked",
+			snapshot:                         newClusterSnapshotOrPanic(state.NewClusterSnapshot(map[string]framework.NodeInfo{})),
+			pods:                             []v1.Pod{},
+			podToRemove:                      factory.BuildPod("ns-1", "pd-1").Get(),
+			expectedRequestedMigProfiles:     map[mig.ProfileName]int{},
+			expectedLackingMigProfiles:       map[mig.ProfileName]int{},
+			expectedLackingMigProfilesLookup: map[string]map[mig.ProfileName]int{},
 		},
 		{
 			name:     "Quantities <= 0 should be removed",
@@ -82,10 +85,13 @@ func TestLackingMigProfilesTracker_Remove(t *testing.T) {
 					WithScalarResourceRequest(mig.Profile7g40gb.AsResourceName(), 2).
 					Get(),
 			).Get(),
-			expectedAllLackingMigProfiles: map[mig.ProfileName]int{
+			expectedRequestedMigProfiles: map[mig.ProfileName]int{
 				mig.Profile1g10gb: 1,
 			},
-			expectedPodsLackingMigProfiles: map[string]map[mig.ProfileName]int{
+			expectedLackingMigProfiles: map[mig.ProfileName]int{
+				mig.Profile1g10gb: 1,
+			},
+			expectedLackingMigProfilesLookup: map[string]map[mig.ProfileName]int{
 				"ns-1/pd-1": {},
 				"ns-1/pd-2": {
 					mig.Profile1g10gb: 1,
@@ -98,8 +104,9 @@ func TestLackingMigProfilesTracker_Remove(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tracker := newLackingMigProfilesTracker(tt.snapshot, tt.pods)
 			tracker.Remove(tt.podToRemove)
-			assert.Equal(t, tt.expectedAllLackingMigProfiles, tracker.allLackingMigProfiles)
-			assert.Equal(t, tt.expectedPodsLackingMigProfiles, tracker.podsLackingMigProfiles)
+			assert.Equal(t, tt.expectedLackingMigProfilesLookup, tracker.lackingMigProfilesLookup)
+			assert.Equal(t, tt.expectedRequestedMigProfiles, tracker.GetRequestedMigProfiles())
+			assert.Equal(t, tt.expectedLackingMigProfiles, tracker.GetLackingMigProfiles())
 		})
 	}
 }
