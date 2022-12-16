@@ -16,8 +16,19 @@
 
 package timeslicing
 
-type ProfileName string
-
-const (
-	ProfileEmpty ProfileName = ""
+import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	v1 "k8s.io/api/core/v1"
 )
+
+func ParseSpecAnnotation(key, value string) (gpu.SpecAnnotation[ProfileName], error) {
+	return gpu.ParseSpecAnnotation(key, value, ProfileEmpty)
+}
+
+func ParseStatusAnnotation(key, value string) (gpu.StatusAnnotation[ProfileName], error) {
+	return gpu.ParseStatusAnnotation(key, value, ProfileEmpty)
+}
+
+func ParseNodeAnnotations(node v1.Node) (gpu.StatusAnnotationList[ProfileName], gpu.SpecAnnotationList[ProfileName]) {
+	return gpu.ParseNodeAnnotations(node, ProfileEmpty)
+}

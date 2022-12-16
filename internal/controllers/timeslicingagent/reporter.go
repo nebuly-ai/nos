@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package migagent
+package timeslicingagent
 
 import (
 	"context"
@@ -34,10 +34,10 @@ type Reporter struct {
 	refreshInterval time.Duration
 }
 
-func NewReporter(client client.Client, tsClient gpu.Client, refreshInterval time.Duration) Reporter {
+func NewReporter(k8sClient client.Client, gpuClient gpu.Client, refreshInterval time.Duration) Reporter {
 	return Reporter{
-		Client:          client,
-		gpuClient:       tsClient,
+		Client:          k8sClient,
+		gpuClient:       gpuClient,
 		refreshInterval: refreshInterval,
 	}
 }
@@ -53,7 +53,7 @@ func (r *Reporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result
 		logger.Error(err, "unable to fetch GPUs")
 		return ctrl.Result{}, err
 	}
-	logger.Info("", devices)
+	logger.Info("", "", devices)
 
 	// Group by GPU index
 
