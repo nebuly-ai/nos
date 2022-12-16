@@ -26,6 +26,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -92,12 +93,12 @@ func TestActuator__Apply(t *testing.T) {
 				}).Get(),
 				"node-2": factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile1g5gb):     "4",
-						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile1g5gb):                         "4",
+						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile2g10gb):                        "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
 					}).
 					WithLabels(map[string]string{
-						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
 						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
 					}).
 					Get(),
@@ -134,14 +135,14 @@ func TestActuator__Apply(t *testing.T) {
 			expectedApplied: true,
 			expectedAnnotations: map[string]map[string]string{
 				"node-1": {
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile1g6gb):  "1",
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile3g20gb): "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile1g6gb):  "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile3g20gb): "2",
 					"annotation-1": "foo",
 				},
 				"node-2": {
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, mig.Profile4g24gb):    "1",
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile4g24gb):    "2",
-					fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile4g24gb):                        "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile4g24gb):                        "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
 				},
 			},
 			expectedErr: false,
@@ -151,12 +152,12 @@ func TestActuator__Apply(t *testing.T) {
 			snapshotNodes: map[string]v1.Node{
 				"node-2": factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb):  "4",
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile2g10gb):                        "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, mig.Profile1g5gb, resource.StatusFree):  "4",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
 					}).
 					WithLabels(map[string]string{
-						fmt.Sprintf(constant.LabelNvidiaProduct): string(mig.GPUModel_A100_SXM4_40GB),
+						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
 						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
 					}).
 					Get(),
@@ -182,9 +183,9 @@ func TestActuator__Apply(t *testing.T) {
 			expectedApplied: false,
 			expectedAnnotations: map[string]map[string]string{
 				"node-2": {
-					fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, mig.Profile2g10gb):    "1",
-					fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, mig.Profile2g10gb): "1",
-					fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, mig.Profile1g5gb):  "4",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile2g10gb):                        "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, mig.Profile1g5gb, resource.StatusFree):  "4",
 				},
 			},
 			expectedErr: false,

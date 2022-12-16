@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +42,7 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Labels: map[string]string{
-						constant.LabelNvidiaProduct: string(GPUModel_A100_SXM4_40GB),
+						constant.LabelNvidiaProduct: string(gpu.GPUModel_A100_SXM4_40GB),
 					},
 				},
 			},
@@ -56,7 +58,7 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, Profile1g10gb): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, Profile1g10gb, resource.StatusFree): "1",
 					},
 				},
 			},
@@ -72,7 +74,7 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, Profile1g10gb): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, Profile1g10gb, resource.StatusFree): "1",
 					},
 					Labels: map[string]string{
 						constant.LabelNvidiaProduct: "unknown-gpu-model",
@@ -87,12 +89,12 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Annotations: map[string]string{
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, Profile1g5gb):  "2",
-						fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, Profile2g20gb): "3",
-						fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, Profile3g20gb): "2",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, Profile1g5gb, resource.StatusFree):  "2",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, Profile2g20gb, resource.StatusUsed): "3",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, Profile3g20gb, resource.StatusFree): "2",
 					},
 					Labels: map[string]string{
-						constant.LabelNvidiaProduct: string(GPUModel_A30),
+						constant.LabelNvidiaProduct: string(gpu.GPUModel_A30),
 					},
 				},
 			},
@@ -101,8 +103,8 @@ func TestNewNode(t *testing.T) {
 				GPUs: []GPU{
 					{
 						index:                0,
-						model:                GPUModel_A30,
-						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
+						model:                gpu.GPUModel_A30,
+						allowedMigGeometries: GetKnownGeometries()[gpu.GPUModel_A30],
 						usedMigDevices: map[ProfileName]int{
 							Profile2g20gb: 3,
 						},
@@ -112,8 +114,8 @@ func TestNewNode(t *testing.T) {
 					},
 					{
 						index:                1,
-						model:                GPUModel_A30,
-						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
+						model:                gpu.GPUModel_A30,
+						allowedMigGeometries: GetKnownGeometries()[gpu.GPUModel_A30],
 						usedMigDevices:       map[ProfileName]int{},
 						freeMigDevices: map[ProfileName]int{
 							Profile3g20gb: 2,
@@ -129,7 +131,7 @@ func TestNewNode(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-node",
 					Labels: map[string]string{
-						constant.LabelNvidiaProduct: string(GPUModel_A30),
+						constant.LabelNvidiaProduct: string(gpu.GPUModel_A30),
 						constant.LabelNvidiaCount:   strconv.Itoa(2),
 					},
 				},
@@ -139,15 +141,15 @@ func TestNewNode(t *testing.T) {
 				GPUs: []GPU{
 					{
 						index:                0,
-						model:                GPUModel_A30,
-						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
+						model:                gpu.GPUModel_A30,
+						allowedMigGeometries: GetKnownGeometries()[gpu.GPUModel_A30],
 						usedMigDevices:       map[ProfileName]int{},
 						freeMigDevices:       map[ProfileName]int{},
 					},
 					{
 						index:                1,
-						model:                GPUModel_A30,
-						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
+						model:                gpu.GPUModel_A30,
+						allowedMigGeometries: GetKnownGeometries()[gpu.GPUModel_A30],
 						usedMigDevices:       map[ProfileName]int{},
 						freeMigDevices:       map[ProfileName]int{},
 					},
@@ -188,8 +190,8 @@ func TestNode__GetGeometry(t *testing.T) {
 				GPUs: []GPU{
 					{
 						index:                0,
-						model:                GPUModel_A30,
-						allowedMigGeometries: GetKnownGeometries()[GPUModel_A30],
+						model:                gpu.GPUModel_A30,
+						allowedMigGeometries: GetKnownGeometries()[gpu.GPUModel_A30],
 						usedMigDevices: map[ProfileName]int{
 							Profile4g24gb: 2,
 							Profile1g5gb:  3,
@@ -201,8 +203,8 @@ func TestNode__GetGeometry(t *testing.T) {
 					},
 					{
 						index:                1,
-						model:                GPUModel_A100_SXM4_40GB,
-						allowedMigGeometries: GetKnownGeometries()[GPUModel_A100_SXM4_40GB],
+						model:                gpu.GPUModel_A100_SXM4_40GB,
+						allowedMigGeometries: GetKnownGeometries()[gpu.GPUModel_A100_SXM4_40GB],
 						usedMigDevices: map[ProfileName]int{
 							Profile1g5gb:  3,
 							Profile2g20gb: 1,
@@ -233,7 +235,7 @@ func TestNode__GetGeometry(t *testing.T) {
 
 func TestNode__UpdateGeometryFor(t *testing.T) {
 	type gpuSpec struct {
-		model GPUModel
+		model gpu.Model
 		index int
 		used  map[ProfileName]int
 		free  map[ProfileName]int
@@ -259,7 +261,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			name: "Node geometry already provides required profiles, should do nothing",
 			nodeGPUs: []gpuSpec{
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 0,
 					used:  map[ProfileName]int{},
 					free: map[ProfileName]int{
@@ -267,7 +269,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					},
 				},
 				{
-					model: GPUModel_A100_SXM4_40GB,
+					model: gpu.GPUModel_A100_SXM4_40GB,
 					index: 1,
 					used:  map[ProfileName]int{},
 					free: map[ProfileName]int{
@@ -287,7 +289,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			name: "Multiple GPUs, all are full: should not change anything",
 			nodeGPUs: []gpuSpec{
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 0,
 					used: map[ProfileName]int{
 						Profile4g24gb: 1,
@@ -295,7 +297,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					free: map[ProfileName]int{},
 				},
 				{
-					model: GPUModel_A100_SXM4_40GB,
+					model: gpu.GPUModel_A100_SXM4_40GB,
 					index: 1,
 					used: map[ProfileName]int{
 						Profile7g40gb: 1,
@@ -317,7 +319,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			name: "GPU with available capacity: should create a new profile without changing the existing free ones",
 			nodeGPUs: []gpuSpec{
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 0,
 					used: map[ProfileName]int{
 						Profile1g6gb: 1,
@@ -337,7 +339,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			name: "GPU with free MIG device: should split it into smaller profiles for making up space",
 			nodeGPUs: []gpuSpec{
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 0,
 					used: map[ProfileName]int{
 						Profile4g24gb: 1, // GPU is full
@@ -345,7 +347,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					free: map[ProfileName]int{},
 				},
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 1,
 					used: map[ProfileName]int{
 						Profile1g6gb: 2,
@@ -368,7 +370,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			name: "GPU with free small MIG devices: should delete them and create the required one",
 			nodeGPUs: []gpuSpec{
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 0,
 					used: map[ProfileName]int{
 						Profile4g24gb: 1,
@@ -376,7 +378,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					free: map[ProfileName]int{},
 				},
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 1,
 					used:  map[ProfileName]int{},
 					free: map[ProfileName]int{
@@ -396,13 +398,13 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			name: "Multiple GPUs, if the first one can accommodate the required profiles, all the others should remain untouched",
 			nodeGPUs: []gpuSpec{
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 0,
 					used:  map[ProfileName]int{},
 					free:  map[ProfileName]int{},
 				},
 				{
-					model: GPUModel_A30,
+					model: gpu.GPUModel_A30,
 					index: 1,
 					used:  map[ProfileName]int{},
 					free:  map[ProfileName]int{},
@@ -452,7 +454,7 @@ func TestNode__HasFreeMigCapacity(t *testing.T) {
 		{
 			name: "Node with GPU without any free or used device",
 			nodeGPUs: []GPU{
-				NewGpuOrPanic(GPUModel_A30, 0, make(map[ProfileName]int), make(map[ProfileName]int)),
+				NewGpuOrPanic(gpu.GPUModel_A30, 0, make(map[ProfileName]int), make(map[ProfileName]int)),
 			},
 			expected: true,
 		},
@@ -460,7 +462,7 @@ func TestNode__HasFreeMigCapacity(t *testing.T) {
 			name: "Node with GPU with free MIG devices",
 			nodeGPUs: []GPU{
 				NewGpuOrPanic(
-					GPUModel_A30,
+					gpu.GPUModel_A30,
 					0,
 					map[ProfileName]int{Profile1g6gb: 1},
 					map[ProfileName]int{Profile1g6gb: 1},
@@ -472,7 +474,7 @@ func TestNode__HasFreeMigCapacity(t *testing.T) {
 			name: "Node with just a single GPU with just used MIG device, but which MIG allowed geometries allow to create more MIG devices",
 			nodeGPUs: []GPU{
 				NewGpuOrPanic(
-					GPUModel_A30,
+					gpu.GPUModel_A30,
 					0,
 					map[ProfileName]int{
 						Profile1g6gb: 1,

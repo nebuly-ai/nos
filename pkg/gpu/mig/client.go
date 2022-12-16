@@ -18,57 +18,48 @@ package mig
 
 import (
 	"context"
-	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	v1 "k8s.io/api/core/v1"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"k8s.io/klog/v2"
-	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
-	"strings"
 )
 
-type resourceWithDeviceId struct {
-	resourceName v1.ResourceName
-	deviceId     string
-}
-
-func (r resourceWithDeviceId) isMigDevice() bool {
-	return IsNvidiaMigDevice(r.resourceName)
-}
-
 type Client interface {
-	GetMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
-	GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
-	GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error)
-	CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, error)
-	DeleteMigResource(ctx context.Context, resource DeviceResource) gpu.Error
-	DeleteAllExcept(ctx context.Context, resources DeviceResourceList) error
+	GetMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error)
+	GetUsedMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error)
+	GetAllocatableMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error)
+	CreateMigDevices(ctx context.Context, profileList ProfileList) (ProfileList, error)
+	DeleteMigDevice(ctx context.Context, device gpu.Device) gpu.Error
+	DeleteAllExcept(ctx context.Context, resources gpu.DeviceList) error
 }
 
 type clientImpl struct {
-	lister     pdrv1.PodResourcesListerClient
-	nvmlClient nvml.Client
+	resourceClient resource.Client
+	nvmlClient     nvml.Client
 }
 
-func NewClient(lister pdrv1.PodResourcesListerClient, nvmlClient nvml.Client) Client {
-	return &clientImpl{lister: lister, nvmlClient: nvmlClient}
+func NewClient(resourceClient resource.Client, nvmlClient nvml.Client) Client {
+	return &clientImpl{
+		resourceClient: resourceClient,
+		nvmlClient:     nvmlClient,
+	}
 }
 
-// CreateMigResources creates the MIG resources provided as argument, which can span multiple GPUs, and returns
+// CreateMigDevices creates the MIG resources provided as argument, which can span multiple GPUs, and returns
 // the resources that were actually created.
 //
 // If any error happens, and it is not possible to create the required resources on a certain GPUs,
 // CreateMigResources still tries to create the resources on the other GPUs and returns the ones that
 // it possible to create. This means that if any error happens, the returned ProfileList will be a subset
 // of the input list, otherwise the two lists will have the same length and items.
-func (c clientImpl) CreateMigResources(ctx context.Context, profileList ProfileList) (ProfileList, error) {
+func (c clientImpl) CreateMigDevices(_ context.Context, profileList ProfileList) (ProfileList, error) {
 	var errors = make(gpu.ErrorList, 0)
 	var createdProfiles = make(ProfileList, 0)
 	for gpuIndex, profiles := range profileList.GroupByGPU() {
 		profileNames := make([]string, 0)
 		for _, p := range profiles {
-			profileNames = append(profileNames, p.Name.AsString())
+			profileNames = append(profileNames, p.Name.String())
 		}
 		if err := c.nvmlClient.CreateMigDevices(profileNames, gpuIndex); err != nil {
 			errors = append(errors, err)
@@ -82,18 +73,18 @@ func (c clientImpl) CreateMigResources(ctx context.Context, profileList ProfileL
 	return createdProfiles, nil
 }
 
-func (c clientImpl) DeleteMigResource(_ context.Context, resource DeviceResource) gpu.Error {
+func (c clientImpl) DeleteMigDevice(_ context.Context, resource gpu.Device) gpu.Error {
 	return c.nvmlClient.DeleteMigDevice(resource.DeviceId)
 }
 
-func (c clientImpl) GetMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error) {
+func (c clientImpl) GetMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
 	// Get used
-	used, err := c.GetUsedMigDeviceResources(ctx)
+	used, err := c.GetUsedMigDevices(ctx)
 	if err != nil {
 		return nil, err
 	}
 	// Get allocatable
-	allocatable, err := c.GetAllocatableMigDeviceResources(ctx)
+	allocatable, err := c.GetAllocatableMigDevices(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -103,65 +94,42 @@ func (c clientImpl) GetMigDeviceResources(ctx context.Context) (DeviceResourceLi
 	return append(used, free...), nil
 }
 
-func (c clientImpl) GetUsedMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error) {
-	logger := klog.FromContext(ctx)
-
-	// List Pods Resources
-	listResp, err := c.lister.List(ctx, &pdrv1.ListPodResourcesRequest{})
+func (c clientImpl) GetUsedMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	// Fetch used devices
+	usedResources, err := c.resourceClient.GetUsedDevices(ctx)
 	if err != nil {
-		logger.Error(err, "unable to list resources used by running Pods from Kubelet gRPC socket")
 		return nil, gpu.NewGenericError(err)
 	}
 
-	// Extract GPUs as resourceName + deviceId
-	resources, err := fromListRespToGPUResourceWithDeviceId(listResp)
-	if err != nil {
-		logger.Error(err, "unable parse resources used by running pods")
-		return nil, gpu.NewGenericError(err)
+	// Consider only NVIDIA GPUs
+	var isNvidiaResource = func(d resource.Device) bool {
+		return d.IsNvidiaResource()
 	}
+	usedGpus := util.Filter(usedResources, isNvidiaResource)
 
 	// Extract MIG devices
-	return c.extractMigDevices(ctx, resources, resource.StatusUsed)
+	return c.extractMigDevices(ctx, usedGpus)
 }
 
-func (c clientImpl) GetAllocatableMigDeviceResources(ctx context.Context) (DeviceResourceList, gpu.Error) {
-	logger := klog.FromContext(ctx)
-
-	// List Allocatable Resources
-	resp, err := c.lister.GetAllocatableResources(ctx, &pdrv1.AllocatableResourcesRequest{})
+func (c clientImpl) GetAllocatableMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	// Fetch used devices
+	allocatableResources, err := c.resourceClient.GetAllocatableDevices(ctx)
 	if err != nil {
-		logger.Error(err, "unable to get allocatable resources from Kubelet gRPC socket")
 		return nil, gpu.NewGenericError(err)
 	}
 
-	// Extract GPUs as resourceName + deviceId
-	resources := make([]resourceWithDeviceId, 0)
-	for _, d := range resp.GetDevices() {
-		// Consider only NVIDIA GPUs
-		if !strings.HasPrefix(d.GetResourceName(), "nvidia.com/") {
-			continue
-		}
-		// Check devices length
-		if len(d.DeviceIds) != 1 {
-			err := fmt.Errorf(
-				"GPU resource %s should be associated with only 1 device, found %d: this should never happen",
-				d.GetResourceName(),
-				len(d.DeviceIds),
-			)
-			return nil, gpu.NewGenericError(err)
-		}
-		res := resourceWithDeviceId{
-			resourceName: v1.ResourceName(d.GetResourceName()),
-			deviceId:     d.DeviceIds[0],
-		}
-		resources = append(resources, res)
+	// Consider only NVIDIA GPUs
+	var isNvidiaResource = func(d resource.Device) bool {
+		return d.IsNvidiaResource()
 	}
+	allocatableGPUs := util.Filter(allocatableResources, isNvidiaResource)
 
-	return c.extractMigDevices(ctx, resources, resource.StatusUnknown)
+	// Extract MIG devices
+	return c.extractMigDevices(ctx, allocatableGPUs)
 }
 
 // DeleteAllExcept deletes all the devices that are not in the list of devices to keep.
-func (c clientImpl) DeleteAllExcept(_ context.Context, resourcesToKeep DeviceResourceList) error {
+func (c clientImpl) DeleteAllExcept(_ context.Context, resourcesToKeep gpu.DeviceList) error {
 	nResources := len(resourcesToKeep)
 	idsToKeep := make([]string, nResources)
 	for i, r := range resourcesToKeep {
@@ -170,42 +138,33 @@ func (c clientImpl) DeleteAllExcept(_ context.Context, resourcesToKeep DeviceRes
 	return c.nvmlClient.DeleteAllMigDevicesExcept(idsToKeep)
 }
 
-func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceWithDeviceId, devicesStatus resource.Status) ([]DeviceResource, gpu.Error) {
+func (c clientImpl) extractMigDevices(ctx context.Context, devices []resource.Device) ([]gpu.Device, gpu.Error) {
 	logger := klog.FromContext(ctx)
 
-	// Extract MIG devices
-	migResources := make([]resourceWithDeviceId, 0)
-	for _, r := range resources {
-		if r.isMigDevice() {
-			migResources = append(migResources, r)
-		}
-	}
-
 	// Retrieve MIG device ID and GPU index
-	migDevices := make([]DeviceResource, 0)
-	for _, r := range migResources {
-		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.deviceId)
+	migDevices := make([]gpu.Device, 0)
+	for _, r := range devices {
+		if !IsNvidiaMigDevice(r.ResourceName) {
+			continue
+		}
+		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.DeviceId)
 		if gpu.IgnoreNotFound(err) != nil {
 			logger.Error(
 				err,
 				"unable to fetch GPU index",
 				"resourceName",
-				r.resourceName,
+				r.DeviceId,
 				"MIG device ID",
-				r.deviceId,
+				r.DeviceId,
 			)
 			return nil, err
 		}
 		if gpu.IsNotFound(err) {
-			logger.V(1).Info("could not find GPU index of MIG device", "MIG device ID", r.deviceId)
+			logger.V(1).Info("could not find GPU index of MIG device", "MIG device ID", r.DeviceId)
 			continue
 		}
-		migDevice := DeviceResource{
-			Device: resource.Device{
-				ResourceName: r.resourceName,
-				DeviceId:     r.deviceId,
-				Status:       devicesStatus,
-			},
+		migDevice := gpu.Device{
+			Device:   r,
 			GpuIndex: gpuIndex,
 		}
 		migDevices = append(migDevices, migDevice)
@@ -214,43 +173,14 @@ func (c clientImpl) extractMigDevices(ctx context.Context, resources []resourceW
 	return migDevices, nil
 }
 
-func fromListRespToGPUResourceWithDeviceId(listResp *pdrv1.ListPodResourcesResponse) ([]resourceWithDeviceId, error) {
-	result := make([]resourceWithDeviceId, 0)
-	for _, r := range listResp.PodResources {
-		for _, cr := range r.Containers {
-			for _, cd := range cr.GetDevices() {
-				// Consider only NVIDIA GPUs
-				if !strings.HasPrefix(cd.GetResourceName(), "nvidia.com/") {
-					continue
-				}
-				// Check devices length
-				if len(cd.DeviceIds) != 1 {
-					err := fmt.Errorf(
-						"GPU resource %s should be associated with only 1 device, found %d: this should never happen",
-						cd.GetResourceName(),
-						len(cd.DeviceIds),
-					)
-					return nil, err
-				}
-				resWithId := resourceWithDeviceId{
-					deviceId:     cd.DeviceIds[0],
-					resourceName: v1.ResourceName(cd.GetResourceName()),
-				}
-				result = append(result, resWithId)
-			}
-		}
-	}
-	return result, nil
-}
-
-func computeFreeDevicesAndUpdateStatus(used []DeviceResource, allocatable []DeviceResource) []DeviceResource {
-	usedLookup := make(map[string]DeviceResource)
+func computeFreeDevicesAndUpdateStatus(used []gpu.Device, allocatable []gpu.Device) []gpu.Device {
+	usedLookup := make(map[string]gpu.Device)
 	for _, u := range used {
 		usedLookup[u.DeviceId] = u
 	}
 
 	// Compute (allocatable - used)
-	res := make([]DeviceResource, 0)
+	res := make([]gpu.Device, 0)
 	for _, a := range allocatable {
 		if _, used := usedLookup[a.DeviceId]; !used {
 			a.Status = resource.StatusFree

@@ -19,6 +19,8 @@ package mig
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"
@@ -128,35 +130,35 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		{
 			name: "Matches",
 			status: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusUsed): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusFree): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "2g.40gb", resource.StatusFree): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "2g.40gb", resource.StatusUsed): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "1g.20gb", resource.StatusFree): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "1g.20gb", resource.StatusUsed): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, "1g.20gb"): "4",
 			},
 			expected: true,
 		},
 		{
 			name: "Do not matches",
 			status: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusUsed): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusFree): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "2g.40gb", resource.StatusFree): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "2g.40gb", resource.StatusUsed): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "1g.20gb", resource.StatusFree): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "1g.20gb", resource.StatusUsed): "2",
 			},
 			spec: map[string]string{
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "2g.40gb"): "2",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "1g.20gb"): "4",
-				fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 1, "4g.40gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "2g.40gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, "1g.20gb"): "4",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, "4g.40gb"): "1",
 			},
 			expected: false,
 		},
@@ -164,15 +166,15 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			specAnnotations := make([]GPUSpecAnnotation, 0)
+			specAnnotations := make(gpu.SpecAnnotationList[ProfileName], 0)
 			for k, v := range tt.spec {
-				a, _ := NewGPUSpecAnnotationFromNodeAnnotation(k, v)
+				a, _ := ParseSpecAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 
-			statusAnnotations := make([]GPUStatusAnnotation, 0)
+			statusAnnotations := make(gpu.StatusAnnotationList[ProfileName], 0)
 			for k, v := range tt.status {
-				a, _ := NewGPUStatusAnnotation(k, v)
+				a, _ := ParseStatusAnnotation(k, v)
 				statusAnnotations = append(statusAnnotations, a)
 			}
 

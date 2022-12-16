@@ -93,7 +93,7 @@ func TestProfileName__GreaterThan(t *testing.T) {
 		expected bool
 	}{
 		{
-			name:     "Profile are equals",
+			name:     "ProfileName are equals",
 			profile:  Profile1g6gb,
 			other:    Profile1g6gb,
 			expected: false,

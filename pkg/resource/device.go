@@ -16,9 +16,26 @@
 
 package resource
 
-import "k8s.io/api/core/v1"
+import (
+	"fmt"
+	"k8s.io/api/core/v1"
+	"strings"
+)
 
 type Status string
+
+func ParseStatus(status string) (Status, error) {
+	if strings.ToLower(status) == "free" {
+		return StatusFree, nil
+	}
+	if strings.ToLower(status) == "used" {
+		return StatusUsed, nil
+	}
+	if strings.ToLower(status) == "unknown" {
+		return StatusUnknown, nil
+	}
+	return "", fmt.Errorf("invalid status %s", status)
+}
 
 const (
 	StatusUsed    Status = "used"
@@ -43,4 +60,8 @@ func (d Device) IsUsed() bool {
 
 func (d Device) IsFree() bool {
 	return d.Status == StatusFree
+}
+
+func (d Device) IsNvidiaResource() bool {
+	return strings.HasPrefix(d.ResourceName.String(), "nvidia.com/")
 }

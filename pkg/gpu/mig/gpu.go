@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"sort"
@@ -60,25 +61,23 @@ func (g Geometry) String() string {
 	return builder.String()
 }
 
-type GPUModel string
-
 type GPU struct {
 	index                int
-	model                GPUModel
+	model                gpu.Model
 	allowedMigGeometries []Geometry
 	usedMigDevices       map[ProfileName]int
 	freeMigDevices       map[ProfileName]int
 }
 
-func NewGpuOrPanic(model GPUModel, index int, usedMigDevices, freeMigDevices map[ProfileName]int) GPU {
-	gpu, err := NewGPU(model, index, usedMigDevices, freeMigDevices)
+func NewGpuOrPanic(model gpu.Model, index int, usedMigDevices, freeMigDevices map[ProfileName]int) GPU {
+	g, err := NewGPU(model, index, usedMigDevices, freeMigDevices)
 	if err != nil {
 		panic(err)
 	}
-	return gpu
+	return g
 }
 
-func NewGPU(model GPUModel, index int, usedMigDevices, freeMigDevices map[ProfileName]int) (GPU, error) {
+func NewGPU(model gpu.Model, index int, usedMigDevices, freeMigDevices map[ProfileName]int) (GPU, error) {
 	allowedGeometries, ok := GetAllowedGeometries(model)
 	if !ok {
 		return GPU{}, fmt.Errorf("model %q is not associated with any known GPU", model)
@@ -113,7 +112,7 @@ func (g *GPU) GetIndex() int {
 	return g.index
 }
 
-func (g *GPU) GetModel() GPUModel {
+func (g *GPU) GetModel() gpu.Model {
 	return g.model
 }
 

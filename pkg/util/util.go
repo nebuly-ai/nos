@@ -143,10 +143,10 @@ func InSlice[K comparable](item K, slice []K) bool {
 	return false
 }
 
-func Filter[K any](slice []K, filter func(k K) bool) []K {
+func Filter[K any](slice []K, keep func(k K) bool) []K {
 	var res = make([]K, 0)
 	for _, k := range slice {
-		if filter(k) {
+		if keep(k) {
 			res = append(res, k)
 		}
 	}

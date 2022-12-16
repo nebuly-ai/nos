@@ -66,8 +66,14 @@ mig-agent-manifests: controller-gen
 	rbac:roleName=mig-agent-role \
 	output:rbac:artifacts:config=config/migagent/rbac
 
+.PHONY: time-slicing-agent-manifests ## Generate manifests for the time-slicing-agent (ClusterRole, etc.).
+time-slicing-agent-manifests: controller-gen
+	$(CONTROLLER_GEN) paths="./internal/controllers/timeslicingagent/..." \
+	rbac:roleName=time-slicing-agent-role \
+	output:rbac:artifacts:config=config/timeslicingagent/rbac
+
 .PHONY: manifests
-manifests: operator-manifests mig-agent-manifests gpu-partitioner-manifests
+manifests: operator-manifests mig-agent-manifests gpu-partitioner-manifests time-slicing-agent-manifests
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.

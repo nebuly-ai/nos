@@ -19,6 +19,7 @@ package mig
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"k8s.io/api/core/v1"
 	"regexp"
@@ -77,4 +78,44 @@ func GetRequestedMigResources(pod v1.Pod) map[ProfileName]int {
 		}
 	}
 	return res
+}
+
+// GetMigProfileName returns the name of the Mig profile associated to the device
+//
+// Example:
+//
+//	Resource name: nvidia.com/mig-1g.10gb
+//	GetMigProfileName() -> 1g.10gb
+func GetMigProfileName(device gpu.Device) ProfileName {
+	return ProfileName(strings.TrimPrefix(device.ResourceName.String(), constant.NvidiaMigResourcePrefix))
+}
+
+func GroupDevicesByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
+	result := make(map[Profile]gpu.DeviceList)
+	for _, r := range l {
+		key := Profile{
+			GpuIndex: r.GpuIndex,
+			Name:     GetMigProfileName(r),
+		}
+		if result[key] == nil {
+			result[key] = make(gpu.DeviceList, 0)
+		}
+		result[key] = append(result[key], r)
+	}
+	return result
+}
+
+func GroupSpecAnnotationsByMigProfile(annotations gpu.SpecAnnotationList[ProfileName]) map[Profile]gpu.SpecAnnotationList[ProfileName] {
+	result := make(map[Profile]gpu.SpecAnnotationList[ProfileName])
+	for _, a := range annotations {
+		key := Profile{
+			GpuIndex: a.Index,
+			Name:     a.ProfileName,
+		}
+		if result[key] == nil {
+			result[key] = make(gpu.SpecAnnotationList[ProfileName], 0)
+		}
+		result[key] = append(result[key], a)
+	}
+	return result
 }

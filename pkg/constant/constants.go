@@ -68,6 +68,9 @@ const (
 	// LabelNvidiaCount is the name of the label assigned by the NVIDIA GPU Operator that identifies
 	// the number of NVIDIA GPUs on a certain node
 	LabelNvidiaCount = "nvidia.com/gpu.count"
+	// LabelNvidiaMemory is the name of the label assigned by the NVIDIA GPU Operator that identifies
+	// the amount of memory of the GPUs of a node
+	LabelNvidiaMemory = "nvidia.com/gpu.memory"
 )
 
 const (

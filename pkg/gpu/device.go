@@ -1,0 +1,100 @@
+/*
+ * Copyright 2022 Nebuly.ai
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package gpu
+
+import (
+	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	"sort"
+)
+
+type Device struct {
+	resource.Device
+	GpuIndex int
+}
+
+// FullResourceName returns the full resource name of the MIG device, including
+// the name of the resource corresponding to the MIG profile and the index
+// of the GPU to which it belongs to.
+func (m Device) FullResourceName() string {
+	return fmt.Sprintf("%d/%s", m.GpuIndex, m.ResourceName)
+}
+
+type DeviceList []Device
+
+func (l DeviceList) GroupBy(keyFunc func(resource Device) string) map[string]DeviceList {
+	result := make(map[string]DeviceList)
+	for _, r := range l {
+		key := keyFunc(r)
+		if result[key] == nil {
+			result[key] = make(DeviceList, 0)
+		}
+		result[key] = append(result[key], r)
+	}
+	return result
+}
+
+func (l DeviceList) SortByDeviceId() DeviceList {
+	sorted := make(DeviceList, len(l))
+	copy(sorted, l)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		return sorted[i].DeviceId < sorted[j].DeviceId
+	})
+	return sorted
+}
+
+func (l DeviceList) GroupByGpuIndex() map[int]DeviceList {
+	result := make(map[int]DeviceList)
+	for _, r := range l {
+		if result[r.GpuIndex] == nil {
+			result[r.GpuIndex] = make(DeviceList, 0)
+		}
+		result[r.GpuIndex] = append(result[r.GpuIndex], r)
+	}
+	return result
+}
+
+func (l DeviceList) GetFree() DeviceList {
+	result := make(DeviceList, 0)
+	for _, r := range l {
+		if r.IsFree() {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
+func (l DeviceList) GetUsed() DeviceList {
+	result := make(DeviceList, 0)
+	for _, r := range l {
+		if r.IsUsed() {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
+func (l DeviceList) GroupByStatus() map[resource.Status]DeviceList {
+	result := make(map[resource.Status]DeviceList)
+	for _, r := range l {
+		if result[r.Status] == nil {
+			result[r.Status] = make(DeviceList, 0)
+		}
+		result[r.Status] = append(result[r.Status], r)
+	}
+	return result
+}

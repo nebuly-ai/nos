@@ -17,6 +17,7 @@
 package mig_test
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +33,7 @@ func TestGPU__GetMigGeometry(t *testing.T) {
 	}{
 		{
 			name:             "Empty GPU",
-			gpu:              mig.NewGpuOrPanic(mig.GPUModel_A30, 0, make(map[mig.ProfileName]int), make(map[mig.ProfileName]int)),
+			gpu:              mig.NewGpuOrPanic(gpu.GPUModel_A30, 0, make(map[mig.ProfileName]int), make(map[mig.ProfileName]int)),
 			expectedGeometry: mig.Geometry{},
 		},
 	}
@@ -51,12 +52,12 @@ func TestGPU__Clone(t *testing.T) {
 	}{
 		{
 			name: "Empty GPU",
-			gpu:  mig.NewGpuOrPanic(mig.GPUModel_A30, 0, make(map[mig.ProfileName]int), make(map[mig.ProfileName]int)),
+			gpu:  mig.NewGpuOrPanic(gpu.GPUModel_A30, 0, make(map[mig.ProfileName]int), make(map[mig.ProfileName]int)),
 		},
 		{
 			name: "GPU with free and used profiles",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb:  1,
@@ -91,7 +92,7 @@ func TestGPU__AddPod(t *testing.T) {
 		{
 			name: "GPU without free MIG resources",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb: 4,
@@ -112,7 +113,7 @@ func TestGPU__AddPod(t *testing.T) {
 		{
 			name: "GPU without enough free MIG resources",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb: 1,
@@ -139,7 +140,7 @@ func TestGPU__AddPod(t *testing.T) {
 		{
 			name: "GPU with enough free MIG resources: both used and free devices should be updated",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb: 1,
@@ -190,7 +191,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 		{
 			name: "Empty GPU: geometry should appear as free MIG devices",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SXM4_40GB,
+				gpu.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),
@@ -199,7 +200,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				mig.Profile7g40gb: 1,
 			},
 			expected: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SXM4_40GB,
+				gpu.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				map[mig.ProfileName]int{
@@ -211,7 +212,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 		{
 			name: "Invalid MIG geometry",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SXM4_40GB,
+				gpu.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),
@@ -220,7 +221,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				mig.Profile1g10gb: 12,
 			},
 			expected: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SXM4_40GB,
+				gpu.GPUModel_A100_SXM4_40GB,
 				0,
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),
@@ -230,7 +231,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 		{
 			name: "MIG Geometry requires deleting used MIG devices: should return error and not change geometry",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb: 4,
@@ -241,7 +242,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				mig.Profile4g24gb: 1,
 			},
 			expected: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb: 4,
@@ -253,7 +254,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 		{
 			name: "Applying new geometry changes only free devices",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb: 2,
@@ -266,7 +267,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				mig.Profile1g6gb: 4,
 			},
 			expected: mig.NewGpuOrPanic(
-				mig.GPUModel_A30,
+				gpu.GPUModel_A30,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g6gb: 2,
@@ -303,7 +304,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 		{
 			name: "Empty required profiles map, should not change geometry",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SXM4_40GB,
+				gpu.GPUModel_A100_SXM4_40GB,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile2g20gb: 1,
@@ -319,7 +320,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 		{
 			name: "No geometries can provide the required profiles, should not change geometry",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SXM4_40GB,
+				gpu.GPUModel_A100_SXM4_40GB,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile2g20gb: 1,
@@ -337,7 +338,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 		{
 			name: "One geometry could provide the required profiles, but applying it would delete used resources, should not change geometry",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_PCIe_80GB,
+				gpu.GPUModel_A100_PCIe_80GB,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile2g20gb: 1,
@@ -355,7 +356,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 		{
 			name: "Current geometry already provides the required profiles, should not change geometry",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_SXM4_40GB,
+				gpu.GPUModel_A100_SXM4_40GB,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile2g20gb: 1,
@@ -376,7 +377,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 			name: "Multiple geometries allow to create some of the required profiles, should change geometry using the " +
 				"ones that allow to create the highest number of required profiles",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_PCIe_80GB,
+				gpu.GPUModel_A100_PCIe_80GB,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile1g10gb: 2,
@@ -394,7 +395,7 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 		{
 			name: "",
 			gpu: mig.NewGpuOrPanic(
-				mig.GPUModel_A100_PCIe_80GB,
+				gpu.GPUModel_A100_PCIe_80GB,
 				0,
 				map[mig.ProfileName]int{
 					mig.Profile3g40gb: 1,

@@ -29,7 +29,7 @@ type Client struct {
 	NumCallsCreateMigResources    uint
 	NumCallsGetMigDeviceResources uint
 
-	ReturnedMigDeviceResources mig.DeviceResourceList
+	ReturnedMigDeviceResources gpu.DeviceList
 	ReturnedError              gpu.Error
 
 	lockReset                 sync.Mutex
@@ -46,35 +46,35 @@ func (m *Client) Reset() {
 	m.NumCallsGetMigDeviceResources = 0
 }
 
-func (m *Client) GetMigDeviceResources(_ context.Context) (mig.DeviceResourceList, gpu.Error) {
+func (m *Client) GetMigDevices(_ context.Context) (gpu.DeviceList, gpu.Error) {
 	m.lockGetMigDeviceResources.Lock()
 	defer m.lockGetMigDeviceResources.Unlock()
 	m.NumCallsGetMigDeviceResources++
 	return m.ReturnedMigDeviceResources, m.ReturnedError
 }
 
-func (m *Client) CreateMigResources(_ context.Context, _ mig.ProfileList) (mig.ProfileList, error) {
+func (m *Client) CreateMigDevices(_ context.Context, _ mig.ProfileList) (mig.ProfileList, error) {
 	m.lockCreateMigResource.Lock()
 	defer m.lockCreateMigResource.Unlock()
 	m.NumCallsCreateMigResources++
 	return nil, m.ReturnedError
 }
 
-func (m *Client) DeleteMigResource(_ context.Context, _ mig.DeviceResource) gpu.Error {
+func (m *Client) DeleteMigDevice(_ context.Context, _ gpu.Device) gpu.Error {
 	m.lockDeleteMigResource.Lock()
 	defer m.lockDeleteMigResource.Unlock()
 	m.NumCallsDeleteMigResource++
 	return m.ReturnedError
 }
 
-func (m *Client) GetUsedMigDeviceResources(ctx context.Context) (mig.DeviceResourceList, gpu.Error) {
-	return mig.DeviceResourceList{}, m.ReturnedError
+func (m *Client) GetUsedMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	return gpu.DeviceList{}, m.ReturnedError
 }
 
-func (m *Client) GetAllocatableMigDeviceResources(ctx context.Context) (mig.DeviceResourceList, gpu.Error) {
-	return mig.DeviceResourceList{}, m.ReturnedError
+func (m *Client) GetAllocatableMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	return gpu.DeviceList{}, m.ReturnedError
 }
 
-func (m *Client) DeleteAllExcept(_ context.Context, resources mig.DeviceResourceList) error {
+func (m *Client) DeleteAllExcept(_ context.Context, resources gpu.DeviceList) error {
 	return m.ReturnedError
 }

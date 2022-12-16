@@ -21,7 +21,7 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -63,7 +63,7 @@ var _ = Describe("MigAgent - Reporter", func() {
 			Expect(node.Annotations).To(BeEmpty())
 
 			By("Checking that after some time the node will have the annotations exposing the new resources")
-			reporterMigClient.ReturnedMigDeviceResources = []migtypes.DeviceResource{
+			reporterMigClient.ReturnedMigDeviceResources = []gpu.Device{
 				{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.10gb",
@@ -81,8 +81,8 @@ var _ = Describe("MigAgent - Reporter", func() {
 					GpuIndex: 1,
 				},
 			}
-			expectedAnnotationOne := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb")
-			expectedAnnotationTwo := fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "2g.20gb")
+			expectedAnnotationOne := fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusFree)
+			expectedAnnotationTwo := fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "2g.20gb", resource.StatusUsed)
 			expectedAnnotations := map[string]string{
 				expectedAnnotationOne:                       "1",
 				expectedAnnotationTwo:                       "1",

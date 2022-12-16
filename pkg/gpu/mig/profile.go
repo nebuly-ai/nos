@@ -26,6 +26,8 @@ import (
 )
 
 const (
+	ProfileEmpty ProfileName = ""
+
 	Profile1g6gb  ProfileName = "1g.6gb"
 	Profile2g12gb ProfileName = "2g.12gb"
 	Profile4g24gb ProfileName = "4g.24gb"
@@ -55,7 +57,7 @@ func (p ProfileName) isValid() bool {
 	return migProfileRegex.MatchString(string(p))
 }
 
-func (p ProfileName) AsString() string {
+func (p ProfileName) String() string {
 	return string(p)
 }
 

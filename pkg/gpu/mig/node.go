@@ -18,10 +18,9 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
-	"strconv"
 )
 
 type Node struct {
@@ -38,11 +37,11 @@ type Node struct {
 //
 // If the v1.Node provided as arg does not have the GPU Product label, returned node will not contain any mig.GPU.
 func NewNode(n v1.Node) (Node, error) {
-	gpuModel, ok := getGPUModel(n)
-	if !ok {
+	gpuModel, err := gpu.GetModel(n)
+	if err != nil {
 		return Node{Name: n.Name, GPUs: make([]GPU, 0)}, nil
 	}
-	gpuCount, _ := getGPUCount(n)
+	gpuCount, _ := gpu.GetCount(n)
 
 	gpus, err := extractGPUs(n, gpuModel, gpuCount)
 	if err != nil {
@@ -51,56 +50,40 @@ func NewNode(n v1.Node) (Node, error) {
 	return Node{Name: n.Name, GPUs: gpus}, nil
 }
 
-func extractGPUs(node v1.Node, gpuModel GPUModel, gpuCount int) ([]GPU, error) {
+func extractGPUs(node v1.Node, gpuModel gpu.Model, gpuCount int) ([]GPU, error) {
 	result := make([]GPU, 0)
 
 	// Init GPUs from annotation
-	statusAnnotations, _ := GetGPUAnnotationsFromNode(node)
+	statusAnnotations, _ := ParseNodeAnnotations(node)
 	for gpuIndex, gpuAnnotations := range statusAnnotations.GroupByGpuIndex() {
 		usedMigDevices := make(map[ProfileName]int)
 		freeMigDevices := make(map[ProfileName]int)
 		for _, a := range gpuAnnotations {
 			if a.IsUsed() {
-				usedMigDevices[a.GetMigProfileName()] = a.Quantity
+				usedMigDevices[a.ProfileName] = a.Quantity
 			}
 			if a.IsFree() {
-				freeMigDevices[a.GetMigProfileName()] = a.Quantity
+				freeMigDevices[a.ProfileName] = a.Quantity
 			}
 		}
-		gpu, err := NewGPU(gpuModel, gpuIndex, usedMigDevices, freeMigDevices)
+		g, err := NewGPU(gpuModel, gpuIndex, usedMigDevices, freeMigDevices)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, gpu)
+		result = append(result, g)
 	}
 
 	// Add missing GPUs not included in node annotations (e.g. GPUs with MIG enabled but without any MIG device)
 	nGpus := len(result)
 	for i := nGpus; i < gpuCount; i++ {
-		gpu, err := NewGPU(gpuModel, i, make(map[ProfileName]int), make(map[ProfileName]int))
+		g, err := NewGPU(gpuModel, i, make(map[ProfileName]int), make(map[ProfileName]int))
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, gpu)
+		result = append(result, g)
 	}
 
 	return result, nil
-}
-
-func getGPUModel(node v1.Node) (GPUModel, bool) {
-	if val, ok := node.Labels[constant.LabelNvidiaProduct]; ok {
-		return GPUModel(val), true
-	}
-	return "", false
-}
-
-func getGPUCount(node v1.Node) (int, bool) {
-	if val, ok := node.Labels[constant.LabelNvidiaCount]; ok {
-		if valAsInt, err := strconv.Atoi(val); err == nil {
-			return valAsInt, true
-		}
-	}
-	return 0, false
 }
 
 // UpdateGeometryFor tries to update the MIG geometry of each single GPU of the node in order to create the MIG profiles
@@ -119,10 +102,10 @@ func (n *Node) UpdateGeometryFor(profiles map[ProfileName]int) bool {
 	var requiredProfiles = util.CopyMap(profiles)
 	var anyGpuUpdated bool
 
-	for _, gpu := range n.GPUs {
-		updated := gpu.UpdateGeometryFor(requiredProfiles)
+	for _, g := range n.GPUs {
+		updated := g.UpdateGeometryFor(requiredProfiles)
 		anyGpuUpdated = anyGpuUpdated || updated
-		for profile, quantity := range gpu.GetFreeMigDevices() {
+		for profile, quantity := range g.GetFreeMigDevices() {
 			requiredProfiles[profile] -= quantity
 			if requiredProfiles[profile] <= 0 {
 				delete(requiredProfiles, profile)
@@ -151,13 +134,13 @@ func (n *Node) HasFreeMigCapacity() bool {
 	if len(n.GPUs) == 0 {
 		return false
 	}
-	for _, gpu := range n.GPUs {
-		if gpu.HasFreeMigDevices() {
+	for _, g := range n.GPUs {
+		if g.HasFreeMigDevices() {
 			return true
 		}
 		// If the GPU is not in a valid Geometry it means that we can create new free MIG devices
 		// by applying any valid MIG geometry
-		if !gpu.AllowsGeometry(gpu.GetGeometry()) {
+		if !g.AllowsGeometry(g.GetGeometry()) {
 			return true
 		}
 	}

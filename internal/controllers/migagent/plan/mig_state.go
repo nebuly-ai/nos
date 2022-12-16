@@ -19,39 +19,40 @@ package plan
 import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
 
 // MigState represents the current state in terms of MIG resources of each GPU (which index is stored as key
 // in the map)
-type MigState map[int]mig.DeviceResourceList
+type MigState map[int]gpu.DeviceList
 
-func NewMigState(resources mig.DeviceResourceList) MigState {
+func NewMigState(resources gpu.DeviceList) MigState {
 	res := make(MigState)
 	for _, r := range resources {
 		if res[r.GpuIndex] == nil {
-			res[r.GpuIndex] = make([]mig.DeviceResource, 0)
+			res[r.GpuIndex] = make([]gpu.Device, 0)
 		}
 		res[r.GpuIndex] = append(res[r.GpuIndex], r)
 	}
 	return res
 }
 
-func (s MigState) Matches(specAnnotations []mig.GPUSpecAnnotation) bool {
+func (s MigState) Matches(specAnnotations gpu.SpecAnnotationList[mig.ProfileName]) bool {
 	getKey := func(migProfile mig.ProfileName, gpuIndex int) string {
 		return fmt.Sprintf("%d-%s", gpuIndex, migProfile)
 	}
 
 	specGpuIndexWithMigProfileQuantities := make(map[string]int)
 	for _, a := range specAnnotations {
-		key := getKey(a.GetMigProfileName(), a.GetGPUIndex())
+		key := getKey(a.ProfileName, a.Index)
 		specGpuIndexWithMigProfileQuantities[key] += a.Quantity
 	}
 
 	stateGpuIndexWithMigProfileQuantities := make(map[string]int)
-	groupedBy := s.Flatten().GroupBy(func(r mig.DeviceResource) string {
-		return getKey(r.GetMigProfileName(), r.GpuIndex)
+	groupedBy := s.Flatten().GroupBy(func(r gpu.Device) string {
+		return getKey(mig.GetMigProfileName(r), r.GpuIndex)
 	})
 	for k, v := range groupedBy {
 		stateGpuIndexWithMigProfileQuantities[k] = len(v)
@@ -60,8 +61,8 @@ func (s MigState) Matches(specAnnotations []mig.GPUSpecAnnotation) bool {
 	return cmp.Equal(specGpuIndexWithMigProfileQuantities, stateGpuIndexWithMigProfileQuantities)
 }
 
-func (s MigState) Flatten() mig.DeviceResourceList {
-	allResources := make(mig.DeviceResourceList, 0)
+func (s MigState) Flatten() gpu.DeviceList {
+	allResources := make(gpu.DeviceList, 0)
 	for _, r := range s {
 		allResources = append(allResources, r...)
 	}
@@ -76,9 +77,9 @@ func (s MigState) DeepCopy() MigState {
 // on the GPU index provided as inputs
 func (s MigState) WithoutMigProfiles(gpuIndex int, migProfiles []mig.ProfileName) MigState {
 	res := s.DeepCopy()
-	res[gpuIndex] = make(mig.DeviceResourceList, 0)
+	res[gpuIndex] = make(gpu.DeviceList, 0)
 	for _, r := range s[gpuIndex] {
-		if !util.InSlice(r.GetMigProfileName(), migProfiles) {
+		if !util.InSlice(mig.GetMigProfileName(r), migProfiles) {
 			res[gpuIndex] = append(res[gpuIndex], r)
 		}
 	}

@@ -25,6 +25,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
 	v1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -42,7 +43,7 @@ type MigActuator struct {
 	// lastAppliedPlan is the latest applied plan
 	lastAppliedPlan *plan.MigConfigPlan
 	// lastAppliedStatus is the MIG status of the GPUs at the time when the latest plan was applied
-	lastAppliedStatus *mig.GPUStatusAnnotationList
+	lastAppliedStatus *gpu.StatusAnnotationList[mig.ProfileName]
 }
 
 func NewActuator(client client.Client, migClient mig.Client, sharedState *SharedState, nodeName string) MigActuator {
@@ -58,7 +59,7 @@ func (a *MigActuator) newLogger(ctx context.Context) logr.Logger {
 	return log.FromContext(ctx).WithName("Actuator")
 }
 
-func (a *MigActuator) updateLastApplied(currentPlan plan.MigConfigPlan, currentStatus mig.GPUStatusAnnotationList) {
+func (a *MigActuator) updateLastApplied(currentPlan plan.MigConfigPlan, currentStatus gpu.StatusAnnotationList[mig.ProfileName]) {
 	a.lastAppliedPlan = &currentPlan
 	a.lastAppliedStatus = &currentStatus
 }
@@ -88,7 +89,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	a.sharedState.lastParsedPlanId = instance.Annotations[v1alpha1.AnnotationPartitioningPlan]
 
 	// Check if reported status already matches spec
-	statusAnnotations, specAnnotations := mig.GetGPUAnnotationsFromNode(instance)
+	statusAnnotations, specAnnotations := gpu.ParseNodeAnnotations(instance, mig.ProfileEmpty)
 	if mig.SpecMatchesStatus(specAnnotations, statusAnnotations) {
 		logger.Info("reported status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
@@ -120,11 +121,11 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	return res, err
 }
 
-func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
+func (a *MigActuator) plan(ctx context.Context, specAnnotations gpu.SpecAnnotationList[mig.ProfileName]) (plan.MigConfigPlan, error) {
 	logger := a.newLogger(ctx)
 
 	// Compute current state
-	migDeviceResources, err := a.migClient.GetMigDeviceResources(ctx)
+	migDeviceResources, err := a.migClient.GetMigDevices(ctx)
 	if gpu.IgnoreNotFound(err) != nil {
 		logger.Error(err, "unable to get MIG device resources")
 		return plan.MigConfigPlan{}, err
@@ -292,7 +293,7 @@ func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation
 			logger.Error(err, "cannot delete MIG resource", "resource", r)
 			continue
 		}
-		err := a.migClient.DeleteMigResource(ctx, r)
+		err := a.migClient.DeleteMigDevice(ctx, r)
 		if gpu.IgnoreNotFound(err) != nil {
 			deleteErrors = append(deleteErrors, err)
 			logger.Error(err, "unable to delete MIG resource", "resource", r)
@@ -329,7 +330,7 @@ func (a *MigActuator) applyCreateOps(ctx context.Context, ops plan.CreateOperati
 	logger.Info("applying create operations", "migProfiles", ops)
 
 	profileList := ops.Flatten()
-	created, err := a.migClient.CreateMigResources(ctx, profileList)
+	created, err := a.migClient.CreateMigDevices(ctx, profileList)
 	if err != nil {
 		nCreated := len(created)
 		return plan.OperationStatus{
@@ -353,9 +354,9 @@ func (a *MigActuator) SetupWithManager(mgr ctrl.Manager, controllerName string) 
 		For(
 			&v1.Node{},
 			builder.WithPredicates(
-				excludeDeletePredicate{},
-				matchingNamePredicate{Name: a.nodeName},
-				annotationsChangedPredicate{},
+				predicate.ExcludeDelete{},
+				predicate.MatchingName{Name: a.nodeName},
+				predicate.AnnotationsChangedPredicate{},
 			),
 		).
 		Named(controllerName).

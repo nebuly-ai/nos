@@ -28,6 +28,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
 	schedulerv1beta3 "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	gpumig "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/scheduler/plugins/capacityscheduling"
 	testutil "github.com/nebuly-ai/nebulnetes/pkg/test/util"
@@ -333,8 +334,8 @@ func decodeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfigura
 	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)
 }
 
-func loadKnownGeometriesFromFile(file string) (map[gpumig.GPUModel][]gpumig.Geometry, error) {
-	var knownGeometries = make(map[gpumig.GPUModel][]gpumig.Geometry)
+func loadKnownGeometriesFromFile(file string) (map[gpu.Model][]gpumig.Geometry, error) {
+	var knownGeometries = make(map[gpu.Model][]gpumig.Geometry)
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return knownGeometries, err

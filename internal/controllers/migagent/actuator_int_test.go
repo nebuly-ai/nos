@@ -21,7 +21,7 @@ package migagent
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -77,7 +77,7 @@ var _ = Describe("MigAgent - Actuator", func() {
 			).To(Succeed())
 
 			By("Updating the node annotations")
-			annotation := fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb")
+			annotation := fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb")
 			updatedNode := node.DeepCopy()
 			updatedNode.Annotations = map[string]string{
 				annotation: "1",
@@ -116,8 +116,8 @@ var _ = Describe("MigAgent - Actuator", func() {
 			).To(Succeed())
 
 			By("Updating the node annotations")
-			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb")
-			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb")
+			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb")
+			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusFree)
 			updatedNode := node.DeepCopy()
 			updatedNode.Annotations = map[string]string{
 				specAnnotation:   "1",
@@ -156,8 +156,8 @@ var _ = Describe("MigAgent - Actuator", func() {
 					&nvidiaDevicePluginPod),
 			).To(Succeed())
 
-			actuatorMigClient.ReturnedMigDeviceResources = migtypes.DeviceResourceList{
-				migtypes.DeviceResource{
+			actuatorMigClient.ReturnedMigDeviceResources = gpu.DeviceList{
+				gpu.Device{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-1g.10gb",
 						DeviceId:     "id-1",
@@ -165,7 +165,7 @@ var _ = Describe("MigAgent - Actuator", func() {
 					},
 					GpuIndex: 0,
 				},
-				migtypes.DeviceResource{
+				gpu.Device{
 					Device: resource.Device{
 						ResourceName: "nvidia.com/mig-2g.20gb",
 						DeviceId:     "id-2",
@@ -176,8 +176,8 @@ var _ = Describe("MigAgent - Actuator", func() {
 			}
 
 			By("Updating the node annotations")
-			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb")
-			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.20gb")
+			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb")
+			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "2g.20gb", resource.StatusFree)
 			updatedNode := node.DeepCopy()
 			updatedNode.Annotations = map[string]string{
 				specAnnotation:   "0",
@@ -218,8 +218,8 @@ var _ = Describe("MigAgent - Actuator", func() {
 			).To(Succeed())
 
 			By("Updating the node annotations")
-			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGPUMigSpecFormat, 0, "1g.10gb")
-			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb")
+			specAnnotation := fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb")
+			statusAnnotation := fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusFree)
 			updatedNode := node.DeepCopy()
 			updatedNode.Annotations = map[string]string{
 				specAnnotation:   "2",
