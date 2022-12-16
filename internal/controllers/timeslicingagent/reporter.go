@@ -18,13 +18,16 @@ package timeslicingagent
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strings"
 	"time"
 )
 
@@ -47,15 +50,47 @@ func NewReporter(k8sClient client.Client, gpuClient gpu.Client, refreshInterval 
 func (r *Reporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := klog.FromContext(ctx)
 
+	// Fetch node and get last status
+	var instance v1.Node
+	if err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
+		return ctrl.Result{}, err
+	}
+	lastStatusAnnotations, _ := gpu.ParseNodeAnnotations(instance, timeslicing.ProfileEmpty)
+
 	// Fetch GPUs
 	devices, err := r.gpuClient.GetDevices(ctx)
 	if err != nil {
 		logger.Error(err, "unable to fetch GPUs")
 		return ctrl.Result{}, err
 	}
-	logger.Info("", "", devices)
 
-	// Group by GPU index
+	// Check if status changed
+	currentStatusAnnotations := timeslicing.ComputeStatusAnnotations(devices)
+	logger.Info("computed annotations", "current", currentStatusAnnotations, "last", lastStatusAnnotations, "devices", devices)
+	if currentStatusAnnotations.Equal(lastStatusAnnotations) {
+		logger.Info("current status is equal to last reported status, nothing to do")
+		return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
+	}
+
+	// Update node
+	logger.Info("status changed - reporting it by updating node annotations")
+	updated := instance.DeepCopy()
+	if updated.Annotations == nil {
+		updated.Annotations = make(map[string]string)
+	}
+	for k := range updated.Annotations {
+		if strings.HasPrefix(k, v1alpha1.AnnotationGpuStatusPrefix) {
+			delete(updated.Annotations, k)
+		}
+	}
+	for _, a := range currentStatusAnnotations {
+		updated.Annotations[a.String()] = a.GetValue()
+	}
+	if err := r.Client.Patch(ctx, updated, client.MergeFrom(&instance)); err != nil {
+		logger.Error(err, "unable to update node status annotations", "annotations", updated.Annotations)
+		return ctrl.Result{}, err
+	}
+	logger.Info("updated reported status - node annotations updated successfully")
 
 	return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
 }

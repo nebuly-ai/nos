@@ -379,7 +379,7 @@ func TestNewMigConfigPlan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			annotations := make(gpu.SpecAnnotationList[mig.ProfileName], 0)
 			for k, v := range tt.specAnnotations {
-				a, err := mig.ParseSpecAnnotation(k, v)
+				a, err := gpu.ParseSpecAnnotation(k, v, mig.ProfileEmpty)
 				assert.NoError(t, err)
 				annotations = append(annotations, a)
 			}

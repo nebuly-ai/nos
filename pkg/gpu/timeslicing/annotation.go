@@ -21,14 +21,22 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func ParseSpecAnnotation(key, value string) (gpu.SpecAnnotation[ProfileName], error) {
-	return gpu.ParseSpecAnnotation(key, value, ProfileEmpty)
-}
-
-func ParseStatusAnnotation(key, value string) (gpu.StatusAnnotation[ProfileName], error) {
-	return gpu.ParseStatusAnnotation(key, value, ProfileEmpty)
-}
-
 func ParseNodeAnnotations(node v1.Node) (gpu.StatusAnnotationList[ProfileName], gpu.SpecAnnotationList[ProfileName]) {
 	return gpu.ParseNodeAnnotations(node, ProfileEmpty)
+}
+
+func ComputeStatusAnnotations(devices gpu.DeviceList) gpu.StatusAnnotationList[ProfileName] {
+	statusAnnotations := devices.AsStatusAnnotation(func(r v1.ResourceName) string {
+		return ExtractProfileName(r).String()
+	})
+	res := make(gpu.StatusAnnotationList[ProfileName], len(statusAnnotations))
+	for i, a := range statusAnnotations {
+		res[i] = gpu.StatusAnnotation[ProfileName]{
+			ProfileName: ProfileName(a.ProfileName),
+			Index:       a.Index,
+			Status:      a.Status,
+			Quantity:    a.Quantity,
+		}
+	}
+	return res
 }

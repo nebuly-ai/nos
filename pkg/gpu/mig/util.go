@@ -87,7 +87,7 @@ func GetRequestedMigResources(pod v1.Pod) map[ProfileName]int {
 //	Resource name: nvidia.com/mig-1g.10gb
 //	GetMigProfileName() -> 1g.10gb
 func GetMigProfileName(device gpu.Device) ProfileName {
-	return ProfileName(strings.TrimPrefix(device.ResourceName.String(), constant.NvidiaMigResourcePrefix))
+	return extractMigProfileName(device.ResourceName)
 }
 
 func GroupDevicesByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
@@ -105,17 +105,6 @@ func GroupDevicesByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
 	return result
 }
 
-func GroupSpecAnnotationsByMigProfile(annotations gpu.SpecAnnotationList[ProfileName]) map[Profile]gpu.SpecAnnotationList[ProfileName] {
-	result := make(map[Profile]gpu.SpecAnnotationList[ProfileName])
-	for _, a := range annotations {
-		key := Profile{
-			GpuIndex: a.Index,
-			Name:     a.ProfileName,
-		}
-		if result[key] == nil {
-			result[key] = make(gpu.SpecAnnotationList[ProfileName], 0)
-		}
-		result[key] = append(result[key], a)
-	}
-	return result
+func extractMigProfileName(r v1.ResourceName) ProfileName {
+	return ProfileName(strings.TrimPrefix(r.String(), constant.NvidiaMigResourcePrefix))
 }

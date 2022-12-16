@@ -40,6 +40,7 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 	)
 
 	BeforeEach(func() {
+		// Create node
 		node := &v1.Node{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nodeName,
@@ -49,6 +50,7 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 	})
 
 	AfterEach(func() {
+		// Delete node
 		node := &v1.Node{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: nodeName,
@@ -59,7 +61,10 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 
 	When("The node does not have any GPU", func() {
 		It("Should not update the node annotations", func() {
-			gpuClient.On("GetDevices", mock.Anything).Return(gpu.DeviceList{}, nil)
+			fmt.Println("******************** Start test 1 ************************")
+
+			mockedCall := gpuClient.On("GetDevices", mock.Anything).Return(gpu.DeviceList{}, nil)
+
 			Consistently(func() error {
 				var node v1.Node
 				if err := k8sClient.Get(
@@ -74,15 +79,19 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 				}
 				return nil
 			}, 5*time.Second).Should(Succeed())
+
+			// Reset the mock
+			mockedCall.Unset()
 		})
 	})
 
 	When("The node has multiple GPUs", func() {
 		It("Should update the node annotations exposing the node GPUs", func() {
+			fmt.Println("******************** Start test 2 ************************")
 			gpus := gpu.DeviceList{
 				{
 					Device: resource.Device{
-						ResourceName: "nvidia.com/gpu",
+						ResourceName: "nvidia.com/gpu-20gb",
 						DeviceId:     "id-1",
 						Status:       resource.StatusFree,
 					},
@@ -105,23 +114,23 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 					GpuIndex: 1,
 				},
 			}
-			gpuClient.On("GetDevices", mock.Anything).Return(gpus, nil)
+			mockedCall := gpuClient.On("GetDevices", mock.Anything).Return(gpus, nil)
 
 			expectedAnnotations := gpu.StatusAnnotationList[timeslicing.ProfileName]{
 				{
-					ProfileName: "nvidia.com/gpu",
+					ProfileName: "20gb",
 					Index:       0,
 					Status:      "free",
 					Quantity:    1,
 				},
 				{
-					ProfileName: "nvidia.com/gpu-10gb",
+					ProfileName: "10gb",
 					Index:       1,
 					Status:      resource.StatusFree,
 					Quantity:    1,
 				},
 				{
-					ProfileName: "nvidia.com/gpu-10gb",
+					ProfileName: "10gb",
 					Index:       1,
 					Status:      resource.StatusUsed,
 					Quantity:    1,
@@ -157,6 +166,9 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 
 				return nil
 			}, timeout, interval).Should(Succeed())
+
+			// Reset the mock
+			mockedCall.Unset()
 		})
 	})
 })

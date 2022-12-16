@@ -19,6 +19,7 @@ package gpu
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	v1 "k8s.io/api/core/v1"
 	"sort"
 )
 
@@ -32,6 +33,10 @@ type Device struct {
 // of the GPU to which it belongs to.
 func (m Device) FullResourceName() string {
 	return fmt.Sprintf("%d/%s", m.GpuIndex, m.ResourceName)
+}
+
+func (m Device) String() string {
+	return fmt.Sprintf("%d/%s/%s/%s", m.GpuIndex, m.ResourceName, m.DeviceId, m.Status)
 }
 
 type DeviceList []Device
@@ -95,6 +100,34 @@ func (l DeviceList) GroupByStatus() map[resource.Status]DeviceList {
 			result[r.Status] = make(DeviceList, 0)
 		}
 		result[r.Status] = append(result[r.Status], r)
+	}
+	return result
+}
+
+func (l DeviceList) GroupByResourceName() map[v1.ResourceName]DeviceList {
+	result := make(map[v1.ResourceName]DeviceList)
+	for _, r := range l {
+		if result[r.ResourceName] == nil {
+			result[r.ResourceName] = make(DeviceList, 0)
+		}
+		result[r.ResourceName] = append(result[r.ResourceName], r)
+	}
+	return result
+}
+
+func (l DeviceList) AsStatusAnnotation(extractProfileName func(r v1.ResourceName) string) StatusAnnotationList[string] {
+	result := make(StatusAnnotationList[string], 0)
+	for gpuIndex, devices := range l.GroupByGpuIndex() {
+		for resourceName, devices := range devices.GroupByResourceName() {
+			for status, devices := range devices.GroupByStatus() {
+				result = append(result, StatusAnnotation[string]{
+					ProfileName: extractProfileName(resourceName),
+					Status:      status,
+					Index:       gpuIndex,
+					Quantity:    len(devices),
+				})
+			}
+		}
 	}
 	return result
 }

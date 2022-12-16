@@ -219,6 +219,6 @@ func (l StatusAnnotationList[K]) GetFree() StatusAnnotationList[K] {
 	})
 }
 
-func (l StatusAnnotationList[K]) Equal(other *StatusAnnotationList[K]) bool {
-	return util.UnorderedEqual(l, *other)
+func (l StatusAnnotationList[K]) Equal(other StatusAnnotationList[K]) bool {
+	return util.UnorderedEqual(l, other)
 }

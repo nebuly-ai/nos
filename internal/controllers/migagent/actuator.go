@@ -109,7 +109,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		logger.Info("MIG config plan is empty, nothing to do")
 		return ctrl.Result{}, nil
 	}
-	if configPlan.Equal(a.lastAppliedPlan) && statusAnnotations.Equal(a.lastAppliedStatus) {
+	if configPlan.Equal(a.lastAppliedPlan) && statusAnnotations.Equal(*a.lastAppliedStatus) {
 		logger.Info("MIG config plan already applied and state hasn't changed, nothing to do")
 		return ctrl.Result{}, nil
 	}

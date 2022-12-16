@@ -16,7 +16,20 @@
 
 package timeslicing
 
+import (
+	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+)
+
+var (
+	profileNamePrefix = fmt.Sprintf("%s-", constant.ResourceNvidiaGPU.String())
+)
+
 type ProfileName string
+
+func (p ProfileName) String() string {
+	return string(p)
+}
 
 const (
 	ProfileEmpty ProfileName = ""

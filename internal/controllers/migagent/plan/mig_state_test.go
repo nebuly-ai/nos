@@ -87,7 +87,7 @@ func TestMigState_Matches(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			specAnnotations := make(gpu.SpecAnnotationList[mig.ProfileName], 0)
 			for k, v := range tt.spec {
-				a, _ := mig.ParseSpecAnnotation(k, v)
+				a, _ := gpu.ParseSpecAnnotation(k, v, mig.ProfileEmpty)
 				specAnnotations = append(specAnnotations, a)
 			}
 			state := NewMigState(tt.stateResources)

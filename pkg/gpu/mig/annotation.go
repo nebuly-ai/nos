@@ -22,14 +22,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func ParseSpecAnnotation(key, value string) (gpu.SpecAnnotation[ProfileName], error) {
-	return gpu.ParseSpecAnnotation(key, value, ProfileEmpty)
-}
-
-func ParseStatusAnnotation(key, value string) (gpu.StatusAnnotation[ProfileName], error) {
-	return gpu.ParseStatusAnnotation(key, value, ProfileEmpty)
-}
-
 func ParseNodeAnnotations(node v1.Node) (gpu.StatusAnnotationList[ProfileName], gpu.SpecAnnotationList[ProfileName]) {
 	return gpu.ParseNodeAnnotations(node, ProfileEmpty)
 }
@@ -47,16 +39,32 @@ func SpecMatchesStatus(specAnnotations gpu.SpecAnnotationList[ProfileName], stat
 	return cmp.Equal(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
+func GroupSpecAnnotationsByMigProfile(annotations gpu.SpecAnnotationList[ProfileName]) map[Profile]gpu.SpecAnnotationList[ProfileName] {
+	result := make(map[Profile]gpu.SpecAnnotationList[ProfileName])
+	for _, a := range annotations {
+		key := Profile{
+			GpuIndex: a.Index,
+			Name:     a.ProfileName,
+		}
+		if result[key] == nil {
+			result[key] = make(gpu.SpecAnnotationList[ProfileName], 0)
+		}
+		result[key] = append(result[key], a)
+	}
+	return result
+}
+
 func ComputeStatusAnnotations(devices gpu.DeviceList) gpu.StatusAnnotationList[ProfileName] {
-	res := make(gpu.StatusAnnotationList[ProfileName], 0)
-	for profile, d := range GroupDevicesByMigProfile(devices) {
-		for status, groupedByStatus := range d.GroupByStatus() {
-			res = append(res, gpu.StatusAnnotation[ProfileName]{
-				Index:       profile.GpuIndex,
-				ProfileName: profile.Name,
-				Status:      status,
-				Quantity:    len(groupedByStatus),
-			})
+	statusAnnotations := devices.AsStatusAnnotation(func(r v1.ResourceName) string {
+		return extractMigProfileName(r).String()
+	})
+	res := make(gpu.StatusAnnotationList[ProfileName], len(statusAnnotations))
+	for i, a := range statusAnnotations {
+		res[i] = gpu.StatusAnnotation[ProfileName]{
+			ProfileName: ProfileName(a.ProfileName),
+			Index:       a.Index,
+			Status:      a.Status,
+			Quantity:    a.Quantity,
 		}
 	}
 	return res

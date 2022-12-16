@@ -168,13 +168,13 @@ func TestSpecMatchesStatusAnnotations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			specAnnotations := make(gpu.SpecAnnotationList[ProfileName], 0)
 			for k, v := range tt.spec {
-				a, _ := ParseSpecAnnotation(k, v)
+				a, _ := gpu.ParseSpecAnnotation(k, v, ProfileEmpty)
 				specAnnotations = append(specAnnotations, a)
 			}
 
 			statusAnnotations := make(gpu.StatusAnnotationList[ProfileName], 0)
 			for k, v := range tt.status {
-				a, _ := ParseStatusAnnotation(k, v)
+				a, _ := gpu.ParseStatusAnnotation(k, v, ProfileEmpty)
 				statusAnnotations = append(statusAnnotations, a)
 			}
 

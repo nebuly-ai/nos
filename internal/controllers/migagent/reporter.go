@@ -19,9 +19,7 @@ package migagent
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -77,8 +75,8 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	newStatusAnnotations := mig.ComputeStatusAnnotations(migResources)
 
 	// Get current status annotations and compare with new ones
-	oldStatusAnnotations, _ := gpu.ParseNodeAnnotations(instance, mig.ProfileEmpty)
-	if util.UnorderedEqual(newStatusAnnotations, oldStatusAnnotations) {
+	oldStatusAnnotations, _ := mig.ParseNodeAnnotations(instance)
+	if newStatusAnnotations.Equal(oldStatusAnnotations) {
 		if instance.Annotations[v1alpha1.AnnotationReportedPartitioningPlan] == r.sharedState.lastParsedPlanId {
 			logger.Info("current status is equal to last reported status, nothing to do")
 			return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
@@ -104,7 +102,6 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		logger.Error(err, "unable to update node status annotations", "annotations", updated.Annotations)
 		return ctrl.Result{}, err
 	}
-
 	logger.Info("updated reported status - node annotations updated successfully")
 
 	return ctrl.Result{RequeueAfter: r.refreshInterval}, nil
