@@ -23,6 +23,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -92,7 +93,7 @@ func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName, planId st
 		node.Annotations = make(map[string]string)
 	}
 	for k := range node.Annotations {
-		if strings.HasPrefix(k, v1alpha1.AnnotationGPUSpecPrefix) {
+		if strings.HasPrefix(k, v1alpha1.AnnotationGpuSpecPrefix) {
 			delete(node.Annotations, k)
 		}
 	}
@@ -109,18 +110,18 @@ func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName, planId st
 	return nil
 }
 
-func getGPUSpecAnnotationList(nodePartitioning state.NodePartitioning) (mig.GPUSpecAnnotationList, error) {
-	res := make(mig.GPUSpecAnnotationList, 0)
-	for _, gpu := range nodePartitioning.GPUs {
-		for r, q := range gpu.Resources {
+func getGPUSpecAnnotationList(nodePartitioning state.NodePartitioning) (gpu.SpecAnnotationList[mig.ProfileName], error) {
+	res := make(gpu.SpecAnnotationList[mig.ProfileName], 0)
+	for _, g := range nodePartitioning.GPUs {
+		for r, q := range g.Resources {
 			migProfile, err := mig.ExtractMigProfile(r)
 			if err != nil {
 				return res, err
 			}
-			annotation := mig.GPUSpecAnnotation{
-				Profile:  migProfile,
-				Index:    gpu.GPUIndex,
-				Quantity: q,
+			annotation := gpu.SpecAnnotation[mig.ProfileName]{
+				ProfileName: migProfile,
+				Index:       g.GPUIndex,
+				Quantity:    q,
 			}
 			res = append(res, annotation)
 		}

@@ -39,14 +39,14 @@ func NewMigState(resources gpu.DeviceList) MigState {
 	return res
 }
 
-func (s MigState) Matches(specAnnotations []mig.GPUSpecAnnotation) bool {
+func (s MigState) Matches(specAnnotations gpu.SpecAnnotationList[mig.ProfileName]) bool {
 	getKey := func(migProfile mig.ProfileName, gpuIndex int) string {
 		return fmt.Sprintf("%d-%s", gpuIndex, migProfile)
 	}
 
 	specGpuIndexWithMigProfileQuantities := make(map[string]int)
 	for _, a := range specAnnotations {
-		key := getKey(a.GetMigProfileName(), a.GetGPUIndex())
+		key := getKey(a.ProfileName, a.Index)
 		specGpuIndexWithMigProfileQuantities[key] += a.Quantity
 	}
 

@@ -43,7 +43,7 @@ type MigActuator struct {
 	// lastAppliedPlan is the latest applied plan
 	lastAppliedPlan *plan.MigConfigPlan
 	// lastAppliedStatus is the MIG status of the GPUs at the time when the latest plan was applied
-	lastAppliedStatus *mig.GPUStatusAnnotationList
+	lastAppliedStatus *gpu.StatusAnnotationList[mig.ProfileName]
 }
 
 func NewActuator(client client.Client, migClient mig.Client, sharedState *SharedState, nodeName string) MigActuator {
@@ -59,7 +59,7 @@ func (a *MigActuator) newLogger(ctx context.Context) logr.Logger {
 	return log.FromContext(ctx).WithName("Actuator")
 }
 
-func (a *MigActuator) updateLastApplied(currentPlan plan.MigConfigPlan, currentStatus mig.GPUStatusAnnotationList) {
+func (a *MigActuator) updateLastApplied(currentPlan plan.MigConfigPlan, currentStatus gpu.StatusAnnotationList[mig.ProfileName]) {
 	a.lastAppliedPlan = &currentPlan
 	a.lastAppliedStatus = &currentStatus
 }
@@ -89,7 +89,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	a.sharedState.lastParsedPlanId = instance.Annotations[v1alpha1.AnnotationPartitioningPlan]
 
 	// Check if reported status already matches spec
-	statusAnnotations, specAnnotations := mig.GetGPUAnnotationsFromNode(instance)
+	statusAnnotations, specAnnotations := gpu.ParseNodeAnnotations(instance, mig.ProfileEmpty)
 	if mig.SpecMatchesStatus(specAnnotations, statusAnnotations) {
 		logger.Info("reported status matches desired MIG config, nothing to do")
 		return ctrl.Result{}, nil
@@ -121,7 +121,7 @@ func (a *MigActuator) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	return res, err
 }
 
-func (a *MigActuator) plan(ctx context.Context, specAnnotations mig.GPUSpecAnnotationList) (plan.MigConfigPlan, error) {
+func (a *MigActuator) plan(ctx context.Context, specAnnotations gpu.SpecAnnotationList[mig.ProfileName]) (plan.MigConfigPlan, error) {
 	logger := a.newLogger(ctx)
 
 	// Compute current state

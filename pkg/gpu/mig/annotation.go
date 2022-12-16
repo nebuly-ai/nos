@@ -17,294 +17,45 @@
 package mig
 
 import (
-	"fmt"
 	"github.com/google/go-cmp/cmp"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
-	"strconv"
-	"strings"
 )
 
-var (
-	// AnnotationMigStatusFormat is the format of the annotation used to expose MIG devices the GPUs of a node
-	// Example:
-	// 		"n8s.nebuly.ai/status-gpu-0-1g.10gb-<status>"
-	AnnotationMigStatusFormat = fmt.Sprintf(
-		"%s-%%d-%%s-%%s",
-		v1alpha1.AnnotationGPUStatusPrefix,
-	)
-	// AnnotationGpuMigSpecFormat is the format of the annotation used to expose the required MIG devices of the GPUs of
-	// a node
-	AnnotationGpuMigSpecFormat = fmt.Sprintf(
-		"%s-%%d-%%s",
-		v1alpha1.AnnotationGPUSpecPrefix,
-	)
-)
-
-type GPUSpecAnnotationList []GPUSpecAnnotation
-
-func (l GPUSpecAnnotationList) GroupByGpuIndex() map[int]GPUSpecAnnotationList {
-	result := make(map[int]GPUSpecAnnotationList)
-	for _, r := range l {
-		key := r.GetGPUIndex()
-		if result[key] == nil {
-			result[key] = make(GPUSpecAnnotationList, 0)
-		}
-		result[key] = append(result[key], r)
-	}
-	return result
+func ParseSpecAnnotation(key, value string) (gpu.SpecAnnotation[ProfileName], error) {
+	return gpu.ParseSpecAnnotation(key, value, ProfileEmpty)
 }
 
-func (l GPUSpecAnnotationList) GroupByMigProfile() map[Profile]GPUSpecAnnotationList {
-	result := make(map[Profile]GPUSpecAnnotationList)
-	for _, a := range l {
-		key := Profile{
-			GpuIndex: a.GetGPUIndex(),
-			Name:     a.GetMigProfileName(),
-		}
-		if result[key] == nil {
-			result[key] = make(GPUSpecAnnotationList, 0)
-		}
-		result[key] = append(result[key], a)
-	}
-	return result
+func ParseStatusAnnotation(key, value string) (gpu.StatusAnnotation[ProfileName], error) {
+	return gpu.ParseStatusAnnotation(key, value, ProfileEmpty)
 }
 
-type GPUSpecAnnotation struct {
-	Profile  ProfileName
-	Index    int
-	Quantity int
+func ParseNodeAnnotations(node v1.Node) (gpu.StatusAnnotationList[ProfileName], gpu.SpecAnnotationList[ProfileName]) {
+	return gpu.ParseNodeAnnotations(node, ProfileEmpty)
 }
 
-func ParseGpuSpecAnnotation(key, value string) (GPUSpecAnnotation, error) {
-	if !strings.HasPrefix(key, v1alpha1.AnnotationGPUSpecPrefix) {
-		err := fmt.Errorf("GPUSpecAnnotation prefix is %q, got %q", v1alpha1.AnnotationGPUSpecPrefix, key)
-		return GPUSpecAnnotation{}, err
-	}
-	parts := strings.Split(key, "-")
-	if len(parts) != 4 {
-		return GPUSpecAnnotation{}, fmt.Errorf("invalid GPUSpecAnnotation key %q", key)
-	}
-	quantity, err := strconv.Atoi(value)
-	if err != nil {
-		return GPUSpecAnnotation{}, err
-	}
-	index, err := strconv.Atoi(parts[2])
-	if err != nil {
-		return GPUSpecAnnotation{}, fmt.Errorf("invalid GPU index: %s", err)
-	}
-	return GPUSpecAnnotation{
-		Profile:  ProfileName(parts[len(parts)-1]),
-		Quantity: quantity,
-		Index:    index,
-	}, nil
-}
-
-func (a GPUSpecAnnotation) GetValue() string {
-	return fmt.Sprintf("%d", a.Quantity)
-}
-
-func (a GPUSpecAnnotation) GetGPUIndex() int {
-	return a.Index
-}
-
-func (a GPUSpecAnnotation) GetMigProfileName() ProfileName {
-	return a.Profile
-}
-
-// GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the
-// respective MIG profile. Example:
-//
-// Annotation
-//
-//	"n8s.nebuly.ai/spec-gpu-0-1g.10gb"
-//
-// Result
-//
-//	"0-1g.10gb"
-func (a GPUSpecAnnotation) GetGPUIndexWithMigProfile() string {
-	return fmt.Sprintf("%d-%s", a.GetGPUIndex(), a.GetMigProfileName())
-}
-
-func (a GPUSpecAnnotation) String() string {
-	return fmt.Sprintf(AnnotationGpuMigSpecFormat, a.GetGPUIndex(), a.GetMigProfileName())
-}
-
-type GPUStatusAnnotationList []GPUStatusAnnotation
-
-func (l GPUStatusAnnotationList) GroupByMigProfile() map[Profile]GPUStatusAnnotationList {
-	result := make(map[Profile]GPUStatusAnnotationList)
-	for _, a := range l {
-		key := Profile{
-			GpuIndex: a.GetGPUIndex(),
-			Name:     a.GetMigProfileName(),
-		}
-		if result[key] == nil {
-			result[key] = make(GPUStatusAnnotationList, 0)
-		}
-		result[key] = append(result[key], a)
-	}
-	return result
-}
-
-func (l GPUStatusAnnotationList) GroupByGpuIndex() map[int]GPUStatusAnnotationList {
-	result := make(map[int]GPUStatusAnnotationList)
-	for _, r := range l {
-		key := r.GetGPUIndex()
-		if result[key] == nil {
-			result[key] = make(GPUStatusAnnotationList, 0)
-		}
-		result[key] = append(result[key], r)
-	}
-	return result
-}
-
-func (l GPUStatusAnnotationList) Filter(filteringFunc func(annotation GPUStatusAnnotation) bool) GPUStatusAnnotationList {
-	result := make(GPUStatusAnnotationList, 0)
-	for _, a := range l {
-		if filteringFunc(a) {
-			result = append(result, a)
-		}
-	}
-	return result
-}
-
-// GetUsed return a new GPUStatusAnnotationList containing the annotations referring to used devices
-func (l GPUStatusAnnotationList) GetUsed() GPUStatusAnnotationList {
-	return l.Filter(func(a GPUStatusAnnotation) bool {
-		return a.IsUsed()
-	})
-}
-
-// GetFree return a new GPUStatusAnnotationList containing the annotations referring to free devices
-func (l GPUStatusAnnotationList) GetFree() GPUStatusAnnotationList {
-	return l.Filter(func(a GPUStatusAnnotation) bool {
-		return a.IsFree()
-	})
-}
-
-func (l GPUStatusAnnotationList) Equal(other *GPUStatusAnnotationList) bool {
-	return util.UnorderedEqual(l, *other)
-}
-
-type GPUStatusAnnotation struct {
-	Profile  ProfileName
-	Index    int
-	Status   resource.Status
-	Quantity int
-}
-
-func ParseGPUStatusAnnotation(key, value string) (GPUStatusAnnotation, error) {
-	if !strings.HasPrefix(key, v1alpha1.AnnotationGPUStatusPrefix) {
-		err := fmt.Errorf("GPUStatusAnnotation prefix is %q, got %q", v1alpha1.AnnotationGPUStatusPrefix, key)
-		return GPUStatusAnnotation{}, err
-	}
-	parts := strings.Split(key, "-")
-	if len(parts) != 5 {
-		return GPUStatusAnnotation{}, fmt.Errorf("invalid GPUStatusAnnotation key %q", key)
-	}
-	quantity, err := strconv.Atoi(value)
-	if err != nil {
-		return GPUStatusAnnotation{}, err
-	}
-	index, err := strconv.Atoi(parts[2])
-	if err != nil {
-		return GPUStatusAnnotation{}, fmt.Errorf("invalid GPU index: %s", err)
-	}
-	status, err := resource.ParseStatus(parts[len(parts)-1])
-	if err != nil {
-		return GPUStatusAnnotation{}, fmt.Errorf("invalid GPU status: %s", err)
-	}
-
-	return GPUStatusAnnotation{
-		Index:    index,
-		Profile:  ProfileName(parts[3]),
-		Status:   status,
-		Quantity: quantity,
-	}, nil
-}
-
-func (a GPUStatusAnnotation) GetValue() string {
-	return fmt.Sprintf("%d", a.Quantity)
-}
-
-func (a GPUStatusAnnotation) GetGPUIndex() int {
-	return a.Index
-}
-
-func (a GPUStatusAnnotation) String() string {
-	return fmt.Sprintf(AnnotationMigStatusFormat, a.Index, a.Profile, a.Status)
-}
-
-// IsUsed returns true if the annotation refers to a used device
-func (a GPUStatusAnnotation) IsUsed() bool {
-	return a.Status == resource.StatusUsed
-}
-
-// IsFree returns true if the annotation refers to a free device
-func (a GPUStatusAnnotation) IsFree() bool {
-	return a.Status == resource.StatusFree
-}
-
-func (a GPUStatusAnnotation) GetMigProfileName() ProfileName {
-	return a.Profile
-}
-
-// GetGPUIndexWithMigProfile returns the GPU index included in the annotation together with the
-// respective MIG profile. Example:
-//
-// Annotation
-//
-//	"n8s.nebuly.ai/status-gpu-0-1g.10gb-used"
-//
-// Result
-//
-//	"0-1g.10gb"
-func (a GPUStatusAnnotation) GetGPUIndexWithMigProfile() string {
-	return fmt.Sprintf("%d-%s", a.GetGPUIndex(), a.GetMigProfileName())
-}
-
-func GetGPUAnnotationsFromNode(node v1.Node) (GPUStatusAnnotationList, GPUSpecAnnotationList) {
-	statusAnnotations := make(GPUStatusAnnotationList, 0)
-	specAnnotations := make(GPUSpecAnnotationList, 0)
-	for k, v := range node.Annotations {
-		if specAnnotation, err := ParseGpuSpecAnnotation(k, v); err == nil {
-			specAnnotations = append(specAnnotations, specAnnotation)
-			continue
-		}
-		if statusAnnotation, err := ParseGPUStatusAnnotation(k, v); err == nil {
-			statusAnnotations = append(statusAnnotations, statusAnnotation)
-			continue
-		}
-	}
-	return statusAnnotations, specAnnotations
-}
-
-func SpecMatchesStatus(specAnnotations []GPUSpecAnnotation, statusAnnotations []GPUStatusAnnotation) bool {
+func SpecMatchesStatus(specAnnotations gpu.SpecAnnotationList[ProfileName], statusAnnotations gpu.StatusAnnotationList[ProfileName]) bool {
 	specMigProfilesWithQuantity := make(map[string]int)
 	statusMigProfilesWithQuantity := make(map[string]int)
 	for _, a := range specAnnotations {
-		specMigProfilesWithQuantity[a.GetGPUIndexWithMigProfile()] += a.Quantity
+		specMigProfilesWithQuantity[a.GetIndexWithProfile()] += a.Quantity
 	}
 	for _, a := range statusAnnotations {
-		statusMigProfilesWithQuantity[a.GetGPUIndexWithMigProfile()] += a.Quantity
+		statusMigProfilesWithQuantity[a.GetIndexWithProfile()] += a.Quantity
 	}
 
 	return cmp.Equal(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func ComputeStatusAnnotations(devices gpu.DeviceList) []GPUStatusAnnotation {
-	res := make([]GPUStatusAnnotation, 0)
-	for profile, d := range GroupByMigProfile(devices) {
+func ComputeStatusAnnotations(devices gpu.DeviceList) gpu.StatusAnnotationList[ProfileName] {
+	res := make(gpu.StatusAnnotationList[ProfileName], 0)
+	for profile, d := range GroupDevicesByMigProfile(devices) {
 		for status, groupedByStatus := range d.GroupByStatus() {
-			res = append(res, GPUStatusAnnotation{
-				Index:    profile.GpuIndex,
-				Profile:  profile.Name,
-				Status:   status,
-				Quantity: len(groupedByStatus),
+			res = append(res, gpu.StatusAnnotation[ProfileName]{
+				Index:       profile.GpuIndex,
+				ProfileName: profile.Name,
+				Status:      status,
+				Quantity:    len(groupedByStatus),
 			})
 		}
 	}

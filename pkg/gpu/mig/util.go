@@ -90,7 +90,7 @@ func GetMigProfileName(device gpu.Device) ProfileName {
 	return ProfileName(strings.TrimPrefix(device.ResourceName.String(), constant.NvidiaMigResourcePrefix))
 }
 
-func GroupByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
+func GroupDevicesByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
 	result := make(map[Profile]gpu.DeviceList)
 	for _, r := range l {
 		key := Profile{
@@ -101,6 +101,21 @@ func GroupByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
 			result[key] = make(gpu.DeviceList, 0)
 		}
 		result[key] = append(result[key], r)
+	}
+	return result
+}
+
+func GroupSpecAnnotationsByMigProfile(annotations gpu.SpecAnnotationList[ProfileName]) map[Profile]gpu.SpecAnnotationList[ProfileName] {
+	result := make(map[Profile]gpu.SpecAnnotationList[ProfileName])
+	for _, a := range annotations {
+		key := Profile{
+			GpuIndex: a.Index,
+			Name:     a.ProfileName,
+		}
+		if result[key] == nil {
+			result[key] = make(gpu.SpecAnnotationList[ProfileName], 0)
+		}
+		result[key] = append(result[key], a)
 	}
 	return result
 }

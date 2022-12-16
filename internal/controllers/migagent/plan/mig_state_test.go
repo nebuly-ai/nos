@@ -18,6 +18,7 @@ package plan
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
@@ -74,37 +75,19 @@ func TestMigState_Matches(t *testing.T) {
 				},
 			},
 			spec: map[string]string{
-				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "1g.10gb"): "2",
-				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, "2g.40gb"): "1",
-				fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, "1g.20gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb"): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "2g.40gb"): "1",
+				fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, "1g.20gb"): "2",
 			},
 			expected: true,
 		},
-		//{
-		//	name: "Do not matches",
-		//	status: map[string]string{
-		//		fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "1g.10gb"): "1",
-		//		fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "1g.10gb"): "1",
-		//		fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 0, "2g.40gb"): "1",
-		//		fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 0, "2g.40gb"): "1",
-		//		fmt.Sprintf(v1alpha1.AnnotationFreeMigStatusFormat, 1, "1g.20gb"): "2",
-		//		fmt.Sprintf(v1alpha1.AnnotationUsedMigStatusFormat, 1, "1g.20gb"): "2",
-		//	},
-		//	spec: map[string]string{
-		//		fmt.Sprintf(v1alpha1.AnnotationGpuMigSpecFormat, 0, "1g.10gb"): "2",
-		//		fmt.Sprintf(v1alpha1.AnnotationGpuMigSpecFormat, 0, "2g.40gb"): "2",
-		//		fmt.Sprintf(v1alpha1.AnnotationGpuMigSpecFormat, 1, "1g.20gb"): "4",
-		//		fmt.Sprintf(v1alpha1.AnnotationGpuMigSpecFormat, 1, "4g.40gb"): "1",
-		//	},
-		//	expected: false,
-		//},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			specAnnotations := make([]mig.GPUSpecAnnotation, 0)
+			specAnnotations := make(gpu.SpecAnnotationList[mig.ProfileName], 0)
 			for k, v := range tt.spec {
-				a, _ := mig.ParseGpuSpecAnnotation(k, v)
+				a, _ := mig.ParseSpecAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 			state := NewMigState(tt.stateResources)

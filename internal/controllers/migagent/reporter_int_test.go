@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	migtypes "github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -82,8 +81,8 @@ var _ = Describe("MigAgent - Reporter", func() {
 					GpuIndex: 1,
 				},
 			}
-			expectedAnnotationOne := fmt.Sprintf(migtypes.AnnotationMigStatusFormat, 0, "1g.10gb", resource.StatusFree)
-			expectedAnnotationTwo := fmt.Sprintf(migtypes.AnnotationMigStatusFormat, 1, "2g.20gb", resource.StatusUsed)
+			expectedAnnotationOne := fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusFree)
+			expectedAnnotationTwo := fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "2g.20gb", resource.StatusUsed)
 			expectedAnnotations := map[string]string{
 				expectedAnnotationOne:                       "1",
 				expectedAnnotationTwo:                       "1",

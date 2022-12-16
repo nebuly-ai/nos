@@ -93,9 +93,9 @@ func TestActuator__Apply(t *testing.T) {
 				}).Get(),
 				"node-2": factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, mig.Profile1g5gb):                      "4",
-						fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, mig.Profile2g10gb):                     "1",
-						fmt.Sprintf(mig.AnnotationMigStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile1g5gb):                         "4",
+						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile2g10gb):                        "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
 					}).
 					WithLabels(map[string]string{
 						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
@@ -135,14 +135,14 @@ func TestActuator__Apply(t *testing.T) {
 			expectedApplied: true,
 			expectedAnnotations: map[string]map[string]string{
 				"node-1": {
-					fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, mig.Profile1g6gb):  "1",
-					fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, mig.Profile3g20gb): "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile1g6gb):  "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile3g20gb): "2",
 					"annotation-1": "foo",
 				},
 				"node-2": {
-					fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 0, mig.Profile4g24gb):                     "1",
-					fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, mig.Profile4g24gb):                     "2",
-					fmt.Sprintf(mig.AnnotationMigStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile4g24gb):                        "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile4g24gb):                        "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
 				},
 			},
 			expectedErr: false,
@@ -152,9 +152,9 @@ func TestActuator__Apply(t *testing.T) {
 			snapshotNodes: map[string]v1.Node{
 				"node-2": factory.BuildNode("node-2").
 					WithAnnotations(map[string]string{
-						fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, mig.Profile2g10gb):                     "1",
-						fmt.Sprintf(mig.AnnotationMigStatusFormat, 0, mig.Profile1g5gb, resource.StatusFree):  "4",
-						fmt.Sprintf(mig.AnnotationMigStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile2g10gb):                        "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, mig.Profile1g5gb, resource.StatusFree):  "4",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
 					}).
 					WithLabels(map[string]string{
 						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
@@ -183,9 +183,9 @@ func TestActuator__Apply(t *testing.T) {
 			expectedApplied: false,
 			expectedAnnotations: map[string]map[string]string{
 				"node-2": {
-					fmt.Sprintf(mig.AnnotationGpuMigSpecFormat, 1, mig.Profile2g10gb):                     "1",
-					fmt.Sprintf(mig.AnnotationMigStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
-					fmt.Sprintf(mig.AnnotationMigStatusFormat, 0, mig.Profile1g5gb, resource.StatusFree):  "4",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile2g10gb):                        "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, mig.Profile2g10gb, resource.StatusFree): "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, mig.Profile1g5gb, resource.StatusFree):  "4",
 				},
 			},
 			expectedErr: false,

@@ -54,16 +54,16 @@ func extractGPUs(node v1.Node, gpuModel gpu.Model, gpuCount int) ([]GPU, error) 
 	result := make([]GPU, 0)
 
 	// Init GPUs from annotation
-	statusAnnotations, _ := GetGPUAnnotationsFromNode(node)
+	statusAnnotations, _ := ParseNodeAnnotations(node)
 	for gpuIndex, gpuAnnotations := range statusAnnotations.GroupByGpuIndex() {
 		usedMigDevices := make(map[ProfileName]int)
 		freeMigDevices := make(map[ProfileName]int)
 		for _, a := range gpuAnnotations {
 			if a.IsUsed() {
-				usedMigDevices[a.GetMigProfileName()] = a.Quantity
+				usedMigDevices[a.ProfileName] = a.Quantity
 			}
 			if a.IsFree() {
-				freeMigDevices[a.GetMigProfileName()] = a.Quantity
+				freeMigDevices[a.ProfileName] = a.Quantity
 			}
 		}
 		g, err := NewGPU(gpuModel, gpuIndex, usedMigDevices, freeMigDevices)

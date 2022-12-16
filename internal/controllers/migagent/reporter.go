@@ -19,6 +19,7 @@ package migagent
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
@@ -76,7 +77,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 	newStatusAnnotations := mig.ComputeStatusAnnotations(migResources)
 
 	// Get current status annotations and compare with new ones
-	oldStatusAnnotations, _ := mig.GetGPUAnnotationsFromNode(instance)
+	oldStatusAnnotations, _ := gpu.ParseNodeAnnotations(instance, mig.ProfileEmpty)
 	if util.UnorderedEqual(newStatusAnnotations, oldStatusAnnotations) {
 		if instance.Annotations[v1alpha1.AnnotationReportedPartitioningPlan] == r.sharedState.lastParsedPlanId {
 			logger.Info("current status is equal to last reported status, nothing to do")
@@ -91,7 +92,7 @@ func (r *MigReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Res
 		updated.Annotations = make(map[string]string)
 	}
 	for k := range updated.Annotations {
-		if strings.HasPrefix(k, v1alpha1.AnnotationGPUStatusPrefix) {
+		if strings.HasPrefix(k, v1alpha1.AnnotationGpuStatusPrefix) {
 			delete(updated.Annotations, k)
 		}
 	}
