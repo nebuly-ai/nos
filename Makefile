@@ -6,6 +6,7 @@ OPERATOR_IMG ?= ghcr.io/telemaco019/nebulnetes-operator:$(N8S_VERSION)
 SCHEDULER_IMG ?= ghcr.io/telemaco019/nebulnetes-scheduler:$(N8S_VERSION)
 GPU_PARTITIONER_IMG ?= ghcr.io/telemaco019/nebulnetes-gpu-partitioner:$(N8S_VERSION)
 MIG_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-mig-agent:$(N8S_VERSION)
+TS_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-time-slicing-agent:$(N8S_VERSION)
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -66,14 +67,17 @@ mig-agent-manifests: controller-gen
 	rbac:roleName=mig-agent-role \
 	output:rbac:artifacts:config=config/migagent/rbac
 
-.PHONY: time-slicing-agent-manifests ## Generate manifests for the time-slicing-agent (ClusterRole, etc.).
-time-slicing-agent-manifests: controller-gen
-	$(CONTROLLER_GEN) paths="./internal/controllers/timeslicingagent/..." \
+.PHONY: ts-agent-manifests	## Generate manifests for the time-slicing-agent (ClusterRole, etc.).
+ts-agent-manifests: controller-gen
+	$(CONTROLLER_GEN) paths="./internal/controllers/tsagent/..." \
 	rbac:roleName=time-slicing-agent-role \
-	output:rbac:artifacts:config=config/timeslicingagent/rbac
+	output:rbac:artifacts:config=config/tsagent/rbac
 
 .PHONY: manifests
-manifests: operator-manifests mig-agent-manifests gpu-partitioner-manifests time-slicing-agent-manifests
+manifests: operator-manifests \
+	mig-agent-manifests \
+	gpu-partitioner-manifests \
+	ts-agent-manifests
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -125,6 +129,10 @@ docker-build-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 docker-build-mig-agent: ## Build docker image with the mig-agent.
 	docker buildx build --platform linux/amd64 -t ${MIG_AGENT_IMG} -f build/migagent/Dockerfile .
 
+.PHONY: docker-build-ts-agent
+docker-build-ts-agent: ## Build docker image with the time-slicing-agent.
+	docker buildx build --platform linux/amd64 -t ${TS_AGENT_IMG} -f build/tsagent/Dockerfile .
+
 .PHONY: docker-build-operator
 docker-build-operator: ## Build docker image with the operator.
 	docker build -t ${OPERATOR_IMG} -f build/operator/Dockerfile .
@@ -134,26 +142,39 @@ docker-build-scheduler: ## Build docker image with the scheduler.
 	docker build -t ${SCHEDULER_IMG} -f build/scheduler/Dockerfile .
 
 .PHONY: docker-push-operator
-docker-push-operator: ## Build docker image with the operator.
+docker-push-operator: ## Push docker image with the operator.
 	docker push ${OPERATOR_IMG}
 
 .PHONY: docker-push-mig-agent
-docker-push-mig-agent: ## Build docker image with the mig-agent.
+docker-push-mig-agent: ## Push docker image with the mig-agent.
 	docker push ${MIG_AGENT_IMG}
 
+.PHONY: docker-push-ts-agent
+docker-push-ts-agent: ## Push docker image with the time-slicing-agent.
+	docker push ${TS_AGENT_IMG}
+
 .PHONY: docker-push-scheduler
-docker-push-scheduler: ## Build docker image with the scheduler.
+docker-push-scheduler: ## Push docker image with the scheduler.
 	docker push ${SCHEDULER_IMG}
 
 .PHONY: docker-push-gpu-partitioner
-docker-push-gpu-partitioner: ## Build docker image with the gpu-partitioner.
+docker-push-gpu-partitioner: ## Push docker image with the gpu-partitioner.
 	docker push ${GPU_PARTITIONER_IMG}
 
 .PHONY: docker-build
-docker-build: test docker-build-mig-agent docker-build-operator docker-build-scheduler docker-build-gpu-partitioner docker-build-mig-agent
+docker-build: test \
+	docker-build-mig-agent \
+	docker-build-ts-agent \
+	docker-build-operator \
+	docker-build-scheduler \
+	docker-build-gpu-partitioner \
 
 .PHONY: docker-push
-docker-push: docker-push-mig-agent docker-push-operator docker-push-scheduler docker-push-mig-agent docker-push-gpu-partitioner
+docker-push: docker-push-mig-agent \
+	docker-build-ts-agent \
+	docker-push-operator \
+	docker-push-scheduler \
+	docker-push-gpu-partitioner
 
 ##@ Deployment
 
@@ -256,12 +277,12 @@ kind: $(KIND)
 $(KIND): $(LOCALBIN)
 	test -s $(LOCALBIN)/kind || GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@latest
 
-.PHONY: golangci-lint # Download golanci-lint if necessary
+.PHONY: golangci-lint ## Download golanci-lint if necessary
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(LOCALBIN)
 	test -s $(LOCALBIN)/golanci-lint || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v${GOLANGCI_LINT_VERSION}
 
-.PHONY: license-eye # Download license-eye if necessary
+.PHONY: license-eye ## Download license-eye if necessary
 license-eye: $(LICENSE_EYE)
 $(LICENSE_EYE): $(LOCALBIN)
 	test -s $(LOCALBIN)/license-eye || GOBIN=$(LOCALBIN) go install github.com/apache/skywalking-eyes/cmd/license-eye@latest

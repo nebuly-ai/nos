@@ -16,7 +16,10 @@
 
 package constant
 
-import v1 "k8s.io/api/core/v1"
+import (
+	v1 "k8s.io/api/core/v1"
+	"time"
+)
 
 type CapacityInfo string
 
@@ -60,6 +63,12 @@ const (
 	ResourceNvidiaGPU v1.ResourceName = "nvidia.com/gpu"
 )
 
+// Env variables
+const (
+	// EnvVarNodeName is the name of the env variable containing the name of the node
+	EnvVarNodeName = "NODE_NAME"
+)
+
 // Labels
 const (
 	// LabelNvidiaProduct is the name of the label assigned by the NVIDIA GPU Operator that identifies
@@ -73,12 +82,18 @@ const (
 	LabelNvidiaMemory = "nvidia.com/gpu.memory"
 )
 
+// Defaults
 const (
 	// DefaultNvidiaGPUResourceMemory is the default memory value (in GigaByte) that is associated to
 	// nvidia.com/gpu resources. The value represents the GPU memory requirement of a single resource.
 	// This value is used when the controller and scheduler configurations do not specify any value for this
 	// setting.
 	DefaultNvidiaGPUResourceMemory = 16
+
+	// DefaultPodResourcesTimeout is the default timeout used for the Pod resource lister
+	DefaultPodResourcesTimeout = 10 * time.Second
+	// DefaultPodResourcesMaxMsgSize is the default max message size used for the Pod resource lister
+	DefaultPodResourcesMaxMsgSize = 1024 * 1024 * 16 // 16 Mb
 )
 
 const (

@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-package timeslicingagent_test
+package tsagent_test
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/timeslicingagent"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/tsagent"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	gpumock "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/gpu"
@@ -91,7 +91,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	// Setup Reporter
-	reporter := timeslicingagent.NewReporter(k8sClient, gpuClient, reporterRefreshInterval)
+	reporter := tsagent.NewReporter(k8sClient, gpuClient, reporterRefreshInterval)
 	Expect(reporter.SetupWithManager(k8sManager, "Reporter", nodeName)).To(Succeed())
 
 	go func() {

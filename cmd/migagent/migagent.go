@@ -34,8 +34,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	pdrv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
-	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,14 +50,8 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(configv1alpha1.AddToScheme(scheme))
 }
-
-const (
-	// defaultPodResourcesPath is the path to the local endpoint serving the PodResources GRPC service.
-	defaultPodResourcesPath    = "/var/lib/kubelet/pod-resources"
-	defaultPodResourcesTimeout = 10 * time.Second
-	defaultPodResourcesMaxSize = 1024 * 1024 * 16 // 16 Mb
-)
 
 func main() {
 	// Setup CLI args
@@ -76,13 +68,13 @@ func main() {
 	ctx := ctrl.SetupSignalHandler()
 
 	// Get node name
-	nodeName, err := util.GetEnvOrError("NODE_NAME")
+	nodeName, err := util.GetEnvOrError(constant.EnvVarNodeName)
 	if err != nil {
-		setupLog.Error(err, "missing required env variable")
+		setupLog.Error(err, fmt.Sprintf("missing required env variable %s", constant.EnvVarNodeName))
 		os.Exit(1)
 	}
 
-	// Setup controller manager
+	// Load config and setup controller manager
 	options := ctrl.Options{
 		Scheme: scheme,
 	}
@@ -114,7 +106,10 @@ func main() {
 	var sharedState = migagent.NewSharedState()
 
 	// Init MIG client
-	lister, err := newPodResourcesListerClient()
+	lister, err := resource.NewPodResourcesListerClient(
+		constant.DefaultPodResourcesTimeout,
+		constant.DefaultPodResourcesMaxMsgSize,
+	)
 	resourceClient := resource.NewClient(lister)
 	setupLog.Info("Initializing NVML client")
 	nvmlClient := nvml.NewClient(ctrl.Log.WithName("NvmlClient"))
@@ -201,13 +196,4 @@ func cleanupUnusedMigResources(ctx context.Context, migClient mig.Client) error 
 	}
 	usedResources := resources.GetUsed()
 	return migClient.DeleteAllExcept(ctx, usedResources)
-}
-
-func newPodResourcesListerClient() (pdrv1.PodResourcesListerClient, error) {
-	endpoint, err := util.LocalEndpoint(defaultPodResourcesPath, podresources.Socket)
-	if err != nil {
-		return nil, err
-	}
-	listerClient, _, err := podresources.GetV1Client(endpoint, defaultPodResourcesTimeout, defaultPodResourcesMaxSize)
-	return listerClient, err
 }

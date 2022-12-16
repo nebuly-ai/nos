@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package timeslicingagent_test
+package tsagent_test
 
 import (
 	"fmt"
