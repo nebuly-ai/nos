@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -85,9 +84,9 @@ func TestMigState_Matches(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			specAnnotations := make(gpu.SpecAnnotationList[mig.ProfileName], 0)
+			specAnnotations := make(gpu.SpecAnnotationList, 0)
 			for k, v := range tt.spec {
-				a, _ := gpu.ParseSpecAnnotation(k, v, mig.ProfileEmpty)
+				a, _ := gpu.ParseSpecAnnotation(k, v)
 				specAnnotations = append(specAnnotations, a)
 			}
 			state := NewMigState(tt.stateResources)

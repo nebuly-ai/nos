@@ -62,7 +62,7 @@ func TestAnnotationConversions(t *testing.T) {
 	}
 
 	// From devices to annotations
-	timeSlicingAnnotations := timeslicing.ComputeStatusAnnotations(devices)
+	timeSlicingAnnotations := devices.AsStatusAnnotation(timeslicing.ExtractProfileName)
 	stringAnnotations := make(map[string]string)
 	for _, a := range timeSlicingAnnotations {
 		stringAnnotations[a.String()] = a.GetValue()
@@ -71,7 +71,7 @@ func TestAnnotationConversions(t *testing.T) {
 	// From annotations to devices
 	node := v1.Node{}
 	node.Annotations = stringAnnotations
-	parsedStatusAnnotations, _ := timeslicing.ParseNodeAnnotations(node)
+	parsedStatusAnnotations, _ := gpu.ParseNodeAnnotations(node)
 
 	// Check that the devices are the same
 	assert.ElementsMatch(t, timeSlicingAnnotations, parsedStatusAnnotations)

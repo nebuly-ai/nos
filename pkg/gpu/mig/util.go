@@ -37,18 +37,32 @@ func IsNvidiaMigDevice(resourceName v1.ResourceName) bool {
 	return resourceRegexp.MatchString(string(resourceName))
 }
 
-// ExtractMigProfile extracts the name of the MIG profile from the provided resource name, and returns an error
+// ExtractProfileName extracts the name of the MIG profile from the provided resource name, and returns an error
 // if the resource name is not a valid NVIDIA MIG resource.
 //
 // Example:
 //
 //	nvidia.com/mig-1g.10gb => 1g.10gb
-func ExtractMigProfile(migFormatResourceName v1.ResourceName) (ProfileName, error) {
-	if isMigResource := resourceRegexp.MatchString(string(migFormatResourceName)); !isMigResource {
+func ExtractProfileName(resourceName v1.ResourceName) (ProfileName, error) {
+	if isMigResource := resourceRegexp.MatchString(string(resourceName)); !isMigResource {
 		return "", fmt.Errorf("invalid input string, required format is %s", resourceRegexp.String())
 	}
-	name := strings.TrimPrefix(string(migFormatResourceName), "nvidia.com/mig-")
+	name := strings.TrimPrefix(string(resourceName), "nvidia.com/mig-")
 	return ProfileName(name), nil
+}
+
+// ExtractProfileNameStr extracts the name of the MIG profile from the provided resource name, and returns an error
+// if the resource name is not a valid NVIDIA MIG resource.
+//
+// Example:
+//
+//	nvidia.com/mig-1g.10gb => 1g.10gb
+func ExtractProfileNameStr(resourceName v1.ResourceName) (string, error) {
+	profileName, err := ExtractProfileName(resourceName)
+	if err != nil {
+		return "", err
+	}
+	return profileName.String(), nil
 }
 
 func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64, error) {
@@ -73,7 +87,7 @@ func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64,
 func GetRequestedMigResources(pod v1.Pod) map[ProfileName]int {
 	res := make(map[ProfileName]int)
 	for r, quantity := range resource.ComputePodRequest(pod) {
-		if migProfile, err := ExtractMigProfile(r); err == nil {
+		if migProfile, err := ExtractProfileName(r); err == nil {
 			res[migProfile] += int(quantity.Value())
 		}
 	}
@@ -87,7 +101,10 @@ func GetRequestedMigResources(pod v1.Pod) map[ProfileName]int {
 //	Resource name: nvidia.com/mig-1g.10gb
 //	GetMigProfileName() -> 1g.10gb
 func GetMigProfileName(device gpu.Device) ProfileName {
-	return extractMigProfileName(device.ResourceName)
+	if profile, err := ExtractProfileName(device.ResourceName); err == nil {
+		return profile
+	}
+	return ""
 }
 
 func GroupDevicesByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
@@ -103,8 +120,4 @@ func GroupDevicesByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
 		result[key] = append(result[key], r)
 	}
 	return result
-}
-
-func extractMigProfileName(r v1.ResourceName) ProfileName {
-	return ProfileName(strings.TrimPrefix(r.String(), constant.NvidiaMigResourcePrefix))
 }

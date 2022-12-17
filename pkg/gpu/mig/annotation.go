@@ -19,14 +19,9 @@ package mig
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	v1 "k8s.io/api/core/v1"
 )
 
-func ParseNodeAnnotations(node v1.Node) (gpu.StatusAnnotationList[ProfileName], gpu.SpecAnnotationList[ProfileName]) {
-	return gpu.ParseNodeAnnotations(node, ProfileEmpty)
-}
-
-func SpecMatchesStatus(specAnnotations gpu.SpecAnnotationList[ProfileName], statusAnnotations gpu.StatusAnnotationList[ProfileName]) bool {
+func SpecMatchesStatus(specAnnotations gpu.SpecAnnotationList, statusAnnotations gpu.StatusAnnotationList) bool {
 	specMigProfilesWithQuantity := make(map[string]int)
 	statusMigProfilesWithQuantity := make(map[string]int)
 	for _, a := range specAnnotations {
@@ -39,33 +34,17 @@ func SpecMatchesStatus(specAnnotations gpu.SpecAnnotationList[ProfileName], stat
 	return cmp.Equal(specMigProfilesWithQuantity, statusMigProfilesWithQuantity)
 }
 
-func GroupSpecAnnotationsByMigProfile(annotations gpu.SpecAnnotationList[ProfileName]) map[Profile]gpu.SpecAnnotationList[ProfileName] {
-	result := make(map[Profile]gpu.SpecAnnotationList[ProfileName])
+func GroupSpecAnnotationsByMigProfile(annotations gpu.SpecAnnotationList) map[Profile]gpu.SpecAnnotationList {
+	result := make(map[Profile]gpu.SpecAnnotationList)
 	for _, a := range annotations {
 		key := Profile{
 			GpuIndex: a.Index,
-			Name:     a.ProfileName,
+			Name:     ProfileName(a.ProfileName),
 		}
 		if result[key] == nil {
-			result[key] = make(gpu.SpecAnnotationList[ProfileName], 0)
+			result[key] = make(gpu.SpecAnnotationList, 0)
 		}
 		result[key] = append(result[key], a)
 	}
 	return result
-}
-
-func ComputeStatusAnnotations(devices gpu.DeviceList) gpu.StatusAnnotationList[ProfileName] {
-	statusAnnotations := devices.AsStatusAnnotation(func(r v1.ResourceName) string {
-		return extractMigProfileName(r).String()
-	})
-	res := make(gpu.StatusAnnotationList[ProfileName], len(statusAnnotations))
-	for i, a := range statusAnnotations {
-		res[i] = gpu.StatusAnnotation[ProfileName]{
-			ProfileName: ProfileName(a.ProfileName),
-			Index:       a.Index,
-			Status:      a.Status,
-			Quantity:    a.Quantity,
-		}
-	}
-	return res
 }

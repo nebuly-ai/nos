@@ -21,6 +21,7 @@ import (
 	"strings"
 )
 
-func ExtractProfileName(r v1.ResourceName) ProfileName {
-	return ProfileName(strings.TrimPrefix(r.String(), profileNamePrefix))
+func ExtractProfileName(r v1.ResourceName) (string, error) {
+	// TODO: check format
+	return strings.TrimPrefix(r.String(), profileNamePrefix), nil
 }

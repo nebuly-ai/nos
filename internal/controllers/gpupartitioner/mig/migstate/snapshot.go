@@ -115,7 +115,7 @@ func (s *MigClusterSnapshot) GetLackingMigProfiles(pod v1.Pod) map[mig.ProfileNa
 	res := make(map[mig.ProfileName]int)
 	for r, q := range s.GetLackingResources(pod).ScalarResources {
 		if mig.IsNvidiaMigDevice(r) {
-			profileName, _ := mig.ExtractMigProfile(r)
+			profileName, _ := mig.ExtractProfileName(r)
 			res[profileName] += int(q)
 		}
 	}

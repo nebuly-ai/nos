@@ -115,17 +115,21 @@ func (l DeviceList) GroupByResourceName() map[v1.ResourceName]DeviceList {
 	return result
 }
 
-func (l DeviceList) AsStatusAnnotation(extractProfileName func(r v1.ResourceName) string) StatusAnnotationList[string] {
-	result := make(StatusAnnotationList[string], 0)
+type extractProfileName func(name v1.ResourceName) (string, error)
+
+func (l DeviceList) AsStatusAnnotation(getProfile extractProfileName) StatusAnnotationList {
+	result := make(StatusAnnotationList, 0)
 	for gpuIndex, devices := range l.GroupByGpuIndex() {
 		for resourceName, devices := range devices.GroupByResourceName() {
 			for status, devices := range devices.GroupByStatus() {
-				result = append(result, StatusAnnotation[string]{
-					ProfileName: extractProfileName(resourceName),
-					Status:      status,
-					Index:       gpuIndex,
-					Quantity:    len(devices),
-				})
+				if profileName, err := getProfile(resourceName); err == nil {
+					result = append(result, StatusAnnotation{
+						ProfileName: profileName,
+						Status:      status,
+						Index:       gpuIndex,
+						Quantity:    len(devices),
+					})
+				}
 			}
 		}
 	}

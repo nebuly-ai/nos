@@ -26,73 +26,73 @@ import (
 	"strings"
 )
 
-func ParseSpecAnnotation[K ~string](key, value string, _ K) (SpecAnnotation[K], error) {
+func ParseSpecAnnotation(key, value string) (SpecAnnotation, error) {
 	if !strings.HasPrefix(key, v1alpha1.AnnotationGpuSpecPrefix) {
 		err := fmt.Errorf(
 			"expected spec annotation prefix is %q, but got %q",
 			v1alpha1.AnnotationGpuSpecPrefix,
 			key,
 		)
-		return SpecAnnotation[K]{}, err
+		return SpecAnnotation{}, err
 	}
 	parts := strings.Split(key, "-")
 	if len(parts) != 4 {
-		return SpecAnnotation[K]{}, fmt.Errorf("invalid spec annotation key %q", key)
+		return SpecAnnotation{}, fmt.Errorf("invalid spec annotation key %q", key)
 	}
 	quantity, err := strconv.Atoi(value)
 	if err != nil {
-		return SpecAnnotation[K]{}, err
+		return SpecAnnotation{}, err
 	}
 	index, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return SpecAnnotation[K]{}, fmt.Errorf("invalid GPU index: %s", err)
+		return SpecAnnotation{}, fmt.Errorf("invalid GPU index: %s", err)
 	}
-	return SpecAnnotation[K]{
-		ProfileName: K(parts[len(parts)-1]),
+	return SpecAnnotation{
+		ProfileName: parts[len(parts)-1],
 		Quantity:    quantity,
 		Index:       index,
 	}, nil
 }
 
-func ParseStatusAnnotation[K ~string](key, value string, _ K) (StatusAnnotation[K], error) {
+func ParseStatusAnnotation(key, value string) (StatusAnnotation, error) {
 	if !strings.HasPrefix(key, v1alpha1.AnnotationGpuStatusPrefix) {
 		err := fmt.Errorf("expected status prefix is %q, but got %q", v1alpha1.AnnotationGpuStatusPrefix, key)
-		return StatusAnnotation[K]{}, err
+		return StatusAnnotation{}, err
 	}
 	parts := strings.Split(key, "-")
 	if len(parts) != 5 {
-		return StatusAnnotation[K]{}, fmt.Errorf("invalid status annotation key %q", key)
+		return StatusAnnotation{}, fmt.Errorf("invalid status annotation key %q", key)
 	}
 	quantity, err := strconv.Atoi(value)
 	if err != nil {
-		return StatusAnnotation[K]{}, err
+		return StatusAnnotation{}, err
 	}
 	index, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return StatusAnnotation[K]{}, fmt.Errorf("invalid GPU index: %s", err)
+		return StatusAnnotation{}, fmt.Errorf("invalid GPU index: %s", err)
 	}
 	status, err := resource.ParseStatus(parts[len(parts)-1])
 	if err != nil {
-		return StatusAnnotation[K]{}, fmt.Errorf("invalid GPU status: %s", err)
+		return StatusAnnotation{}, fmt.Errorf("invalid GPU status: %s", err)
 	}
 
-	return StatusAnnotation[K]{
+	return StatusAnnotation{
 		Index:       index,
-		ProfileName: K(parts[3]),
+		ProfileName: parts[3],
 		Status:      status,
 		Quantity:    quantity,
 	}, nil
 }
 
-func ParseNodeAnnotations[K ~string](node v1.Node, t K) (StatusAnnotationList[K], SpecAnnotationList[K]) {
-	statusAnnotations := make(StatusAnnotationList[K], 0)
-	specAnnotations := make(SpecAnnotationList[K], 0)
+func ParseNodeAnnotations(node v1.Node) (StatusAnnotationList, SpecAnnotationList) {
+	statusAnnotations := make(StatusAnnotationList, 0)
+	specAnnotations := make(SpecAnnotationList, 0)
 	for k, v := range node.Annotations {
-		if specAnnotation, err := ParseSpecAnnotation(k, v, t); err == nil {
+		if specAnnotation, err := ParseSpecAnnotation(k, v); err == nil {
 			specAnnotations = append(specAnnotations, specAnnotation)
 			continue
 		}
-		if statusAnnotation, err := ParseStatusAnnotation(k, v, t); err == nil {
+		if statusAnnotation, err := ParseStatusAnnotation(k, v); err == nil {
 			statusAnnotations = append(statusAnnotations, statusAnnotation)
 			continue
 		}
@@ -100,28 +100,28 @@ func ParseNodeAnnotations[K ~string](node v1.Node, t K) (StatusAnnotationList[K]
 	return statusAnnotations, specAnnotations
 }
 
-type StatusAnnotation[K ~string] struct {
-	ProfileName K
+type StatusAnnotation struct {
+	ProfileName string
 	Index       int
 	Status      resource.Status
 	Quantity    int
 }
 
 // IsUsed returns true if the annotation refers to a used device
-func (a StatusAnnotation[K]) IsUsed() bool {
+func (a StatusAnnotation) IsUsed() bool {
 	return a.Status == resource.StatusUsed
 }
 
 // IsFree returns true if the annotation refers to a free device
-func (a StatusAnnotation[K]) IsFree() bool {
+func (a StatusAnnotation) IsFree() bool {
 	return a.Status == resource.StatusFree
 }
 
-func (a StatusAnnotation[K]) String() string {
+func (a StatusAnnotation) String() string {
 	return fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, a.Index, a.ProfileName, a.Status)
 }
 
-func (a StatusAnnotation[K]) GetValue() string {
+func (a StatusAnnotation) GetValue() string {
 	return fmt.Sprintf("%d", a.Quantity)
 }
 
@@ -135,21 +135,21 @@ func (a StatusAnnotation[K]) GetValue() string {
 // Result:
 //
 //	"0-1g.10gb"
-func (a StatusAnnotation[K]) GetIndexWithProfile() string {
+func (a StatusAnnotation) GetIndexWithProfile() string {
 	return fmt.Sprintf("%d-%s", a.Index, a.ProfileName)
 }
 
-type SpecAnnotation[K ~string] struct {
-	ProfileName K
+type SpecAnnotation struct {
+	ProfileName string
 	Index       int
 	Quantity    int
 }
 
-func (a SpecAnnotation[K]) String() string {
+func (a SpecAnnotation) String() string {
 	return fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, a.Index, a.ProfileName)
 }
 
-func (a SpecAnnotation[K]) GetValue() string {
+func (a SpecAnnotation) GetValue() string {
 	return fmt.Sprintf("%d", a.Quantity)
 }
 
@@ -163,40 +163,40 @@ func (a SpecAnnotation[K]) GetValue() string {
 // Result:
 //
 //	"0-1g.10gb"
-func (a SpecAnnotation[K]) GetIndexWithProfile() string {
+func (a SpecAnnotation) GetIndexWithProfile() string {
 	return fmt.Sprintf("%d-%s", a.Index, a.ProfileName)
 }
 
-type SpecAnnotationList[K ~string] []SpecAnnotation[K]
+type SpecAnnotationList []SpecAnnotation
 
-func (l SpecAnnotationList[K]) GroupByGpuIndex() map[int]SpecAnnotationList[K] {
-	result := make(map[int]SpecAnnotationList[K])
+func (l SpecAnnotationList) GroupByGpuIndex() map[int]SpecAnnotationList {
+	result := make(map[int]SpecAnnotationList)
 	for _, r := range l {
 		key := r.Index
 		if result[key] == nil {
-			result[key] = make(SpecAnnotationList[K], 0)
+			result[key] = make(SpecAnnotationList, 0)
 		}
 		result[key] = append(result[key], r)
 	}
 	return result
 }
 
-type StatusAnnotationList[K ~string] []StatusAnnotation[K]
+type StatusAnnotationList []StatusAnnotation
 
-func (l StatusAnnotationList[K]) GroupByGpuIndex() map[int]StatusAnnotationList[K] {
-	result := make(map[int]StatusAnnotationList[K])
+func (l StatusAnnotationList) GroupByGpuIndex() map[int]StatusAnnotationList {
+	result := make(map[int]StatusAnnotationList)
 	for _, r := range l {
 		key := r.Index
 		if result[key] == nil {
-			result[key] = make(StatusAnnotationList[K], 0)
+			result[key] = make(StatusAnnotationList, 0)
 		}
 		result[key] = append(result[key], r)
 	}
 	return result
 }
 
-func (l StatusAnnotationList[K]) Filter(keep func(annotation StatusAnnotation[K]) bool) StatusAnnotationList[K] {
-	result := make(StatusAnnotationList[K], 0)
+func (l StatusAnnotationList) Filter(keep func(annotation StatusAnnotation) bool) StatusAnnotationList {
+	result := make(StatusAnnotationList, 0)
 	for _, a := range l {
 		if keep(a) {
 			result = append(result, a)
@@ -206,19 +206,19 @@ func (l StatusAnnotationList[K]) Filter(keep func(annotation StatusAnnotation[K]
 }
 
 // GetUsed return a new GPUStatusAnnotationList containing the annotations referring to used devices
-func (l StatusAnnotationList[K]) GetUsed() StatusAnnotationList[K] {
-	return l.Filter(func(a StatusAnnotation[K]) bool {
+func (l StatusAnnotationList) GetUsed() StatusAnnotationList {
+	return l.Filter(func(a StatusAnnotation) bool {
 		return a.IsUsed()
 	})
 }
 
 // GetFree return a new GPUStatusAnnotationList containing the annotations referring to free devices
-func (l StatusAnnotationList[K]) GetFree() StatusAnnotationList[K] {
-	return l.Filter(func(a StatusAnnotation[K]) bool {
+func (l StatusAnnotationList) GetFree() StatusAnnotationList {
+	return l.Filter(func(a StatusAnnotation) bool {
 		return a.IsFree()
 	})
 }
 
-func (l StatusAnnotationList[K]) Equal(other StatusAnnotationList[K]) bool {
+func (l StatusAnnotationList) Equal(other StatusAnnotationList) bool {
 	return util.UnorderedEqual(l, other)
 }

@@ -55,7 +55,7 @@ func (r *Reporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result
 	if err := r.Client.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, &instance); err != nil {
 		return ctrl.Result{}, err
 	}
-	lastStatusAnnotations, _ := gpu.ParseNodeAnnotations(instance, timeslicing.ProfileEmpty)
+	lastStatusAnnotations, _ := gpu.ParseNodeAnnotations(instance)
 
 	// Fetch GPUs
 	devices, err := r.gpuClient.GetDevices(ctx)
@@ -65,7 +65,7 @@ func (r *Reporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result
 	}
 
 	// Check if status changed
-	currentStatusAnnotations := timeslicing.ComputeStatusAnnotations(devices)
+	currentStatusAnnotations := devices.AsStatusAnnotation(timeslicing.ExtractProfileName)
 	logger.Info("computed annotations", "current", currentStatusAnnotations, "last", lastStatusAnnotations, "devices", devices)
 	if currentStatusAnnotations.Equal(lastStatusAnnotations) {
 		logger.Info("current status is equal to last reported status, nothing to do")

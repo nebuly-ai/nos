@@ -110,16 +110,16 @@ func (a Actuator) applyNodePartitioning(ctx context.Context, nodeName, planId st
 	return nil
 }
 
-func getGPUSpecAnnotationList(nodePartitioning state.NodePartitioning) (gpu.SpecAnnotationList[mig.ProfileName], error) {
-	res := make(gpu.SpecAnnotationList[mig.ProfileName], 0)
+func getGPUSpecAnnotationList(nodePartitioning state.NodePartitioning) (gpu.SpecAnnotationList, error) {
+	res := make(gpu.SpecAnnotationList, 0)
 	for _, g := range nodePartitioning.GPUs {
 		for r, q := range g.Resources {
-			migProfile, err := mig.ExtractMigProfile(r)
+			migProfile, err := mig.ExtractProfileName(r)
 			if err != nil {
 				return res, err
 			}
-			annotation := gpu.SpecAnnotation[mig.ProfileName]{
-				ProfileName: migProfile,
+			annotation := gpu.SpecAnnotation{
+				ProfileName: migProfile.String(),
 				Index:       g.GPUIndex,
 				Quantity:    q,
 			}

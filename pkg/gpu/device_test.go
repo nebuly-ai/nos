@@ -28,12 +28,12 @@ func TestDeviceList__AsStatusAnnotation(t *testing.T) {
 	testCases := []struct {
 		name     string
 		list     gpu.DeviceList
-		expected gpu.StatusAnnotationList[string]
+		expected gpu.StatusAnnotationList
 	}{
 		{
 			name:     "empty",
 			list:     gpu.DeviceList{},
-			expected: gpu.StatusAnnotationList[string]{},
+			expected: gpu.StatusAnnotationList{},
 		},
 		{
 			name: "multiple devices, same GPU index, same resource ID, same status, different profiles",
@@ -55,7 +55,7 @@ func TestDeviceList__AsStatusAnnotation(t *testing.T) {
 					GpuIndex: 0,
 				},
 			},
-			expected: gpu.StatusAnnotationList[string]{
+			expected: gpu.StatusAnnotationList{
 				{
 					ProfileName: "nvidia.com/gpu-1",
 					Index:       0,
@@ -106,7 +106,7 @@ func TestDeviceList__AsStatusAnnotation(t *testing.T) {
 					GpuIndex: 1,
 				},
 			},
-			expected: gpu.StatusAnnotationList[string]{
+			expected: gpu.StatusAnnotationList{
 				{
 					ProfileName: "nvidia.com/gpu-1",
 					Index:       0,
@@ -131,9 +131,10 @@ func TestDeviceList__AsStatusAnnotation(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.ElementsMatch(t, tt.expected, tt.list.AsStatusAnnotation(func(r v1.ResourceName) string {
-				return string(r)
-			}))
+			getProfileName := func(r v1.ResourceName) (string, error) {
+				return string(r), nil
+			}
+			assert.ElementsMatch(t, tt.expected, tt.list.AsStatusAnnotation(getProfileName))
 		})
 	}
 }

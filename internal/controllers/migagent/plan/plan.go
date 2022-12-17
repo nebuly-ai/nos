@@ -28,7 +28,7 @@ type MigConfigPlan struct {
 	CreateOperations CreateOperationList
 }
 
-func NewMigConfigPlan(state MigState, desired gpu.SpecAnnotationList[mig.ProfileName]) MigConfigPlan {
+func NewMigConfigPlan(state MigState, desired gpu.SpecAnnotationList) MigConfigPlan {
 	plan := MigConfigPlan{
 		DeleteOperations: make(DeleteOperationList, 0),
 		CreateOperations: make(CreateOperationList, 0),
@@ -166,14 +166,14 @@ func (p *MigConfigPlan) Equal(other *MigConfigPlan) bool {
 	return true
 }
 
-func getResourcesNotIncludedInSpec(state MigState, specAnnotations gpu.SpecAnnotationList[mig.ProfileName]) gpu.DeviceList {
+func getResourcesNotIncludedInSpec(state MigState, specAnnotations gpu.SpecAnnotationList) gpu.DeviceList {
 	lookup := specAnnotations.GroupByGpuIndex()
 
 	updatedState := state
 	for gpuIndex, annotations := range lookup {
 		migProfiles := make([]mig.ProfileName, 0)
 		for _, a := range annotations {
-			migProfiles = append(migProfiles, a.ProfileName)
+			migProfiles = append(migProfiles, mig.ProfileName(a.ProfileName))
 		}
 		updatedState = updatedState.WithoutMigProfiles(gpuIndex, migProfiles)
 	}

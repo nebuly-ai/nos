@@ -21,7 +21,6 @@ package tsagent_test
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	. "github.com/onsi/ginkgo/v2"
@@ -116,7 +115,7 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 			}
 			mockedCall := gpuClient.On("GetDevices", mock.Anything).Return(gpus, nil)
 
-			expectedAnnotations := gpu.StatusAnnotationList[timeslicing.ProfileName]{
+			expectedAnnotations := gpu.StatusAnnotationList{
 				{
 					ProfileName: "20gb",
 					Index:       0,
@@ -148,7 +147,7 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 				if len(node.Annotations) == 0 {
 					return fmt.Errorf("node annotations are empty")
 				}
-				statusAnnotations, _ := timeslicing.ParseNodeAnnotations(node)
+				statusAnnotations, _ := gpu.ParseNodeAnnotations(node)
 				if len(statusAnnotations) != 3 {
 					return fmt.Errorf(
 						"expected %d status annotations, found %d",

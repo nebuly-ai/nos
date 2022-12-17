@@ -42,7 +42,7 @@ func TestSpecAnnotation_GetGpuIndex(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := gpu.ParseSpecAnnotation(tt.annotation, "1", "")
+			annotation, err := gpu.ParseSpecAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.Index)
 		})
@@ -64,7 +64,7 @@ func TestSpecAnnotation_GetProfile(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := gpu.ParseSpecAnnotation(tt.annotation, "1", "")
+			annotation, err := gpu.ParseSpecAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.ProfileName)
 		})
@@ -86,7 +86,7 @@ func TestSpecAnnotation_GetIndexWithProfile(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := gpu.ParseSpecAnnotation(tt.annotation, "1", "")
+			annotation, err := gpu.ParseSpecAnnotation(tt.annotation, "1")
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, annotation.GetIndexWithProfile())
 		})
@@ -96,68 +96,68 @@ func TestSpecAnnotation_GetIndexWithProfile(t *testing.T) {
 func TestStatusAnnotationList_GetFree(t *testing.T) {
 	testCases := []struct {
 		name     string
-		list     gpu.StatusAnnotationList[string]
-		expected gpu.StatusAnnotationList[string]
+		list     gpu.StatusAnnotationList
+		expected gpu.StatusAnnotationList
 	}{
 		{
 			name:     "Empty list",
-			list:     gpu.StatusAnnotationList[string]{},
-			expected: gpu.StatusAnnotationList[string]{},
+			list:     gpu.StatusAnnotationList{},
+			expected: gpu.StatusAnnotationList{},
 		},
 		{
 			name: "Only used annotations",
-			list: gpu.StatusAnnotationList[string]{
-				gpu.StatusAnnotation[string]{
+			list: gpu.StatusAnnotationList{
+				gpu.StatusAnnotation{
 					ProfileName: "1g10gb",
 					Index:       0,
 					Status:      resource.StatusUsed,
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "2g20gb",
 					Index:       0,
 					Status:      resource.StatusUsed,
 					Quantity:    1,
 				},
 			},
-			expected: gpu.StatusAnnotationList[string]{},
+			expected: gpu.StatusAnnotationList{},
 		},
 		{
 			name: "Used and Free annotations, only Free are returned",
-			list: gpu.StatusAnnotationList[string]{
-				gpu.StatusAnnotation[string]{
+			list: gpu.StatusAnnotationList{
+				gpu.StatusAnnotation{
 					ProfileName: "1g10gb",
 					Index:       0,
 					Status:      resource.StatusUsed,
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "2g20gb",
 					Index:       0,
 					Status:      resource.StatusUsed,
 					Quantity:    1,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "1g10gb",
 					Index:       0,
 					Status:      resource.StatusFree,
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "2g20gb",
 					Index:       0,
 					Status:      resource.StatusFree,
 					Quantity:    1,
 				},
 			},
-			expected: gpu.StatusAnnotationList[string]{
-				gpu.StatusAnnotation[string]{
+			expected: gpu.StatusAnnotationList{
+				gpu.StatusAnnotation{
 					ProfileName: "1g10gb",
 					Index:       0,
 					Status:      resource.StatusFree,
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "2g20gb",
 					Index:       0,
 					Status:      resource.StatusFree,
@@ -178,68 +178,68 @@ func TestStatusAnnotationList_GetFree(t *testing.T) {
 func TestStatusAnnotationList_GetUsed(t *testing.T) {
 	testCases := []struct {
 		name     string
-		list     gpu.StatusAnnotationList[string]
-		expected gpu.StatusAnnotationList[string]
+		list     gpu.StatusAnnotationList
+		expected gpu.StatusAnnotationList
 	}{
 		{
 			name:     "Empty list",
-			list:     gpu.StatusAnnotationList[string]{},
-			expected: gpu.StatusAnnotationList[string]{},
+			list:     gpu.StatusAnnotationList{},
+			expected: gpu.StatusAnnotationList{},
 		},
 		{
 			name: "Only free annotations",
-			list: gpu.StatusAnnotationList[string]{
-				gpu.StatusAnnotation[string]{
+			list: gpu.StatusAnnotationList{
+				gpu.StatusAnnotation{
 					ProfileName: "1g10gb",
 					Status:      resource.StatusFree,
 					Index:       0,
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					Index:       0,
 					ProfileName: "2g20gb",
 					Status:      resource.StatusFree,
 					Quantity:    1,
 				},
 			},
-			expected: gpu.StatusAnnotationList[string]{},
+			expected: gpu.StatusAnnotationList{},
 		},
 		{
 			name: "Used and Free annotations, only Used are returned",
-			list: gpu.StatusAnnotationList[string]{
-				gpu.StatusAnnotation[string]{
+			list: gpu.StatusAnnotationList{
+				gpu.StatusAnnotation{
 					Status:      resource.StatusUsed,
 					Index:       0,
 					ProfileName: "1g10gb",
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "2g20gb",
 					Status:      resource.StatusUsed,
 					Index:       0,
 					Quantity:    1,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					Index:       0,
 					ProfileName: "1g10gb",
 					Status:      resource.StatusFree,
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "2g20gb",
 					Index:       0,
 					Status:      resource.StatusFree,
 					Quantity:    1,
 				},
 			},
-			expected: gpu.StatusAnnotationList[string]{
-				gpu.StatusAnnotation[string]{
+			expected: gpu.StatusAnnotationList{
+				gpu.StatusAnnotation{
 					Status:      resource.StatusUsed,
 					Index:       0,
 					ProfileName: "1g10gb",
 					Quantity:    2,
 				},
-				gpu.StatusAnnotation[string]{
+				gpu.StatusAnnotation{
 					ProfileName: "2g20gb",
 					Status:      resource.StatusUsed,
 					Index:       0,
@@ -261,14 +261,14 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 	testCases := []struct {
 		name                      string
 		node                      v1.Node
-		expectedStatusAnnotations gpu.StatusAnnotationList[string]
-		expectedSpecAnnotations   gpu.SpecAnnotationList[string]
+		expectedStatusAnnotations gpu.StatusAnnotationList
+		expectedSpecAnnotations   gpu.SpecAnnotationList
 	}{
 		{
 			name:                      "Node without annotations",
 			node:                      v1.Node{},
-			expectedStatusAnnotations: make(gpu.StatusAnnotationList[string], 0),
-			expectedSpecAnnotations:   make(gpu.SpecAnnotationList[string], 0),
+			expectedStatusAnnotations: make(gpu.StatusAnnotationList, 0),
+			expectedSpecAnnotations:   make(gpu.SpecAnnotationList, 0),
 		},
 		{
 			name: "Node with annotations",
@@ -281,7 +281,7 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 					},
 				).
 				Get(),
-			expectedStatusAnnotations: gpu.StatusAnnotationList[string]{
+			expectedStatusAnnotations: gpu.StatusAnnotationList{
 				{
 					ProfileName: "1g.10gb",
 					Status:      resource.StatusFree,
@@ -289,7 +289,7 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 					Quantity:    3,
 				},
 			},
-			expectedSpecAnnotations: gpu.SpecAnnotationList[string]{
+			expectedSpecAnnotations: gpu.SpecAnnotationList{
 				{
 					ProfileName: "1g.10gb",
 					Index:       2,
@@ -306,7 +306,7 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			status, spec := gpu.ParseNodeAnnotations(tt.node, "")
+			status, spec := gpu.ParseNodeAnnotations(tt.node)
 			assert.ElementsMatch(t, tt.expectedStatusAnnotations, status)
 			assert.ElementsMatch(t, tt.expectedSpecAnnotations, spec)
 		})
@@ -318,56 +318,56 @@ func TestParseStatusAnnotation(t *testing.T) {
 		name        string
 		key         string
 		value       string
-		expected    gpu.StatusAnnotation[string]
+		expected    gpu.StatusAnnotation
 		expectedErr bool
 	}{
 		{
 			name:        "Empty key and value",
 			key:         "",
 			value:       "",
-			expected:    gpu.StatusAnnotation[string]{},
+			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Key without prefix",
 			key:         "n8s.nebuly.ai/foo",
 			value:       "1",
-			expected:    gpu.StatusAnnotation[string]{},
+			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Key with prefix, but without status",
 			key:         v1alpha1.AnnotationGpuStatusPrefix + "foo",
 			value:       "1",
-			expected:    gpu.StatusAnnotation[string]{},
+			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Quantity is not an integer",
 			key:         fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "1g.10gb", resource.StatusFree),
 			value:       "foo",
-			expected:    gpu.StatusAnnotation[string]{},
+			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Index is not an integer",
 			key:         "n8s.nebuly.ai/status-gpu-foo-1g.10gb-free",
 			value:       "1",
-			expected:    gpu.StatusAnnotation[string]{},
+			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Invalid status",
 			key:         "n8s.nebuly.ai/status-gpu-0-1g.10gb-foo",
 			value:       "1",
-			expected:    gpu.StatusAnnotation[string]{},
+			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:  "Valid annotation",
 			key:   "n8s.nebuly.ai/status-gpu-1-1g.10gb-used",
 			value: "1",
-			expected: gpu.StatusAnnotation[string]{
+			expected: gpu.StatusAnnotation{
 				ProfileName: "1g.10gb",
 				Status:      resource.StatusUsed,
 				Index:       1,
@@ -379,7 +379,7 @@ func TestParseStatusAnnotation(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, err := gpu.ParseStatusAnnotation(tt.key, tt.value, "")
+			annotation, err := gpu.ParseStatusAnnotation(tt.key, tt.value)
 			if tt.expectedErr {
 				assert.Error(t, err)
 			}
@@ -393,42 +393,42 @@ func TestParseSpecAnnotation(t *testing.T) {
 		name        string
 		key         string
 		value       string
-		expected    gpu.SpecAnnotation[string]
+		expected    gpu.SpecAnnotation
 		expectedErr bool
 	}{
 		{
 			name:        "Empty key and value",
 			key:         "",
 			value:       "",
-			expected:    gpu.SpecAnnotation[string]{},
+			expected:    gpu.SpecAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Key without prefix",
 			key:         "n8s.nebuly.ai/foo",
 			value:       "1",
-			expected:    gpu.SpecAnnotation[string]{},
+			expected:    gpu.SpecAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Key with prefix, but without spec",
 			key:         v1alpha1.AnnotationGpuSpecPrefix + "foo",
 			value:       "1",
-			expected:    gpu.SpecAnnotation[string]{},
+			expected:    gpu.SpecAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Quantity is not an integer",
 			key:         fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, "1g.10gb"),
 			value:       "foo",
-			expected:    gpu.SpecAnnotation[string]{},
+			expected:    gpu.SpecAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:  "Valid annotation",
 			key:   fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, "1g.10gb"),
 			value: "1",
-			expected: gpu.SpecAnnotation[string]{
+			expected: gpu.SpecAnnotation{
 				ProfileName: "1g.10gb",
 				Index:       1,
 				Quantity:    1,
@@ -439,7 +439,7 @@ func TestParseSpecAnnotation(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			annotation, value := gpu.ParseSpecAnnotation(tt.key, tt.value, "")
+			annotation, value := gpu.ParseSpecAnnotation(tt.key, tt.value)
 			if tt.expectedErr {
 				assert.Error(t, value)
 			}
