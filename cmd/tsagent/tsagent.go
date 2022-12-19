@@ -37,6 +37,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"time"
 )
 
 var (
@@ -83,7 +84,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	setupLog.Info("loaded config", "reportingInterval", agentConfig.ReportConfigIntervalSeconds)
+	reportingSeconds := agentConfig.ReportConfigIntervalSeconds * time.Second
+	setupLog.Info("loaded config", "reportingInterval", reportingSeconds)
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -115,7 +117,7 @@ func main() {
 	migReporter := tsagent.NewReporter(
 		mgr.GetClient(),
 		gpuClient,
-		agentConfig.ReportConfigIntervalSeconds,
+		reportingSeconds,
 	)
 	if err = migReporter.SetupWithManager(mgr, "reporter", nodeName); err != nil {
 		setupLog.Error(err, "unable to create time-slicing Reporter")
