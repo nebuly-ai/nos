@@ -55,6 +55,7 @@ const (
 const (
 	// NvidiaMigResourcePrefix is the prefix of NVIDIA MIG resources
 	NvidiaMigResourcePrefix = "nvidia.com/mig-"
+	NvidiaResourcePrefix    = "nvidia.com/"
 )
 
 // Resource names

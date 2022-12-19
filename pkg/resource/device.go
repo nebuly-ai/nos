@@ -18,6 +18,7 @@ package resource
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"k8s.io/api/core/v1"
 	"strings"
 )
@@ -63,5 +64,5 @@ func (d Device) IsFree() bool {
 }
 
 func (d Device) IsNvidiaResource() bool {
-	return strings.HasPrefix(d.ResourceName.String(), "nvidia.com/")
+	return strings.HasPrefix(d.ResourceName.String(), constant.NvidiaResourcePrefix)
 }

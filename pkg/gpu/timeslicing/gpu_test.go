@@ -72,6 +72,34 @@ func TestNewGPU(t *testing.T) {
 			),
 			expectedErr: false,
 		},
+		{
+			name:     "Used profile with memory size smaller than min",
+			model:    gpu.GPUModel_A100_PCIe_80GB,
+			index:    0,
+			memoryGB: 30,
+			usedProfiles: map[timeslicing.ProfileName]int{
+				"nvidia.com/gpu-1gb": 2,
+			},
+			freeProfiles: map[timeslicing.ProfileName]int{
+				"nvidia.com/gpu-10gb": 2,
+			},
+			expected:    timeslicing.GPU{},
+			expectedErr: true,
+		},
+		{
+			name:     "Free profile with memory size smaller than min",
+			model:    gpu.GPUModel_A100_PCIe_80GB,
+			index:    0,
+			memoryGB: 30,
+			usedProfiles: map[timeslicing.ProfileName]int{
+				"nvidia.com/gpu-10gb": 2,
+			},
+			freeProfiles: map[timeslicing.ProfileName]int{
+				"nvidia.com/gpu-1gb": 2,
+			},
+			expected:    timeslicing.GPU{},
+			expectedErr: true,
+		},
 	}
 
 	for _, tt := range testCases {

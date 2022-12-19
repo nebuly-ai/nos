@@ -64,10 +64,28 @@ func NewGpuOrPanic(model gpu.Model, index int, memoryGB int, usedProfiles, freeP
 func (g *GPU) Validate() error {
 	var totalMemoryGB int
 	for p, q := range g.usedProfiles {
-		totalMemoryGB += p.GetMemorySizeGB() * q
+		mem := p.GetMemorySizeGB()
+		if mem < MinSliceMemoryGB {
+			return fmt.Errorf(
+				"min allowed slice size is %dGB, but profile %s has %dGB",
+				MinSliceMemoryGB,
+				p,
+				mem,
+			)
+		}
+		totalMemoryGB += mem * q
 	}
 	for p, q := range g.freeProfiles {
-		totalMemoryGB += p.GetMemorySizeGB() * q
+		mem := p.GetMemorySizeGB()
+		if mem < MinSliceMemoryGB {
+			return fmt.Errorf(
+				"min allowed slice size is %dGB, but profile %s has %dGB",
+				MinSliceMemoryGB,
+				p,
+				mem,
+			)
+		}
+		totalMemoryGB += mem * q
 	}
 	if totalMemoryGB > g.MemoryGB {
 		return fmt.Errorf("total memory of profiles (%d) exceeds GPU memory (%d)", totalMemoryGB, g.MemoryGB)
