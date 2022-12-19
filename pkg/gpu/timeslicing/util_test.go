@@ -84,3 +84,34 @@ func TestAnnotationConversions(t *testing.T) {
 	// Check that the devices are the same
 	assert.ElementsMatch(t, timeSlicingAnnotations, parsedStatusAnnotations)
 }
+
+func TestExtractGpuId(t *testing.T) {
+	testCases := []struct {
+		name     string
+		id       string
+		expected string
+	}{
+		{
+			name:     "empty",
+			id:       "",
+			expected: "",
+		},
+		{
+			name:     "non-replica ID, should return the same ID",
+			id:       "id-1",
+			expected: "id-1",
+		},
+		{
+			name:     "replica ID, should return the ID without the replica suffix",
+			id:       "id-1::1",
+			expected: "id-1",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			id := timeslicing.ExtractGpuId(tt.id)
+			assert.Equal(t, tt.expected, id)
+		})
+	}
+}
