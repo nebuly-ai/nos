@@ -20,4 +20,5 @@ func init() {
 	SchemeBuilder.Register(&OperatorConfig{})
 	SchemeBuilder.Register(&GpuPartitionerConfig{})
 	SchemeBuilder.Register(&MigAgentConfig{})
+	SchemeBuilder.Register(&TimeSlicingAgentConfig{})
 }

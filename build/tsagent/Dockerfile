@@ -24,20 +24,20 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY cmd/migagent/migagent.go migagent.go
+COPY cmd/tsagent/tsagent.go tsagent.go
 COPY pkg pkg/
 COPY internal internal/
 
 # Build
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o migagent -tags nvml migagent.go
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o tsagent -tags nvml tsagent.go
 
 FROM nvidia/cuda:11.6.2-base-ubuntu20.04
 WORKDIR /
-COPY --from=builder /workspace/migagent .
+COPY --from=builder /workspace/tsagent .
 
 ENV NVIDIA_DISABLE_REQUIRE="true"
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_MIG_CONFIG_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=utility
 
-ENTRYPOINT ["/migagent"]
+ENTRYPOINT ["/tsagent"]
