@@ -19,6 +19,7 @@ package gpu
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"k8s.io/api/core/v1"
 	"math"
 	"strconv"
@@ -68,4 +69,20 @@ func GetMemoryGB(node v1.Node) (int, error) {
 	}
 	memoryGb := math.Ceil(float64(memoryBytes) / 1000)
 	return int(memoryGb), nil
+}
+
+func ComputeFreeDevicesAndUpdateStatus(used []Device, allocatable []Device) []Device {
+	usedLookup := make(map[string]Device)
+	for _, u := range used {
+		usedLookup[u.DeviceId] = u
+	}
+	// Compute (allocatable - used)
+	res := make([]Device, 0)
+	for _, a := range allocatable {
+		if _, isUsed := usedLookup[a.DeviceId]; !isUsed {
+			a.Status = resource.StatusFree
+			res = append(res, a)
+		}
+	}
+	return res
 }

@@ -231,7 +231,7 @@ func TestClient_GetUsedMigDevices(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			nvmlClient := mockednvml.Client{}
 			for migDevice, index := range tt.deviceIdToGPUIndex {
-				nvmlClient.On("GetGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
+				nvmlClient.On("GetMigDeviceGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
 			}
 			lister := MockedPodResourcesListerClient{
 				ListResp:  tt.listPodResourcesResp,
@@ -360,7 +360,7 @@ func TestClient_GetAllocatableMigDevices(t *testing.T) {
 				GetAllocatableError: tt.allocatableResourcesErr,
 			}
 			for migDevice, index := range tt.deviceIdToGPUIndex {
-				nvmlClient.On("GetGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
+				nvmlClient.On("GetMigDeviceGpuIndex", migDevice).Return(index, tt.getGpuIndexErr).Maybe()
 			}
 			resourceClient := resource.NewClient(lister)
 			client := mig.NewClient(resourceClient, &nvmlClient)

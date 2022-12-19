@@ -20,4 +20,8 @@ import "context"
 
 type Client interface {
 	GetDevices(ctx context.Context) (DeviceList, Error)
+
+	GetUsedDevices(ctx context.Context) (DeviceList, Error)
+
+	GetAllocatableDevices(ctx context.Context) (DeviceList, Error)
 }

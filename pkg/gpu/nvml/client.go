@@ -56,10 +56,48 @@ func (c *clientImpl) shutdown() {
 	}
 }
 
-// GetGpuIndex returns the index of the GPU associated to the
+func (c *clientImpl) GetGpuIndex(deviceId string) (int, gpu.Error) {
+	if err := c.init(); err != nil {
+		return 0, err
+	}
+	defer c.shutdown()
+
+	c.logger.V(3).Info("retrieving GPU index", "DeviceUUID", deviceId)
+	var result int
+	var err error
+	var found bool
+	err = c.nvlibClient.VisitDevices(func(gpuIndex int, d nvlibdevice.Device) error {
+		if found {
+			return nil
+		}
+		uuid, ret := d.GetUUID()
+		if ret != nvlibNvml.SUCCESS {
+			return fmt.Errorf(
+				"error getting UUID of device with index %d on GPU %v: %s",
+				gpuIndex,
+				deviceId,
+				ret.Error(),
+			)
+		}
+		if uuid == deviceId {
+			result = gpuIndex
+			found = true
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, gpu.NewGenericError(err)
+	}
+	if !found {
+		return 0, gpu.NotFoundErr.Errorf("GPU index of device %s not found", deviceId)
+	}
+	return result, nil
+}
+
+// GetMigDeviceGpuIndex returns the index of the GPU associated to the
 // MIG device provided as arg. Returns err if the device
 // is not found or any error occurs while retrieving it.
-func (c *clientImpl) GetGpuIndex(migDeviceId string) (int, gpu.Error) {
+func (c *clientImpl) GetMigDeviceGpuIndex(migDeviceId string) (int, gpu.Error) {
 	if err := c.init(); err != nil {
 		return 0, err
 	}

@@ -89,7 +89,7 @@ func (c clientImpl) GetMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Erro
 		return nil, err
 	}
 	// Get free
-	free := computeFreeDevicesAndUpdateStatus(used, allocatable)
+	free := gpu.ComputeFreeDevicesAndUpdateStatus(used, allocatable)
 
 	return append(used, free...), nil
 }
@@ -112,7 +112,7 @@ func (c clientImpl) GetUsedMigDevices(ctx context.Context) (gpu.DeviceList, gpu.
 }
 
 func (c clientImpl) GetAllocatableMigDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
-	// Fetch used devices
+	// Fetch allocatable devices
 	allocatableResources, err := c.resourceClient.GetAllocatableDevices(ctx)
 	if err != nil {
 		return nil, gpu.NewGenericError(err)
@@ -147,7 +147,7 @@ func (c clientImpl) extractMigDevices(ctx context.Context, devices []resource.De
 		if !IsNvidiaMigDevice(r.ResourceName) {
 			continue
 		}
-		gpuIndex, err := c.nvmlClient.GetGpuIndex(r.DeviceId)
+		gpuIndex, err := c.nvmlClient.GetMigDeviceGpuIndex(r.DeviceId)
 		if gpu.IgnoreNotFound(err) != nil {
 			logger.Error(
 				err,
@@ -171,21 +171,4 @@ func (c clientImpl) extractMigDevices(ctx context.Context, devices []resource.De
 	}
 
 	return migDevices, nil
-}
-
-func computeFreeDevicesAndUpdateStatus(used []gpu.Device, allocatable []gpu.Device) []gpu.Device {
-	usedLookup := make(map[string]gpu.Device)
-	for _, u := range used {
-		usedLookup[u.DeviceId] = u
-	}
-
-	// Compute (allocatable - used)
-	res := make([]gpu.Device, 0)
-	for _, a := range allocatable {
-		if _, used := usedLookup[a.DeviceId]; !used {
-			a.Status = resource.StatusFree
-			res = append(res, a)
-		}
-	}
-	return res
 }

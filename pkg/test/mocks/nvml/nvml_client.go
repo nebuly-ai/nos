@@ -44,17 +44,15 @@ func (_m *Client) CreateMigDevices(migProfileNames []string, gpuIndex int) gpu.E
 	return r0
 }
 
-// DeleteAllExcept provides a mock function with given fields: migDeviceIds
+// DeleteAllMigDevicesExcept provides a mock function with given fields: migDeviceIds
 func (_m *Client) DeleteAllMigDevicesExcept(migDeviceIds []string) error {
 	ret := _m.Called(migDeviceIds)
 
-	var r0 gpu.Error
-	if rf, ok := ret.Get(0).(func([]string) gpu.Error); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]string) error); ok {
 		r0 = rf(migDeviceIds)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(gpu.Error)
-		}
+		r0 = ret.Error(0)
 	}
 
 	return r0
@@ -76,8 +74,31 @@ func (_m *Client) DeleteMigDevice(id string) gpu.Error {
 	return r0
 }
 
-// GetGpuIndex provides a mock function with given fields: migDeviceId
-func (_m *Client) GetGpuIndex(migDeviceId string) (int, gpu.Error) {
+// GetGpuIndex provides a mock function with given fields: gpuId
+func (_m *Client) GetGpuIndex(gpuId string) (int, gpu.Error) {
+	ret := _m.Called(gpuId)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		r0 = rf(gpuId)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 gpu.Error
+	if rf, ok := ret.Get(1).(func(string) gpu.Error); ok {
+		r1 = rf(gpuId)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(gpu.Error)
+		}
+	}
+
+	return r0, r1
+}
+
+// GetMigDeviceGpuIndex provides a mock function with given fields: migDeviceId
+func (_m *Client) GetMigDeviceGpuIndex(migDeviceId string) (int, gpu.Error) {
 	ret := _m.Called(migDeviceId)
 
 	var r0 int

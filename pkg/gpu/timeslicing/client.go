@@ -21,6 +21,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 )
 
 type tsClient struct {
@@ -35,7 +36,69 @@ func NewClient(resourceClient resource.Client, nvmlClient nvml.Client) gpu.Clien
 	}
 }
 
-func (t tsClient) GetDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
-	//TODO implement me
-	panic("implement me")
+func (c tsClient) GetDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	// Get used
+	used, err := c.GetUsedDevices(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Get allocatable
+	allocatable, err := c.GetAllocatableDevices(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Get free
+	free := gpu.ComputeFreeDevicesAndUpdateStatus(used, allocatable)
+
+	return append(used, free...), nil
+}
+
+func (c tsClient) GetUsedDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	// Fetch used devices
+	usedResources, err := c.resourceClient.GetUsedDevices(ctx)
+	if err != nil {
+		return nil, gpu.NewGenericError(err)
+	}
+	// Consider only NVIDIA GPUs
+	var isNvidiaResource = func(d resource.Device) bool {
+		return d.IsNvidiaResource()
+	}
+	usedGpus := util.Filter(usedResources, isNvidiaResource)
+	// Convert to gpu.DeviceList
+	return c.toGpuDeviceList(usedGpus)
+}
+
+func (c tsClient) GetAllocatableDevices(ctx context.Context) (gpu.DeviceList, gpu.Error) {
+	// Fetch allocatable devices
+	allocatableResources, err := c.resourceClient.GetAllocatableDevices(ctx)
+	if err != nil {
+		return nil, gpu.NewGenericError(err)
+	}
+	// Consider only NVIDIA GPUs
+	var isNvidiaResource = func(d resource.Device) bool {
+		return d.IsNvidiaResource()
+	}
+	allocatableGPUs := util.Filter(allocatableResources, isNvidiaResource)
+	// Extract MIG devices
+	return c.toGpuDeviceList(allocatableGPUs)
+}
+
+func (c tsClient) toGpuDeviceList(resources []resource.Device) (gpu.DeviceList, gpu.Error) {
+	var res = make(gpu.DeviceList, len(resources))
+	for i, r := range resources {
+		index, err := c.nvmlClient.GetGpuIndex(r.DeviceId)
+		if err != nil {
+			return nil, err
+		}
+		device := gpu.Device{
+			Device: resource.Device{
+				ResourceName: r.ResourceName,
+				DeviceId:     r.DeviceId,
+				Status:       r.Status,
+			},
+			GpuIndex: index,
+		}
+		res[i] = device
+	}
+	return res, nil
 }

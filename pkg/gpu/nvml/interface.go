@@ -21,7 +21,9 @@ import (
 )
 
 type Client interface {
-	GetGpuIndex(migDeviceId string) (int, gpu.Error)
+	GetGpuIndex(gpuId string) (int, gpu.Error)
+
+	GetMigDeviceGpuIndex(migDeviceId string) (int, gpu.Error)
 
 	DeleteMigDevice(id string) gpu.Error
 
