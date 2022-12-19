@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package timeslicing
+package ts
 
 import (
 	"context"

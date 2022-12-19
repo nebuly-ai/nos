@@ -60,8 +60,6 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 
 	When("The node does not have any GPU", func() {
 		It("Should not update the node annotations", func() {
-			fmt.Println("******************** Start test 1 ************************")
-
 			mockedCall := gpuClient.On("GetDevices", mock.Anything).Return(gpu.DeviceList{}, nil)
 
 			Consistently(func() error {
@@ -86,7 +84,6 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 
 	When("The node has multiple GPUs", func() {
 		It("Should update the node annotations exposing the node GPUs", func() {
-			fmt.Println("******************** Start test 2 ************************")
 			gpus := gpu.DeviceList{
 				{
 					Device: resource.Device{

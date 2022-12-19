@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package timeslicingstate_test
+package tsstate_test
 
 import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/timeslicing/timeslicingstate"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/ts/tsstate"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
@@ -259,7 +259,7 @@ sharing:
 			snapshot := state.NewClusterSnapshot(nodeInfos)
 
 			// Init TimeSlicing cluster snapshot
-			timeSlicingSnapshot, err := timeslicingstate.NewSnapshot(snapshot, tt.nvidiaDevicePluginCm)
+			timeSlicingSnapshot, err := tsstate.NewSnapshot(snapshot, tt.nvidiaDevicePluginCm)
 			if tt.expectedErr {
 				assert.Error(t, err)
 			} else {

@@ -201,6 +201,11 @@ deploy-mig-agent: kustomize ## Deploy the MIG Agent to the K8s cluster specified
 	cd config/migagent/manager && $(KUSTOMIZE) edit set image mig-agent=${MIG_AGENT_IMG}
 	$(KUSTOMIZE) build config/migagent/default | kubectl apply -f -
 
+.PHONY: deploy-ts-agent
+deploy-ts-agent: kustomize ## Deploy the Time Slicing Agent to the K8s cluster specified in ~/.kube/config.
+	cd config/tsagent/manager && $(KUSTOMIZE) edit set image time-slicing-agent=${TS_AGENT_IMG}
+	$(KUSTOMIZE) build config/tsagent/default | kubectl apply -f -
+
 .PHONY: deploy-gpu-partitioner
 deploy-gpu-partitioner: kustomize ## Deploy the GPU Partitioner to the K8s cluster specified in ~/.kube/config.
 	cd config/gpupartitioner/manager && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}

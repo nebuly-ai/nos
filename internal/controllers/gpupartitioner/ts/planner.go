@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package timeslicing
+package ts
 
 import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/timeslicing/timeslicingstate"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/ts/tsstate"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -45,7 +45,7 @@ func (p *Planner) Plan(ctx context.Context, s state.ClusterSnapshot, pendingPods
 	}
 
 	// Init time-slicing snapshot
-	_, err := timeslicingstate.NewSnapshot(s, cm)
+	_, err := tsstate.NewSnapshot(s, cm)
 	if err != nil {
 		return core.PartitioningPlan{}, fmt.Errorf("failed to initialize time-slicing snapshot: %w", err)
 	}

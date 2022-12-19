@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package timeslicingstate
+package tsstate
 
 import (
 	"fmt"
