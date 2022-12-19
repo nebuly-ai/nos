@@ -83,6 +83,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	setupLog.Info("loaded config", "reportingInterval", agentConfig.ReportConfigIntervalSeconds)
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), options)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
