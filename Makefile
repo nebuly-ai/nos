@@ -127,11 +127,11 @@ docker-build-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 
 .PHONY: docker-build-mig-agent
 docker-build-mig-agent: ## Build docker image with the mig-agent.
-	docker buildx build --platform linux/amd64 -t ${MIG_AGENT_IMG} -f build/migagent/Dockerfile .
+	docker build -t ${MIG_AGENT_IMG} -f build/migagent/Dockerfile .
 
 .PHONY: docker-build-ts-agent
 docker-build-ts-agent: ## Build docker image with the time-slicing-agent.
-	docker buildx build --platform linux/amd64 -t ${TS_AGENT_IMG} -f build/tsagent/Dockerfile .
+	docker build -t ${TS_AGENT_IMG} -f build/tsagent/Dockerfile .
 
 .PHONY: docker-build-operator
 docker-build-operator: ## Build docker image with the operator.
