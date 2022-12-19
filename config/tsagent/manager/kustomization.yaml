@@ -6,11 +6,11 @@ generatorOptions:
 
 configMapGenerator:
 - files:
-  - ts_agent_config.yaml
+  - time_slicing_agent_config.yaml
   name: time-slicing-agent-config
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: time-slicing-agent
   newName: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
-  newTag: 0.0.1-alpha.2
+  newTag: latest
