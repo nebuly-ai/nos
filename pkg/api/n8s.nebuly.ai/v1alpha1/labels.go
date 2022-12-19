@@ -21,6 +21,4 @@ const (
 	LabelCapacityInfo = "n8s.nebuly.ai/capacity"
 	// LabelGpuPartitioning specifies the PartitioningKind that should be performed on the GPUs of a node
 	LabelGpuPartitioning = "n8s.nebuly.ai/gpu-partitioning"
-	// LabelGpuMemory specifies the amount of GPU memory requested by a Pod
-	LabelGpuMemory = "n8s.nebuly.ai/gpu-memory"
 )

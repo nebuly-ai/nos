@@ -17,9 +17,11 @@
 package timeslicing_test
 
 import (
-	deviceplugin "github.com/NVIDIA/k8s-device-plugin/api/config/v1"
+	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -30,7 +32,6 @@ func TestNewNode(t *testing.T) {
 	testCases := []struct {
 		name        string
 		node        v1.Node
-		config      deviceplugin.TimeSlicing
 		expected    timeslicing.Node
 		errExpected bool
 	}{
@@ -59,103 +60,75 @@ func TestNewNode(t *testing.T) {
 			errExpected: true,
 		},
 		{
-			name: "config is empty, returned node should have all GPUs with just 1 replica",
+			name: "no status labels, should return all GPUs",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
 				constant.LabelNvidiaProduct: "foo",
 				constant.LabelNvidiaCount:   "3", // Number of returned GPUs
 				constant.LabelNvidiaMemory:  "2000",
 			}).Get(),
-			config:      deviceplugin.TimeSlicing{Resources: make([]deviceplugin.ReplicatedResource, 0)},
-			errExpected: false,
 			expected: timeslicing.Node{
 				Name: "node-1",
 				GPUs: []timeslicing.GPU{
-					{
-						Model:    "foo",
-						Index:    0,
-						Replicas: 1,
-						MemoryGB: 2,
-					},
-					{
-						Model:    "foo",
-						Index:    1,
-						Replicas: 1,
-						MemoryGB: 2,
-					},
-					{
-						Model:    "foo",
-						Index:    2,
-						Replicas: 1,
-						MemoryGB: 2,
-					},
+					timeslicing.NewGPU(
+						"foo",
+						0,
+						2,
+					),
+					timeslicing.NewGPU(
+						"foo",
+						1,
+						2,
+					),
+					timeslicing.NewGPU(
+						"foo",
+						2,
+						2,
+					),
 				},
 			},
 		},
 		{
-			name: "GPUs not specified in config should be added with 1 replica",
+			name: "free and used labels",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
 				constant.LabelNvidiaProduct: "foo",
-				constant.LabelNvidiaCount:   "3", // Number of returned GPUs
-				constant.LabelNvidiaMemory:  "2000",
+				constant.LabelNvidiaCount:   "3",
+				constant.LabelNvidiaMemory:  "16000",
+			}).WithAnnotations(map[string]string{
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", resource.StatusFree): "2",
+				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "20gb", resource.StatusUsed): "1",
 			}).Get(),
-			config: deviceplugin.TimeSlicing{Resources: []deviceplugin.ReplicatedResource{
-				{
-					Name:   "nvidia.com/gpu",
-					Rename: "",
-					Devices: deviceplugin.ReplicatedDevices{
-						List: []deviceplugin.ReplicatedDeviceRef{"0", "1"},
-					},
-					Replicas: 2,
-				},
-			}},
 			expected: timeslicing.Node{
 				Name: "node-1",
 				GPUs: []timeslicing.GPU{
 					{
-						Model:    "foo",
-						Index:    0,
-						Replicas: 2,
-						MemoryGB: 2,
+						Model:        "foo",
+						Index:        0,
+						MemoryGB:     16,
+						FreeProfiles: map[timeslicing.ProfileName]int{timeslicing.ProfileName("10gb"): 2},
+						UsedProfiles: map[timeslicing.ProfileName]int{},
 					},
 					{
-						Model:    "foo",
-						Index:    1,
-						Replicas: 2,
-						MemoryGB: 2,
+						Model:        "foo",
+						Index:        1,
+						MemoryGB:     16,
+						FreeProfiles: map[timeslicing.ProfileName]int{},
+						UsedProfiles: map[timeslicing.ProfileName]int{timeslicing.ProfileName("20gb"): 1},
 					},
 					{
-						Model:    "foo",
-						Index:    2,
-						Replicas: 1,
-						MemoryGB: 2,
+						Model:        "foo",
+						Index:        2,
+						MemoryGB:     16,
+						FreeProfiles: map[timeslicing.ProfileName]int{},
+						UsedProfiles: map[timeslicing.ProfileName]int{},
 					},
 				},
 			},
-		},
-		{
-			name: "config uses UUID instead of index",
-			node: factory.BuildNode("node-1").WithLabels(map[string]string{
-				constant.LabelNvidiaProduct: "foo",
-				constant.LabelNvidiaCount:   "3", // Number of returned GPUs
-				constant.LabelNvidiaMemory:  "2000",
-			}).Get(),
-			config: deviceplugin.TimeSlicing{Resources: []deviceplugin.ReplicatedResource{
-				{
-					Name:   "nvidia.com/gpu",
-					Rename: "",
-					Devices: deviceplugin.ReplicatedDevices{
-						List: []deviceplugin.ReplicatedDeviceRef{"uuid-1"},
-					},
-					Replicas: 2,
-				},
-			}},
-			errExpected: true,
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			node, err := timeslicing.NewNode(tt.node, tt.config)
+			node, err := timeslicing.NewNode(tt.node)
 			if tt.errExpected {
 				assert.Error(t, err)
 			} else {

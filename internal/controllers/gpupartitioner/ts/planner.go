@@ -45,7 +45,7 @@ func (p *Planner) Plan(ctx context.Context, s state.ClusterSnapshot, pendingPods
 	}
 
 	// Init time-slicing snapshot
-	_, err := tsstate.NewSnapshot(s, cm)
+	_, err := tsstate.NewSnapshot(s)
 	if err != nil {
 		return core.PartitioningPlan{}, fmt.Errorf("failed to initialize time-slicing snapshot: %w", err)
 	}

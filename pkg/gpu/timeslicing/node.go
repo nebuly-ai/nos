@@ -17,11 +17,8 @@
 package timeslicing
 
 import (
-	"fmt"
-	deviceplugin "github.com/NVIDIA/k8s-device-plugin/api/config/v1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
-	"strconv"
 )
 
 type Node struct {
@@ -29,54 +26,70 @@ type Node struct {
 	GPUs []GPU
 }
 
-func NewNode(n v1.Node, config deviceplugin.TimeSlicing) (Node, error) {
-	// Extract common GPU info from node labels
-	gpuModel, err := gpu.GetModel(n)
+func NewNode(n v1.Node) (Node, error) {
+	gpus, err := extractGPUs(n)
 	if err != nil {
 		return Node{}, err
 	}
-	gpuCount, err := gpu.GetCount(n)
-	if err != nil {
-		return Node{}, err
-	}
-	memoryGB, err := gpu.GetMemoryGB(n)
-	if err != nil {
-		return Node{}, err
-	}
-
-	// Init GPUs from nvidia device plugin time-slicing config
-	gpus := make([]GPU, 0)
-	for _, r := range config.Resources {
-		for _, d := range r.Devices.List {
-			if !d.IsGPUIndex() {
-				return Node{}, fmt.Errorf("time-slicing config should use GPU indexes, found: %s", d)
-			}
-			index, _ := strconv.Atoi(string(d))
-			g := GPU{
-				Model:    gpuModel,
-				Index:    index,
-				MemoryGB: memoryGB,
-				Replicas: r.Replicas,
-			}
-			gpus = append(gpus, g)
-		}
-	}
-
-	// Add missing GPUs not included in time-slicing config
-	for i := len(gpus); i < gpuCount; i++ {
-		g := GPU{
-			Model:    gpuModel,
-			Index:    i,
-			MemoryGB: memoryGB,
-			Replicas: 1,
-		}
-		gpus = append(gpus, g)
-	}
-
 	return Node{
 		Name: n.Name,
 		GPUs: gpus,
 	}, nil
+}
+
+func extractGPUs(n v1.Node) ([]GPU, error) {
+	// Extract common GPU info from node labels
+	gpuModel, err := gpu.GetModel(n)
+	if err != nil {
+		return nil, err
+	}
+	gpuCount, err := gpu.GetCount(n)
+	if err != nil {
+		return nil, err
+	}
+	gpuMemoryGB, err := gpu.GetMemoryGB(n)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]GPU, 0)
+	// Init GPUs from annotation
+	statusAnnotations, _ := gpu.ParseNodeAnnotations(n)
+	for gpuIndex, gpuAnnotations := range statusAnnotations.GroupByGpuIndex() {
+		usedProfiles := make(map[ProfileName]int)
+		freeProfiles := make(map[ProfileName]int)
+		for _, a := range gpuAnnotations {
+			profileName := ProfileName(a.ProfileName)
+			if a.IsUsed() {
+				usedProfiles[profileName] = a.Quantity
+			}
+			if a.IsFree() {
+				freeProfiles[profileName] = a.Quantity
+			}
+		}
+		g := GPU{
+			Model:        gpuModel,
+			Index:        gpuIndex,
+			MemoryGB:     gpuMemoryGB,
+			FreeProfiles: freeProfiles,
+			UsedProfiles: usedProfiles,
+		}
+		result = append(result, g)
+	}
+
+	// Add missing GPUs not included in node annotations
+	// (e.g. GPUs enabled but without any time-slicing replica/profile)
+	nGpus := len(result)
+	for i := nGpus; i < gpuCount; i++ {
+		g := NewGPU(
+			gpuModel,
+			i,
+			gpuMemoryGB,
+		)
+		result = append(result, g)
+	}
+
+	return result, nil
 }
 
 func (n *Node) Clone() Node {

@@ -17,7 +17,6 @@
 package tsstate
 
 import (
-	"fmt"
 	deviceplugin "github.com/NVIDIA/k8s-device-plugin/api/config/v1"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
@@ -46,7 +45,7 @@ func (d timeSlicingData) clone() *timeSlicingData {
 	return &res
 }
 
-func NewSnapshot(snapshot state.ClusterSnapshot, nvidiaDevicePluginCm v1.ConfigMap) (TimeSlicingClusterSnapshot, error) {
+func NewSnapshot(snapshot state.ClusterSnapshot) (TimeSlicingClusterSnapshot, error) {
 	// Extract nodes with MIG partitioning enabled
 	nodes := make(map[string]framework.NodeInfo)
 	for k, v := range snapshot.GetNodes() {
@@ -60,38 +59,55 @@ func NewSnapshot(snapshot state.ClusterSnapshot, nvidiaDevicePluginCm v1.ConfigM
 	}
 	filteredSnapshot := state.NewClusterSnapshot(nodes)
 
-	// Extract time-slicing config of each node from CM
-	nodesTimeSlicingConfig, err := getNodesTimeSlicingConfig(nvidiaDevicePluginCm)
-	if err != nil {
-		return TimeSlicingClusterSnapshot{}, err
-	}
-
-	// Extract time-slicing nodes
-	var empty = TimeSlicingClusterSnapshot{}
-	var tsNodes = make(map[string]timeslicing.Node)
-	for nodeName, nodeInfo := range filteredSnapshot.GetNodes() {
-		if nodeInfo.Node() == nil {
-			return empty, fmt.Errorf("node %s is nil in cluster snapshot, this should never happen", nodeName)
-		}
-		// if device plugin CM does not contain time-slicing config then create a new one
-		var timeSlicingConfig deviceplugin.TimeSlicing
-		timeSlicingConfig, ok := nodesTimeSlicingConfig[nodeName]
-		if !ok {
-			timeSlicingConfig = deviceplugin.TimeSlicing{Resources: []deviceplugin.ReplicatedResource{}}
-		}
-		// init time-slicing node
-		node, err := timeslicing.NewNode(*nodeInfo.Node(), timeSlicingConfig)
+	// Init MigClusterSnapshot
+	tsNodes := make(map[string]timeslicing.Node)
+	for name, node := range nodes {
+		tsNode, err := timeslicing.NewNode(*node.Node())
 		if err != nil {
-			return empty, err
+			return TimeSlicingClusterSnapshot{}, err
 		}
-		tsNodes[nodeName] = node
+		tsNodes[name] = tsNode
 	}
-
 	return TimeSlicingClusterSnapshot{
-		ClusterSnapshot: snapshot,
+		ClusterSnapshot: filteredSnapshot,
 		data:            &timeSlicingData{tsNodes: tsNodes},
 	}, nil
 }
+
+//func NewSnapshot(snapshot state.ClusterSnapshot) (TimeSlicingClusterSnapshot, error) {
+//	// Extract nodes with MIG partitioning enabled
+//	nodes := make(map[string]framework.NodeInfo)
+//	for k, v := range snapshot.GetNodes() {
+//		if v.Node() == nil {
+//			continue
+//		}
+//		if !gpu.IsTimeSlicingPartitioningEnabled(*v.Node()) {
+//			continue
+//		}
+//		nodes[k] = v
+//	}
+//	filteredSnapshot := state.NewClusterSnapshot(nodes)
+//
+//	// Extract time-slicing nodes
+//	var empty = TimeSlicingClusterSnapshot{}
+//	var tsNodes = make(map[string]timeslicing.Node)
+//	for nodeName, nodeInfo := range filteredSnapshot.GetNodes() {
+//		if nodeInfo.Node() == nil {
+//			return empty, fmt.Errorf("node %s is nil in cluster snapshot, this should never happen", nodeName)
+//		}
+//		// init time-slicing node
+//		node, err := timeslicing.NewNode(*nodeInfo.Node())
+//		if err != nil {
+//			return empty, err
+//		}
+//		tsNodes[nodeName] = node
+//	}
+//
+//	return TimeSlicingClusterSnapshot{
+//		ClusterSnapshot: snapshot,
+//		data:            &timeSlicingData{tsNodes: tsNodes},
+//	}, nil
+//}
 
 func getNodesTimeSlicingConfig(nvidiaDevicePluginCM v1.ConfigMap) (map[string]deviceplugin.TimeSlicing, error) {
 	var result = make(map[string]deviceplugin.TimeSlicing)

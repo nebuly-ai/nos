@@ -17,33 +17,33 @@
 package timeslicing
 
 import (
-	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 )
 
 type GPU struct {
 	Model        gpu.Model
 	Index        int
-	Replicas     int
 	MemoryGB     int
-	usedMemoryGB int
+	FreeProfiles map[ProfileName]int
+	UsedProfiles map[ProfileName]int
+}
+
+func NewGPU(model gpu.Model, index int, memoryGB int) GPU {
+	return GPU{
+		Model:        model,
+		Index:        index,
+		MemoryGB:     memoryGB,
+		FreeProfiles: make(map[ProfileName]int),
+		UsedProfiles: make(map[ProfileName]int),
+	}
 }
 
 func (g *GPU) Clone() GPU {
 	return GPU{
 		Model:    g.Model,
 		Index:    g.Index,
-		Replicas: g.Replicas,
 		MemoryGB: g.MemoryGB,
 	}
-}
-
-func (g *GPU) ReserveMemory(memoryGB int) error {
-	if g.usedMemoryGB+memoryGB > g.MemoryGB {
-		return fmt.Errorf("not enough memory: requested %d, available %d", memoryGB, g.MemoryGB-g.usedMemoryGB)
-	}
-	g.usedMemoryGB += memoryGB
-	return nil
 }
 
 func (g *GPU) GetSliceSize() {
