@@ -1,4 +1,4 @@
-name: Build MIG agent
+name: Build Time Slicing agent
 
 on:
   workflow_dispatch:
