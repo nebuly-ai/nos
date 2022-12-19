@@ -1,0 +1,37 @@
+name: Build MIG agent
+
+on:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  TS_AGENT_IMG: "ghcr.io/telemaco019/nebulnetes-time-slicing-agent:latest"
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+          cache: true
+
+      - name: Login to GitHub container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build images
+        run: make docker-build-ts-agent
+
+      - name: Push images
+        run: make docker-push-ts-agent
