@@ -109,6 +109,14 @@ var _ = Describe("Time Slicing Agent Reporter", func() {
 					},
 					GpuIndex: 1,
 				},
+				{
+					Device: resource.Device{
+						ResourceName: "nvidia.com/gpu", // should not be included in annotations
+						DeviceId:     "id-2",
+						Status:       resource.StatusFree,
+					},
+					GpuIndex: 2,
+				},
 			}
 			mockedCall := gpuClient.On("GetDevices", mock.Anything).Return(gpus, nil)
 
