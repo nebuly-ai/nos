@@ -19,10 +19,12 @@ package timeslicing
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"regexp"
 )
 
 var (
 	profileNamePrefix = fmt.Sprintf("%s-", constant.ResourceNvidiaGPU.String())
+	resourceRegexp    = regexp.MustCompile(`nvidia\.com/gpu-\d+gb`)
 )
 
 type ProfileName string
@@ -30,7 +32,3 @@ type ProfileName string
 func (p ProfileName) String() string {
 	return string(p)
 }
-
-const (
-	ProfileEmpty ProfileName = ""
-)

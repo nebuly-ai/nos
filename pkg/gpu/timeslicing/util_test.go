@@ -45,6 +45,14 @@ func TestAnnotationConversions(t *testing.T) {
 		},
 		{
 			Device: resource.Device{
+				ResourceName: "nvidia.com/gpu",
+				DeviceId:     "id-3",
+				Status:       resource.StatusUsed,
+			},
+			GpuIndex: 3,
+		},
+		{
+			Device: resource.Device{
 				ResourceName: "nvidia.com/gpu-20gb",
 				DeviceId:     "id-1",
 				Status:       resource.StatusFree,
@@ -62,7 +70,7 @@ func TestAnnotationConversions(t *testing.T) {
 	}
 
 	// From devices to annotations
-	timeSlicingAnnotations := devices.AsStatusAnnotation(timeslicing.ExtractProfileName)
+	timeSlicingAnnotations := devices.AsStatusAnnotation(timeslicing.ExtractProfileNameStr)
 	stringAnnotations := make(map[string]string)
 	for _, a := range timeSlicingAnnotations {
 		stringAnnotations[a.String()] = a.GetValue()

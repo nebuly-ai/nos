@@ -17,11 +17,30 @@
 package timeslicing
 
 import (
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"strings"
 )
 
-func ExtractProfileName(r v1.ResourceName) (string, error) {
-	// TODO: check format
-	return strings.TrimPrefix(r.String(), profileNamePrefix), nil
+// ExtractProfileName extracts the name of the time-slicing profile from the provided resource name,
+// and returns an error if the resource name is not a valid NVIDIA time-slicing resource.
+//
+// Example:
+//
+//	nvidia.com/10gb => 10gb
+//	nvidia.com/gpu => error
+func ExtractProfileName(resourceName v1.ResourceName) (ProfileName, error) {
+	if isTsResource := resourceRegexp.MatchString(string(resourceName)); !isTsResource {
+		return "", fmt.Errorf("invalid input string, required format is %s", resourceRegexp.String())
+	}
+	name := strings.TrimPrefix(string(resourceName), profileNamePrefix)
+	return ProfileName(name), nil
+}
+
+func ExtractProfileNameStr(r v1.ResourceName) (string, error) {
+	profileName, err := ExtractProfileName(r)
+	if err != nil {
+		return "", err
+	}
+	return profileName.String(), err
 }
