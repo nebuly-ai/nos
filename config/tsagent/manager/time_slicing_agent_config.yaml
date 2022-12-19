@@ -1,5 +1,5 @@
-apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
-kind: ControllerManagerConfig
+apiVersion: config.n8s.nebuly.ai/v1alpha1
+kind: TimeSlicingAgentConfig
 health:
   healthProbeBindAddress: :8081
 metrics:
