@@ -44,3 +44,12 @@ func ExtractProfileNameStr(r v1.ResourceName) (string, error) {
 	}
 	return profileName.String(), err
 }
+
+// ExtractGpuId returns the GPU ID corresponding to the resource ID provided as argument.
+func ExtractGpuId(resourceId string) string {
+	before, _, found := strings.Cut(resourceId, ReplicaGpuIdSeparator)
+	if !found {
+		return resourceId
+	}
+	return before
+}

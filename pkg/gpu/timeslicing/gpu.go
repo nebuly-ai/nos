@@ -29,7 +29,7 @@ type GPU struct {
 	usedMemoryGB int
 }
 
-func (g GPU) Clone() GPU {
+func (g *GPU) Clone() GPU {
 	return GPU{
 		Model:    g.Model,
 		Index:    g.Index,

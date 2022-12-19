@@ -86,7 +86,8 @@ func (c tsClient) GetAllocatableDevices(ctx context.Context) (gpu.DeviceList, gp
 func (c tsClient) toGpuDeviceList(resources []resource.Device) (gpu.DeviceList, gpu.Error) {
 	var res = make(gpu.DeviceList, len(resources))
 	for i, r := range resources {
-		index, err := c.nvmlClient.GetGpuIndex(r.DeviceId)
+		id := ExtractGpuId(r.DeviceId)
+		index, err := c.nvmlClient.GetGpuIndex(id)
 		if err != nil {
 			return nil, err
 		}
