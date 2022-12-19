@@ -65,7 +65,7 @@ func (r *Reporter) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result
 	}
 
 	// Check if status changed
-	currentStatusAnnotations := devices.AsStatusAnnotation(timeslicing.ExtractProfileName)
+	currentStatusAnnotations := devices.AsStatusAnnotation(timeslicing.ExtractProfileNameStr)
 	logger.Info("computed annotations", "current", currentStatusAnnotations, "last", lastStatusAnnotations, "devices", devices)
 	if currentStatusAnnotations.Equal(lastStatusAnnotations) {
 		logger.Info("current status is equal to last reported status, nothing to do")
