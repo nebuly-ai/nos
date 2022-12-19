@@ -69,17 +69,17 @@ func TestNewNode(t *testing.T) {
 			expected: timeslicing.Node{
 				Name: "node-1",
 				GPUs: []timeslicing.GPU{
-					timeslicing.NewGPU(
+					timeslicing.NewFullGPU(
 						"foo",
 						0,
 						2,
 					),
-					timeslicing.NewGPU(
+					timeslicing.NewFullGPU(
 						"foo",
 						1,
 						2,
 					),
-					timeslicing.NewGPU(
+					timeslicing.NewFullGPU(
 						"foo",
 						2,
 						2,
@@ -92,7 +92,7 @@ func TestNewNode(t *testing.T) {
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
 				constant.LabelNvidiaProduct: "foo",
 				constant.LabelNvidiaCount:   "3",
-				constant.LabelNvidiaMemory:  "16000",
+				constant.LabelNvidiaMemory:  "40000",
 			}).WithAnnotations(map[string]string{
 				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", resource.StatusFree): "2",
 				fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "20gb", resource.StatusUsed): "1",
@@ -100,27 +100,27 @@ func TestNewNode(t *testing.T) {
 			expected: timeslicing.Node{
 				Name: "node-1",
 				GPUs: []timeslicing.GPU{
-					{
-						Model:        "foo",
-						Index:        0,
-						MemoryGB:     16,
-						FreeProfiles: map[timeslicing.ProfileName]int{timeslicing.ProfileName("10gb"): 2},
-						UsedProfiles: map[timeslicing.ProfileName]int{},
-					},
-					{
-						Model:        "foo",
-						Index:        1,
-						MemoryGB:     16,
-						FreeProfiles: map[timeslicing.ProfileName]int{},
-						UsedProfiles: map[timeslicing.ProfileName]int{timeslicing.ProfileName("20gb"): 1},
-					},
-					{
-						Model:        "foo",
-						Index:        2,
-						MemoryGB:     16,
-						FreeProfiles: map[timeslicing.ProfileName]int{},
-						UsedProfiles: map[timeslicing.ProfileName]int{},
-					},
+					timeslicing.NewGpuOrPanic(
+						"foo",
+						0,
+						40,
+						map[timeslicing.ProfileName]int{"10gb": 2},
+						map[timeslicing.ProfileName]int{},
+					),
+					timeslicing.NewGpuOrPanic(
+						"foo",
+						1,
+						40,
+						map[timeslicing.ProfileName]int{},
+						map[timeslicing.ProfileName]int{"20gb": 1},
+					),
+					timeslicing.NewGpuOrPanic(
+						"foo",
+						2,
+						40,
+						map[timeslicing.ProfileName]int{},
+						map[timeslicing.ProfileName]int{},
+					),
 				},
 			},
 		},

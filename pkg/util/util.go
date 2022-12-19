@@ -89,11 +89,25 @@ func GetNamespacedName(object HasNamespacedName) types.NamespacedName {
 type empty struct {
 }
 
+type Set[K comparable] map[K]empty
+
+func (s Set[K]) Add(item K) {
+	s[item] = empty{}
+}
+
+func (s Set[K]) Items() []K {
+	var res = make([]K, 0, len(s))
+	for k := range s {
+		res = append(res, k)
+	}
+	return res
+}
+
 func GetKeys[K comparable, V any](maps ...map[K]V) []K {
-	var set = make(map[K]empty)
+	var set = make(Set[K])
 	for _, m := range maps {
 		for k := range m {
-			set[k] = empty{}
+			set.Add(k)
 		}
 	}
 	var res = make([]K, len(set))

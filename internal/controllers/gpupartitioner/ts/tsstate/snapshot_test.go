@@ -61,7 +61,7 @@ func TestNewSnapshot(t *testing.T) {
 				"node-1": {
 					Name: "node-1",
 					GPUs: []timeslicing.GPU{
-						timeslicing.NewGPU(
+						timeslicing.NewFullGPU(
 							"foo",
 							0,
 							1,

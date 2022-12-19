@@ -17,6 +17,7 @@
 package timeslicing
 
 import (
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 )
 
@@ -24,18 +25,54 @@ type GPU struct {
 	Model        gpu.Model
 	Index        int
 	MemoryGB     int
-	FreeProfiles map[ProfileName]int
-	UsedProfiles map[ProfileName]int
+	freeProfiles map[ProfileName]int
+	usedProfiles map[ProfileName]int
 }
 
-func NewGPU(model gpu.Model, index int, memoryGB int) GPU {
+func NewFullGPU(model gpu.Model, index int, memoryGB int) GPU {
 	return GPU{
 		Model:        model,
 		Index:        index,
 		MemoryGB:     memoryGB,
-		FreeProfiles: make(map[ProfileName]int),
-		UsedProfiles: make(map[ProfileName]int),
+		freeProfiles: make(map[ProfileName]int),
+		usedProfiles: make(map[ProfileName]int),
 	}
+}
+
+func NewGPU(model gpu.Model, index int, memoryGB int, usedProfiles, freeProfiles map[ProfileName]int) (GPU, error) {
+	g := GPU{
+		Model:        model,
+		Index:        index,
+		MemoryGB:     memoryGB,
+		freeProfiles: freeProfiles,
+		usedProfiles: usedProfiles,
+	}
+	if err := g.Validate(); err != nil {
+		return GPU{}, err
+	}
+	return g, nil
+}
+
+func NewGpuOrPanic(model gpu.Model, index int, memoryGB int, usedProfiles, freeProfiles map[ProfileName]int) GPU {
+	g, err := NewGPU(model, index, memoryGB, usedProfiles, freeProfiles)
+	if err != nil {
+		panic(err)
+	}
+	return g
+}
+
+func (g *GPU) Validate() error {
+	var totalMemoryGB int
+	for p, q := range g.usedProfiles {
+		totalMemoryGB += p.GetMemorySizeGB() * q
+	}
+	for p, q := range g.freeProfiles {
+		totalMemoryGB += p.GetMemorySizeGB() * q
+	}
+	if totalMemoryGB > g.MemoryGB {
+		return fmt.Errorf("total memory of profiles (%d) exceeds GPU memory (%d)", totalMemoryGB, g.MemoryGB)
+	}
+	return nil
 }
 
 func (g *GPU) Clone() GPU {
@@ -44,8 +81,4 @@ func (g *GPU) Clone() GPU {
 		Index:    g.Index,
 		MemoryGB: g.MemoryGB,
 	}
-}
-
-func (g *GPU) GetSliceSize() {
-
 }

@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
 var (
@@ -31,4 +33,13 @@ type ProfileName string
 
 func (p ProfileName) String() string {
 	return string(p)
+}
+
+func (p ProfileName) GetMemorySizeGB() int {
+	trimmed := strings.TrimPrefix(p.String(), profileNamePrefix)
+	trimmed = strings.TrimSuffix(trimmed, "gb")
+	if i, err := strconv.Atoi(trimmed); err == nil {
+		return i
+	}
+	return 0
 }

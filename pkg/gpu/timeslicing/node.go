@@ -67,12 +67,15 @@ func extractGPUs(n v1.Node) ([]GPU, error) {
 				freeProfiles[profileName] = a.Quantity
 			}
 		}
-		g := GPU{
-			Model:        gpuModel,
-			Index:        gpuIndex,
-			MemoryGB:     gpuMemoryGB,
-			FreeProfiles: freeProfiles,
-			UsedProfiles: usedProfiles,
+		g, err := NewGPU(
+			gpuModel,
+			gpuIndex,
+			gpuMemoryGB,
+			freeProfiles,
+			usedProfiles,
+		)
+		if err != nil {
+			return nil, err
 		}
 		result = append(result, g)
 	}
@@ -81,7 +84,7 @@ func extractGPUs(n v1.Node) ([]GPU, error) {
 	// (e.g. GPUs enabled but without any time-slicing replica/profile)
 	nGpus := len(result)
 	for i := nGpus; i < gpuCount; i++ {
-		g := NewGPU(
+		g := NewFullGPU(
 			gpuModel,
 			i,
 			gpuMemoryGB,
