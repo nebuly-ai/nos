@@ -25,9 +25,16 @@ import (
 	"sync"
 )
 
-func NewClusterState() ClusterState {
+func NewEmptyClusterState() ClusterState {
 	return ClusterState{
 		nodes:    make(map[string]framework.NodeInfo),
+		bindings: make(map[types.NamespacedName]string),
+	}
+}
+
+func NewClusterState(nodes map[string]framework.NodeInfo) ClusterState {
+	return ClusterState{
+		nodes:    nodes,
 		bindings: make(map[types.NamespacedName]string),
 	}
 }
@@ -47,23 +54,11 @@ func (c *ClusterState) GetNode(nodeName string) (framework.NodeInfo, bool) {
 	return node, ok
 }
 
-func (c *ClusterState) GetNodes() []framework.NodeInfo {
+func (c *ClusterState) GetNodes() map[string]framework.NodeInfo {
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	nodes := make([]framework.NodeInfo, 0, len(c.nodes))
-	for _, node := range c.nodes {
-		nodes = append(nodes, node)
-	}
-
-	return nodes
-}
-
-func (c *ClusterState) GetSnapshot() ClusterSnapshot {
-	c.mtx.RLock()
-	defer c.mtx.RUnlock()
-
-	return NewClusterSnapshot(c.nodes)
+	return c.nodes
 }
 
 func (c *ClusterState) deleteNode(name string) {

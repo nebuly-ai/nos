@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
@@ -41,15 +40,11 @@ func NewActuator(client client.Client) Actuator {
 	}
 }
 
-func (a Actuator) Apply(ctx context.Context, s state.ClusterSnapshot, plan core.PartitioningPlan) (bool, error) {
+func (a Actuator) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
 	var err error
-	var snapshot migstate.MigClusterSnapshot
 	logger := log.FromContext(ctx)
 	logger.Info("applying desired MIG partitioning")
 
-	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
-		return false, fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
-	}
 	if snapshot.GetPartitioningState().Equal(plan.DesiredState) {
 		logger.Info("current and desired partitioning states are equal, nothing to do")
 		return false, nil

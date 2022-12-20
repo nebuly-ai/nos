@@ -143,7 +143,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 //				{
 //					MigProfile: mig.ProfileName{
 //						GpuIndex: 0,
-//						Name:     "1g.10gb",
+//						GetName:     "1g.10gb",
 //					},
 //					Quantity: 0,
 //				},
@@ -158,7 +158,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 //			op: plan.CreateOperation{
 //				MigProfile: mig.ProfileName{
 //					GpuIndex: 0,
-//					Name:     "1g.10gb",
+//					GetName:     "1g.10gb",
 //				},
 //				Quantity: 1,
 //			},
@@ -172,7 +172,7 @@ func TestMigActuator_applyDeleteOp(t *testing.T) {
 //			op: plan.CreateOperation{
 //				MigProfile: mig.ProfileName{
 //					GpuIndex: 0,
-//					Name:     "1g.10gb",
+//					GetName:     "1g.10gb",
 //				},
 //				Quantity: 4,
 //			},

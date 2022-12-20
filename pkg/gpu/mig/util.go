@@ -37,8 +37,8 @@ func IsNvidiaMigDevice(resourceName v1.ResourceName) bool {
 	return resourceRegexp.MatchString(string(resourceName))
 }
 
-// ExtractProfileName extracts the name of the MIG profile from the provided resource name, and returns an error
-// if the resource name is not a valid NVIDIA MIG resource.
+// ExtractProfileName extracts the Name of the MIG profile from the provided resource Name, and returns an error
+// if the resource Name is not a valid NVIDIA MIG resource.
 //
 // Example:
 //
@@ -51,8 +51,8 @@ func ExtractProfileName(resourceName v1.ResourceName) (ProfileName, error) {
 	return ProfileName(name), nil
 }
 
-// ExtractProfileNameStr extracts the name of the MIG profile from the provided resource name, and returns an error
-// if the resource name is not a valid NVIDIA MIG resource.
+// ExtractProfileNameStr extracts the Name of the MIG profile from the provided resource Name, and returns an error
+// if the resource Name is not a valid NVIDIA MIG resource.
 //
 // Example:
 //
@@ -84,7 +84,7 @@ func ExtractMemoryGBFromMigFormat(migFormatResourceName v1.ResourceName) (int64,
 	return res, nil
 }
 
-func GetRequestedMigResources(pod v1.Pod) map[ProfileName]int {
+func GetRequestedProfiles(pod v1.Pod) map[ProfileName]int {
 	res := make(map[ProfileName]int)
 	for r, quantity := range resource.ComputePodRequest(pod) {
 		if migProfile, err := ExtractProfileName(r); err == nil {
@@ -94,11 +94,11 @@ func GetRequestedMigResources(pod v1.Pod) map[ProfileName]int {
 	return res
 }
 
-// GetMigProfileName returns the name of the Mig profile associated to the device
+// GetMigProfileName returns the Name of the Mig profile associated to the device
 //
 // Example:
 //
-//	Resource name: nvidia.com/mig-1g.10gb
+//	Resource Name: nvidia.com/mig-1g.10gb
 //	GetMigProfileName() -> 1g.10gb
 func GetMigProfileName(device gpu.Device) ProfileName {
 	if profile, err := ExtractProfileName(device.ResourceName); err == nil {

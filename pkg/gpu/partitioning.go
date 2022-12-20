@@ -21,6 +21,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+type Slice interface {
+	SmallerThan(other Slice) bool
+}
+
 type PartitioningKind string
 
 func (p PartitioningKind) String() string {

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package mig
+package core_test
 
 import (
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
+	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +26,7 @@ import (
 	"testing"
 )
 
-func TestSortCandidatePods(t *testing.T) {
+func TestPodSorter(t *testing.T) {
 	testCases := []struct {
 		name     string
 		pods     []v1.Pod
@@ -125,7 +127,8 @@ func TestSortCandidatePods(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			res := SortCandidatePods(tt.pods)
+			sliceCalculator := mig_partitioner.NewSliceCalculator()
+			res := core.NewPodSorter(sliceCalculator).Sort(tt.pods)
 			assert.Equal(t, tt.expected, res)
 		})
 	}

@@ -19,30 +19,58 @@ package core
 import (
 	"context"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
-	"time"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-type PartitioningPlan struct {
-	DesiredState state.PartitioningState
-	id           string
-}
-
-func NewPartitioningPlan(s state.PartitioningState) PartitioningPlan {
-	return PartitioningPlan{
-		DesiredState: s,
-		id:           time.Now().UTC().String(),
-	}
-}
-
-func (p PartitioningPlan) GetId() string {
-	return p.id
-}
-
 type Planner interface {
-	Plan(ctx context.Context, snapshot state.ClusterSnapshot, pendingPods []v1.Pod) (PartitioningPlan, error)
+	Plan(ctx context.Context, snapshot Snapshot, pendingPods []v1.Pod) (PartitioningPlan, error)
 }
 
 type Actuator interface {
-	Apply(ctx context.Context, snapshot state.ClusterSnapshot, plan PartitioningPlan) (bool, error)
+	Apply(ctx context.Context, snapshot Snapshot, plan PartitioningPlan) (bool, error)
+}
+
+type SliceCalculator interface {
+	GetRequestedSlices(pod v1.Pod) map[gpu.Slice]int
+}
+
+type SliceFilter interface {
+	ExtractSlices(resources map[v1.ResourceName]int64) map[gpu.Slice]int
+}
+
+type PartitionableNode interface {
+	UpdateGeometryFor(slices map[gpu.Slice]int) (bool, error)
+	GetName() string
+	Geometry() map[gpu.Slice]int
+	NodeInfo() framework.NodeInfo
+	Clone() interface{}
+	AddPod(pod v1.Pod) error
+	HasFreeCapacity() bool
+}
+
+type Partitioner interface {
+	GetPartitioning(node PartitionableNode) state.NodePartitioning
+}
+
+type Snapshot interface {
+	GetPartitioningState() state.PartitioningState
+	GetCandidateNodes() []PartitionableNode
+	GetLackingSlices(pod v1.Pod) map[gpu.Slice]int
+	SetNode(n PartitionableNode)
+	Fork() error
+	Commit()
+	Revert()
+	GetNode(name string) (PartitionableNode, bool)
+	GetNodes() map[string]PartitionableNode
+	AddPod(node string, pod v1.Pod) error
+}
+
+type SnapshotTaker interface {
+	TakeSnapshot(clusterState *state.ClusterState) (Snapshot, error)
+}
+
+type Sorter interface {
+	Sort(pods []v1.Pod) []v1.Pod
 }

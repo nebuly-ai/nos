@@ -14,47 +14,74 @@
  * limitations under the License.
  */
 
-package state
+package core
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
-func NewClusterSnapshot(nodes map[string]framework.NodeInfo) ClusterSnapshot {
-	data := snapshotData{nodes: nodes}
-	return ClusterSnapshot{data: &data}
-}
-
 type snapshotData struct {
-	nodes map[string]framework.NodeInfo
+	nodes map[string]PartitionableNode
 }
 
 func (d snapshotData) clone() *snapshotData {
 	res := snapshotData{
-		nodes: make(map[string]framework.NodeInfo),
+		nodes: make(map[string]PartitionableNode),
 	}
 	for k, v := range d.nodes {
-		res.nodes[k] = *v.Clone()
+		res.nodes[k] = v.Clone().(PartitionableNode)
 	}
 	return &res
 }
 
-type ClusterSnapshot struct {
-	data       *snapshotData
-	forkedData *snapshotData
+type clusterSnapshot struct {
+	data               *snapshotData
+	forkedData         *snapshotData
+	partitioner        Partitioner
+	profilesCalculator SliceCalculator
+	profilesFilter     SliceFilter
 }
 
-func (c *ClusterSnapshot) getData() *snapshotData {
+func NewClusterSnapshot(
+	nodes map[string]PartitionableNode,
+	partitioner Partitioner,
+	sliceCalculator SliceCalculator,
+	sliceFilter SliceFilter,
+) Snapshot {
+	data := snapshotData{nodes: nodes}
+	return &clusterSnapshot{
+		data:               &data,
+		partitioner:        partitioner,
+		profilesCalculator: sliceCalculator,
+		profilesFilter:     sliceFilter,
+	}
+}
+
+func (c *clusterSnapshot) GetPartitioningState() state.PartitioningState {
+	partitioningState := make(map[string]state.NodePartitioning)
+	for name, node := range c.GetNodes() {
+		partitioningState[name] = c.partitioner.GetPartitioning(node)
+	}
+	return partitioningState
+}
+
+func (c *clusterSnapshot) GetLackingSlices(pod v1.Pod) map[gpu.Slice]int {
+	return c.profilesFilter.ExtractSlices(c.getLackingResources(pod).ScalarResources)
+}
+
+func (c *clusterSnapshot) getData() *snapshotData {
 	if c.forkedData != nil {
 		return c.forkedData
 	}
 	return c.data
 }
 
-func (c *ClusterSnapshot) Fork() error {
+func (c *clusterSnapshot) Fork() error {
 	if c.forkedData != nil {
 		return fmt.Errorf("snapshot already forked")
 	}
@@ -62,24 +89,34 @@ func (c *ClusterSnapshot) Fork() error {
 	return nil
 }
 
-func (c *ClusterSnapshot) Commit() {
+func (c *clusterSnapshot) Commit() {
 	if c.forkedData != nil {
 		c.data = c.forkedData
 		c.forkedData = nil
 	}
 }
 
-func (c *ClusterSnapshot) Revert() {
+func (c *clusterSnapshot) Revert() {
 	c.forkedData = nil
 }
 
-func (c *ClusterSnapshot) GetLackingResources(pod v1.Pod) framework.Resource {
+func (c *clusterSnapshot) GetCandidateNodes() []PartitionableNode {
+	result := make([]PartitionableNode, 0)
+	for _, n := range c.getData().nodes {
+		if n.HasFreeCapacity() {
+			result = append(result, n)
+		}
+	}
+	return result
+}
+
+func (c *clusterSnapshot) getLackingResources(pod v1.Pod) framework.Resource {
 	podRequest := resource.ComputePodRequest(pod)
 	totalAllocatable := framework.Resource{}
 	totalRequested := framework.Resource{}
 	for _, n := range c.GetNodes() {
-		totalAllocatable = resource.Sum(totalAllocatable, *n.Allocatable)
-		totalRequested = resource.Sum(totalRequested, *n.Requested)
+		totalAllocatable = resource.Sum(totalAllocatable, *n.NodeInfo().Allocatable)
+		totalRequested = resource.Sum(totalRequested, *n.NodeInfo().Requested)
 	}
 	available := resource.SubtractNonNegative(totalAllocatable, totalRequested)
 	diff := resource.Subtract(available, resource.FromListToFramework(podRequest))
@@ -108,25 +145,27 @@ func (c *ClusterSnapshot) GetLackingResources(pod v1.Pod) framework.Resource {
 	return resource.Abs(*res)
 }
 
-func (c *ClusterSnapshot) GetNodes() map[string]framework.NodeInfo {
+func (c *clusterSnapshot) GetNodes() map[string]PartitionableNode {
 	return c.getData().nodes
 }
 
-func (c *ClusterSnapshot) GetNode(name string) (framework.NodeInfo, bool) {
+func (c *clusterSnapshot) GetNode(name string) (PartitionableNode, bool) {
 	node, found := c.GetNodes()[name]
 	return node, found
 }
 
-func (c *ClusterSnapshot) SetNode(nodeInfo framework.NodeInfo) {
-	c.getData().nodes[nodeInfo.Node().Name] = nodeInfo
+func (c *clusterSnapshot) SetNode(node PartitionableNode) {
+	c.getData().nodes[node.GetName()] = node
 }
 
-func (c *ClusterSnapshot) AddPod(nodeName string, pod v1.Pod) error {
+func (c *clusterSnapshot) AddPod(nodeName string, pod v1.Pod) error {
 	node, found := c.getData().nodes[nodeName]
 	if !found {
 		return fmt.Errorf("could not find node %s in cluster snapshot", nodeName)
 	}
-	node.AddPod(&pod)
+	if err := node.AddPod(pod); err != nil {
+		return err
+	}
 	c.getData().nodes[nodeName] = node
 	return nil
 }

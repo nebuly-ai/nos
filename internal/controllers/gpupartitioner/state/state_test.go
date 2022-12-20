@@ -66,7 +66,7 @@ func TestClusterState_GetNode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			clusterState := NewClusterState()
+			clusterState := NewEmptyClusterState()
 			clusterState.nodes = tt.nodes
 			node, found := clusterState.GetNode(tt.nodeName)
 			assert.Equal(t, tt.expectedNode, node)

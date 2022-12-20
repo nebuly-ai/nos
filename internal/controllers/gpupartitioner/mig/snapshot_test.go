@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package state_test
+package mig_test
 
 import (
+	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -28,12 +31,70 @@ import (
 	"testing"
 )
 
-func TestSnapshot__GetLackingResources(t *testing.T) {
+func TestSnapshotTaker(t *testing.T) {
+	testCases := []struct {
+		name                  string
+		snapshotNodes         []v1.Node
+		expectedSnapshotNodes []string
+		expectedErr           bool
+	}{
+		{
+			name:                  "Empty snapshot",
+			snapshotNodes:         []v1.Node{},
+			expectedSnapshotNodes: []string{},
+			expectedErr:           false,
+		},
+		{
+			name: "MIG Snapshot should include only nodes with gpu-partitioning=MIG",
+			snapshotNodes: []v1.Node{
+				factory.BuildNode("node-1").Get(),
+				factory.BuildNode("node-2").WithLabels(map[string]string{
+					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+				}).Get(),
+				factory.BuildNode("node-3").WithLabels(map[string]string{
+					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+				}).Get(),
+			},
+			expectedSnapshotNodes: []string{"node-2"},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			// Init cluster snapshot
+			nodeInfos := make(map[string]framework.NodeInfo)
+			for _, n := range tt.snapshotNodes {
+				n := n
+				ni := framework.NewNodeInfo()
+				ni.SetNode(&n)
+				nodeInfos[n.Name] = *ni
+			}
+
+			snapshotTaker := mig_partitioner.NewSnapshotTaker()
+			clusterState := state.NewClusterState(nodeInfos)
+
+			// Take snapshot
+			snapshot, err := snapshotTaker.TakeSnapshot(&clusterState)
+			if tt.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				snapshotNodeNames := make([]string, 0)
+				for n := range snapshot.GetNodes() {
+					snapshotNodeNames = append(snapshotNodeNames, n)
+				}
+				assert.Equal(t, tt.expectedSnapshotNodes, snapshotNodeNames)
+			}
+		})
+	}
+}
+
+func TestSnapshot__GetLackingSlices(t *testing.T) {
 	testCases := []struct {
 		name          string
 		snapshotNodes map[string]framework.NodeInfo
 		pod           v1.Pod
-		expected      framework.Resource
+		expected      map[gpu.Slice]int
 	}{
 		{
 			name:          "Empty snapshot",
@@ -42,15 +103,12 @@ func TestSnapshot__GetLackingResources(t *testing.T) {
 				WithContainer(
 					factory.BuildContainer("c1", "test").
 						WithResourceRequest(v1.ResourceCPU, *resource.NewMilliQuantity(200, resource.DecimalSI)).
-						WithResourceRequest(constant.ResourceNvidiaGPU, *resource.NewQuantity(2, resource.DecimalSI)).
+						WithResourceRequest(mig.Profile1g10gb.AsResourceName(), *resource.NewQuantity(2, resource.DecimalSI)).
 						Get(),
 				).
 				Get(),
-			expected: framework.Resource{
-				MilliCPU: 200,
-				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceNvidiaGPU: 2,
-				},
+			expected: map[gpu.Slice]int{
+				mig.Profile1g10gb: 2,
 			},
 		},
 		{
@@ -102,69 +160,28 @@ func TestSnapshot__GetLackingResources(t *testing.T) {
 						WithResourceRequest(v1.ResourceEphemeralStorage, *resource.NewQuantity(1, resource.DecimalSI)).
 						WithResourceRequest(v1.ResourcePods, *resource.NewQuantity(1, resource.DecimalSI)).
 						WithResourceRequest(constant.ResourceNvidiaGPU, *resource.NewQuantity(2, resource.DecimalSI)).
+						WithResourceRequest(mig.Profile1g10gb.AsResourceName(), *resource.NewQuantity(2, resource.DecimalSI)).
+						Get(),
+				).
+				WithContainer(
+					factory.BuildContainer("c1", "test").
+						WithResourceRequest(mig.Profile7g40gb.AsResourceName(), *resource.NewQuantity(1, resource.DecimalSI)).
 						Get(),
 				).
 				Get(),
-			expected: framework.Resource{
-				MilliCPU:         300,
-				EphemeralStorage: 1,
-				AllowedPodNumber: 1,
-				ScalarResources: map[v1.ResourceName]int64{
-					constant.ResourceNvidiaGPU: 2,
-				},
+			expected: map[gpu.Slice]int{
+				mig.Profile1g10gb: 2,
+				mig.Profile7g40gb: 1,
 			},
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			snapshot := state.NewClusterSnapshot(tt.snapshotNodes)
-			assert.Equal(t, tt.expected, snapshot.GetLackingResources(tt.pod))
+			s := state.NewClusterState(tt.snapshotNodes)
+			snapshot, err := mig_partitioner.NewSnapshotTaker().TakeSnapshot(&s)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, snapshot.GetLackingSlices(tt.pod))
 		})
 	}
-}
-
-func TestSnapshot__Forking(t *testing.T) {
-	t.Run("Forking multiple times shall return error", func(t *testing.T) {
-		snapshot := state.NewClusterSnapshot(map[string]framework.NodeInfo{})
-		assert.NoError(t, snapshot.Fork())
-		assert.Error(t, snapshot.Fork())
-	})
-
-	t.Run("Test Revert changes", func(t *testing.T) {
-		snapshot := state.NewClusterSnapshot(map[string]framework.NodeInfo{
-			"node-1": *framework.NewNodeInfo(),
-		})
-		originalNodes := make(map[string]framework.NodeInfo)
-		for k, v := range snapshot.GetNodes() {
-			originalNodes[k] = *v.Clone()
-		}
-		assert.NoError(t, snapshot.Fork())
-		assert.NoError(t, snapshot.AddPod("node-1", factory.BuildPod("ns-1", "pod-1").Get()))
-		// Snapshot modified, should differ from original one
-		assert.NotEqual(t, originalNodes, snapshot.GetNodes())
-		// Revert changes
-		snapshot.Revert()
-		// Changes reverted, snapshot should be equal as the original one before the changes
-		assert.Equal(t, originalNodes, snapshot.GetNodes())
-	})
-
-	t.Run("Test Commit changes", func(t *testing.T) {
-		snapshot := state.NewClusterSnapshot(map[string]framework.NodeInfo{
-			"node-1": *framework.NewNodeInfo(),
-		})
-		originalNodes := make(map[string]*framework.NodeInfo)
-		for k, v := range snapshot.GetNodes() {
-			originalNodes[k] = v.Clone()
-		}
-		assert.NoError(t, snapshot.Fork())
-		assert.NoError(t, snapshot.AddPod("node-1", factory.BuildPod("ns-1", "pod-1").Get()))
-		// Snapshot modified, should differ from original one
-		assert.NotEqual(t, originalNodes, snapshot.GetNodes())
-		// Commit changes
-		snapshot.Commit()
-		assert.NotEqual(t, originalNodes, snapshot.GetNodes())
-		// After committing it should be possible to fork the snapshot again
-		assert.NoError(t, snapshot.Fork())
-	})
 }

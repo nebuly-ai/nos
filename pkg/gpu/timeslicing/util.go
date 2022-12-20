@@ -18,6 +18,7 @@ package timeslicing
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"strings"
 )
@@ -52,4 +53,14 @@ func ExtractGpuId(resourceId string) string {
 		return resourceId
 	}
 	return before
+}
+
+func GetRequestedProfiles(pod v1.Pod) map[ProfileName]int {
+	res := make(map[ProfileName]int)
+	for r, quantity := range resource.ComputePodRequest(pod) {
+		if migProfile, err := ExtractProfileName(r); err == nil {
+			res[migProfile] += int(quantity.Value())
+		}
+	}
+	return res
 }

@@ -19,6 +19,7 @@ package mig_test
 import (
 	"context"
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	partitioner_mig "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
@@ -472,8 +473,10 @@ func TestPlanner__Plan(t *testing.T) {
 				mock.Anything,
 			).Return(framework.PluginToStatus{"": tt.schedulerFilterStatus}).Maybe()
 
+			snapshot, err := newSnapshotFromNodes(tt.snapshotNodes)
+			assert.NoError(t, err)
+
 			planner := partitioner_mig.NewPlanner(mockedScheduler)
-			snapshot := newSnapshotFromNodes(tt.snapshotNodes)
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
 
 			// Compute overall partitioning ignoring GPU index
@@ -557,7 +560,7 @@ func TestPlanner__Plan(t *testing.T) {
 //	nodeInfo := *framework.NewNodeInfo()
 //}
 
-func newSnapshotFromNodes(nodes []v1.Node) state.ClusterSnapshot {
+func newSnapshotFromNodes(nodes []v1.Node) (core.Snapshot, error) {
 	nodeInfos := make(map[string]framework.NodeInfo)
 	for _, node := range nodes {
 		n := node
@@ -567,6 +570,6 @@ func newSnapshotFromNodes(nodes []v1.Node) state.ClusterSnapshot {
 		ni.SetNode(&n)
 		nodeInfos[n.Name] = *ni
 	}
-	snapshot := state.NewClusterSnapshot(nodeInfos)
-	return snapshot
+	s := state.NewClusterState(nodeInfos)
+	return partitioner_mig.NewSnapshotTaker().TakeSnapshot(&s)
 }

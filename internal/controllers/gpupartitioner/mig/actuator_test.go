@@ -204,7 +204,10 @@ func TestActuator__Apply(t *testing.T) {
 				nodeInfos[n.Name] = *ni
 			}
 
-			snapshot := state.NewClusterSnapshot(nodeInfos)
+			s := state.NewClusterState(nodeInfos)
+			snapshot, err := partitionermig.NewSnapshotTaker().TakeSnapshot(&s)
+			assert.NoError(t, err)
+
 			fakeClient := fakeClientBuilder.Build()
 			actuator := partitionermig.NewActuator(fakeClient)
 			plan := core.NewPartitioningPlan(tt.desiredState)

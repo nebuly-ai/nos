@@ -19,13 +19,14 @@ package mig
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
 type Node struct {
-	Name string
-	GPUs []GPU
+	Name     string
+	nodeInfo framework.NodeInfo
+	GPUs     []GPU
 }
 
 // NewNode creates a new MIG Node starting from the node provided as argument.
@@ -36,18 +37,30 @@ type Node struct {
 // - GPU count ("nvidia.com/gpu.count")
 //
 // If the v1.Node provided as arg does not have the GPU Product label, returned node will not contain any mig.GPU.
-func NewNode(n v1.Node) (Node, error) {
-	gpuModel, err := gpu.GetModel(n)
-	if err != nil {
-		return Node{Name: n.Name, GPUs: make([]GPU, 0)}, nil
+func NewNode(n framework.NodeInfo) (Node, error) {
+	if n.Node() == nil {
+		return Node{}, fmt.Errorf("node is nil")
 	}
-	gpuCount, _ := gpu.GetCount(n)
+	node := *n.Node()
+	gpuModel, err := gpu.GetModel(node)
+	if err != nil {
+		return Node{
+			Name:     node.Name,
+			GPUs:     make([]GPU, 0),
+			nodeInfo: n,
+		}, nil
+	}
+	gpuCount, _ := gpu.GetCount(node)
 
-	gpus, err := extractGPUs(n, gpuModel, gpuCount)
+	gpus, err := extractGPUs(node, gpuModel, gpuCount)
 	if err != nil {
 		return Node{}, err
 	}
-	return Node{Name: n.Name, GPUs: gpus}, nil
+	return Node{
+		Name:     node.Name,
+		GPUs:     gpus,
+		nodeInfo: n,
+	}, nil
 }
 
 func extractGPUs(node v1.Node, gpuModel gpu.Model, gpuCount int) ([]GPU, error) {
@@ -87,40 +100,14 @@ func extractGPUs(node v1.Node, gpuModel gpu.Model, gpuCount int) ([]GPU, error) 
 	return result, nil
 }
 
-// UpdateGeometryFor tries to update the MIG geometry of each single GPU of the node in order to create the MIG profiles
-// provided as argument.
-//
-// The method returns true if it updates the MIG geometry of any GPU, false otherwise.
-func (n *Node) UpdateGeometryFor(profiles map[ProfileName]int) bool {
-	// If there are no GPUs, then there's nothing to do
-	if len(n.GPUs) == 0 {
-		return false
-	}
-	if len(profiles) == 0 {
-		return false
-	}
-
-	var requiredProfiles = util.CopyMap(profiles)
-	var anyGpuUpdated bool
-
-	for _, g := range n.GPUs {
-		updated := g.UpdateGeometryFor(requiredProfiles)
-		anyGpuUpdated = anyGpuUpdated || updated
-		for profile, quantity := range g.GetFreeMigDevices() {
-			requiredProfiles[profile] -= quantity
-			if requiredProfiles[profile] <= 0 {
-				delete(requiredProfiles, profile)
-			}
-		}
-	}
-
-	return anyGpuUpdated
+func (n *Node) GetName() string {
+	return n.Name
 }
 
-// GetGeometry returns the overall MIG geometry of the node, which corresponds to the sum of the MIG geometry of all
+// Geometry returns the overall MIG geometry of the node, which corresponds to the sum of the MIG geometry of all
 // the GPUs present in the Node.
-func (n *Node) GetGeometry() Geometry {
-	res := make(Geometry)
+func (n *Node) Geometry() map[gpu.Slice]int {
+	res := make(map[gpu.Slice]int)
 	for _, g := range n.GPUs {
 		for p, q := range g.GetGeometry() {
 			res[p] += q
@@ -129,9 +116,13 @@ func (n *Node) GetGeometry() Geometry {
 	return res
 }
 
-// HasFreeMigCapacity returns true if the Node has at least one GPU with free MIG capacity, namely it either has a
+func (n *Node) NodeInfo() framework.NodeInfo {
+	return n.nodeInfo
+}
+
+// HasFreeCapacity returns true if the Node has at least one GPU with free MIG capacity, namely it either has a
 // free MIG device or its allowed MIG geometries allow to create at least one more MIG device.
-func (n *Node) HasFreeMigCapacity() bool {
+func (n *Node) HasFreeCapacity() bool {
 	if len(n.GPUs) == 0 {
 		return false
 	}
@@ -148,6 +139,62 @@ func (n *Node) HasFreeMigCapacity() bool {
 	return false
 }
 
+// UpdateGeometryFor tries to update the MIG geometry of each single GPU of the node in order to create the MIG profiles
+// provided as argument.
+//
+// The method returns true if it updates the MIG geometry of any GPU, false otherwise.
+func (n *Node) UpdateGeometryFor(slices map[gpu.Slice]int) (bool, error) {
+	// If there are no GPUs, then there's nothing to do
+	if len(n.GPUs) == 0 {
+		return false, nil
+	}
+	if len(slices) == 0 {
+		return false, nil
+	}
+
+	// Copy slices
+	var requiredProfiles = make(map[gpu.Slice]int, len(slices))
+	for k, v := range slices {
+		requiredProfiles[k] = v
+	}
+	var anyGpuUpdated bool
+
+	for _, g := range n.GPUs {
+		updated := g.UpdateGeometryFor(requiredProfiles)
+		anyGpuUpdated = anyGpuUpdated || updated
+		for profile, quantity := range g.GetFreeMigDevices() {
+			requiredProfiles[profile] -= quantity
+			if requiredProfiles[profile] <= 0 {
+				delete(requiredProfiles, profile)
+			}
+		}
+	}
+
+	// Update node info
+	scalarResources := n.computeScalarResources()
+	n.nodeInfo.Allocatable.ScalarResources = scalarResources
+
+	return anyGpuUpdated, nil
+}
+
+func (n *Node) computeScalarResources() map[v1.ResourceName]int64 {
+	res := make(map[v1.ResourceName]int64)
+
+	// Set all non-MIG scalar resources
+	for r, v := range n.nodeInfo.Allocatable.ScalarResources {
+		if !IsNvidiaMigDevice(r) {
+			res[r] = v
+		}
+	}
+	// Set MIG scalar resources
+	for r, v := range n.Geometry() {
+		resource := r.(ProfileName).AsResourceName()
+		res[resource] = int64(v)
+	}
+
+	return res
+}
+
 // AddPod adds a Pod to the node by updating the free and used MIG devices of the Node GPUs according to the
 // MIG requested required by the Pod.
 //
@@ -155,19 +202,22 @@ func (n *Node) HasFreeMigCapacity() bool {
 func (n *Node) AddPod(pod v1.Pod) error {
 	for _, g := range n.GPUs {
 		if err := g.AddPod(pod); err == nil {
+			nodeInfo := n.NodeInfo()
+			nodeInfo.AddPod(&pod)
 			return nil
 		}
 	}
 	return fmt.Errorf("not enough free MIG devices")
 }
 
-func (n *Node) Clone() Node {
+func (n *Node) Clone() interface{} {
 	cloned := Node{
-		Name: n.Name,
-		GPUs: make([]GPU, len(n.GPUs)),
+		Name:     n.GetName(),
+		GPUs:     make([]GPU, len(n.GPUs)),
+		nodeInfo: *n.nodeInfo.Clone(),
 	}
 	for i := range n.GPUs {
 		cloned.GPUs[i] = n.GPUs[i].Clone()
 	}
-	return cloned
+	return &cloned
 }

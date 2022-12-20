@@ -128,7 +128,7 @@ func main() {
 	}
 
 	// Init state
-	clusterState := state.NewClusterState()
+	clusterState := state.NewEmptyClusterState()
 
 	// Setup state controllers
 	nodeController := state.NewNodeController(
@@ -205,6 +205,7 @@ func main() {
 		&clusterState,
 		migPlanner,
 		migActuator,
+		mig.NewSnapshotTaker(),
 	)
 	if err = migController.SetupWithManager(mgr, constant.MigPartitionerControllerName); err != nil {
 		setupLog.Error(

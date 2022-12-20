@@ -18,10 +18,7 @@ package ts
 
 import (
 	"context"
-	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/ts/tsstate"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -34,7 +31,7 @@ type Planner struct {
 	nvidiaDevicePluginConfigMapNamespace string
 }
 
-func (p *Planner) Plan(ctx context.Context, s state.ClusterSnapshot, pendingPods []v1.Pod) (core.PartitioningPlan, error) {
+func (p *Planner) Plan(ctx context.Context, s core.Snapshot, pendingPods []v1.Pod) (core.PartitioningPlan, error) {
 	//pendingPods = util.Filter(pendingPods, hasGpuMemoryLabel)
 
 	// Fetch NVIDIA device plugin CM containing the time slicing config of all nodes
@@ -45,10 +42,10 @@ func (p *Planner) Plan(ctx context.Context, s state.ClusterSnapshot, pendingPods
 	}
 
 	// Init time-slicing snapshot
-	_, err := tsstate.NewSnapshot(s)
-	if err != nil {
-		return core.PartitioningPlan{}, fmt.Errorf("failed to initialize time-slicing snapshot: %w", err)
-	}
+	//_, err := NewSnapshot(s)
+	//if err != nil {
+	//	return core.PartitioningPlan{}, fmt.Errorf("failed to initialize time-slicing snapshot: %w", err)
+	//}
 
 	return core.PartitioningPlan{}, nil
 }

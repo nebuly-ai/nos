@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"strconv"
 	"testing"
 )
@@ -160,7 +161,9 @@ func TestNewNode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			node, err := NewNode(tt.node)
+			nodeInfo := framework.NewNodeInfo()
+			nodeInfo.SetNode(&tt.node)
+			node, err := NewNode(*nodeInfo)
 			if tt.expectedError {
 				assert.Error(t, err)
 			} else {
@@ -176,12 +179,12 @@ func TestNode__GetGeometry(t *testing.T) {
 	testCases := []struct {
 		name     string
 		node     Node
-		expected Geometry
+		expected map[gpu.Slice]int
 	}{
 		{
 			name:     "Empty node",
 			node:     Node{},
-			expected: Geometry{},
+			expected: make(map[gpu.Slice]int),
 		},
 		{
 			name: "Geometry is the sum of all GPUs Geometry",
@@ -216,7 +219,7 @@ func TestNode__GetGeometry(t *testing.T) {
 					},
 				},
 			},
-			expected: Geometry{
+			expected: map[gpu.Slice]int{
 				Profile4g24gb: 2,
 				Profile2g20gb: 1,
 				Profile1g5gb:  8,
@@ -228,7 +231,7 @@ func TestNode__GetGeometry(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.node.GetGeometry())
+			assert.Equal(t, tt.expected, tt.node.Geometry())
 		})
 	}
 }
@@ -244,18 +247,18 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 	testCases := []struct {
 		name             string
 		nodeGPUs         []gpuSpec
-		migProfiles      map[ProfileName]int
+		migProfiles      map[gpu.Slice]int
 		expectedUpdated  bool
-		expectedGeometry Geometry
+		expectedGeometry map[gpu.Slice]int
 	}{
 		{
 			name:     "Node without GPUs",
 			nodeGPUs: make([]gpuSpec, 0),
-			migProfiles: map[ProfileName]int{
+			migProfiles: map[gpu.Slice]int{
 				Profile1g6gb: 1,
 			},
 			expectedUpdated:  false,
-			expectedGeometry: make(Geometry),
+			expectedGeometry: make(map[gpu.Slice]int),
 		},
 		{
 			name: "Node geometry already provides required profiles, should do nothing",
@@ -277,11 +280,11 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					},
 				},
 			},
-			migProfiles: map[ProfileName]int{
+			migProfiles: map[gpu.Slice]int{
 				Profile1g6gb: 1,
 			},
 			expectedUpdated: false,
-			expectedGeometry: Geometry{
+			expectedGeometry: map[gpu.Slice]int{
 				Profile1g6gb: 6,
 			},
 		},
@@ -305,12 +308,12 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					free: map[ProfileName]int{},
 				},
 			},
-			migProfiles: map[ProfileName]int{
+			migProfiles: map[gpu.Slice]int{
 				Profile1g5gb:  4,
 				Profile2g10gb: 1,
 			},
 			expectedUpdated: false,
-			expectedGeometry: Geometry{
+			expectedGeometry: map[gpu.Slice]int{
 				Profile4g24gb: 1,
 				Profile7g40gb: 1,
 			},
@@ -327,11 +330,11 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					free: map[ProfileName]int{}, // free is empty, but GPU has enough capacity for creating new profiles
 				},
 			},
-			migProfiles: map[ProfileName]int{
+			migProfiles: map[gpu.Slice]int{
 				Profile1g6gb: 2,
 			},
 			expectedUpdated: true,
-			expectedGeometry: Geometry{
+			expectedGeometry: map[gpu.Slice]int{
 				Profile1g6gb: 4,
 			},
 		},
@@ -357,11 +360,11 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					},
 				},
 			},
-			migProfiles: map[ProfileName]int{
+			migProfiles: map[gpu.Slice]int{
 				Profile1g6gb: 1,
 			},
 			expectedUpdated: true,
-			expectedGeometry: Geometry{
+			expectedGeometry: map[gpu.Slice]int{
 				Profile4g24gb: 1,
 				Profile1g6gb:  4,
 			},
@@ -386,11 +389,11 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					},
 				},
 			},
-			migProfiles: map[ProfileName]int{
+			migProfiles: map[gpu.Slice]int{
 				Profile4g24gb: 1,
 			},
 			expectedUpdated: true,
-			expectedGeometry: Geometry{
+			expectedGeometry: map[gpu.Slice]int{
 				Profile4g24gb: 2,
 			},
 		},
@@ -410,10 +413,10 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 					free:  map[ProfileName]int{},
 				},
 			},
-			migProfiles: map[ProfileName]int{
+			migProfiles: map[gpu.Slice]int{
 				Profile1g6gb: 3,
 			},
-			expectedGeometry: Geometry{
+			expectedGeometry: map[gpu.Slice]int{
 				Profile1g6gb: 4,
 			},
 			expectedUpdated: true,
@@ -426,16 +429,17 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			node := Node{Name: "test"}
 			gpus := make([]GPU, 0)
 			for _, spec := range tt.nodeGPUs {
-				gpu, err := NewGPU(spec.model, spec.index, spec.used, spec.free)
+				g, err := NewGPU(spec.model, spec.index, spec.used, spec.free)
 				assert.NoError(t, err)
-				gpus = append(gpus, gpu)
+				gpus = append(gpus, g)
 			}
 			node.GPUs = gpus
 
 			// Run test
-			updated := node.UpdateGeometryFor(tt.migProfiles)
+			updated, err := node.UpdateGeometryFor(tt.migProfiles)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedUpdated, updated)
-			assert.Equal(t, tt.expectedGeometry, node.GetGeometry())
+			assert.Equal(t, tt.expectedGeometry, node.Geometry())
 		})
 	}
 }
@@ -489,7 +493,7 @@ func TestNode__HasFreeMigCapacity(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			n := Node{Name: "test", GPUs: tt.nodeGPUs}
-			res := n.HasFreeMigCapacity()
+			res := n.HasFreeCapacity()
 			assert.Equal(t, tt.expected, res)
 		})
 	}

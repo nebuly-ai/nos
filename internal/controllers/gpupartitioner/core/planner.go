@@ -14,49 +14,70 @@
  * limitations under the License.
  */
 
-package mig
+package core
 
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig/migstate"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
 
-type Planner struct {
-	schedulerFramework framework.Framework
+type PartitioningPlan struct {
+	DesiredState state.PartitioningState
+	id           string
 }
 
-func NewPlanner(scheduler framework.Framework) Planner {
-	return Planner{
-		schedulerFramework: scheduler,
+func NewPartitioningPlan(s state.PartitioningState) PartitioningPlan {
+	return PartitioningPlan{
+		DesiredState: s,
+		id:           time.Now().UTC().String(),
 	}
 }
 
-func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePods []v1.Pod) (core.PartitioningPlan, error) {
+func (p PartitioningPlan) GetId() string {
+	return p.id
+}
+
+type planner struct {
+	sliceCalculator    SliceCalculator
+	schedulerFramework framework.Framework
+	partitioner        Partitioner
+	sorter             Sorter
+}
+
+func NewPlanner(partitioner Partitioner, sliceCalculator SliceCalculator, schedulerFramework framework.Framework) Planner {
+	return planner{
+		partitioner:        partitioner,
+		sliceCalculator:    sliceCalculator,
+		schedulerFramework: schedulerFramework,
+		sorter:             NewPodSorter(sliceCalculator),
+	}
+}
+
+func (p planner) Plan(ctx context.Context, snapshot Snapshot, candidatePods []v1.Pod) (PartitioningPlan, error) {
 	logger := log.FromContext(ctx)
 	logger.V(3).Info("planning desired GPU partitioning", "candidatePods", len(candidatePods))
 	var err error
-	var snapshot migstate.MigClusterSnapshot
-	if snapshot, err = migstate.NewClusterSnapshot(s); err != nil {
-		return core.PartitioningPlan{}, fmt.Errorf("error initializing MIG cluster snapshot: %v", err)
-	}
 
 	partitioningState := snapshot.GetPartitioningState()
-	tracker := newLackingMigProfilesTracker(snapshot, candidatePods)
+	tracker := NewSliceTracker(
+		snapshot,
+		p.sliceCalculator,
+		candidatePods,
+	)
 
 	// No lacking MIG profiles, nothing to do
-	if len(tracker.GetLackingMigProfiles()) == 0 {
-		logger.V(1).Info("no lacking MIG profiles, nothing to do")
-		return core.NewPartitioningPlan(partitioningState), nil
+	if len(tracker.GetLackingSlices()) == 0 {
+		logger.V(1).Info("no lacking profiles, nothing to do")
+		return NewPartitioningPlan(partitioningState), nil
 	}
 
 	// Sort candidate pods
-	sortedCandidatePods := SortCandidatePods(candidatePods)
+	sortedCandidatePods := p.sorter.Sort(candidatePods)
 
 	// Get candidate nodes
 	candidateNodes := snapshot.GetCandidateNodes()
@@ -64,29 +85,30 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 
 	for _, n := range candidateNodes {
 		// If there are no more lacking MIG profiles we can stop
-		lackingMigProfiles := tracker.GetLackingMigProfiles()
+		lackingMigProfiles := tracker.GetLackingSlices()
 		if len(lackingMigProfiles) == 0 {
-			return core.NewPartitioningPlan(partitioningState), nil
+			return NewPartitioningPlan(partitioningState), nil
 		}
 
 		// Fork the state
 		if err = snapshot.Fork(); err != nil {
-			return core.PartitioningPlan{}, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
+			return PartitioningPlan{}, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
 		}
 
 		// Try to update MIG geometry
-		nodeGeometryUpdated := n.UpdateGeometryFor(tracker.GetRequestedMigProfiles())
+		nodeGeometryUpdated, err := n.UpdateGeometryFor(tracker.GetLackingSlices())
+		if err != nil {
+			return PartitioningPlan{}, err
+		}
 		if nodeGeometryUpdated {
-			logger.V(1).Info("updated node MIG geometry", "node", n.Name, "geometry", n.GetGeometry())
-			if err = snapshot.SetNode(n); err != nil {
-				return core.PartitioningPlan{}, err
-			}
+			logger.V(1).Info("updated node geometry", "node", n.GetName(), "geometry", n.Geometry())
+			snapshot.SetNode(n)
 		}
 
 		// Try to add candidate pods to the node with the updated geometry
 		var addedPods int
 		for _, pod := range sortedCandidatePods {
-			if added := p.tryAddPod(ctx, pod, n.Name, &snapshot); !added {
+			if added := p.tryAddPod(ctx, pod, n.GetName(), snapshot); !added {
 				logger.V(1).Info(
 					"pod does not fit node",
 					"namespace",
@@ -94,7 +116,7 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 					"pod",
 					pod.Name,
 					"node",
-					n.Name,
+					n.GetName,
 				)
 				continue
 			}
@@ -105,9 +127,9 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 				"pod",
 				pod.Name,
 				"node",
-				n.Name,
+				n.GetName,
 			)
-			partitioningState[n.Name] = migstate.FromMigNodeToNodePartitioning(n)
+			partitioningState[n.GetName()] = p.partitioner.GetPartitioning(n)
 			tracker.Remove(pod)
 			addedPods++
 		}
@@ -121,14 +143,14 @@ func (p Planner) Plan(ctx context.Context, s state.ClusterSnapshot, candidatePod
 		}
 	}
 
-	return core.NewPartitioningPlan(partitioningState), nil
+	return NewPartitioningPlan(partitioningState), nil
 }
 
-func (p Planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeName string, snapshot *migstate.MigClusterSnapshot) bool {
+func (p planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeName string, snapshot Snapshot) bool {
 	// First we check if there are any lacking MIG profiles,
 	// if so we avoid running a scheduler cycle
 	// since we already know that it is going to fail
-	if len(snapshot.GetLackingMigProfiles(pod)) > 0 {
+	if len(snapshot.GetLackingSlices(pod)) > 0 {
 		return false
 	}
 	// Simulate scheduling
@@ -136,7 +158,7 @@ func (p Planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeName string, sna
 	if !ok {
 		return false
 	}
-	if !p.canSchedulePod(ctx, pod, nodeInfo) {
+	if !p.canSchedulePod(ctx, pod, nodeInfo.NodeInfo()) {
 		return false
 	}
 	// Add Pod to snapshot
@@ -147,7 +169,7 @@ func (p Planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeName string, sna
 }
 
 // canSchedulePod runs a scheduler cycle to check whether the Pod can be scheduled on the specified Node
-func (p Planner) canSchedulePod(ctx context.Context, pod v1.Pod, node framework.NodeInfo) bool {
+func (p planner) canSchedulePod(ctx context.Context, pod v1.Pod, node framework.NodeInfo) bool {
 	logger := log.FromContext(ctx)
 	logger.V(1).Info("simulating pod scheduling", "pod", pod.Name, "namespace", pod.Namespace)
 	cycleState := framework.NewCycleState()

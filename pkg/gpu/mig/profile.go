@@ -19,6 +19,7 @@ package mig
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"regexp"
 	"strconv"
@@ -80,11 +81,15 @@ func (p ProfileName) getGiSlices() int {
 	return asInt
 }
 
-func (p ProfileName) SmallerThan(other ProfileName) bool {
-	if p.getMemorySlices() < other.getMemorySlices() {
+func (p ProfileName) SmallerThan(other gpu.Slice) bool {
+	otherMig, ok := other.(ProfileName)
+	if !ok {
+		return false
+	}
+	if p.getMemorySlices() < otherMig.getMemorySlices() {
 		return true
 	}
-	if p.getGiSlices() < other.getGiSlices() {
+	if p.getGiSlices() < otherMig.getGiSlices() {
 		return true
 	}
 	return false

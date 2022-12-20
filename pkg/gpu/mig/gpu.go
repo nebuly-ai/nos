@@ -172,7 +172,7 @@ func (g *GPU) ApplyGeometry(geometry Geometry) error {
 // profiles provided as argument, without deleting any of the used profiles.
 //
 // The method returns true if the GPU geometry gets updated, false otherwise.
-func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) bool {
+func (g *GPU) UpdateGeometryFor(requiredProfiles map[gpu.Slice]int) bool {
 	var geometryNumProvidedProfiles = make(map[string]int)
 	var geometryLookup = make(map[string]Geometry)
 	var bestGeometry *Geometry
@@ -180,12 +180,17 @@ func (g *GPU) UpdateGeometryFor(requiredProfiles map[ProfileName]int) bool {
 	// For each allowed geometry, compute the number of required profiles that it can provide
 	for _, candidate := range g.GetAllowedGeometries() {
 		for requiredProfile, requiredQuantity := range requiredProfiles {
+			requiredMigProfile, ok := requiredProfile.(ProfileName)
+			if !ok {
+				return false
+			}
+
 			// If GPU already provides the profile resources then there's nothing to do
-			if g.freeMigDevices[requiredProfile] >= requiredQuantity {
+			if g.freeMigDevices[requiredMigProfile] >= requiredQuantity {
 				continue
 			}
 			numProvidedProfiles := util.Min(
-				candidate[requiredProfile]-g.usedMigDevices[requiredProfile],
+				candidate[requiredMigProfile]-g.usedMigDevices[requiredMigProfile],
 				requiredQuantity,
 			)
 			// If the candidate geometry does not provide the required profile, then skip it
@@ -243,7 +248,7 @@ func (g *GPU) GetAllowedGeometries() []Geometry {
 //
 // AddPod returns an error if the GPU does not have enough free MIG resources for the Pod.
 func (g *GPU) AddPod(pod v1.Pod) error {
-	for r, q := range GetRequestedMigResources(pod) {
+	for r, q := range GetRequestedProfiles(pod) {
 		if g.freeMigDevices[r] < q {
 			return fmt.Errorf(
 				"not enough free MIG devices (pod requests %d %s, but GPU only has %d)",

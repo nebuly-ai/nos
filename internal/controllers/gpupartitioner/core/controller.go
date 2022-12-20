@@ -34,12 +34,13 @@ import (
 
 type Controller struct {
 	client.Client
-	Scheme       *runtime.Scheme
-	podBatcher   util.Batcher[v1.Pod]
-	clusterState *state.ClusterState
-	currentBatch map[string]v1.Pod
-	planner      Planner
-	actuator     Actuator
+	Scheme        *runtime.Scheme
+	podBatcher    util.Batcher[v1.Pod]
+	clusterState  *state.ClusterState
+	currentBatch  map[string]v1.Pod
+	planner       Planner
+	actuator      Actuator
+	snapshotTaker SnapshotTaker
 }
 
 func NewController(
@@ -48,15 +49,17 @@ func NewController(
 	podBatcher util.Batcher[v1.Pod],
 	clusterState *state.ClusterState,
 	planner Planner,
-	actuator Actuator) Controller {
+	actuator Actuator,
+	snapshotTaker SnapshotTaker) Controller {
 	return Controller{
-		Scheme:       scheme,
-		Client:       client,
-		clusterState: clusterState,
-		currentBatch: make(map[string]v1.Pod),
-		podBatcher:   podBatcher,
-		planner:      planner,
-		actuator:     actuator,
+		Scheme:        scheme,
+		Client:        client,
+		clusterState:  clusterState,
+		currentBatch:  make(map[string]v1.Pod),
+		podBatcher:    podBatcher,
+		planner:       planner,
+		actuator:      actuator,
+		snapshotTaker: snapshotTaker,
 	}
 }
 
@@ -161,7 +164,11 @@ func (c *Controller) processPendingPods(ctx context.Context) error {
 		return nil
 	}
 
-	snapshot := c.clusterState.GetSnapshot()
+	snapshot, err := c.snapshotTaker.TakeSnapshot(c.clusterState)
+	if err != nil {
+		logger.Error(err, "unable to take a snapshot of the cluster state")
+		return err
+	}
 
 	// Compute desired state
 	plan, err := c.planner.Plan(ctx, snapshot, pods)

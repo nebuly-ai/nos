@@ -297,8 +297,8 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 	testCases := []struct {
 		name             string
 		gpu              mig.GPU
-		profiles         map[mig.ProfileName]int
-		expectedGeometry map[mig.ProfileName]int
+		profiles         map[gpu.Slice]int
+		expectedGeometry map[gpu.Slice]int
 		expectedUpdated  bool
 	}{
 		{
@@ -311,8 +311,8 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 				},
 				map[mig.ProfileName]int{},
 			),
-			profiles: map[mig.ProfileName]int{},
-			expectedGeometry: map[mig.ProfileName]int{
+			profiles: map[gpu.Slice]int{},
+			expectedGeometry: map[gpu.Slice]int{
 				mig.Profile2g20gb: 1, // unchanged
 			},
 			expectedUpdated: false,
@@ -327,10 +327,10 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 				},
 				map[mig.ProfileName]int{},
 			),
-			profiles: map[mig.ProfileName]int{
+			profiles: map[gpu.Slice]int{
 				mig.Profile1g10gb: 1,
 			},
-			expectedGeometry: map[mig.ProfileName]int{
+			expectedGeometry: map[gpu.Slice]int{
 				mig.Profile2g20gb: 1, // unchanged
 			},
 			expectedUpdated: false,
@@ -345,10 +345,10 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 				},
 				map[mig.ProfileName]int{},
 			),
-			profiles: map[mig.ProfileName]int{
+			profiles: map[gpu.Slice]int{
 				mig.Profile7g79gb: 1,
 			},
-			expectedGeometry: map[mig.ProfileName]int{
+			expectedGeometry: map[gpu.Slice]int{
 				mig.Profile2g20gb: 1, // unchanged
 			},
 			expectedUpdated: false,
@@ -365,10 +365,10 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 					mig.Profile2g20gb: 2,
 				},
 			),
-			profiles: map[mig.ProfileName]int{
+			profiles: map[gpu.Slice]int{
 				mig.Profile2g20gb: 2,
 			},
-			expectedGeometry: map[mig.ProfileName]int{
+			expectedGeometry: map[gpu.Slice]int{
 				mig.Profile2g20gb: 3, // unchanged
 			},
 			expectedUpdated: false,
@@ -384,10 +384,10 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 				},
 				map[mig.ProfileName]int{},
 			),
-			profiles: map[mig.ProfileName]int{
+			profiles: map[gpu.Slice]int{
 				mig.Profile1g10gb: 6,
 			},
-			expectedGeometry: map[mig.ProfileName]int{
+			expectedGeometry: map[gpu.Slice]int{
 				mig.Profile1g10gb: 7,
 			},
 			expectedUpdated: true,
@@ -404,10 +404,10 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 					mig.Profile1g10gb: 3,
 				},
 			),
-			profiles: map[mig.ProfileName]int{
+			profiles: map[gpu.Slice]int{
 				mig.Profile3g40gb: 1,
 			},
-			expectedGeometry: map[mig.ProfileName]int{
+			expectedGeometry: map[gpu.Slice]int{
 				mig.Profile3g40gb: 2,
 			},
 			expectedUpdated: true,
