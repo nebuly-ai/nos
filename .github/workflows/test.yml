@@ -45,4 +45,11 @@ jobs:
           skip-pkg-cache: true
           skip-build-cache: true
 
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v2
+        with:
+          file: ./cover.out
+          flags: unittests
+          name: codecov-umbrella
+
 
