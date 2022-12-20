@@ -18,7 +18,7 @@ package ts
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
+	core2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -31,14 +31,14 @@ type Planner struct {
 	nvidiaDevicePluginConfigMapNamespace string
 }
 
-func (p *Planner) Plan(ctx context.Context, s core.Snapshot, pendingPods []v1.Pod) (core.PartitioningPlan, error) {
+func (p *Planner) Plan(ctx context.Context, s core2.Snapshot, pendingPods []v1.Pod) (core2.PartitioningPlan, error) {
 	//pendingPods = util.Filter(pendingPods, hasGpuMemoryLabel)
 
 	// Fetch NVIDIA device plugin CM containing the time slicing config of all nodes
 	var cm v1.ConfigMap
 	cmKey := client.ObjectKey{Name: p.nvidiaDevicePluginConfigMapName, Namespace: p.nvidiaDevicePluginConfigMapNamespace}
 	if err := p.Get(ctx, cmKey, &cm); err != nil {
-		return core.PartitioningPlan{}, nil
+		return core2.PartitioningPlan{}, nil
 	}
 
 	// Init time-slicing snapshot
@@ -47,7 +47,7 @@ func (p *Planner) Plan(ctx context.Context, s core.Snapshot, pendingPods []v1.Po
 	//	return core.PartitioningPlan{}, fmt.Errorf("failed to initialize time-slicing snapshot: %w", err)
 	//}
 
-	return core.PartitioningPlan{}, nil
+	return core2.PartitioningPlan{}, nil
 }
 
 //func hasGpuMemoryLabel(pod v1.Pod) bool {

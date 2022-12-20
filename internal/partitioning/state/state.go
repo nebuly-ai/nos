@@ -61,7 +61,7 @@ func (c *ClusterState) GetNodes() map[string]framework.NodeInfo {
 	return c.nodes
 }
 
-func (c *ClusterState) deleteNode(name string) {
+func (c *ClusterState) DeleteNode(name string) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -73,7 +73,7 @@ func (c *ClusterState) deleteNode(name string) {
 	}
 }
 
-func (c *ClusterState) updateNode(node v1.Node, pods []v1.Pod) {
+func (c *ClusterState) UpdateNode(node v1.Node, pods []v1.Pod) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -99,7 +99,7 @@ func (c *ClusterState) updateNode(node v1.Node, pods []v1.Pod) {
 	}
 }
 
-func (c *ClusterState) deletePod(namespacedName types.NamespacedName) error {
+func (c *ClusterState) DeletePod(namespacedName types.NamespacedName) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -137,7 +137,7 @@ func (c *ClusterState) deletePod(namespacedName types.NamespacedName) error {
 	return nil
 }
 
-func (c *ClusterState) updateUsage(pod v1.Pod) {
+func (c *ClusterState) UpdateUsage(pod v1.Pod) {
 	// avoid acquiring lock if Pod is not assigned to any node yet
 	if pod.Spec.NodeName == "" {
 		return

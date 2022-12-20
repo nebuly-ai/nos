@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package state
+package gpupartitioner
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
@@ -32,10 +33,10 @@ import (
 type PodController struct {
 	client.Client
 	Scheme       *runtime.Scheme
-	clusterState *ClusterState
+	clusterState *state.ClusterState
 }
 
-func NewPodController(client client.Client, scheme *runtime.Scheme, state *ClusterState) PodController {
+func NewPodController(client client.Client, scheme *runtime.Scheme, state *state.ClusterState) PodController {
 	return PodController{
 		Client:       client,
 		Scheme:       scheme,
@@ -58,7 +59,7 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	// If Pod does not exist then remove it from Cluster State
 	if apierrors.IsNotFound(err) {
 		logger.V(2).Info("deleting pod", "pod", req.Name, "namespace", req.Namespace)
-		_ = c.clusterState.deletePod(req.NamespacedName)
+		_ = c.clusterState.DeletePod(req.NamespacedName)
 		return ctrl.Result{}, nil
 	}
 
@@ -92,13 +93,13 @@ func (c *PodController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
 		logger.V(3).Info("adding node", "node", nodeName)
-		c.clusterState.updateNode(podNode, podList.Items)
+		c.clusterState.UpdateNode(podNode, podList.Items)
 
 		return ctrl.Result{}, nil
 	}
 
 	logger.V(2).Info("updating cluster state usage", "pod", req.Name, "namespace", req.Namespace)
-	c.clusterState.updateUsage(instance)
+	c.clusterState.UpdateUsage(instance)
 	return ctrl.Result{}, nil
 }
 

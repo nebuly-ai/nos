@@ -17,8 +17,9 @@
 package mig
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
+	core2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	state2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
@@ -28,10 +29,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ core.SliceFilter = sliceFilterAdapter(nil)
-var _ core.Partitioner = partitionerAdapter(nil)
-var _ core.SliceCalculator = sliceCalculatorAdapter(nil)
-var _ core.SnapshotTaker = snapshotTakerAdapter(nil)
+var _ core2.SliceFilter = sliceFilterAdapter(nil)
+var _ core2.Partitioner = partitionerAdapter(nil)
+var _ core2.SliceCalculator = sliceCalculatorAdapter(nil)
+var _ core2.SnapshotTaker = snapshotTakerAdapter(nil)
 
 type sliceFilterAdapter func(resources map[v1.ResourceName]int64) map[gpu.Slice]int
 
@@ -39,7 +40,7 @@ func (f sliceFilterAdapter) ExtractSlices(resources map[v1.ResourceName]int64) m
 	return f(resources)
 }
 
-func NewSliceFilter() core.SliceFilter {
+func NewSliceFilter() core2.SliceFilter {
 	var sliceFilter sliceFilterAdapter = func(resources map[v1.ResourceName]int64) map[gpu.Slice]int {
 		var res = make(map[gpu.Slice]int)
 		for r, q := range resources {
@@ -53,29 +54,29 @@ func NewSliceFilter() core.SliceFilter {
 	return sliceFilter
 }
 
-type partitionerAdapter func(node core.PartitionableNode) state.NodePartitioning
+type partitionerAdapter func(node core2.PartitionableNode) state2.NodePartitioning
 
-func (f partitionerAdapter) GetPartitioning(node core.PartitionableNode) state.NodePartitioning {
+func (f partitionerAdapter) GetPartitioning(node core2.PartitionableNode) state2.NodePartitioning {
 	return f(node)
 }
 
-func NewPartitioner() core.Partitioner {
-	var partitioner partitionerAdapter = func(node core.PartitionableNode) state.NodePartitioning {
+func NewPartitioner() core2.Partitioner {
+	var partitioner partitionerAdapter = func(node core2.PartitionableNode) state2.NodePartitioning {
 		migNode, ok := node.(*mig.Node)
 		if !ok {
-			return state.NodePartitioning{
-				GPUs: make([]state.GPUPartitioning, 0),
+			return state2.NodePartitioning{
+				GPUs: make([]state2.GPUPartitioning, 0),
 			}
 		}
-		gpuPartitioning := make([]state.GPUPartitioning, 0)
+		gpuPartitioning := make([]state2.GPUPartitioning, 0)
 		for _, g := range migNode.GPUs {
-			gp := state.GPUPartitioning{
+			gp := state2.GPUPartitioning{
 				GPUIndex:  g.GetIndex(),
 				Resources: g.GetGeometry().AsResources(),
 			}
 			gpuPartitioning = append(gpuPartitioning, gp)
 		}
-		return state.NodePartitioning{GPUs: gpuPartitioning}
+		return state2.NodePartitioning{GPUs: gpuPartitioning}
 	}
 	return partitioner
 }
@@ -86,7 +87,7 @@ func (f sliceCalculatorAdapter) GetRequestedSlices(pod v1.Pod) map[gpu.Slice]int
 	return f(pod)
 }
 
-func NewSliceCalculator() core.SliceCalculator {
+func NewSliceCalculator() core2.SliceCalculator {
 	var sliceCalculator sliceCalculatorAdapter = func(pod v1.Pod) map[gpu.Slice]int {
 		requestedMigProfiles := mig.GetRequestedProfiles(pod)
 		res := make(map[gpu.Slice]int, len(requestedMigProfiles))
@@ -98,26 +99,26 @@ func NewSliceCalculator() core.SliceCalculator {
 	return sliceCalculator
 }
 
-func NewPlanner(scheduler framework.Framework) core.Planner {
+func NewPlanner(scheduler framework.Framework) core2.Planner {
 	sliceCalculator := NewSliceCalculator()
 	partitioner := NewPartitioner()
-	return core.NewPlanner(
+	return core2.NewPlanner(
 		partitioner,
 		sliceCalculator,
 		scheduler,
 	)
 }
 
-type snapshotTakerAdapter func(clusterState *state.ClusterState) (core.Snapshot, error)
+type snapshotTakerAdapter func(clusterState *state2.ClusterState) (core2.Snapshot, error)
 
-func (s snapshotTakerAdapter) TakeSnapshot(clusterState *state.ClusterState) (core.Snapshot, error) {
+func (s snapshotTakerAdapter) TakeSnapshot(clusterState *state2.ClusterState) (core2.Snapshot, error) {
 	return s(clusterState)
 }
 
-func NewSnapshotTaker() core.SnapshotTaker {
-	var snapshotTaker snapshotTakerAdapter = func(clusterState *state.ClusterState) (core.Snapshot, error) {
+func NewSnapshotTaker() core2.SnapshotTaker {
+	var snapshotTaker snapshotTakerAdapter = func(clusterState *state2.ClusterState) (core2.Snapshot, error) {
 		// Extract nodes with MIG partitioning enabled
-		nodes := make(map[string]core.PartitionableNode)
+		nodes := make(map[string]core2.PartitionableNode)
 		for k, v := range clusterState.GetNodes() {
 			if v.Node() == nil {
 				continue
@@ -134,7 +135,7 @@ func NewSnapshotTaker() core.SnapshotTaker {
 		partitioner := NewPartitioner()
 		sliceCalculator := NewSliceCalculator()
 		sliceFilter := NewSliceFilter()
-		snapshot := core.NewClusterSnapshot(
+		snapshot := core2.NewClusterSnapshot(
 			nodes,
 			partitioner,
 			sliceCalculator,
@@ -149,15 +150,15 @@ func NewController(
 	scheme *runtime.Scheme,
 	client client.Client,
 	podBatcher util.Batcher[v1.Pod],
-	clusterState *state.ClusterState,
+	clusterState *state2.ClusterState,
 	scheduler framework.Framework,
-) core.Controller {
-	planner := core.NewPlanner(
+) gpupartitioner.Controller {
+	planner := core2.NewPlanner(
 		NewPartitioner(),
 		NewSliceCalculator(),
 		scheduler,
 	)
-	return core.NewController(
+	return gpupartitioner.NewController(
 		scheme,
 		client,
 		podBatcher,

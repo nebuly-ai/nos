@@ -57,7 +57,7 @@ operator-manifests: controller-gen ## Generate CustomResourceDefinition objects.
 
 .PHONY: gpu-partitioner-manifests ## Generate manifests for the gpu-partitioner (ClusterRole, etc.).
 gpu-partitioner-manifests: controller-gen
-	$(CONTROLLER_GEN) paths="./internal/controllers/gpupartitioner/core" \
+	$(CONTROLLER_GEN) paths="./internal/controllers/gpupartitioner" \
 	rbac:roleName=gpu-partitioner-role \
 	output:rbac:artifacts:config=config/gpupartitioner/rbac
 

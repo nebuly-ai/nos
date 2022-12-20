@@ -17,7 +17,7 @@
 package state_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"

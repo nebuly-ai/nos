@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package core
+package gpupartitioner
 
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
@@ -38,9 +39,9 @@ type Controller struct {
 	podBatcher    util.Batcher[v1.Pod]
 	clusterState  *state.ClusterState
 	currentBatch  map[string]v1.Pod
-	planner       Planner
-	actuator      Actuator
-	snapshotTaker SnapshotTaker
+	planner       core.Planner
+	actuator      core.Actuator
+	snapshotTaker core.SnapshotTaker
 }
 
 func NewController(
@@ -48,9 +49,9 @@ func NewController(
 	client client.Client,
 	podBatcher util.Batcher[v1.Pod],
 	clusterState *state.ClusterState,
-	planner Planner,
-	actuator Actuator,
-	snapshotTaker SnapshotTaker) Controller {
+	planner core.Planner,
+	actuator core.Actuator,
+	snapshotTaker core.SnapshotTaker) Controller {
 	return Controller{
 		Scheme:        scheme,
 		Client:        client,

@@ -17,8 +17,8 @@
 package core_test
 
 import (
-	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"

@@ -17,7 +17,7 @@
 package core_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
+	core2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
@@ -30,8 +30,8 @@ import (
 	"testing"
 )
 
-func newMigSnapshot(t *testing.T, nodes []v1.Node) core.Snapshot {
-	migNodes := make(map[string]core.PartitionableNode, len(nodes))
+func newMigSnapshot(t *testing.T, nodes []v1.Node) core2.Snapshot {
+	migNodes := make(map[string]core2.PartitionableNode, len(nodes))
 	for _, n := range nodes {
 		nodeInfo := framework.NewNodeInfo()
 		nodeInfo.SetNode(&n)
@@ -41,7 +41,7 @@ func newMigSnapshot(t *testing.T, nodes []v1.Node) core.Snapshot {
 		}
 		migNodes[n.Name] = &migNode
 	}
-	return core.NewClusterSnapshot(
+	return core2.NewClusterSnapshot(
 		migNodes,
 		mocks.NewPartitioner(t),
 		mocks.NewSliceCalculator(t),
@@ -63,9 +63,9 @@ func TestSnapshot__Forking(t *testing.T) {
 			constant.LabelNvidiaCount:     "1",
 		}).Get()
 		snapshot := newMigSnapshot(t, []v1.Node{node})
-		originalNodes := make(map[string]core.PartitionableNode)
+		originalNodes := make(map[string]core2.PartitionableNode)
 		for k, v := range snapshot.GetNodes() {
-			originalNodes[k] = v.Clone().(core.PartitionableNode)
+			originalNodes[k] = v.Clone().(core2.PartitionableNode)
 		}
 		pod := factory.BuildPod("ns-1", "pod-1").WithContainer(
 			factory.BuildContainer("c1", "i1").WithCPUMilliRequest(1000).Get(),
@@ -99,9 +99,9 @@ func TestSnapshot__Forking(t *testing.T) {
 			constant.LabelNvidiaCount:     "1",
 		}).Get()
 		snapshot := newMigSnapshot(t, []v1.Node{node})
-		originalNodes := make(map[string]core.PartitionableNode)
+		originalNodes := make(map[string]core2.PartitionableNode)
 		for k, v := range snapshot.GetNodes() {
-			originalNodes[k] = v.Clone().(core.PartitionableNode)
+			originalNodes[k] = v.Clone().(core2.PartitionableNode)
 		}
 		pod := factory.BuildPod("ns-1", "pod-1").WithContainer(
 			factory.BuildContainer("c1", "i1").WithCPUMilliRequest(1000).Get(),

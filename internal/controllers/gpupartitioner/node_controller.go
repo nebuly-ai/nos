@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package state
+package gpupartitioner
 
 import (
 	"context"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
@@ -35,10 +36,10 @@ import (
 type NodeController struct {
 	client.Client
 	Scheme       *runtime.Scheme
-	clusterState *ClusterState
+	clusterState *state.ClusterState
 }
 
-func NewNodeController(client client.Client, scheme *runtime.Scheme, state *ClusterState) NodeController {
+func NewNodeController(client client.Client, scheme *runtime.Scheme, state *state.ClusterState) NodeController {
 	return NodeController{
 		Client:       client,
 		Scheme:       scheme,
@@ -59,7 +60,7 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	}
 	if apierrors.IsNotFound(err) {
 		logger.V(2).Info("deleting node", "node", instance.Name)
-		c.clusterState.deleteNode(instance.Name)
+		c.clusterState.DeleteNode(instance.Name)
 		return ctrl.Result{}, nil
 	}
 
@@ -70,7 +71,7 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, err
 	}
 	logger.V(2).Info("updating node", "node", instance.Name, "nPods", len(podList.Items))
-	c.clusterState.updateNode(instance, podList.Items)
+	c.clusterState.UpdateNode(instance, podList.Items)
 
 	return ctrl.Result{}, nil
 }

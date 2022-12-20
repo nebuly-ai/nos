@@ -141,7 +141,7 @@ func TestClusterState_deleteNode(t *testing.T) {
 				nodes:    tt.nodes,
 				bindings: tt.bindings,
 			}
-			state.deleteNode(tt.node)
+			state.DeleteNode(tt.node)
 			assert.Equal(t, tt.expectedNodes, state.nodes)
 			assert.Equal(t, tt.expectedBindings, state.bindings)
 		})
@@ -215,7 +215,7 @@ func TestClusterState_deletePod(t *testing.T) {
 				nodes:    tt.nodes,
 				bindings: tt.bindings,
 			}
-			err := state.deletePod(tt.podToDelete)
+			err := state.DeletePod(tt.podToDelete)
 			if tt.errorExpected {
 				assert.Error(t, err)
 			} else {
@@ -262,7 +262,7 @@ func TestClusterState_deletePod(t *testing.T) {
 		}
 
 		// delete pod and check
-		err := clusterState.deletePod(util.GetNamespacedName(&podOne))
+		err := clusterState.DeletePod(util.GetNamespacedName(&podOne))
 		assert.NoError(t, err)
 		assert.Equal(t, expectedBindings, clusterState.bindings)
 		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
@@ -319,7 +319,7 @@ func TestClusterState_updateNode(t *testing.T) {
 		}
 
 		// Update and check
-		clusterState.updateNode(newNode, newPods)
+		clusterState.UpdateNode(newNode, newPods)
 		assert.Equal(t, expectedBindings, clusterState.bindings)
 		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
 		for k, n := range expectedNodes {
@@ -372,7 +372,7 @@ func TestClusterState_updateNode(t *testing.T) {
 		}
 
 		// Update and check
-		clusterState.updateNode(nodeOne, []v1.Pod{newPod})
+		clusterState.UpdateNode(nodeOne, []v1.Pod{newPod})
 		assert.Equal(t, expectedBindings, clusterState.bindings)
 		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
 		for k, n := range expectedNodes {
@@ -446,7 +446,7 @@ func TestClusterState_updateUsage(t *testing.T) {
 				nodes:    tt.nodes,
 				bindings: tt.bindings,
 			}
-			state.updateUsage(tt.pod)
+			state.UpdateUsage(tt.pod)
 			assert.Equal(t, tt.expectedNodes, state.nodes)
 			assert.Equal(t, tt.expectedBindings, state.bindings)
 		})
@@ -486,7 +486,7 @@ func TestClusterState_updateUsage(t *testing.T) {
 		}
 
 		// Update and check
-		clusterState.updateUsage(newPod)
+		clusterState.UpdateUsage(newPod)
 		assert.Equal(t, expectedBindings, clusterState.bindings)
 		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
 		for k, n := range expectedNodes {
@@ -541,7 +541,7 @@ func TestClusterState_updateUsage(t *testing.T) {
 		}
 
 		// Update and check
-		clusterState.updateUsage(updatedPod)
+		clusterState.UpdateUsage(updatedPod)
 		assert.Equal(t, expectedBindings, clusterState.bindings)
 		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
 		for k, n := range expectedNodes {
@@ -596,7 +596,7 @@ func TestClusterState_updateUsage(t *testing.T) {
 		}
 
 		// Update and check
-		clusterState.updateUsage(updatedPod)
+		clusterState.UpdateUsage(updatedPod)
 		assert.Equal(t, expectedBindings, clusterState.bindings)
 		assert.Equal(t, len(expectedNodes), len(clusterState.nodes))
 		for k, n := range expectedNodes {

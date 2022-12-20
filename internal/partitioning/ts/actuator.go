@@ -18,12 +18,12 @@ package ts
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
+	core2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 )
 
 type Actuator struct {
 }
 
-func (p *Planner) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
+func (p *Planner) Apply(ctx context.Context, snapshot core2.Snapshot, plan core2.PartitioningPlan) (bool, error) {
 	return false, nil
 }

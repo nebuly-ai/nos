@@ -20,8 +20,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
+	state2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
@@ -127,10 +128,10 @@ func main() {
 	}
 
 	// Init state
-	clusterState := state.NewEmptyClusterState()
+	clusterState := state2.NewEmptyClusterState()
 
 	// Setup state controllers
-	nodeController := state.NewNodeController(
+	nodeController := gpupartitioner.NewNodeController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,
@@ -144,7 +145,7 @@ func main() {
 		)
 		os.Exit(1)
 	}
-	podController := state.NewPodController(
+	podController := gpupartitioner.NewPodController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		&clusterState,

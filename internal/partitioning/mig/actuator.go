@@ -19,8 +19,8 @@ package mig
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	core2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
@@ -40,7 +40,7 @@ func NewActuator(client client.Client) Actuator {
 	}
 }
 
-func (a Actuator) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
+func (a Actuator) Apply(ctx context.Context, snapshot core2.Snapshot, plan core2.PartitioningPlan) (bool, error) {
 	var err error
 	logger := log.FromContext(ctx)
 	logger.Info("applying desired MIG partitioning")

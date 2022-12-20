@@ -19,9 +19,9 @@ package core_test
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
-	partitioner_mig "github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	partitioner_mig "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
+	state2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
@@ -46,7 +46,7 @@ func TestPlanner__Plan(t *testing.T) {
 		schedulerPreFilterStatus *framework.Status
 		schedulerFilterStatus    *framework.Status
 
-		expectedOverallPartitioning []state.GPUPartitioning
+		expectedOverallPartitioning []state2.GPUPartitioning
 		expectedErr                 bool
 	}{
 		{
@@ -56,7 +56,7 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 
-			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
+			expectedOverallPartitioning: make([]state2.GPUPartitioning, 0),
 			expectedErr:                 false,
 		},
 		{
@@ -69,7 +69,7 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 
-			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
+			expectedOverallPartitioning: make([]state2.GPUPartitioning, 0),
 			expectedErr:                 false,
 		},
 		{
@@ -111,7 +111,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state.GPUPartitioning{
+			expectedOverallPartitioning: []state2.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g20gb.AsResourceName(): 1,
@@ -166,7 +166,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Error),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state.GPUPartitioning{
+			expectedOverallPartitioning: []state2.GPUPartitioning{
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
@@ -217,7 +217,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Error),
-			expectedOverallPartitioning: []state.GPUPartitioning{
+			expectedOverallPartitioning: []state2.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g24gb.AsResourceName(): 1,
@@ -298,7 +298,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state.GPUPartitioning{
+			expectedOverallPartitioning: []state2.GPUPartitioning{
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
@@ -384,7 +384,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state.GPUPartitioning{
+			expectedOverallPartitioning: []state2.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile3g20gb.AsResourceName(): 2,
@@ -443,7 +443,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state.GPUPartitioning{
+			expectedOverallPartitioning: []state2.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g40gb.AsResourceName(): 1,
@@ -478,7 +478,7 @@ func TestPlanner__Plan(t *testing.T) {
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
 
 			// Compute overall partitioning ignoring GPU index
-			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
+			overallGpuPartitioning := make([]state2.GPUPartitioning, 0)
 			for _, nodePartitioning := range plan.DesiredState {
 				for _, g := range nodePartitioning.GPUs {
 					g.GPUIndex = 0
@@ -568,7 +568,7 @@ func newSnapshotFromNodes(nodes []v1.Node) core.Snapshot {
 		ni.SetNode(&n)
 		nodeInfos[n.Name] = *ni
 	}
-	s := state.NewClusterState(nodeInfos)
+	s := state2.NewClusterState(nodeInfos)
 	snapshot, err := partitioner_mig.NewSnapshotTaker().TakeSnapshot(&s)
 	if err != nil {
 		panic(err)
