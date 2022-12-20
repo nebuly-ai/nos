@@ -23,7 +23,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/tsagent"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	gpumock "github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
+	gpumock "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/gpu"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
