@@ -17,43 +17,41 @@
 package mig
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kubernetes/pkg/scheduler/framework"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 )
 
-func NewPlanner(scheduler framework.Framework) core.Planner {
-	return core.NewPlanner(
-		NewPartitioner(),
-		NewSliceCalculator(),
-		scheduler,
-	)
+var _ core.SnapshotTaker = snapshotTaker{}
+
+type snapshotTaker struct {
 }
 
-func NewController(
-	scheme *runtime.Scheme,
-	client client.Client,
-	podBatcher util.Batcher[v1.Pod],
-	clusterState *state.ClusterState,
-	scheduler framework.Framework,
-) gpupartitioner.Controller {
-
-	return gpupartitioner.NewController(
-		scheme,
-		client,
-		podBatcher,
-		clusterState,
-		core.NewPlanner(
-			NewPartitioner(),
-			NewSliceCalculator(),
-			scheduler,
-		),
-		NewActuator(client),
-		NewSnapshotTaker(),
+func (s snapshotTaker) TakeSnapshot(clusterState *state.ClusterState) (core.Snapshot, error) {
+	nodes := make(map[string]core.PartitionableNode)
+	for k, v := range clusterState.GetNodes() {
+		if v.Node() == nil {
+			continue
+		}
+		if !gpu.IsMigPartitioningEnabled(*v.Node()) {
+			continue
+		}
+		migNode, err := mig.NewNode(v)
+		if err != nil {
+			return nil, err
+		}
+		nodes[k] = &migNode
+	}
+	snapshot := core.NewClusterSnapshot(
+		nodes,
+		NewPartitioner(),
+		NewSliceCalculator(),
+		NewSliceFilter(),
 	)
+	return snapshot, nil
+}
+
+func NewSnapshotTaker() core.SnapshotTaker {
+	return snapshotTaker{}
 }

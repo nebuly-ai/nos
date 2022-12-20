@@ -14,16 +14,31 @@
  * limitations under the License.
  */
 
-package ts
+package mig
 
 import (
-	"context"
-	core "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	v1 "k8s.io/api/core/v1"
 )
 
-type Actuator struct {
+var _ core.SliceFilter = sliceFilter{}
+
+type sliceFilter struct {
 }
 
-func (p *Actuator) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
-	return false, nil
+func (f sliceFilter) ExtractSlices(resources map[v1.ResourceName]int64) map[gpu.Slice]int {
+	var res = make(map[gpu.Slice]int)
+	for r, q := range resources {
+		if mig.IsNvidiaMigDevice(r) {
+			profileName, _ := mig.ExtractProfileName(r)
+			res[profileName] += int(q)
+		}
+	}
+	return res
+}
+
+func NewSliceFilter() core.SliceFilter {
+	return sliceFilter{}
 }

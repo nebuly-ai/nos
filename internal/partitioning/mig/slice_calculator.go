@@ -14,16 +14,29 @@
  * limitations under the License.
  */
 
-package ts
+package mig
 
 import (
-	"context"
-	core "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	v1 "k8s.io/api/core/v1"
 )
 
-type Actuator struct {
+var _ core.SliceCalculator = sliceCalculator{}
+
+type sliceCalculator struct {
 }
 
-func (p *Actuator) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
-	return false, nil
+func (f sliceCalculator) GetRequestedSlices(pod v1.Pod) map[gpu.Slice]int {
+	requestedMigProfiles := mig.GetRequestedProfiles(pod)
+	res := make(map[gpu.Slice]int, len(requestedMigProfiles))
+	for p, q := range requestedMigProfiles {
+		res[p] = q
+	}
+	return res
+}
+
+func NewSliceCalculator() core.SliceCalculator {
+	return sliceCalculator{}
 }

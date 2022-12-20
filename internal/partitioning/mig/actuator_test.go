@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	mig2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
-	state2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
@@ -40,7 +40,7 @@ func TestActuator__Apply(t *testing.T) {
 	testCases := []struct {
 		name          string
 		snapshotNodes map[string]v1.Node
-		desiredState  state2.PartitioningState
+		desiredState  state.PartitioningState
 
 		expectedAnnotations map[string]map[string]string
 		expectedApplied     bool
@@ -49,7 +49,7 @@ func TestActuator__Apply(t *testing.T) {
 		{
 			name:                "Empty snapshot, empty desired state",
 			snapshotNodes:       map[string]v1.Node{},
-			desiredState:        map[string]state2.NodePartitioning{},
+			desiredState:        map[string]state.NodePartitioning{},
 			expectedAnnotations: map[string]map[string]string{},
 			expectedApplied:     false,
 			expectedErr:         false,
@@ -57,9 +57,9 @@ func TestActuator__Apply(t *testing.T) {
 		{
 			name:          "Empty snapshot, desired state not empty: actuator should return node not found error",
 			snapshotNodes: map[string]v1.Node{},
-			desiredState: map[string]state2.NodePartitioning{
+			desiredState: map[string]state.NodePartitioning{
 				"node-1": {
-					GPUs: []state2.GPUPartitioning{
+					GPUs: []state.GPUPartitioning{
 						{
 							GPUIndex: 0,
 							Resources: map[v1.ResourceName]int{
@@ -80,7 +80,7 @@ func TestActuator__Apply(t *testing.T) {
 					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
 				}).Get(),
 			},
-			desiredState:        map[string]state2.NodePartitioning{},
+			desiredState:        map[string]state.NodePartitioning{},
 			expectedAnnotations: map[string]map[string]string{},
 			expectedApplied:     false,
 			expectedErr:         false,
@@ -103,9 +103,9 @@ func TestActuator__Apply(t *testing.T) {
 					}).
 					Get(),
 			},
-			desiredState: map[string]state2.NodePartitioning{
+			desiredState: map[string]state.NodePartitioning{
 				"node-1": {
-					GPUs: []state2.GPUPartitioning{
+					GPUs: []state.GPUPartitioning{
 						{
 							GPUIndex: 0,
 							Resources: map[v1.ResourceName]int{
@@ -116,7 +116,7 @@ func TestActuator__Apply(t *testing.T) {
 					},
 				},
 				"node-2": {
-					GPUs: []state2.GPUPartitioning{
+					GPUs: []state.GPUPartitioning{
 						{
 							GPUIndex: 0,
 							Resources: map[v1.ResourceName]int{
@@ -162,9 +162,9 @@ func TestActuator__Apply(t *testing.T) {
 					}).
 					Get(),
 			},
-			desiredState: map[string]state2.NodePartitioning{
+			desiredState: map[string]state.NodePartitioning{
 				"node-2": {
-					GPUs: []state2.GPUPartitioning{
+					GPUs: []state.GPUPartitioning{
 						{
 							GPUIndex: 0,
 							Resources: map[v1.ResourceName]int{
@@ -204,12 +204,12 @@ func TestActuator__Apply(t *testing.T) {
 				nodeInfos[n.Name] = *ni
 			}
 
-			s := state2.NewClusterState(nodeInfos)
-			snapshot, err := mig2.NewSnapshotTaker().TakeSnapshot(&s)
+			s := state.NewClusterState(nodeInfos)
+			snapshot, err := mig_partitioner.NewSnapshotTaker().TakeSnapshot(&s)
 			assert.NoError(t, err)
 
 			fakeClient := fakeClientBuilder.Build()
-			actuator := mig2.NewActuator(fakeClient)
+			actuator := mig_partitioner.NewActuator(fakeClient)
 			plan := core.NewPartitioningPlan(tt.desiredState)
 			applied, err := actuator.Apply(context.Background(), snapshot, plan)
 

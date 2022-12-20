@@ -15,15 +15,3 @@
  */
 
 package ts
-
-import (
-	"context"
-	core "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-)
-
-type Actuator struct {
-}
-
-func (p *Actuator) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
-	return false, nil
-}

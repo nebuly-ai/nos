@@ -17,13 +17,13 @@
 package ts
 
 import (
-	"context"
-	core "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 )
 
-type Actuator struct {
+type partitioner struct {
 }
 
-func (p *Actuator) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
-	return false, nil
+func (p partitioner) GetPartitioning(node core.PartitionableNode) state.NodePartitioning {
+	return state.NodePartitioning{}
 }

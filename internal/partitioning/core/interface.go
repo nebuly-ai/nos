@@ -18,7 +18,7 @@ package core
 
 import (
 	"context"
-	state2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
@@ -51,11 +51,11 @@ type PartitionableNode interface {
 }
 
 type Partitioner interface {
-	GetPartitioning(node PartitionableNode) state2.NodePartitioning
+	GetPartitioning(node PartitionableNode) state.NodePartitioning
 }
 
 type Snapshot interface {
-	GetPartitioningState() state2.PartitioningState
+	GetPartitioningState() state.PartitioningState
 	GetCandidateNodes() []PartitionableNode
 	GetLackingSlices(pod v1.Pod) map[gpu.Slice]int
 	SetNode(n PartitionableNode)
@@ -68,7 +68,7 @@ type Snapshot interface {
 }
 
 type SnapshotTaker interface {
-	TakeSnapshot(clusterState *state2.ClusterState) (Snapshot, error)
+	TakeSnapshot(clusterState *state.ClusterState) (Snapshot, error)
 }
 
 type Sorter interface {
