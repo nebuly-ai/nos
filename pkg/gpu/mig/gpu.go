@@ -19,52 +19,15 @@ package mig
 import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
-	"sort"
-	"strings"
 )
-
-// Geometry corresponds to the MIG Geometry of a GPU,
-// namely the MIG profiles of the GPU with the respective quantity.
-type Geometry map[ProfileName]int
-
-func (g Geometry) AsResources() map[v1.ResourceName]int {
-	res := make(map[v1.ResourceName]int)
-	for p, v := range g {
-		resourceName := v1.ResourceName(fmt.Sprintf("%s%s", constant.NvidiaMigResourcePrefix, p))
-		res[resourceName] += v
-	}
-	return res
-}
-
-func (g Geometry) Id() string {
-	return g.String()
-}
-
-func (g Geometry) String() string {
-	// Sort profiles
-	var orderedProfiles = make([]ProfileName, 0, len(g))
-	for profile := range g {
-		orderedProfiles = append(orderedProfiles, profile)
-	}
-	sort.SliceStable(orderedProfiles, func(i, j int) bool {
-		return orderedProfiles[i] < orderedProfiles[j]
-	})
-	// Build string
-	var builder strings.Builder
-	for _, profile := range orderedProfiles {
-		builder.WriteString(fmt.Sprintf("%s:%d, ", profile, g[profile]))
-	}
-	return builder.String()
-}
 
 type GPU struct {
 	index                int
 	model                gpu.Model
-	allowedMigGeometries []Geometry
+	allowedMigGeometries []gpu.Geometry
 	usedMigDevices       map[ProfileName]int
 	freeMigDevices       map[ProfileName]int
 }
@@ -116,8 +79,8 @@ func (g *GPU) GetModel() gpu.Model {
 	return g.model
 }
 
-func (g *GPU) GetGeometry() Geometry {
-	res := make(Geometry)
+func (g *GPU) GetGeometry() gpu.Geometry {
+	res := make(gpu.Geometry)
 
 	for profile, quantity := range g.usedMigDevices {
 		res[profile] += quantity
@@ -131,7 +94,7 @@ func (g *GPU) GetGeometry() Geometry {
 
 // CanApplyGeometry returns true if the geometry provided as argument can be applied to the GPU, otherwise it
 // returns false and the reason why the geometry cannot be applied.
-func (g *GPU) CanApplyGeometry(geometry Geometry) (bool, string) {
+func (g *GPU) CanApplyGeometry(geometry gpu.Geometry) (bool, string) {
 	// Check if geometry is allowed
 	if !g.AllowsGeometry(geometry) {
 		return false, fmt.Sprintf("GPU model %s does not allow the provided MIG geometry", g.model)
@@ -149,14 +112,17 @@ func (g *GPU) CanApplyGeometry(geometry Geometry) (bool, string) {
 // ApplyGeometry applies the MIG geometry provided as argument by changing the free devices of the GPU.
 // It returns an error if the provided geometry is not allowed or if applying it would require to delete any used
 // device of the GPU.
-func (g *GPU) ApplyGeometry(geometry Geometry) error {
+func (g *GPU) ApplyGeometry(geometry gpu.Geometry) error {
 	canApply, reason := g.CanApplyGeometry(geometry)
 	if !canApply {
 		return fmt.Errorf(reason)
 	}
 	// Apply geometry by changing free devices
 	for profile, quantity := range geometry {
-		g.freeMigDevices[profile] = quantity - g.usedMigDevices[profile]
+		migProfile, ok := profile.(ProfileName)
+		if ok {
+			g.freeMigDevices[migProfile] = quantity - g.usedMigDevices[migProfile]
+		}
 	}
 	// Delete all free devices not included in the new geometry
 	for profile := range g.freeMigDevices {
@@ -174,8 +140,8 @@ func (g *GPU) ApplyGeometry(geometry Geometry) error {
 // The method returns true if the GPU geometry gets updated, false otherwise.
 func (g *GPU) UpdateGeometryFor(requiredProfiles map[gpu.Slice]int) bool {
 	var geometryNumProvidedProfiles = make(map[string]int)
-	var geometryLookup = make(map[string]Geometry)
-	var bestGeometry *Geometry
+	var geometryLookup = make(map[string]gpu.Geometry)
+	var bestGeometry *gpu.Geometry
 
 	// For each allowed geometry, compute the number of required profiles that it can provide
 	for _, candidate := range g.GetAllowedGeometries() {
@@ -229,7 +195,7 @@ func (g *GPU) UpdateGeometryFor(requiredProfiles map[gpu.Slice]int) bool {
 }
 
 // AllowsGeometry returns true if the geometry provided as argument is allowed by the GPU model
-func (g *GPU) AllowsGeometry(geometry Geometry) bool {
+func (g *GPU) AllowsGeometry(geometry gpu.Geometry) bool {
 	for _, allowedGeometry := range g.GetAllowedGeometries() {
 		if cmp.Equal(geometry, allowedGeometry) {
 			return true
@@ -239,7 +205,7 @@ func (g *GPU) AllowsGeometry(geometry Geometry) bool {
 }
 
 // GetAllowedGeometries returns the MIG geometries allowed by the GPU model
-func (g *GPU) GetAllowedGeometries() []Geometry {
+func (g *GPU) GetAllowedGeometries() []gpu.Geometry {
 	return g.allowedMigGeometries
 }
 

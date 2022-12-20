@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	defaultKnownMigGeometries = map[gpu.Model][]Geometry{
+	defaultKnownMigGeometries = map[gpu.Model][]gpu.Geometry{
 		gpu.GPUModel_A30: {
 			{
 				Profile4g24gb: 1,
@@ -141,7 +141,7 @@ var (
 	}
 )
 
-func SetKnownGeometries(configs map[gpu.Model][]Geometry) error {
+func SetKnownGeometries(configs map[gpu.Model][]gpu.Geometry) error {
 	if err := validateConfigs(configs); err != nil {
 		return err
 	}
@@ -149,26 +149,30 @@ func SetKnownGeometries(configs map[gpu.Model][]Geometry) error {
 	return nil
 }
 
-func GetKnownGeometries() map[gpu.Model][]Geometry {
+func GetKnownGeometries() map[gpu.Model][]gpu.Geometry {
 	if defaultKnownMigGeometries == nil {
-		return map[gpu.Model][]Geometry{}
+		return map[gpu.Model][]gpu.Geometry{}
 	}
 	return defaultKnownMigGeometries
 }
 
-func GetAllowedGeometries(model gpu.Model) ([]Geometry, bool) {
+func GetAllowedGeometries(model gpu.Model) ([]gpu.Geometry, bool) {
 	configs, ok := GetKnownGeometries()[model]
 	return configs, ok
 }
 
-func validateConfigs(configs map[gpu.Model][]Geometry) error {
+func validateConfigs(configs map[gpu.Model][]gpu.Geometry) error {
 	if len(configs) == 0 {
 		return fmt.Errorf("no known configs provided")
 	}
 	for _, geometryList := range configs {
 		for _, geometry := range geometryList {
 			for profile, quantity := range geometry {
-				if !profile.isValid() {
+				migProfile, ok := profile.(ProfileName)
+				if !ok {
+					return fmt.Errorf("invalid profile type %T, expected MIG profile name", profile)
+				}
+				if !migProfile.isValid() {
 					return fmt.Errorf("invalid profile %s", profile)
 				}
 				if quantity < 1 {

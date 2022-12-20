@@ -29,12 +29,12 @@ func TestGPU__GetMigGeometry(t *testing.T) {
 	testCases := []struct {
 		name             string
 		gpu              mig.GPU
-		expectedGeometry mig.Geometry
+		expectedGeometry gpu.Geometry
 	}{
 		{
 			name:             "Empty GPU",
 			gpu:              mig.NewGpuOrPanic(gpu.GPUModel_A30, 0, make(map[mig.ProfileName]int), make(map[mig.ProfileName]int)),
-			expectedGeometry: mig.Geometry{},
+			expectedGeometry: gpu.Geometry{},
 		},
 	}
 
@@ -184,7 +184,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 	testCases := []struct {
 		name            string
 		gpu             mig.GPU
-		geometryToApply mig.Geometry
+		geometryToApply gpu.Geometry
 		expected        mig.GPU
 		expectedErr     bool
 	}{
@@ -196,7 +196,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),
 			),
-			geometryToApply: mig.Geometry{
+			geometryToApply: gpu.Geometry{
 				mig.Profile7g40gb: 1,
 			},
 			expected: mig.NewGpuOrPanic(
@@ -217,7 +217,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				make(map[mig.ProfileName]int),
 				make(map[mig.ProfileName]int),
 			),
-			geometryToApply: mig.Geometry{
+			geometryToApply: gpu.Geometry{
 				mig.Profile1g10gb: 12,
 			},
 			expected: mig.NewGpuOrPanic(
@@ -238,7 +238,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 				},
 				make(map[mig.ProfileName]int),
 			),
-			geometryToApply: map[mig.ProfileName]int{
+			geometryToApply: map[gpu.Slice]int{
 				mig.Profile4g24gb: 1,
 			},
 			expected: mig.NewGpuOrPanic(
@@ -263,7 +263,7 @@ func TestGPU__ApplyGeometry(t *testing.T) {
 					mig.Profile2g12gb: 1,
 				},
 			),
-			geometryToApply: map[mig.ProfileName]int{
+			geometryToApply: map[gpu.Slice]int{
 				mig.Profile1g6gb: 4,
 			},
 			expected: mig.NewGpuOrPanic(
@@ -425,17 +425,17 @@ func TestGPU__UpdateGeometryFor(t *testing.T) {
 func TestGeometry__AsResources(t *testing.T) {
 	testCases := []struct {
 		name     string
-		geometry mig.Geometry
+		geometry gpu.Geometry
 		expected map[v1.ResourceName]int
 	}{
 		{
 			name:     "Empty geometry",
-			geometry: mig.Geometry{},
+			geometry: gpu.Geometry{},
 			expected: make(map[v1.ResourceName]int),
 		},
 		{
 			name: "Multiple resources",
-			geometry: mig.Geometry{
+			geometry: gpu.Geometry{
 				mig.Profile1g5gb:  3,
 				mig.Profile1g10gb: 2,
 			},

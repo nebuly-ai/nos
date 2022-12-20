@@ -48,11 +48,7 @@ func NewController(
 		client,
 		podBatcher,
 		clusterState,
-		core.NewPlanner(
-			NewPartitioner(),
-			NewSliceCalculator(),
-			scheduler,
-		),
+		NewPlanner(scheduler),
 		NewActuator(client),
 		NewSnapshotTaker(),
 	)

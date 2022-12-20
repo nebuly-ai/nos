@@ -81,6 +81,7 @@ func TestPlanner__Plan(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
+						constant.LabelNvidiaCount:     "1",
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
@@ -93,6 +94,7 @@ func TestPlanner__Plan(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
+						constant.LabelNvidiaCount:     "1",
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
@@ -134,6 +136,7 @@ func TestPlanner__Plan(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
+						constant.LabelNvidiaCount:     "1",
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
@@ -185,6 +188,7 @@ func TestPlanner__Plan(t *testing.T) {
 					}).
 					WithLabels(map[string]string{
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A30),
+						constant.LabelNvidiaCount:     "1",
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{

@@ -44,13 +44,12 @@ func NewNode(n framework.NodeInfo) (Node, error) {
 	node := *n.Node()
 	gpuModel, err := gpu.GetModel(node)
 	if err != nil {
-		return Node{
-			Name:     node.Name,
-			GPUs:     make([]GPU, 0),
-			nodeInfo: n,
-		}, nil
+		return Node{}, err
 	}
-	gpuCount, _ := gpu.GetCount(node)
+	gpuCount, err := gpu.GetCount(node)
+	if err != nil {
+		return Node{}, err
+	}
 
 	gpus, err := extractGPUs(node, gpuModel, gpuCount)
 	if err != nil {

@@ -47,11 +47,8 @@ func TestNewNode(t *testing.T) {
 					},
 				},
 			},
-			expectedNode: Node{
-				Name: "test-node",
-				GPUs: make([]GPU, 0),
-			},
-			expectedError: false,
+			expectedNode:  Node{},
+			expectedError: true,
 		},
 		{
 			name: "Node without GPU model label",
@@ -63,11 +60,8 @@ func TestNewNode(t *testing.T) {
 					},
 				},
 			},
-			expectedNode: Node{
-				Name: "test-node",
-				GPUs: make([]GPU, 0),
-			},
-			expectedError: false,
+			expectedNode:  Node{},
+			expectedError: true,
 		},
 		{
 			name: "Node with unknown GPU model",
@@ -96,6 +90,7 @@ func TestNewNode(t *testing.T) {
 					},
 					Labels: map[string]string{
 						constant.LabelNvidiaProduct: string(gpu.GPUModel_A30),
+						constant.LabelNvidiaCount:   "2",
 					},
 				},
 			},

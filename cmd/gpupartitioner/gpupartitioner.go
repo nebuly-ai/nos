@@ -325,8 +325,8 @@ func decodeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfigura
 	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)
 }
 
-func loadKnownGeometriesFromFile(file string) (map[gpu.Model][]gpumig.Geometry, error) {
-	var knownGeometries = make(map[gpu.Model][]gpumig.Geometry)
+func loadKnownGeometriesFromFile(file string) (map[gpu.Model][]gpu.Geometry, error) {
+	var knownGeometries = make(map[gpu.Model][]gpu.Geometry)
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return knownGeometries, err

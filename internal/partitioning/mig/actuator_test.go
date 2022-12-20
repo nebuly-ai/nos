@@ -78,6 +78,8 @@ func TestActuator__Apply(t *testing.T) {
 			snapshotNodes: map[string]v1.Node{
 				"node-1": factory.BuildNode("node-1").WithLabels(map[string]string{
 					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+					constant.LabelNvidiaCount:     "1",
+					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 				}).Get(),
 			},
 			desiredState:        map[string]state.NodePartitioning{},
@@ -100,6 +102,8 @@ func TestActuator__Apply(t *testing.T) {
 					WithLabels(map[string]string{
 						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
 						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
+						constant.LabelNvidiaCount:                "2",
+						constant.LabelNvidiaProduct:              string(gpu.GPUModel_A100_SXM4_40GB),
 					}).
 					Get(),
 			},
@@ -159,6 +163,8 @@ func TestActuator__Apply(t *testing.T) {
 					WithLabels(map[string]string{
 						fmt.Sprintf(constant.LabelNvidiaProduct): string(gpu.GPUModel_A100_SXM4_40GB),
 						v1alpha1.LabelGpuPartitioning:            gpu.PartitioningKindMig.String(),
+						constant.LabelNvidiaCount:                "2",
+						constant.LabelNvidiaProduct:              string(gpu.GPUModel_A100_SXM4_40GB),
 					}).
 					Get(),
 			},

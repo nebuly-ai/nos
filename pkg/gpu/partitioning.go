@@ -17,12 +17,51 @@
 package gpu
 
 import (
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	v1 "k8s.io/api/core/v1"
+	"sort"
+	"strings"
 )
 
 type Slice interface {
 	SmallerThan(other Slice) bool
+	String() string
+}
+
+// Geometry corresponds to the partitioning Geometry of a GPU,
+// namely the slices of the GPU with the respective quantity.
+type Geometry map[Slice]int
+
+func (g Geometry) AsResources() map[v1.ResourceName]int {
+	res := make(map[v1.ResourceName]int)
+	for p, v := range g {
+		resourceName := v1.ResourceName(fmt.Sprintf("%s%s", constant.NvidiaMigResourcePrefix, p))
+		res[resourceName] += v
+	}
+	return res
+}
+
+func (g Geometry) Id() string {
+	return g.String()
+}
+
+func (g Geometry) String() string {
+	// Sort profiles
+	var orderedProfiles = make([]Slice, 0, len(g))
+	for profile := range g {
+		orderedProfiles = append(orderedProfiles, profile)
+	}
+	sort.SliceStable(orderedProfiles, func(i, j int) bool {
+		return orderedProfiles[i].String() < orderedProfiles[j].String()
+	})
+	// Build string
+	var builder strings.Builder
+	for _, profile := range orderedProfiles {
+		builder.WriteString(fmt.Sprintf("%s:%d, ", profile, g[profile]))
+	}
+	return builder.String()
 }
 
 type PartitioningKind string

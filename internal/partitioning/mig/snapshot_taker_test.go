@@ -20,6 +20,7 @@ import (
 	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
@@ -47,9 +48,13 @@ func TestSnapshotTaker(t *testing.T) {
 				factory.BuildNode("node-1").Get(),
 				factory.BuildNode("node-2").WithLabels(map[string]string{
 					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+					constant.LabelNvidiaCount:     "1",
+					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 				}).Get(),
 				factory.BuildNode("node-3").WithLabels(map[string]string{
 					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					constant.LabelNvidiaCount:     "1",
+					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 				}).Get(),
 			},
 			expectedSnapshotNodes: []string{"node-2"},

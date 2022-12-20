@@ -41,7 +41,7 @@ func TestPartitioner__GetPartitioning(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			partitioning := mig_partitioner.NewPartitioner().GetPartitioning(tt.node)
-			assert.Equal(t, tt.expected, partitioning)
+			assert.True(t, tt.expected.Equal(partitioning))
 		})
 	}
 }
