@@ -35,6 +35,7 @@ const (
 	ClusterStateNodeControllerName      = "clusterstate-node-controller"
 	ClusterStatePodControllerName       = "clusterstate-pod-controller"
 	MigPartitionerControllerName        = "mig-partitioner-controller"
+	TsPartitionerControllerName         = "ts-partitioner-controller"
 )
 
 // Error messages
