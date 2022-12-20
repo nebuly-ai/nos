@@ -434,6 +434,7 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 				gpus = append(gpus, g)
 			}
 			node.GPUs = gpus
+			node.nodeInfo = *framework.NewNodeInfo()
 
 			// Run test
 			updated, err := node.UpdateGeometryFor(tt.migProfiles)
