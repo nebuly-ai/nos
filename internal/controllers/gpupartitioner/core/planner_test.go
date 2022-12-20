@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mig_test
+package core_test
 
 import (
 	"context"
@@ -473,9 +473,7 @@ func TestPlanner__Plan(t *testing.T) {
 				mock.Anything,
 			).Return(framework.PluginToStatus{"": tt.schedulerFilterStatus}).Maybe()
 
-			snapshot, err := newSnapshotFromNodes(tt.snapshotNodes)
-			assert.NoError(t, err)
-
+			snapshot := newSnapshotFromNodes(tt.snapshotNodes)
 			planner := partitioner_mig.NewPlanner(mockedScheduler)
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
 
@@ -560,7 +558,7 @@ func TestPlanner__Plan(t *testing.T) {
 //	nodeInfo := *framework.NewNodeInfo()
 //}
 
-func newSnapshotFromNodes(nodes []v1.Node) (core.Snapshot, error) {
+func newSnapshotFromNodes(nodes []v1.Node) core.Snapshot {
 	nodeInfos := make(map[string]framework.NodeInfo)
 	for _, node := range nodes {
 		n := node
@@ -571,5 +569,9 @@ func newSnapshotFromNodes(nodes []v1.Node) (core.Snapshot, error) {
 		nodeInfos[n.Name] = *ni
 	}
 	s := state.NewClusterState(nodeInfos)
-	return partitioner_mig.NewSnapshotTaker().TakeSnapshot(&s)
+	snapshot, err := partitioner_mig.NewSnapshotTaker().TakeSnapshot(&s)
+	if err != nil {
+		panic(err)
+	}
+	return snapshot
 }
