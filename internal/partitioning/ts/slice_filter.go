@@ -15,3 +15,30 @@
  */
 
 package ts
+
+import (
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
+	v1 "k8s.io/api/core/v1"
+)
+
+var _ core.SliceFilter = sliceFilter{}
+
+type sliceFilter struct {
+}
+
+func (s sliceFilter) ExtractSlices(resources map[v1.ResourceName]int64) map[gpu.Slice]int {
+	var res = make(map[gpu.Slice]int)
+	for r, q := range resources {
+		if timeslicing.IsTimeSlicingResource(r) {
+			profileName, _ := timeslicing.ExtractProfileName(r)
+			res[profileName] += int(q)
+		}
+	}
+	return res
+}
+
+func NewSliceFilter() core.SliceFilter {
+	return sliceFilter{}
+}

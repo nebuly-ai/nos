@@ -17,23 +17,31 @@
 package timeslicing
 
 import (
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
 )
 
 type Node struct {
-	Name string
-	GPUs []GPU
+	Name     string
+	GPUs     []GPU
+	nodeInfo framework.NodeInfo
 }
 
-func NewNode(n v1.Node) (Node, error) {
-	gpus, err := extractGPUs(n)
+func NewNode(n framework.NodeInfo) (Node, error) {
+	if n.Node() == nil {
+		return Node{}, fmt.Errorf("node is nil")
+	}
+	node := *n.Node()
+	gpus, err := extractGPUs(node)
 	if err != nil {
 		return Node{}, err
 	}
 	return Node{
-		Name: n.Name,
-		GPUs: gpus,
+		Name:     node.Name,
+		GPUs:     gpus,
+		nodeInfo: n,
 	}, nil
 }
 
@@ -95,13 +103,43 @@ func extractGPUs(n v1.Node) ([]GPU, error) {
 	return result, nil
 }
 
-func (n *Node) Clone() Node {
+func (n *Node) Clone() interface{} {
 	gpus := make([]GPU, len(n.GPUs))
 	for i, g := range n.GPUs {
 		gpus[i] = g.Clone()
 	}
-	return Node{
+	return &Node{
 		Name: n.Name,
 		GPUs: gpus,
 	}
+}
+
+func (n *Node) UpdateGeometryFor(slices map[gpu.Slice]int) (bool, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node) GetName() string {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node) Geometry() map[gpu.Slice]int {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node) NodeInfo() framework.NodeInfo {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node) AddPod(pod v1.Pod) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (n *Node) HasFreeCapacity() bool {
+	//TODO implement me
+	panic("implement me")
 }

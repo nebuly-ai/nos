@@ -25,6 +25,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"testing"
 )
 
@@ -128,7 +129,9 @@ func TestNewNode(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			node, err := timeslicing.NewNode(tt.node)
+			nodeInfo := framework.NewNodeInfo()
+			nodeInfo.SetNode(&tt.node)
+			node, err := timeslicing.NewNode(*nodeInfo)
 			if tt.errExpected {
 				assert.Error(t, err)
 			} else {

@@ -19,6 +19,8 @@ package timeslicing
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	v1 "k8s.io/api/core/v1"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,6 +33,11 @@ var (
 
 type ProfileName string
 
+func (p ProfileName) SmallerThan(other gpu.Slice) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (p ProfileName) String() string {
 	return string(p)
 }
@@ -42,4 +49,9 @@ func (p ProfileName) GetMemorySizeGB() int {
 		return i
 	}
 	return 0
+}
+
+func (p ProfileName) AsResourceName() v1.ResourceName {
+	resourceNameStr := fmt.Sprintf("%s%s", profileNamePrefix, p)
+	return v1.ResourceName(resourceNameStr)
 }

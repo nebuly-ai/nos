@@ -121,3 +121,12 @@ func GroupDevicesByMigProfile(l gpu.DeviceList) map[Profile]gpu.DeviceList {
 	}
 	return result
 }
+
+func AsResources(g gpu.Geometry) map[v1.ResourceName]int {
+	res := make(map[v1.ResourceName]int)
+	for p, v := range g {
+		resourceName := v1.ResourceName(fmt.Sprintf("%s%s", constant.NvidiaMigResourcePrefix, p))
+		res[resourceName] += v
+	}
+	return res
+}

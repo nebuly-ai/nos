@@ -93,6 +93,17 @@ func (g *GPU) Validate() error {
 	return nil
 }
 
+func (g *GPU) GetGeometry() gpu.Geometry {
+	geometry := make(gpu.Geometry)
+	for p, q := range g.usedProfiles {
+		geometry[p] += q
+	}
+	for p, q := range g.freeProfiles {
+		geometry[p] += q
+	}
+	return geometry
+}
+
 func (g *GPU) Clone() GPU {
 	return GPU{
 		Model:    g.Model,

@@ -19,11 +19,32 @@ package ts
 import (
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
 )
+
+var _ core.Partitioner = partitioner{}
 
 type partitioner struct {
 }
 
 func (p partitioner) GetPartitioning(node core.PartitionableNode) state.NodePartitioning {
-	return state.NodePartitioning{}
+	tsNode, ok := node.(*timeslicing.Node)
+	if !ok {
+		return state.NodePartitioning{
+			GPUs: make([]state.GPUPartitioning, 0),
+		}
+	}
+	gpuPartitioning := make([]state.GPUPartitioning, 0)
+	for _, g := range tsNode.GPUs {
+		gp := state.GPUPartitioning{
+			GPUIndex:  g.Index,
+			Resources: timeslicing.AsResources(g.GetGeometry()),
+		}
+		gpuPartitioning = append(gpuPartitioning, gp)
+	}
+	return state.NodePartitioning{GPUs: gpuPartitioning}
+}
+
+func NewPartitioner() core.Partitioner {
+	return partitioner{}
 }

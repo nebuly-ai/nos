@@ -448,7 +448,7 @@ func TestGeometry__AsResources(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.geometry.AsResources())
+			assert.Equal(t, tt.expected, mig.AsResources(tt.geometry))
 		})
 	}
 }

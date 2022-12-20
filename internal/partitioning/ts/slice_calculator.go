@@ -15,3 +15,28 @@
  */
 
 package ts
+
+import (
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
+	v1 "k8s.io/api/core/v1"
+)
+
+var _ core.SliceCalculator = sliceCalculator{}
+
+type sliceCalculator struct {
+}
+
+func (s sliceCalculator) GetRequestedSlices(pod v1.Pod) map[gpu.Slice]int {
+	requestedProfiles := timeslicing.GetRequestedProfiles(pod)
+	res := make(map[gpu.Slice]int, len(requestedProfiles))
+	for p, q := range requestedProfiles {
+		res[p] = q
+	}
+	return res
+}
+
+func NewSliceCalculator() core.SliceCalculator {
+	return sliceCalculator{}
+}

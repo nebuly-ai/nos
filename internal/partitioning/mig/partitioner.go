@@ -38,7 +38,7 @@ func (f partitioner) GetPartitioning(node core.PartitionableNode) state.NodePart
 	for _, g := range migNode.GPUs {
 		gp := state.GPUPartitioning{
 			GPUIndex:  g.GetIndex(),
-			Resources: g.GetGeometry().AsResources(),
+			Resources: mig.AsResources(g.GetGeometry()),
 		}
 		gpuPartitioning = append(gpuPartitioning, gp)
 	}

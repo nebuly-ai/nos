@@ -17,41 +17,39 @@
 package ts
 
 import (
+	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ core.SnapshotTaker = snapshotTaker{}
-
-type snapshotTaker struct {
-}
-
-func (s snapshotTaker) TakeSnapshot(clusterState *state.ClusterState) (core.Snapshot, error) {
-	nodes := make(map[string]core.PartitionableNode)
-	for k, v := range clusterState.GetNodes() {
-		if v.Node() == nil {
-			continue
-		}
-		if !gpu.IsTimeSlicingPartitioningEnabled(*v.Node()) {
-			continue
-		}
-		tsNode, err := timeslicing.NewNode(v)
-		if err != nil {
-			return nil, err
-		}
-		nodes[k] = &tsNode
-	}
-	snapshot := core.NewClusterSnapshot(
-		nodes,
+func NewPlanner(scheduler framework.Framework) core.Planner {
+	return core.NewPlanner(
 		NewPartitioner(),
 		NewSliceCalculator(),
-		NewSliceFilter(),
+		scheduler,
 	)
-	return snapshot, nil
 }
 
-func NewSnapshotTaker() core.SnapshotTaker {
-	return snapshotTaker{}
+func NewController(
+	scheme *runtime.Scheme,
+	client client.Client,
+	podBatcher util.Batcher[v1.Pod],
+	clusterState *state.ClusterState,
+	scheduler framework.Framework,
+) gpupartitioner.Controller {
+
+	return gpupartitioner.NewController(
+		scheme,
+		client,
+		podBatcher,
+		clusterState,
+		NewPlanner(scheduler),
+		NewActuator(client),
+		NewSnapshotTaker(),
+	)
 }
