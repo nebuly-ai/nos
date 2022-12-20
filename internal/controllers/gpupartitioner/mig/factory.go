@@ -21,8 +21,11 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ core.SliceFilter = sliceFilterAdapter(nil)
@@ -140,4 +143,27 @@ func NewSnapshotTaker() core.SnapshotTaker {
 		return snapshot, nil
 	}
 	return snapshotTaker
+}
+
+func NewController(
+	scheme *runtime.Scheme,
+	client client.Client,
+	podBatcher util.Batcher[v1.Pod],
+	clusterState *state.ClusterState,
+	scheduler framework.Framework,
+) core.Controller {
+	planner := core.NewPlanner(
+		NewPartitioner(),
+		NewSliceCalculator(),
+		scheduler,
+	)
+	return core.NewController(
+		scheme,
+		client,
+		podBatcher,
+		clusterState,
+		planner,
+		NewActuator(client),
+		NewSnapshotTaker(),
+	)
 }

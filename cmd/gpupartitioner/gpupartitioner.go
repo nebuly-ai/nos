@@ -20,7 +20,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/core"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/mig"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner/state"
 	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
@@ -160,16 +159,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Init scheduler and planner
+	// Init scheduler
 	k8sClient := kubernetes.NewForConfigOrDie(ctrl.GetConfigOrDie())
 	schedulerFramework, err := newSchedulerFramework(ctx, config, k8sClient)
 	if err != nil {
 		setupLog.Error(err, "unable to init k8s scheduler framework")
-		os.Exit(1)
-	}
-	migPlanner := mig.NewPlanner(schedulerFramework)
-	if err != nil {
-		setupLog.Error(err, "unable to create MIG planner")
 		os.Exit(1)
 	}
 
@@ -194,18 +188,13 @@ func main() {
 		}
 	}()
 
-	// Init actuator
-	migActuator := mig.NewActuator(mgr.GetClient())
-
 	// Setup MIG controller
-	migController := core.NewController(
+	migController := mig.NewController(
 		mgr.GetScheme(),
 		mgr.GetClient(),
 		podBatcher,
 		&clusterState,
-		migPlanner,
-		migActuator,
-		mig.NewSnapshotTaker(),
+		schedulerFramework,
 	)
 	if err = migController.SetupWithManager(mgr, constant.MigPartitionerControllerName); err != nil {
 		setupLog.Error(
