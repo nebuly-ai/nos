@@ -21,5 +21,5 @@ const (
 	// GPU devices exposed by the NVIDIA device plugin as time-slicing shared GPUs.
 	ReplicaGpuIdSeparator = "::"
 	// MinSliceMemoryGB is the smallest slice size that can be created on time-slicing shared GPUs.
-	MinSliceMemoryGB = 2
+	MinSliceMemoryGB = 1
 )

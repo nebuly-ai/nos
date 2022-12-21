@@ -19,14 +19,15 @@ package timeslicing
 import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	v1 "k8s.io/api/core/v1"
 )
 
 type GPU struct {
 	Model        gpu.Model
 	Index        int
 	MemoryGB     int
-	freeProfiles map[ProfileName]int
-	usedProfiles map[ProfileName]int
+	UsedProfiles map[ProfileName]int
+	FreeProfiles map[ProfileName]int
 }
 
 func NewFullGPU(model gpu.Model, index int, memoryGB int) GPU {
@@ -34,8 +35,8 @@ func NewFullGPU(model gpu.Model, index int, memoryGB int) GPU {
 		Model:        model,
 		Index:        index,
 		MemoryGB:     memoryGB,
-		freeProfiles: make(map[ProfileName]int),
-		usedProfiles: make(map[ProfileName]int),
+		UsedProfiles: make(map[ProfileName]int),
+		FreeProfiles: make(map[ProfileName]int),
 	}
 }
 
@@ -44,8 +45,8 @@ func NewGPU(model gpu.Model, index int, memoryGB int, usedProfiles, freeProfiles
 		Model:        model,
 		Index:        index,
 		MemoryGB:     memoryGB,
-		freeProfiles: freeProfiles,
-		usedProfiles: usedProfiles,
+		UsedProfiles: usedProfiles,
+		FreeProfiles: freeProfiles,
 	}
 	if err := g.Validate(); err != nil {
 		return GPU{}, err
@@ -63,7 +64,7 @@ func NewGpuOrPanic(model gpu.Model, index int, memoryGB int, usedProfiles, freeP
 
 func (g *GPU) Validate() error {
 	var totalMemoryGB int
-	for p, q := range g.usedProfiles {
+	for p, q := range g.UsedProfiles {
 		mem := p.GetMemorySizeGB()
 		if mem < MinSliceMemoryGB {
 			return fmt.Errorf(
@@ -75,7 +76,7 @@ func (g *GPU) Validate() error {
 		}
 		totalMemoryGB += mem * q
 	}
-	for p, q := range g.freeProfiles {
+	for p, q := range g.FreeProfiles {
 		mem := p.GetMemorySizeGB()
 		if mem < MinSliceMemoryGB {
 			return fmt.Errorf(
@@ -95,10 +96,10 @@ func (g *GPU) Validate() error {
 
 func (g *GPU) GetGeometry() gpu.Geometry {
 	geometry := make(gpu.Geometry)
-	for p, q := range g.usedProfiles {
+	for p, q := range g.UsedProfiles {
 		geometry[p] += q
 	}
-	for p, q := range g.freeProfiles {
+	for p, q := range g.FreeProfiles {
 		geometry[p] += q
 	}
 	return geometry
@@ -110,4 +111,41 @@ func (g *GPU) Clone() GPU {
 		Index:    g.Index,
 		MemoryGB: g.MemoryGB,
 	}
+}
+
+func (g *GPU) HasFreeCapacity() bool {
+	if len(g.FreeProfiles) > 0 {
+		return true
+	}
+	// Check if there is space to create more slices
+	var slicesMemory int
+	for p, q := range g.UsedProfiles {
+		slicesMemory += p.GetMemorySizeGB() * q
+	}
+	freeMemory := g.MemoryGB - slicesMemory
+	return freeMemory >= MinSliceMemoryGB
+}
+
+// AddPod adds a Pod to the GPU by updating the free and used slices according to the ones
+// requested by the Pod.
+//
+// AddPod returns an error if the GPU does not have enough free slices for the Pod.
+func (g *GPU) AddPod(pod v1.Pod) error {
+	for r, q := range GetRequestedProfiles(pod) {
+		if g.FreeProfiles[r] < q {
+			return fmt.Errorf(
+				"not enough free slices (pod requests %d %s, but GPU only has %d)",
+				q,
+				r,
+				g.FreeProfiles[r],
+			)
+		}
+		g.FreeProfiles[r] -= q
+		g.UsedProfiles[r] += q
+	}
+	return nil
+}
+
+func (g *GPU) UpdateGeometryFor(slices map[gpu.Slice]int) bool {
+	return false
 }

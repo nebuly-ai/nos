@@ -79,8 +79,8 @@ func extractGPUs(n v1.Node) ([]GPU, error) {
 			gpuModel,
 			gpuIndex,
 			gpuMemoryGB,
-			freeProfiles,
 			usedProfiles,
+			freeProfiles,
 		)
 		if err != nil {
 			return nil, err
@@ -115,31 +115,98 @@ func (n *Node) Clone() interface{} {
 }
 
 func (n *Node) UpdateGeometryFor(slices map[gpu.Slice]int) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	// If there are no GPUs, then there's nothing to do
+	if len(n.GPUs) == 0 {
+		return false, nil
+	}
+	if len(slices) == 0 {
+		return false, nil
+	}
+
+	// Copy slices
+	var requiredSlices = make(map[gpu.Slice]int, len(slices))
+	for k, v := range slices {
+		requiredSlices[k] = v
+	}
+
+	var anyGpuUpdated bool
+	for _, g := range n.GPUs {
+		updated := g.UpdateGeometryFor(requiredSlices)
+		anyGpuUpdated = anyGpuUpdated || updated
+		for profile, quantity := range g.FreeProfiles {
+			requiredSlices[profile] -= quantity
+			if requiredSlices[profile] <= 0 {
+				delete(requiredSlices, profile)
+			}
+		}
+	}
+
+	// Update node info
+	scalarResources := n.computeScalarResources()
+	n.nodeInfo.Allocatable.ScalarResources = scalarResources
+
+	return anyGpuUpdated, nil
+}
+
+func (n *Node) computeScalarResources() map[v1.ResourceName]int64 {
+	res := make(map[v1.ResourceName]int64)
+
+	// Set all non-time-slicing scalar resources
+	for r, v := range n.nodeInfo.Allocatable.ScalarResources {
+		if !IsTimeSlicingResource(r) {
+			res[r] = v
+		}
+	}
+	// Set time-slicing scalar resources
+	for r, v := range n.Geometry() {
+		resource := r.(ProfileName).AsResourceName()
+		res[resource] = int64(v)
+	}
+
+	return res
 }
 
 func (n *Node) GetName() string {
-	//TODO implement me
-	panic("implement me")
+	return n.Name
 }
 
+// Geometry returns the overall geometry of the node, which corresponds to the sum of the geometries of all
+// the GPUs present in the Node.
 func (n *Node) Geometry() map[gpu.Slice]int {
-	//TODO implement me
-	panic("implement me")
+	res := make(map[gpu.Slice]int)
+	for _, g := range n.GPUs {
+		for p, q := range g.GetGeometry() {
+			res[p] += q
+		}
+	}
+	return res
 }
 
 func (n *Node) NodeInfo() framework.NodeInfo {
-	//TODO implement me
-	panic("implement me")
+	return n.nodeInfo
 }
 
+// AddPod adds a Pod to the node by updating the free and used time-slicing slices of the Node GPUs according to the
+// slices requested by the Pod.
+//
+// AddPod returns an error if the node does not have any GPU providing enough free slices resources for the Pod.
 func (n *Node) AddPod(pod v1.Pod) error {
-	//TODO implement me
-	panic("implement me")
+	for _, g := range n.GPUs {
+		if err := g.AddPod(pod); err == nil {
+			nodeInfo := n.NodeInfo()
+			nodeInfo.AddPod(&pod)
+			return nil
+		}
+	}
+	return fmt.Errorf("not enough free GPU slices")
 }
 
+// HasFreeCapacity returns true if any of the GPUs of the node has enough free capacity for hosting more pods.
 func (n *Node) HasFreeCapacity() bool {
-	//TODO implement me
-	panic("implement me")
+	for _, g := range n.GPUs {
+		if g.HasFreeCapacity() {
+			return true
+		}
+	}
+	return false
 }

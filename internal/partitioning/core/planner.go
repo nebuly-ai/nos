@@ -70,7 +70,7 @@ func (p planner) Plan(ctx context.Context, snapshot Snapshot, candidatePods []v1
 		candidatePods,
 	)
 
-	// No lacking MIG profiles, nothing to do
+	// No lacking slices, nothing to do
 	if len(tracker.GetLackingSlices()) == 0 {
 		logger.V(1).Info("no lacking profiles, nothing to do")
 		return NewPartitioningPlan(partitioningState), nil
@@ -84,9 +84,9 @@ func (p planner) Plan(ctx context.Context, snapshot Snapshot, candidatePods []v1
 	logger.V(1).Info(fmt.Sprintf("found %d candidate nodes", len(candidateNodes)))
 
 	for _, n := range candidateNodes {
-		// If there are no more lacking MIG profiles we can stop
-		lackingMigProfiles := tracker.GetLackingSlices()
-		if len(lackingMigProfiles) == 0 {
+		// If there are no more lacking slices we can stop
+		lackingSlices := tracker.GetLackingSlices()
+		if len(lackingSlices) == 0 {
 			return NewPartitioningPlan(partitioningState), nil
 		}
 
@@ -95,7 +95,7 @@ func (p planner) Plan(ctx context.Context, snapshot Snapshot, candidatePods []v1
 			return PartitioningPlan{}, fmt.Errorf("error forking snapshot, this should never happen: %v", err)
 		}
 
-		// Try to update MIG geometry
+		// Try to update geometry
 		nodeGeometryUpdated, err := n.UpdateGeometryFor(tracker.GetLackingSlices())
 		if err != nil {
 			return PartitioningPlan{}, err
@@ -147,7 +147,7 @@ func (p planner) Plan(ctx context.Context, snapshot Snapshot, candidatePods []v1
 }
 
 func (p planner) tryAddPod(ctx context.Context, pod v1.Pod, nodeName string, snapshot Snapshot) bool {
-	// First we check if there are any lacking MIG profiles,
+	// First we check if there are any lacking slices,
 	// if so we avoid running a scheduler cycle
 	// since we already know that it is going to fail
 	if len(snapshot.GetLackingSlices(pod)) > 0 {

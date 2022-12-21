@@ -18,6 +18,10 @@ package gpu
 
 type Model string
 
+func (m Model) String() string {
+	return string(m)
+}
+
 const (
 	GPUModel_A30            Model = "A30"
 	GPUModel_A100_SXM4_40GB Model = "NVIDIA-A100-40GB-SXM4"

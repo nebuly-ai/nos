@@ -156,8 +156,8 @@ func (n *Node) UpdateGeometryFor(slices map[gpu.Slice]int) (bool, error) {
 	for k, v := range slices {
 		requiredProfiles[k] = v
 	}
-	var anyGpuUpdated bool
 
+	var anyGpuUpdated bool
 	for _, g := range n.GPUs {
 		updated := g.UpdateGeometryFor(requiredProfiles)
 		anyGpuUpdated = anyGpuUpdated || updated
@@ -180,7 +180,7 @@ func (n *Node) computeScalarResources() map[v1.ResourceName]int64 {
 	res := make(map[v1.ResourceName]int64)
 
 	// Set all non-MIG scalar resources
-	for r, v := range n.nodeInfo.Allocatable.ScalarResources {
+	for r, v := range n.NodeInfo().Allocatable.ScalarResources {
 		if !IsNvidiaMigDevice(r) {
 			res[r] = v
 		}

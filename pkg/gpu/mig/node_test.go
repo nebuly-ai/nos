@@ -22,6 +22,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -254,6 +255,24 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 			},
 			expectedUpdated:  false,
 			expectedGeometry: make(map[gpu.Slice]int),
+		},
+		{
+			name: "Node with GPUs, empty input list",
+			nodeGPUs: []gpuSpec{
+				{
+					model: gpu.GPUModel_A30,
+					index: 0,
+					used:  map[ProfileName]int{},
+					free: map[ProfileName]int{
+						Profile1g6gb: 4,
+					},
+				},
+			},
+			migProfiles:     make(map[gpu.Slice]int),
+			expectedUpdated: false,
+			expectedGeometry: map[gpu.Slice]int{
+				Profile1g6gb: 4,
+			},
 		},
 		{
 			name: "Node geometry already provides required profiles, should do nothing",
@@ -491,6 +510,82 @@ func TestNode__HasFreeMigCapacity(t *testing.T) {
 			n := Node{Name: "test", GPUs: tt.nodeGPUs}
 			res := n.HasFreeCapacity()
 			assert.Equal(t, tt.expected, res)
+		})
+	}
+}
+
+func TestNode_AddPod(t *testing.T) {
+	testCases := []struct {
+		name                       string
+		node                       v1.Node
+		pod                        v1.Pod
+		expectedRequestedResources framework.Resource
+		expectedUsedSlices         map[gpu.Slice]int
+		expectedFreeSlices         map[gpu.Slice]int
+		expectedErr                bool
+	}{
+		{
+			name: "Adding a pod should update node info and used GPU slices",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: gpu.GPUModel_A30.String(),
+					constant.LabelNvidiaCount:   "3",
+					constant.LabelNvidiaMemory:  "40000",
+				}).
+				WithAnnotations(map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, Profile1g10gb, resource.StatusFree): "3",
+				}).Get(),
+			pod: factory.BuildPod("ns-1", "pd-1").WithContainer(
+				factory.BuildContainer("c-1", "foo").
+					WithCPUMilliRequest(1000).
+					WithScalarResourceRequest(Profile1g10gb.AsResourceName(), 1).
+					Get(),
+			).Get(),
+			expectedRequestedResources: framework.Resource{
+				MilliCPU: 1000,
+				ScalarResources: map[v1.ResourceName]int64{
+					Profile1g10gb.AsResourceName(): 1,
+				},
+			},
+			expectedUsedSlices: map[gpu.Slice]int{
+				Profile1g10gb: 1,
+			},
+			expectedFreeSlices: map[gpu.Slice]int{
+				Profile1g10gb: 2,
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			nodeInfo := framework.NewNodeInfo()
+			nodeInfo.SetNode(&tt.node)
+			n, err := NewNode(*nodeInfo)
+			if err != nil {
+				panic(err)
+			}
+
+			err = n.AddPod(tt.pod)
+			if tt.expectedErr {
+				assert.Error(t, err)
+				return
+			}
+
+			var freeSlices = make(map[gpu.Slice]int)
+			var usedSlices = make(map[gpu.Slice]int)
+			for _, g := range n.GPUs {
+				for p, q := range g.GetUsedMigDevices() {
+					usedSlices[p] += q
+				}
+				for p, q := range g.GetFreeMigDevices() {
+					freeSlices[p] += q
+				}
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedRequestedResources, *n.NodeInfo().Requested)
+			assert.Equal(t, tt.expectedUsedSlices, usedSlices)
+			assert.Equal(t, tt.expectedFreeSlices, freeSlices)
 		})
 	}
 }
