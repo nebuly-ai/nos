@@ -85,7 +85,7 @@ func TestSliceTracker__Remove(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			snapshot := newSnapshotFromNodes(tt.nodes)
+			snapshot := newSnapshotFromNodes(tt.nodes, mig_partitioner.NewSnapshotTaker())
 			tracker := core.NewSliceTracker(
 				snapshot,
 				mig_partitioner.NewSliceCalculator(),

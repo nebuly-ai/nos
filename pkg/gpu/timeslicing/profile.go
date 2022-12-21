@@ -34,8 +34,11 @@ var (
 type ProfileName string
 
 func (p ProfileName) SmallerThan(other gpu.Slice) bool {
-	//TODO implement me
-	panic("implement me")
+	otherProfile, ok := other.(ProfileName)
+	if !ok {
+		return false
+	}
+	return p.GetMemorySizeGB() < otherProfile.GetMemorySizeGB()
 }
 
 func (p ProfileName) String() string {

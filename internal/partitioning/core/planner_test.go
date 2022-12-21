@@ -20,12 +20,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	partitioner_mig "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
-	state2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	partitioning_mig "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	partitioning_ts "github.com/nebuly-ai/nebulnetes/internal/partitioning/ts"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
 	n8sresource "github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	scheduler_mock "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/scheduler"
@@ -38,7 +40,7 @@ import (
 	"testing"
 )
 
-func TestPlanner__Plan(t *testing.T) {
+func TestPlanner__Plan__MIG(t *testing.T) {
 	testCases := []struct {
 		name                     string
 		snapshotNodes            []v1.Node
@@ -46,7 +48,7 @@ func TestPlanner__Plan(t *testing.T) {
 		schedulerPreFilterStatus *framework.Status
 		schedulerFilterStatus    *framework.Status
 
-		expectedOverallPartitioning []state2.GPUPartitioning
+		expectedOverallPartitioning []state.GPUPartitioning
 		expectedErr                 bool
 	}{
 		{
@@ -56,7 +58,7 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 
-			expectedOverallPartitioning: make([]state2.GPUPartitioning, 0),
+			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
 			expectedErr:                 false,
 		},
 		{
@@ -69,7 +71,7 @@ func TestPlanner__Plan(t *testing.T) {
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
 
-			expectedOverallPartitioning: make([]state2.GPUPartitioning, 0),
+			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
 			expectedErr:                 false,
 		},
 		{
@@ -113,7 +115,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state2.GPUPartitioning{
+			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g20gb.AsResourceName(): 1,
@@ -169,7 +171,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Error),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state2.GPUPartitioning{
+			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
@@ -221,7 +223,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Error),
-			expectedOverallPartitioning: []state2.GPUPartitioning{
+			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g24gb.AsResourceName(): 1,
@@ -302,7 +304,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state2.GPUPartitioning{
+			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
@@ -388,7 +390,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state2.GPUPartitioning{
+			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile3g20gb.AsResourceName(): 2,
@@ -447,7 +449,7 @@ func TestPlanner__Plan(t *testing.T) {
 			},
 			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
 			schedulerFilterStatus:    framework.NewStatus(framework.Success),
-			expectedOverallPartitioning: []state2.GPUPartitioning{
+			expectedOverallPartitioning: []state.GPUPartitioning{
 				{
 					Resources: map[v1.ResourceName]int{
 						mig.Profile4g40gb.AsResourceName(): 1,
@@ -477,12 +479,241 @@ func TestPlanner__Plan(t *testing.T) {
 				mock.Anything,
 			).Return(framework.PluginToStatus{"": tt.schedulerFilterStatus}).Maybe()
 
-			snapshot := newSnapshotFromNodes(tt.snapshotNodes)
-			planner := partitioner_mig.NewPlanner(mockedScheduler)
+			snapshot := newSnapshotFromNodes(tt.snapshotNodes, partitioning_mig.NewSnapshotTaker())
+			planner := partitioning_mig.NewPlanner(mockedScheduler)
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
 
 			// Compute overall partitioning ignoring GPU index
-			overallGpuPartitioning := make([]state2.GPUPartitioning, 0)
+			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
+			for _, nodePartitioning := range plan.DesiredState {
+				for _, g := range nodePartitioning.GPUs {
+					g.GPUIndex = 0
+					overallGpuPartitioning = append(overallGpuPartitioning, g)
+				}
+			}
+			for i := range tt.expectedOverallPartitioning {
+				gpuPartitioning := &tt.expectedOverallPartitioning[i]
+				gpuPartitioning.GPUIndex = 0
+			}
+
+			// Run assertions
+			if tt.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.ElementsMatch(t, tt.expectedOverallPartitioning, overallGpuPartitioning)
+			}
+		})
+	}
+}
+
+func TestPlanner__Plan__TimeSlicing(t *testing.T) {
+	testCases := []struct {
+		name                     string
+		snapshotNodes            []v1.Node
+		candidatePods            []v1.Pod
+		schedulerPreFilterStatus *framework.Status
+		schedulerFilterStatus    *framework.Status
+
+		expectedOverallPartitioning []state.GPUPartitioning
+		expectedErr                 bool
+	}{
+		{
+			name:                     "Empty snapshot, no candidates",
+			snapshotNodes:            make([]v1.Node, 0),
+			candidatePods:            make([]v1.Pod, 0),
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+
+			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
+			expectedErr:                 false,
+		},
+		{
+			name:          "Empty snapshot, many candidates",
+			snapshotNodes: make([]v1.Node, 0),
+			candidatePods: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("10gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-2", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+			},
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+
+			expectedOverallPartitioning: make([]state.GPUPartitioning, 0),
+			expectedErr:                 false,
+		},
+		{
+			name: "Node with free capacity, should create new slices",
+			snapshotNodes: []v1.Node{
+				factory.BuildNode("node-1").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", n8sresource.StatusFree): "1",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
+					Get(),
+			},
+			candidatePods: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("10gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("5gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+			},
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						timeslicing.ProfileName("10gb").AsResourceName(): 1,
+						timeslicing.ProfileName("5gb").AsResourceName():  1,
+					},
+				},
+			},
+			expectedErr: false,
+		},
+		{
+			name: "Nodes with free profiles and free capacity, should create new slices and delete unnecessary slices (grouping small slices into larger ones)",
+			snapshotNodes: []v1.Node{
+				factory.BuildNode("node-1").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", n8sresource.StatusFree): "2",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", n8sresource.StatusUsed): "2",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(4, resource.DecimalSI),
+					}).
+					Get(),
+				factory.BuildNode("node-2").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "40gb", n8sresource.StatusFree): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "40gb", n8sresource.StatusUsed): "1",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						timeslicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
+					Get(),
+				factory.BuildNode("node-3").
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						constant.LabelNvidiaMemory:    strconv.Itoa(20000),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					}).
+					Get(),
+			},
+			candidatePods: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("40gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+			},
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						timeslicing.ProfileName("40gb").AsResourceName(): 1,
+					},
+				},
+				{
+					GPUIndex: 1,
+					Resources: map[v1.ResourceName]int{
+						timeslicing.ProfileName("40gb").AsResourceName(): 1,
+					},
+				},
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						timeslicing.ProfileName("20gb").AsResourceName(): 1,
+						timeslicing.ProfileName("10gb").AsResourceName(): 2,
+					},
+				},
+				{
+					GPUIndex:  0,
+					Resources: map[v1.ResourceName]int{},
+				},
+			},
+			expectedErr: false,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			mockedScheduler := scheduler_mock.NewFramework(t)
+			mockedScheduler.On(
+				"RunPreFilterPlugins",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(nil, tt.schedulerPreFilterStatus).Maybe()
+			mockedScheduler.On(
+				"RunFilterPlugins",
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+				mock.Anything,
+			).Return(framework.PluginToStatus{"": tt.schedulerFilterStatus}).Maybe()
+
+			snapshot := newSnapshotFromNodes(tt.snapshotNodes, partitioning_ts.NewSnapshotTaker())
+			planner := partitioning_ts.NewPlanner(mockedScheduler)
+			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
+
+			// Compute overall partitioning ignoring GPU index
+			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
 			for _, nodePartitioning := range plan.DesiredState {
 				for _, g := range nodePartitioning.GPUs {
 					g.GPUIndex = 0
@@ -543,7 +774,7 @@ func TestPlanner__Plan(t *testing.T) {
 //		mock.Anything,
 //		mock.Anything,
 //	).Return(framework.PluginToStatus{"": framework.NewStatus(framework.Success)}).Maybe()
-//	planner := partitioner_mig.NewPlanner(mockedScheduler)
+//	planner := partitioning_mig.NewPlanner(mockedScheduler)
 //
 //	for _, bb := range benchmarks {
 //		ctx := context.Background()
@@ -562,7 +793,7 @@ func TestPlanner__Plan(t *testing.T) {
 //	nodeInfo := *framework.NewNodeInfo()
 //}
 
-func newSnapshotFromNodes(nodes []v1.Node) core.Snapshot {
+func newSnapshotFromNodes(nodes []v1.Node, snapshotTaker core.SnapshotTaker) core.Snapshot {
 	nodeInfos := make(map[string]framework.NodeInfo)
 	for _, node := range nodes {
 		n := node
@@ -572,8 +803,8 @@ func newSnapshotFromNodes(nodes []v1.Node) core.Snapshot {
 		ni.SetNode(&n)
 		nodeInfos[n.Name] = *ni
 	}
-	s := state2.NewClusterState(nodeInfos)
-	snapshot, err := partitioner_mig.NewSnapshotTaker().TakeSnapshot(s)
+	s := state.NewClusterState(nodeInfos)
+	snapshot, err := snapshotTaker.TakeSnapshot(s)
 	if err != nil {
 		panic(err)
 	}

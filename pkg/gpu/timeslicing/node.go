@@ -109,9 +109,11 @@ func (n *Node) Clone() interface{} {
 	for i, g := range n.GPUs {
 		gpus[i] = g.Clone()
 	}
+	clonedNodeInfo := n.nodeInfo.Clone()
 	return &Node{
-		Name: n.Name,
-		GPUs: gpus,
+		Name:     n.Name,
+		GPUs:     gpus,
+		nodeInfo: *clonedNodeInfo,
 	}
 }
 
