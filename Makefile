@@ -207,7 +207,7 @@ deploy-ts-agent: kustomize ## Deploy the Time Slicing Agent to the K8s cluster s
 	$(KUSTOMIZE) build config/tsagent/default | kubectl apply -f -
 
 .PHONY: deploy-gpu-partitioner
-deploy-gpu-partitioner: kustomize ## Deploy the GPU Partitioner to the K8s cluster specified in ~/.kube/config.
+deploy-gpu-partitioner: kustomize deploy-mig-agent deploy-ts-agent ## Deploy the GPU Partitioner to the K8s cluster specified in ~/.kube/config.
 	cd config/gpupartitioner/manager && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}
 	$(KUSTOMIZE) build config/gpupartitioner/default | kubectl apply -f -
 
