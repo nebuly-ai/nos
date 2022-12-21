@@ -23,6 +23,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
+	"sort"
 )
 
 type snapshotData struct {
@@ -107,6 +108,9 @@ func (c *clusterSnapshot) GetCandidateNodes() []PartitionableNode {
 			result = append(result, n)
 		}
 	}
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].GetName() < result[j].GetName()
+	})
 	return result
 }
 
