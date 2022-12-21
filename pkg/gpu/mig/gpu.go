@@ -148,7 +148,7 @@ func (g *GPU) UpdateGeometryFor(requiredProfiles map[gpu.Slice]int) bool {
 		for requiredProfile, requiredQuantity := range requiredProfiles {
 			requiredMigProfile, ok := requiredProfile.(ProfileName)
 			if !ok {
-				return false
+				continue
 			}
 
 			// If GPU already provides the profile resources then there's nothing to do

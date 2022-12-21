@@ -42,6 +42,10 @@ func (p ProfileName) String() string {
 	return string(p)
 }
 
+func NewProfile(sizeGb int) ProfileName {
+	return ProfileName(fmt.Sprintf("%dgb", sizeGb))
+}
+
 func (p ProfileName) GetMemorySizeGB() int {
 	trimmed := strings.TrimPrefix(p.String(), profileNamePrefix)
 	trimmed = strings.TrimSuffix(trimmed, "gb")

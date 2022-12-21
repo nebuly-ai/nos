@@ -61,6 +61,7 @@ func extractGPUs(n v1.Node) ([]GPU, error) {
 	}
 
 	result := make([]GPU, 0)
+
 	// Init GPUs from annotation
 	statusAnnotations, _ := gpu.ParseNodeAnnotations(n)
 	for gpuIndex, gpuAnnotations := range statusAnnotations.GroupByGpuIndex() {
