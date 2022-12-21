@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
-	state2 "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/ts"
 	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
@@ -129,13 +129,13 @@ func main() {
 	}
 
 	// Init state
-	clusterState := state2.NewEmptyClusterState()
+	clusterState := state.NewEmptyClusterState()
 
 	// Setup state controllers
 	nodeController := gpupartitioner.NewNodeController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		&clusterState,
+		clusterState,
 	)
 	if err = nodeController.SetupWithManager(mgr, constant.ClusterStateNodeControllerName); err != nil {
 		setupLog.Error(
@@ -149,7 +149,7 @@ func main() {
 	podController := gpupartitioner.NewPodController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		&clusterState,
+		clusterState,
 	)
 	if err = podController.SetupWithManager(mgr, constant.ClusterStatePodControllerName); err != nil {
 		setupLog.Error(
@@ -195,7 +195,7 @@ func main() {
 		mgr.GetScheme(),
 		mgr.GetClient(),
 		podBatcher,
-		&clusterState,
+		clusterState,
 		schedulerFramework,
 	)
 	if err = migController.SetupWithManager(mgr, constant.MigPartitionerControllerName); err != nil {
@@ -213,7 +213,7 @@ func main() {
 		mgr.GetScheme(),
 		mgr.GetClient(),
 		podBatcher,
-		&clusterState,
+		clusterState,
 		schedulerFramework,
 	)
 	if err = timeSlicingController.SetupWithManager(mgr, constant.TsPartitionerControllerName); err != nil {

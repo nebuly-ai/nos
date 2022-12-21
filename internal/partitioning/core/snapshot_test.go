@@ -123,7 +123,7 @@ func TestSnapshot__GetLackingSlices(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
 			s := state.NewClusterState(tt.snapshotNodes)
-			snapshot, err := mig_partitioner.NewSnapshotTaker().TakeSnapshot(&s)
+			snapshot, err := mig_partitioner.NewSnapshotTaker().TakeSnapshot(s)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, snapshot.GetLackingSlices(tt.pod))
 		})

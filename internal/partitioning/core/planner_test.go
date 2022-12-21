@@ -573,7 +573,7 @@ func newSnapshotFromNodes(nodes []v1.Node) core.Snapshot {
 		nodeInfos[n.Name] = *ni
 	}
 	s := state2.NewClusterState(nodeInfos)
-	snapshot, err := partitioner_mig.NewSnapshotTaker().TakeSnapshot(&s)
+	snapshot, err := partitioner_mig.NewSnapshotTaker().TakeSnapshot(s)
 	if err != nil {
 		panic(err)
 	}

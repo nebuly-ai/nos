@@ -20,6 +20,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,6 +49,7 @@ func NewController(
 		client,
 		podBatcher,
 		clusterState,
+		gpu.PartitioningKindMig,
 		NewPlanner(scheduler),
 		NewActuator(client),
 		NewSnapshotTaker(),

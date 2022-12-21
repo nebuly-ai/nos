@@ -23,6 +23,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/pod"
 	v1 "k8s.io/api/core/v1"
@@ -42,6 +43,7 @@ type Controller struct {
 	planner       core.Planner
 	actuator      core.Actuator
 	snapshotTaker core.SnapshotTaker
+	kind          gpu.PartitioningKind
 }
 
 func NewController(
@@ -49,6 +51,7 @@ func NewController(
 	client client.Client,
 	podBatcher util.Batcher[v1.Pod],
 	clusterState *state.ClusterState,
+	kind gpu.PartitioningKind,
 	planner core.Planner,
 	actuator core.Actuator,
 	snapshotTaker core.SnapshotTaker) Controller {
@@ -61,6 +64,7 @@ func NewController(
 		planner:       planner,
 		actuator:      actuator,
 		snapshotTaker: snapshotTaker,
+		kind:          kind,
 	}
 }
 
@@ -74,6 +78,11 @@ func NewController(
 //+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=compositeelasticquotas,verbs=get;list;watch
 
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	// If there isn't any node with this kind of partitioning then there's noting to do
+	if !c.clusterState.IsPartitioningEnabled(c.kind) {
+		return ctrl.Result{}, nil
+	}
+
 	logger := log.FromContext(ctx)
 	logger.V(3).Info("*** start reconcile ***")
 	defer logger.V(3).Info("*** end reconcile ***")

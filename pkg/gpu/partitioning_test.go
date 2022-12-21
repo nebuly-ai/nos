@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package gpu
+package gpu_test
 
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -38,14 +39,14 @@ func TestIsMigPartitioningEnabled(t *testing.T) {
 		{
 			name: "Node with partitioning label, but not MIG",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
-				v1alpha1.LabelGpuPartitioning: PartitioningKindTimeSlicing.String(),
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
 			}).Get(),
 			expected: false,
 		},
 		{
 			name: "Noe with partitioning label, MIG",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
-				v1alpha1.LabelGpuPartitioning: PartitioningKindMig.String(),
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
 			}).Get(),
 			expected: true,
 		},
@@ -53,8 +54,99 @@ func TestIsMigPartitioningEnabled(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			enabled := IsMigPartitioningEnabled(tt.node)
+			enabled := gpu.IsMigPartitioningEnabled(tt.node)
 			assert.Equal(t, tt.expected, enabled)
+		})
+	}
+}
+
+func TestIsTimeSlicingPartitioningEnabled(t *testing.T) {
+	testCases := []struct {
+		name     string
+		node     v1.Node
+		expected bool
+	}{
+		{
+			name:     "Node without partitioning label",
+			node:     factory.BuildNode("node-1").Get(),
+			expected: false,
+		},
+		{
+			name: "Node with partitioning label, but not time-slicing",
+			node: factory.BuildNode("node-1").WithLabels(map[string]string{
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+			}).Get(),
+			expected: false,
+		},
+		{
+			name: "Noe with partitioning label, time-slicing",
+			node: factory.BuildNode("node-1").WithLabels(map[string]string{
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+			}).Get(),
+			expected: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			enabled := gpu.IsTimeSlicingPartitioningEnabled(tt.node)
+			assert.Equal(t, tt.expected, enabled)
+		})
+	}
+}
+
+func TestGetPartitioningKind(t *testing.T) {
+	testCases := []struct {
+		name       string
+		node       v1.Node
+		expected   gpu.PartitioningKind
+		expectedOk bool
+	}{
+		{
+			name:       "Node without GPU partitioning label",
+			node:       factory.BuildNode("node-1").Get(),
+			expected:   "",
+			expectedOk: false,
+		},
+		{
+			name: "Node with GPU partitioning label, but value is not a valid kind",
+			node: factory.BuildNode("node-1").WithLabels(map[string]string{
+				v1alpha1.LabelGpuPartitioning: "invalid-kind",
+			}).Get(),
+			expected:   "",
+			expectedOk: false,
+		},
+		{
+			name: "Node with time-slicing partitioning kind",
+			node: factory.BuildNode("node-1").WithLabels(map[string]string{
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+			}).Get(),
+			expected:   gpu.PartitioningKindTimeSlicing,
+			expectedOk: true,
+		},
+		{
+			name: "Node with MIG partitioning kind",
+			node: factory.BuildNode("node-1").WithLabels(map[string]string{
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+			}).Get(),
+			expected:   gpu.PartitioningKindMig,
+			expectedOk: true,
+		},
+		{
+			name: "Node with hybrid partitioning kind",
+			node: factory.BuildNode("node-1").WithLabels(map[string]string{
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindHybrid.String(),
+			}).Get(),
+			expected:   gpu.PartitioningKindHybrid,
+			expectedOk: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			kind, ok := gpu.GetPartitioningKind(tt.node)
+			assert.Equal(t, tt.expected, kind)
+			assert.Equal(t, tt.expectedOk, ok)
 		})
 	}
 }

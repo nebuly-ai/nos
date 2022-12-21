@@ -96,7 +96,7 @@ func TestSnapshotTaker__TakeSnapshot(t *testing.T) {
 			clusterState := state.NewClusterState(nodeInfos)
 
 			// Take snapshot
-			snapshot, err := snapshotTaker.TakeSnapshot(&clusterState)
+			snapshot, err := snapshotTaker.TakeSnapshot(clusterState)
 			if tt.expectedErr {
 				assert.Error(t, err)
 			} else {

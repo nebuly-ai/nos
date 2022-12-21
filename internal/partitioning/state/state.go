@@ -18,6 +18,7 @@ package state
 
 import (
 	"fmt"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -25,23 +26,30 @@ import (
 	"sync"
 )
 
-func NewEmptyClusterState() ClusterState {
-	return ClusterState{
-		nodes:    make(map[string]framework.NodeInfo),
-		bindings: make(map[types.NamespacedName]string),
+func NewEmptyClusterState() *ClusterState {
+	state := ClusterState{
+		nodes:             make(map[string]framework.NodeInfo),
+		bindings:          make(map[types.NamespacedName]string),
+		partitioningKinds: make(map[gpu.PartitioningKind]int),
 	}
+	state.refreshPartitioningKinds()
+	return &state
 }
 
-func NewClusterState(nodes map[string]framework.NodeInfo) ClusterState {
-	return ClusterState{
-		nodes:    nodes,
-		bindings: make(map[types.NamespacedName]string),
+func NewClusterState(nodes map[string]framework.NodeInfo) *ClusterState {
+	state := ClusterState{
+		nodes:             nodes,
+		bindings:          make(map[types.NamespacedName]string),
+		partitioningKinds: make(map[gpu.PartitioningKind]int),
 	}
+	state.refreshPartitioningKinds()
+	return &state
 }
 
 type ClusterState struct {
-	nodes    map[string]framework.NodeInfo
-	bindings map[types.NamespacedName]string // lookup table: Pod => NodeName
+	nodes             map[string]framework.NodeInfo
+	bindings          map[types.NamespacedName]string // lookup table: Pod => NodeName
+	partitioningKinds map[gpu.PartitioningKind]int    // lookup table: PartitioningKind => number of nodes with that kind of partitioning
 
 	mtx sync.RWMutex
 }
@@ -71,6 +79,8 @@ func (c *ClusterState) DeleteNode(name string) {
 			delete(c.bindings, key)
 		}
 	}
+
+	c.refreshPartitioningKinds()
 }
 
 func (c *ClusterState) UpdateNode(node v1.Node, pods []v1.Pod) {
@@ -97,6 +107,9 @@ func (c *ClusterState) UpdateNode(node v1.Node, pods []v1.Pod) {
 	for _, p := range pods {
 		c.bindings[util.GetNamespacedName(&p)] = node.Name
 	}
+
+	// Update partitioning kinds lookup table
+	c.refreshPartitioningKinds()
 }
 
 func (c *ClusterState) DeletePod(namespacedName types.NamespacedName) error {
@@ -166,6 +179,17 @@ func (c *ClusterState) UpdateUsage(pod v1.Pod) {
 	c.bindings[namespacedName] = pod.Spec.NodeName
 }
 
+func (c *ClusterState) refreshPartitioningKinds() {
+	c.partitioningKinds = make(map[gpu.PartitioningKind]int)
+	for _, n := range c.nodes {
+		if node := n.Node(); node != nil {
+			if kind, ok := gpu.GetPartitioningKind(*n.Node()); ok {
+				c.partitioningKinds[kind]++
+			}
+		}
+	}
+}
+
 func (c *ClusterState) updateUsageForKnownPod(cachedNodeName string, pod v1.Pod) {
 	namespacedName := util.GetNamespacedName(&pod)
 	nodeInfo := c.nodes[pod.Spec.NodeName]
@@ -186,4 +210,13 @@ func (c *ClusterState) updateUsageForKnownPod(cachedNodeName string, pod v1.Pod)
 	}
 
 	c.nodes[pod.Spec.NodeName] = nodeInfo
+}
+
+// IsPartitioningEnabled returns true if there is at least one node enabled for the provided kind of GPU partitioning
+func (c *ClusterState) IsPartitioningEnabled(kind gpu.PartitioningKind) bool {
+	c.mtx.RLock()
+	defer c.mtx.RUnlock()
+
+	nNodes := c.partitioningKinds[kind]
+	return nNodes > 0
 }

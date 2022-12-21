@@ -17,6 +17,8 @@
 package state
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -607,5 +609,70 @@ func TestClusterState_updateUsage(t *testing.T) {
 			assert.Equal(t, n.Pods, actualNode.Pods)
 			assert.Equal(t, n.Requested, actualNode.Requested)
 		}
+	})
+}
+
+func TestClusterState_IsPartitioningEnabled(t *testing.T) {
+	t.Run("no nodes with partitioning enabled", func(t *testing.T) {
+		// current state
+		nodeOne := factory.BuildNode("node-1").Get()
+		nodeTwo := factory.BuildNode("node-2").Get()
+		nodeInfoOne := framework.NewNodeInfo()
+		nodeInfoOne.SetNode(&nodeOne)
+		nodeInfoTwo := framework.NewNodeInfo()
+		nodeInfoTwo.SetNode(&nodeTwo)
+		clusterState := NewClusterState(map[string]framework.NodeInfo{
+			"node-1": *nodeInfoOne,
+			"node-2": *nodeInfoTwo,
+		})
+		assert.False(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
+	})
+
+	t.Run("a node changes its partitioning kind", func(t *testing.T) {
+		// current state
+		nodeOne := factory.BuildNode("node-1").Get()
+		nodeTwo := factory.BuildNode("node-2").WithLabels(map[string]string{
+			v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+		}).Get()
+		nodeInfoOne := framework.NewNodeInfo()
+		nodeInfoOne.SetNode(&nodeOne)
+		nodeInfoTwo := framework.NewNodeInfo()
+		nodeInfoTwo.SetNode(&nodeTwo)
+		clusterState := NewClusterState(map[string]framework.NodeInfo{
+			"node-1": *nodeInfoOne,
+			"node-2": *nodeInfoTwo,
+		})
+		assert.True(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
+
+		// node-2 changes its partitioning kind to time-slicing
+		nodeTwo.Labels[v1alpha1.LabelGpuPartitioning] = gpu.PartitioningKindTimeSlicing.String()
+		clusterState.UpdateNode(nodeTwo, []v1.Pod{})
+
+		// enabled partitioning kinds should be updated
+		assert.False(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
+		assert.True(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindTimeSlicing))
+	})
+
+	t.Run("a node is deleted, partitioning kind should be updated", func(t *testing.T) {
+		// current state
+		nodeOne := factory.BuildNode("node-1").Get()
+		nodeTwo := factory.BuildNode("node-2").WithLabels(map[string]string{
+			v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
+		}).Get()
+		nodeInfoOne := framework.NewNodeInfo()
+		nodeInfoOne.SetNode(&nodeOne)
+		nodeInfoTwo := framework.NewNodeInfo()
+		nodeInfoTwo.SetNode(&nodeTwo)
+		clusterState := NewClusterState(map[string]framework.NodeInfo{
+			"node-1": *nodeInfoOne,
+			"node-2": *nodeInfoTwo,
+		})
+		assert.True(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
+
+		// node-2 is deleted
+		clusterState.DeleteNode(nodeTwo.Name)
+
+		// partitioning kind should be updated
+		assert.False(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
 	})
 }

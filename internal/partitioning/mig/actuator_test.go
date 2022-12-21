@@ -211,7 +211,7 @@ func TestActuator__Apply(t *testing.T) {
 			}
 
 			s := state.NewClusterState(nodeInfos)
-			snapshot, err := mig_partitioner.NewSnapshotTaker().TakeSnapshot(&s)
+			snapshot, err := mig_partitioner.NewSnapshotTaker().TakeSnapshot(s)
 			assert.NoError(t, err)
 
 			fakeClient := fakeClientBuilder.Build()

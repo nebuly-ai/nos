@@ -84,3 +84,28 @@ func IsTimeSlicingPartitioningEnabled(node v1.Node) bool {
 	}
 	return partitioningKind == PartitioningKindTimeSlicing.String()
 }
+
+func GetPartitioningKind(node v1.Node) (PartitioningKind, bool) {
+	partitioningKindStr, ok := node.Labels[v1alpha1.LabelGpuPartitioning]
+	if !ok {
+		return "", false
+	}
+	partitioningKind, valid := asPartitioningKind(partitioningKindStr)
+	if !valid {
+		return "", false
+	}
+	return partitioningKind, true
+}
+
+func asPartitioningKind(kind string) (PartitioningKind, bool) {
+	switch kind {
+	case PartitioningKindMig.String():
+		return PartitioningKindMig, true
+	case PartitioningKindTimeSlicing.String():
+		return PartitioningKindTimeSlicing, true
+	case PartitioningKindHybrid.String():
+		return PartitioningKindHybrid, true
+	default:
+		return "", false
+	}
+}
