@@ -55,7 +55,7 @@ func (a actuator) Apply(ctx context.Context, snapshot Snapshot, plan Partitionin
 		if err := a.Get(ctx, client.ObjectKey{Name: nodeName}, &node); err != nil {
 			return false, fmt.Errorf("failed to get node %s: %w", nodeName, err)
 		}
-		logger.Info("partitioning node", "node", node, "partitioning", partitioningState)
+		logger.Info("partitioning node", "node", node.Name, "partitioning", partitioningState)
 		if err = a.ApplyPartitioning(ctx, node, plan.GetId(), partitioningState); err != nil {
 			return false, fmt.Errorf("error partitioning node %s: %w", nodeName, err)
 		}

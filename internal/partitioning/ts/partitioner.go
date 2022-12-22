@@ -62,6 +62,7 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 			)
 			return p.Create(ctx, &devicePluginCm)
 		}
+		logger.Error(err, "unable to get device plugin ConfigMap")
 		return err
 	}
 
