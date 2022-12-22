@@ -109,3 +109,11 @@ func asPartitioningKind(kind string) (PartitioningKind, bool) {
 		return "", false
 	}
 }
+
+type SliceCalculator interface {
+	GetRequestedSlices(pod v1.Pod) map[Slice]int
+}
+
+type SliceFilter interface {
+	ExtractSlices(resources map[v1.ResourceName]int64) map[Slice]int
+}

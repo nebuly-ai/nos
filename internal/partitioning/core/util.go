@@ -17,6 +17,7 @@
 package core
 
 import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/component-helpers/scheduling/corev1"
 	"sort"
@@ -30,7 +31,7 @@ func (f SorterAdapter) Sort(pods []v1.Pod) []v1.Pod {
 	return f(pods)
 }
 
-func NewPodSorter(sliceCalculator SliceCalculator) SorterAdapter {
+func NewPodSorter(sliceCalculator gpu.SliceCalculator) SorterAdapter {
 	var sorter = func(pods []v1.Pod) []v1.Pod {
 		sorted := make([]v1.Pod, len(pods))
 		copy(sorted, pods)

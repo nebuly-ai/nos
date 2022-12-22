@@ -17,13 +17,12 @@
 package ts
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
 	v1 "k8s.io/api/core/v1"
 )
 
-var _ core.SliceFilter = sliceFilter{}
+var _ gpu.SliceFilter = sliceFilter{}
 
 type sliceFilter struct {
 }
@@ -39,6 +38,6 @@ func (s sliceFilter) ExtractSlices(resources map[v1.ResourceName]int64) map[gpu.
 	return res
 }
 
-func NewSliceFilter() core.SliceFilter {
+func NewSliceFilter() gpu.SliceFilter {
 	return sliceFilter{}
 }

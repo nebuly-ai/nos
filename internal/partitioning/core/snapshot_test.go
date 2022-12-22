@@ -143,7 +143,7 @@ func newMigSnapshot(t *testing.T, nodes []v1.Node) core.Snapshot {
 	}
 	return core.NewClusterSnapshot(
 		migNodes,
-		mocks.NewPartitioner(t),
+		mocks.NewPartitionCalculator(t),
 		mocks.NewSliceCalculator(t),
 		mocks.NewSliceFilter(t),
 	)

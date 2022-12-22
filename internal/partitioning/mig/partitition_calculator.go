@@ -19,39 +19,32 @@ package mig
 import (
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 )
 
-var _ core.SnapshotTaker = snapshotTaker{}
+var _ core.PartitionCalculator = partitionCalculator{}
 
-type snapshotTaker struct {
+type partitionCalculator struct {
 }
 
-func (s snapshotTaker) TakeSnapshot(clusterState *state.ClusterState) (core.Snapshot, error) {
-	nodes := make(map[string]core.PartitionableNode)
-	for k, v := range clusterState.GetNodes() {
-		if v.Node() == nil {
-			continue
+func (p partitionCalculator) GetPartitioning(node core.PartitionableNode) state.NodePartitioning {
+	migNode, ok := node.(*mig.Node)
+	if !ok {
+		return state.NodePartitioning{
+			GPUs: make([]state.GPUPartitioning, 0),
 		}
-		if !gpu.IsMigPartitioningEnabled(*v.Node()) {
-			continue
-		}
-		migNode, err := mig.NewNode(v)
-		if err != nil {
-			return nil, err
-		}
-		nodes[k] = &migNode
 	}
-	snapshot := core.NewClusterSnapshot(
-		nodes,
-		NewPartitionCalculator(),
-		NewSliceCalculator(),
-		NewSliceFilter(),
-	)
-	return snapshot, nil
+	gpuPartitioning := make([]state.GPUPartitioning, 0)
+	for _, g := range migNode.GPUs {
+		gp := state.GPUPartitioning{
+			GPUIndex:  g.GetIndex(),
+			Resources: mig.AsResources(g.GetGeometry()),
+		}
+		gpuPartitioning = append(gpuPartitioning, gp)
+	}
+	return state.NodePartitioning{GPUs: gpuPartitioning}
 }
 
-func NewSnapshotTaker() core.SnapshotTaker {
-	return snapshotTaker{}
+func NewPartitionCalculator() core.PartitionCalculator {
+	return partitionCalculator{}
 }

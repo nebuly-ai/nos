@@ -17,13 +17,12 @@
 package mig
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	v1 "k8s.io/api/core/v1"
 )
 
-var _ core.SliceCalculator = sliceCalculator{}
+var _ gpu.SliceCalculator = sliceCalculator{}
 
 type sliceCalculator struct {
 }
@@ -37,6 +36,6 @@ func (f sliceCalculator) GetRequestedSlices(pod v1.Pod) map[gpu.Slice]int {
 	return res
 }
 
-func NewSliceCalculator() core.SliceCalculator {
+func NewSliceCalculator() gpu.SliceCalculator {
 	return sliceCalculator{}
 }

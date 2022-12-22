@@ -30,9 +30,16 @@ import (
 
 func NewPlanner(scheduler framework.Framework) core.Planner {
 	return core.NewPlanner(
-		NewPartitioner(),
+		NewPartitionCalculator(),
 		NewSliceCalculator(),
 		scheduler,
+	)
+}
+
+func NewActuator(client client.Client) core.Actuator {
+	return core.NewActuator(
+		client,
+		NewPartitioner(client),
 	)
 }
 

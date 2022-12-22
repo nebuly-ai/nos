@@ -28,10 +28,10 @@ type SliceTracker struct {
 	lackingSlices       map[gpu.Slice]int
 	lackingSlicesLookup map[string]map[gpu.Slice]int // Pod => lacking slices
 
-	calculator SliceCalculator
+	calculator gpu.SliceCalculator
 }
 
-func NewSliceTracker(snapshot Snapshot, calculator SliceCalculator, pods []v1.Pod) SliceTracker {
+func NewSliceTracker(snapshot Snapshot, calculator gpu.SliceCalculator, pods []v1.Pod) SliceTracker {
 	requestedSlices := make(map[gpu.Slice]int)
 	lackingSlices := make(map[gpu.Slice]int)
 	podsLackingSlices := make(map[string]map[gpu.Slice]int)

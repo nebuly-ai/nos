@@ -22,7 +22,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
 )
 
-var _ core.Partitioner = partitioner{}
+var _ core.PartitionCalculator = partitioner{}
 
 type partitioner struct {
 }
@@ -45,6 +45,6 @@ func (p partitioner) GetPartitioning(node core.PartitionableNode) state.NodePart
 	return state.NodePartitioning{GPUs: gpuPartitioning}
 }
 
-func NewPartitioner() core.Partitioner {
+func NewPartitioner() core.PartitionCalculator {
 	return partitioner{}
 }

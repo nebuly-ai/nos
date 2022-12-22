@@ -32,14 +32,6 @@ type Actuator interface {
 	Apply(ctx context.Context, snapshot Snapshot, plan PartitioningPlan) (bool, error)
 }
 
-type SliceCalculator interface {
-	GetRequestedSlices(pod v1.Pod) map[gpu.Slice]int
-}
-
-type SliceFilter interface {
-	ExtractSlices(resources map[v1.ResourceName]int64) map[gpu.Slice]int
-}
-
 type PartitionableNode interface {
 	UpdateGeometryFor(slices map[gpu.Slice]int) (bool, error)
 	GetName() string
@@ -50,8 +42,12 @@ type PartitionableNode interface {
 	HasFreeCapacity() bool
 }
 
-type Partitioner interface {
+type PartitionCalculator interface {
 	GetPartitioning(node PartitionableNode) state.NodePartitioning
+}
+
+type Partitioner interface {
+	ApplyPartitioning(ctx context.Context, node v1.Node, planId string, partitioning state.NodePartitioning) error
 }
 
 type Snapshot interface {

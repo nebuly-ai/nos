@@ -43,16 +43,16 @@ func (d snapshotData) clone() *snapshotData {
 type clusterSnapshot struct {
 	data               *snapshotData
 	forkedData         *snapshotData
-	partitioner        Partitioner
-	profilesCalculator SliceCalculator
-	profilesFilter     SliceFilter
+	partitioner        PartitionCalculator
+	profilesCalculator gpu.SliceCalculator
+	profilesFilter     gpu.SliceFilter
 }
 
 func NewClusterSnapshot(
 	nodes map[string]PartitionableNode,
-	partitioner Partitioner,
-	sliceCalculator SliceCalculator,
-	sliceFilter SliceFilter,
+	partitioner PartitionCalculator,
+	sliceCalculator gpu.SliceCalculator,
+	sliceFilter gpu.SliceFilter,
 ) Snapshot {
 	data := snapshotData{nodes: nodes}
 	return &clusterSnapshot{

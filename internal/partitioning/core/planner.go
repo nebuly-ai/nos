@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -43,13 +44,13 @@ func (p PartitioningPlan) GetId() string {
 }
 
 type planner struct {
-	sliceCalculator    SliceCalculator
+	sliceCalculator    gpu.SliceCalculator
 	schedulerFramework framework.Framework
-	partitioner        Partitioner
+	partitioner        PartitionCalculator
 	sorter             Sorter
 }
 
-func NewPlanner(partitioner Partitioner, sliceCalculator SliceCalculator, schedulerFramework framework.Framework) Planner {
+func NewPlanner(partitioner PartitionCalculator, sliceCalculator gpu.SliceCalculator, schedulerFramework framework.Framework) Planner {
 	return planner{
 		partitioner:        partitioner,
 		sliceCalculator:    sliceCalculator,
