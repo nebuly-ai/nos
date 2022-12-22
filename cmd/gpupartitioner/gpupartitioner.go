@@ -123,7 +123,7 @@ func main() {
 
 	// Setup known MIG geometries
 	if config.KnownMigGeometriesFile != "" {
-		knownGeometries, err := loadKnownGeometriesFromFile(config.KnownMigGeometriesFile)
+		knownGeometries, err := loadKnownMigGeometriesFromFile(config.KnownMigGeometriesFile)
 		if err != nil {
 			setupLog.Error(err, "unable to load known MIG geometries")
 			os.Exit(1)
@@ -366,12 +366,31 @@ func decodeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfigura
 	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)
 }
 
-func loadKnownGeometriesFromFile(file string) (map[gpu.Model][]gpu.Geometry, error) {
-	var knownGeometries = make(map[gpu.Model][]gpu.Geometry)
+func loadKnownMigGeometriesFromFile(file string) (map[gpu.Model][]gpu.Geometry, error) {
+	var knownGeometries = make(map[gpu.Model]migGeometryList)
 	data, err := os.ReadFile(file)
 	if err != nil {
-		return knownGeometries, err
+		return map[gpu.Model][]gpu.Geometry{}, err
 	}
 	err = yaml.Unmarshal(data, &knownGeometries)
-	return knownGeometries, err
+
+	var res = make(map[gpu.Model][]gpu.Geometry, len(knownGeometries))
+	for k, v := range knownGeometries {
+		res[k] = v.asGpuGeometry()
+	}
+	return res, err
+}
+
+type migGeometryList []map[gpumig.ProfileName]int
+
+func (m migGeometryList) asGpuGeometry() []gpu.Geometry {
+	var res = make([]gpu.Geometry, len(m))
+	for i, migGeometry := range m {
+		gpuGeometry := make(gpu.Geometry, len(migGeometry))
+		for k, v := range migGeometry {
+			gpuGeometry[k] = v
+		}
+		res[i] = gpuGeometry
+	}
+	return res
 }
