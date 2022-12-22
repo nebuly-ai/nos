@@ -28,10 +28,11 @@ import (
 type GpuPartitionerConfig struct {
 	metav1.TypeMeta                        `json:",inline"`
 	cfg.ControllerManagerConfigurationSpec `json:",inline"`
-	SchedulerConfigFile                    string        `json:"schedulerConfigFile,omitempty"`
-	KnownMigGeometriesFile                 string        `json:"knownMigGeometriesFile,omitempty"`
-	BatchWindowTimeoutSeconds              time.Duration `json:"batchWindowTimeoutSeconds"`
-	BatchWindowIdleSeconds                 time.Duration `json:"batchWindowIdleSeconds"`
+	SchedulerConfigFile                    string           `json:"schedulerConfigFile,omitempty"`
+	KnownMigGeometriesFile                 string           `json:"knownMigGeometriesFile,omitempty"`
+	BatchWindowTimeoutSeconds              time.Duration    `json:"batchWindowTimeoutSeconds"`
+	BatchWindowIdleSeconds                 time.Duration    `json:"batchWindowIdleSeconds"`
+	NvidiaDevicePluginConfigMap            NamespacedObject `json:"devicePluginConfigMap,omitempty"`
 }
 
 func (c *GpuPartitionerConfig) Validate() error {
@@ -42,4 +43,9 @@ func (c *GpuPartitionerConfig) Validate() error {
 		return errors.New("batchWindowIdleSeconds must be greater than 0")
 	}
 	return nil
+}
+
+type NamespacedObject struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }

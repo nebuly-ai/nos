@@ -24,9 +24,17 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+func NewActuator(client client.Client, devicePluginCM types.NamespacedName) core.Actuator {
+	return core.NewActuator(
+		client,
+		NewPartitioner(client, devicePluginCM),
+	)
+}
 
 func NewPlanner(scheduler framework.Framework) core.Planner {
 	return core.NewPlanner(
@@ -42,6 +50,7 @@ func NewController(
 	podBatcher util.Batcher[v1.Pod],
 	clusterState *state.ClusterState,
 	scheduler framework.Framework,
+	devicePluginCM types.NamespacedName,
 ) gpupartitioner.Controller {
 
 	return gpupartitioner.NewController(
@@ -51,7 +60,7 @@ func NewController(
 		clusterState,
 		gpu.PartitioningKindTimeSlicing,
 		NewPlanner(scheduler),
-		NewActuator(client),
+		NewActuator(client, devicePluginCM),
 		NewSnapshotTaker(),
 	)
 }

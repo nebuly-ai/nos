@@ -15,23 +15,3 @@
  */
 
 package ts
-
-import (
-	"context"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-)
-
-type Actuator struct {
-	client.Client
-}
-
-func (p Actuator) Apply(ctx context.Context, snapshot core.Snapshot, plan core.PartitioningPlan) (bool, error) {
-	return false, nil
-}
-
-func NewActuator(client client.Client) Actuator {
-	return Actuator{
-		Client: client,
-	}
-}

@@ -82,6 +82,9 @@ const (
 	// LabelNvidiaMemory is the name of the label assigned by the NVIDIA GPU Operator that identifies
 	// the amount of memory of the GPUs of a node
 	LabelNvidiaMemory = "nvidia.com/gpu.memory"
+	// LabelNvidiaDevicePluginConfig is the label used by the NVIDIA k8s device plugin for determining the
+	// which plugin config to apply choosing from the respective ConfigMap
+	LabelNvidiaDevicePluginConfig = "nvidia.com/device-plugin.config"
 )
 
 // Defaults
@@ -96,6 +99,11 @@ const (
 	DefaultPodResourcesTimeout = 10 * time.Second
 	// DefaultPodResourcesMaxMsgSize is the default max message size used for the Pod resource lister
 	DefaultPodResourcesMaxMsgSize = 1024 * 1024 * 16 // 16 Mb
+
+	// DefaultDevicePluginCMName is the default name of the ConfigMap used by the NVIDIA device plugin
+	DefaultDevicePluginCMName = "time-slicing-config"
+	// DefaultDevicePluginCMNamespace is the default namespace of the ConfigMap used by the NVIDIA device plugin
+	DefaultDevicePluginCMNamespace = "gpu-operator"
 )
 
 const (

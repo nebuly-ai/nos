@@ -36,6 +36,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/informers"
@@ -98,6 +99,26 @@ func main() {
 	if err = config.Validate(); err != nil {
 		setupLog.Error(err, "config is invalid")
 		os.Exit(1)
+	}
+	devicePluginCM := types.NamespacedName{
+		Name:      config.NvidiaDevicePluginConfigMap.Name,
+		Namespace: config.NvidiaDevicePluginConfigMap.Namespace,
+	}
+	if devicePluginCM.Name == "" {
+		devicePluginCM.Name = constant.DefaultDevicePluginCMName
+		setupLog.V(1).Info(
+			"device plugin CM name is not set, using default value",
+			"name",
+			constant.DefaultDevicePluginCMName,
+		)
+	}
+	if devicePluginCM.Namespace == "" {
+		devicePluginCM.Namespace = constant.DefaultDevicePluginCMNamespace
+		setupLog.V(1).Info(
+			"device plugin CM namespace is not set, using default value",
+			"namespace",
+			constant.DefaultDevicePluginCMNamespace,
+		)
 	}
 
 	// Setup known MIG geometries
@@ -215,6 +236,7 @@ func main() {
 		podBatcher,
 		clusterState,
 		schedulerFramework,
+		devicePluginCM,
 	)
 	if err = timeSlicingController.SetupWithManager(mgr, constant.TsPartitionerControllerName); err != nil {
 		setupLog.Error(
