@@ -69,6 +69,7 @@ func NewController(
 }
 
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;patch
 //+kubebuilder:rbac:groups=core,resources=persistentvolumes;persistentvolumeclaims;namespaces;services;replicationcontrollers,verbs=get;list;watch
 //+kubebuilder:rbac:groups=apps,resources=statefulsets;replicasets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=csinodes;storageclasses;csidrivers;csistoragecapacities,verbs=get;list;watch
@@ -181,7 +182,7 @@ func (c *Controller) processPendingPods(ctx context.Context) error {
 	}
 
 	// Compute desired state
-	plan, err := c.planner.Plan(ctx, snapshot, pods)
+	plan, err := c.planner.Plan(ctx, snapshot.Clone(), pods)
 	if err != nil {
 		logger.Error(err, "unable to plan desired partitioning state")
 		return err
@@ -189,7 +190,7 @@ func (c *Controller) processPendingPods(ctx context.Context) error {
 	logger.Info("computed desired partitioning state", "partitioning", plan)
 
 	// Apply partitioning plan
-	_, err = c.actuator.Apply(ctx, snapshot, plan)
+	_, err = c.actuator.Apply(ctx, snapshot.Clone(), plan)
 	if err != nil {
 		logger.Error(err, "unable to apply desired partitioning state")
 		return err

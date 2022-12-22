@@ -17,6 +17,15 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - patch
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - namespaces
   - persistentvolumeclaims
   - persistentvolumes
