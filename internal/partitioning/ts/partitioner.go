@@ -107,6 +107,7 @@ func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
 	for _, g := range partitioning.GPUs {
 		for r, q := range g.Resources {
 			nvidiaRes := nvidiav1.ReplicatedResource{
+				Name:   nvidiav1.ResourceName(constant.ResourceNvidiaGPU),
 				Rename: nvidiav1.ResourceName(strings.TrimPrefix(r.String(), constant.NvidiaResourcePrefix)),
 				Devices: nvidiav1.ReplicatedDevices{
 					List: []nvidiav1.ReplicatedDeviceRef{
@@ -119,7 +120,9 @@ func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
 		}
 	}
 	return nvidiav1.Config{
-		Version: nvidiav1.Version,
+		Version:   nvidiav1.Version,
+		Flags:     nvidiav1.Flags{},
+		Resources: nvidiav1.Resources{},
 		Sharing: nvidiav1.Sharing{
 			TimeSlicing: nvidiav1.TimeSlicing{Resources: replicatedResources},
 		},
