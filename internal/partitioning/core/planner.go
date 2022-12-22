@@ -34,9 +34,10 @@ type PartitioningPlan struct {
 }
 
 func NewPartitioningPlan(s state.PartitioningState) PartitioningPlan {
+	withoutSpaces := strings.ReplaceAll(time.Now().UTC().String(), " ", "-")
 	return PartitioningPlan{
 		DesiredState: s,
-		id:           strings.ReplaceAll(time.Now().UTC().String(), " ", "-"),
+		id:           strings.ReplaceAll(withoutSpaces, "+", "-"),
 	}
 }
 
