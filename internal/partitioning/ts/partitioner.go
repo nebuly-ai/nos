@@ -81,12 +81,12 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 
 	// Update ConfigMap with new node config
 	key := fmt.Sprintf("%s-%s", node.Name, planId)
-	nvidiaSharing := ToNvidiaSharing(partitioning)
-	nvidiaSharingYaml, err := yaml.Marshal(nvidiaSharing)
+	pluginConfig := ToPluginConfig(partitioning)
+	pluginConfigYaml, err := yaml.Marshal(pluginConfig)
 	if err != nil {
 		return fmt.Errorf("unable to marshal nvidia device plugin config: %v", err)
 	}
-	devicePluginCm.Data[key] = string(nvidiaSharingYaml)
+	devicePluginCm.Data[key] = string(pluginConfigYaml)
 	if err = p.Patch(ctx, &devicePluginCm, client.MergeFrom(originalCm)); err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 	return nil
 }
 
-func ToNvidiaSharing(partitioning state.NodePartitioning) nvidiav1.Sharing {
+func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
 	replicatedResources := make([]nvidiav1.ReplicatedResource, 0)
 	for _, g := range partitioning.GPUs {
 		for r, q := range g.Resources {
@@ -118,5 +118,10 @@ func ToNvidiaSharing(partitioning state.NodePartitioning) nvidiav1.Sharing {
 			replicatedResources = append(replicatedResources, nvidiaRes)
 		}
 	}
-	return nvidiav1.Sharing{TimeSlicing: nvidiav1.TimeSlicing{Resources: replicatedResources}}
+	return nvidiav1.Config{
+		Version: nvidiav1.Version,
+		Sharing: nvidiav1.Sharing{
+			TimeSlicing: nvidiav1.TimeSlicing{Resources: replicatedResources},
+		},
+	}
 }

@@ -24,11 +24,11 @@ import (
 	"testing"
 )
 
-func TestToNvidiaSharing(t *testing.T) {
+func TestToPluginConfig(t *testing.T) {
 	t.Run("Empty node partitioning", func(t *testing.T) {
 		nodePartitioning := state.NodePartitioning{GPUs: []state.GPUPartitioning{}}
-		nvidiaSharing := ts.ToNvidiaSharing(nodePartitioning)
-		assert.Empty(t, nvidiaSharing.TimeSlicing.Resources)
+		config := ts.ToPluginConfig(nodePartitioning)
+		assert.Empty(t, config.Sharing.TimeSlicing.Resources)
 	})
 
 	t.Run("Multiple GPUs, multiple resources with replicas", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestToNvidiaSharing(t *testing.T) {
 				},
 			},
 		}
-		nvidiaSharing := ts.ToNvidiaSharing(nodePartitioning)
-		assert.Len(t, nvidiaSharing.TimeSlicing.Resources, 4)
+		config := ts.ToPluginConfig(nodePartitioning)
+		assert.Len(t, config.Sharing.TimeSlicing.Resources, 4)
 	})
 }
