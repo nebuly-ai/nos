@@ -24,7 +24,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
+	"strconv"
 	"time"
 )
 
@@ -34,14 +34,9 @@ type PartitioningPlan struct {
 }
 
 func NewPartitioningPlan(s state.PartitioningState) PartitioningPlan {
-	safeId := strings.NewReplacer(
-		" ", "-",
-		":", "-",
-		"+", "-",
-	).Replace(time.Now().UTC().String())
 	return PartitioningPlan{
 		DesiredState: s,
-		id:           safeId,
+		id:           strconv.FormatInt(time.Now().UTC().Unix(), 10),
 	}
 }
 
