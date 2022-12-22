@@ -67,6 +67,7 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 		logger.Error(err, "unable to get device plugin ConfigMap")
 		return err
 	}
+	originalCm := devicePluginCm.DeepCopy()
 
 	// Delete old node config
 	for k := range devicePluginCm.Data {
@@ -76,7 +77,6 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 	}
 
 	// Update ConfigMap with new node config
-	originalCm := devicePluginCm.DeepCopy()
 	key := fmt.Sprintf("%s-%s", node.Name, planId)
 	devicePluginCm.Data[key] = "" // todo
 	if err := p.Patch(ctx, &devicePluginCm, client.MergeFrom(originalCm)); err != nil {
