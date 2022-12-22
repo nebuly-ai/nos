@@ -470,3 +470,46 @@ func TestNode__UpdateGeometryFor(t *testing.T) {
 		})
 	}
 }
+
+func TestNode__Clone(t *testing.T) {
+	testCases := []struct {
+		name string
+		node v1.Node
+	}{
+		{
+			name: "Empty node, no GPUs",
+			node: factory.BuildNode("node").WithLabels(map[string]string{
+				constant.LabelNvidiaProduct: "foo",
+				constant.LabelNvidiaCount:   "0",
+				constant.LabelNvidiaMemory:  "40000",
+			}).Get(),
+		},
+		{
+			name: "Node with GPUs",
+			node: factory.BuildNode("node").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: "foo",
+					constant.LabelNvidiaCount:   "2",
+					constant.LabelNvidiaMemory:  "40000",
+				}).WithAnnotations(
+				map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", resource.StatusFree): "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "20gb", resource.StatusFree): "1",
+				}).Get(),
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			nodeInfo := framework.NewNodeInfo()
+			nodeInfo.SetNode(&tt.node)
+			nodeInfo.Allocatable.ScalarResources = map[v1.ResourceName]int64{"nebuly.ai/foo": 1}
+			n, err := timeslicing.NewNode(*nodeInfo)
+			if err != nil {
+				panic(err)
+			}
+			clone := n.Clone()
+			assert.Equal(t, &n, clone)
+		})
+	}
+}

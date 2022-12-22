@@ -142,7 +142,7 @@ var (
 )
 
 func SetKnownGeometries(configs map[gpu.Model][]gpu.Geometry) error {
-	if err := validateConfigs(configs); err != nil {
+	if err := ValidateConfigs(configs); err != nil {
 		return err
 	}
 	defaultKnownMigGeometries = configs
@@ -161,7 +161,7 @@ func GetAllowedGeometries(model gpu.Model) ([]gpu.Geometry, bool) {
 	return configs, ok
 }
 
-func validateConfigs(configs map[gpu.Model][]gpu.Geometry) error {
+func ValidateConfigs(configs map[gpu.Model][]gpu.Geometry) error {
 	if len(configs) == 0 {
 		return fmt.Errorf("no known configs provided")
 	}
