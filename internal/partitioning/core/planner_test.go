@@ -839,9 +839,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 
 			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
 			for _, nodePartitioning := range plan.DesiredState {
-				for _, g := range nodePartitioning.GPUs {
-					overallGpuPartitioning = append(overallGpuPartitioning, g)
-				}
+				overallGpuPartitioning = append(overallGpuPartitioning, nodePartitioning.GPUs...)
 			}
 
 			// Run assertions
