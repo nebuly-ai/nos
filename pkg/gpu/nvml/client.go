@@ -79,7 +79,7 @@ func (c *clientImpl) GetGpuIndex(deviceId string) (int, gpu.Error) {
 				ret.Error(),
 			)
 		}
-		c.logger.Info("visiting device", "GPUIndex", gpuIndex, "GPU UUID", uuid)
+		c.logger.V(3).Info("visiting device", "GPUIndex", gpuIndex, "GPU UUID", uuid)
 		if uuid == deviceId {
 			result = gpuIndex
 			found = true

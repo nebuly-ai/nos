@@ -31,7 +31,8 @@ func GetModel(node v1.Node) (Model, error) {
 	val, ok := node.Labels[constant.LabelNvidiaProduct]
 	if !ok {
 		return "", fmt.Errorf(
-			"cannot get GPU model from node labels, missing label %s",
+			"cannot get GPU model from node %s labels: missing label %s",
+			node.Name,
 			constant.LabelNvidiaProduct,
 		)
 	}
