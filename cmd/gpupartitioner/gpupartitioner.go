@@ -372,12 +372,15 @@ func loadKnownMigGeometriesFromFile(file string) (map[gpu.Model][]gpu.Geometry, 
 	if err != nil {
 		return map[gpu.Model][]gpu.Geometry{}, err
 	}
-	err = yaml.Unmarshal(data, &knownGeometries)
+	if err = yaml.Unmarshal(data, &knownGeometries); err != nil {
+		return map[gpu.Model][]gpu.Geometry{}, err
+	}
 
 	var res = make(map[gpu.Model][]gpu.Geometry, len(knownGeometries))
 	for k, v := range knownGeometries {
 		res[k] = v.asGpuGeometry()
 	}
+
 	return res, err
 }
 
