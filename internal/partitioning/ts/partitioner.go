@@ -49,10 +49,12 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 
 	// Fetch nvidia-device-plugin config or create it if it doesn't exist
 	var devicePluginCm v1.ConfigMap
-	if err := p.Client.Get(ctx, client.ObjectKey{}, &devicePluginCm); err != nil {
+	cmObjectKey := client.ObjectKey{Name: p.devicePluginCM.Name, Namespace: p.devicePluginCM.Namespace}
+	if err := p.Client.Get(ctx, cmObjectKey, &devicePluginCm); err != nil {
 		if errors.IsNotFound(err) {
 			devicePluginCm.Name = p.devicePluginCM.Name
 			devicePluginCm.Namespace = p.devicePluginCM.Namespace
+			devicePluginCm.Data = map[string]string{}
 			logger.Info(
 				"device plugin ConfigMap not found, creating it",
 				"name",
