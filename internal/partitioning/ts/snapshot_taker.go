@@ -45,7 +45,7 @@ func (s snapshotTaker) TakeSnapshot(clusterState *state.ClusterState) (core.Snap
 	}
 	snapshot := core.NewClusterSnapshot(
 		nodes,
-		NewPartitioner(),
+		NewPartitionCalculator(),
 		NewSliceCalculator(),
 		NewSliceFilter(),
 	)

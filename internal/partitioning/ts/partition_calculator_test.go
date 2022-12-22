@@ -44,7 +44,7 @@ func newTsNodeOrPanic(node v1.Node) *timeslicing.Node {
 	return &tsNode
 }
 
-func TestPartitioner__GetPartitioning(t *testing.T) {
+func TestPartitionCalculator__GetPartitioning(t *testing.T) {
 	testCases := []struct {
 		name     string
 		node     core.PartitionableNode
@@ -110,7 +110,7 @@ func TestPartitioner__GetPartitioning(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			partitioning := ts_partitioning.NewPartitioner().GetPartitioning(tt.node)
+			partitioning := ts_partitioning.NewPartitionCalculator().GetPartitioning(tt.node)
 			assert.True(t, tt.expected.Equal(partitioning))
 		})
 	}
