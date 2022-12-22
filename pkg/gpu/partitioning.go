@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/json"
 	"sort"
 	"strings"
 )
@@ -52,6 +53,14 @@ func (g Geometry) String() string {
 		builder.WriteString(fmt.Sprintf("%s:%d, ", profile, g[profile]))
 	}
 	return builder.String()
+}
+
+func (g Geometry) MarshalJSON() ([]byte, error) {
+	var asStr = make(map[string]int, len(g))
+	for k, v := range g {
+		asStr[k.String()] = v
+	}
+	return json.Marshal(asStr)
 }
 
 type PartitioningKind string

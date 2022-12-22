@@ -367,21 +367,23 @@ func decodeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfigura
 }
 
 func loadKnownMigGeometriesFromFile(file string) (map[gpu.Model][]gpu.Geometry, error) {
-	var knownGeometries = make(map[gpu.Model]migGeometryList)
+	var knownMigGeometries = make(map[gpu.Model]migGeometryList)
+	var empty = map[gpu.Model][]gpu.Geometry{}
+
 	data, err := os.ReadFile(file)
 	if err != nil {
-		return map[gpu.Model][]gpu.Geometry{}, err
+		return empty, err
 	}
-	if err = yaml.Unmarshal(data, &knownGeometries); err != nil {
-		return map[gpu.Model][]gpu.Geometry{}, err
+	if err = yaml.Unmarshal(data, &knownMigGeometries); err != nil {
+		return empty, err
 	}
 
-	var res = make(map[gpu.Model][]gpu.Geometry, len(knownGeometries))
-	for k, v := range knownGeometries {
+	var res = make(map[gpu.Model][]gpu.Geometry, len(knownMigGeometries))
+	for k, v := range knownMigGeometries {
 		res[k] = v.asGpuGeometry()
 	}
 
-	return res, err
+	return res, nil
 }
 
 type migGeometryList []map[gpumig.ProfileName]int
