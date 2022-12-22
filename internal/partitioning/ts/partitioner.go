@@ -107,7 +107,7 @@ func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
 	for _, g := range partitioning.GPUs {
 		for r, q := range g.Resources {
 			nvidiaRes := nvidiav1.ReplicatedResource{
-				Rename: nvidiav1.ResourceName(r),
+				Rename: nvidiav1.ResourceName(strings.TrimPrefix(r.String(), constant.NvidiaResourcePrefix)),
 				Devices: nvidiav1.ReplicatedDevices{
 					List: []nvidiav1.ReplicatedDeviceRef{
 						nvidiav1.ReplicatedDeviceRef(strconv.Itoa(g.GPUIndex)),
