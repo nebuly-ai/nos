@@ -24,6 +24,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"strings"
 	"time"
 )
 
@@ -35,7 +36,7 @@ type PartitioningPlan struct {
 func NewPartitioningPlan(s state.PartitioningState) PartitioningPlan {
 	return PartitioningPlan{
 		DesiredState: s,
-		id:           time.Now().UTC().String(),
+		id:           strings.ReplaceAll(time.Now().UTC().String(), " ", "-"),
 	}
 }
 
