@@ -342,3 +342,131 @@ func TestNode_AddPod(t *testing.T) {
 		})
 	}
 }
+
+func TestNode__UpdateGeometryFor(t *testing.T) {
+	testCases := []struct {
+		name   string
+		node   v1.Node
+		slices map[gpu.Slice]int
+
+		expectedErr    bool
+		expectedUpdate bool
+	}{
+		{
+			name: "node without GPUs",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: "foo",
+					constant.LabelNvidiaCount:   "0",
+					constant.LabelNvidiaMemory:  "40000",
+				}).
+				Get(),
+			slices: map[gpu.Slice]int{
+				timeslicing.ProfileName("10gb"): 1,
+			},
+			expectedErr:    false,
+			expectedUpdate: false,
+		},
+		{
+			name: "no slices",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: "foo",
+					constant.LabelNvidiaCount:   "2",
+					constant.LabelNvidiaMemory:  "40000",
+				}).
+				Get(),
+			slices:         map[gpu.Slice]int{},
+			expectedErr:    false,
+			expectedUpdate: false,
+		},
+		{
+			name: "node with free capacity, should update",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: "foo",
+					constant.LabelNvidiaCount:   "3",
+					constant.LabelNvidiaMemory:  "40000",
+				}).
+				Get(),
+			slices: map[gpu.Slice]int{
+				timeslicing.ProfileName("10gb"): 1,
+			},
+			expectedErr:    false,
+			expectedUpdate: true,
+		},
+		{
+			name: "node without any free slice or capacity, should not update",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: "foo",
+					constant.LabelNvidiaCount:   "1",
+					constant.LabelNvidiaMemory:  "10000",
+				}).
+				WithAnnotations(map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", resource.StatusUsed): "1",
+				}).Get(),
+			slices: map[gpu.Slice]int{
+				timeslicing.ProfileName("10gb"): 1,
+			},
+			expectedErr:    false,
+			expectedUpdate: false,
+		},
+		{
+			name: "node already provides required slices, should not update",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: "foo",
+					constant.LabelNvidiaCount:   "1",
+					constant.LabelNvidiaMemory:  "40000",
+				}).
+				WithAnnotations(map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", resource.StatusFree): "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "20gb", resource.StatusFree): "1",
+				}).Get(),
+			slices: map[gpu.Slice]int{
+				timeslicing.ProfileName("10gb"): 1,
+				timeslicing.ProfileName("20gb"): 1,
+			},
+			expectedErr:    false,
+			expectedUpdate: false,
+		},
+		{
+			name: "node with free profiles that can be deleted, should update",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaProduct: "foo",
+					constant.LabelNvidiaCount:   "1",
+					constant.LabelNvidiaMemory:  "40000",
+				}).
+				WithAnnotations(map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", resource.StatusFree): "2",
+				}).Get(),
+			slices: map[gpu.Slice]int{
+				timeslicing.ProfileName("20gb"): 1,
+			},
+			expectedErr:    false,
+			expectedUpdate: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			nodeInfo := framework.NewNodeInfo()
+			nodeInfo.SetNode(&tt.node)
+			nodeInfo.Allocatable.ScalarResources = map[v1.ResourceName]int64{"nebuly.ai/foo": 1}
+			n, err := timeslicing.NewNode(*nodeInfo)
+			if err != nil {
+				panic(err)
+			}
+
+			updated, err := n.UpdateGeometryFor(tt.slices)
+			assert.Equal(t, tt.expectedUpdate, updated)
+			if tt.expectedErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
