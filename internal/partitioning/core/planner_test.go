@@ -554,6 +554,40 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 			expectedErr:                 false,
 		},
 		{
+			name: "No nodes with time-slicing partitioning enabled, should do nothing",
+			snapshotNodes: []v1.Node{
+				factory.BuildNode("node-1").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", n8sresource.StatusFree): "1",
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
+					Get(),
+			},
+			candidatePods: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("10gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("5gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+			},
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+
+			expectedOverallPartitioning: []state.GPUPartitioning{},
+			expectedErr:                 false,
+		},
+		{
 			name: "Node with free capacity, should create new slices",
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
@@ -689,6 +723,97 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 			},
 			expectedErr: false,
 		},
+		{
+			name: "Nodes with free profiles and free capacity, should create new slices and delete unnecessary slices (splitting large slices into smaller ones)",
+			snapshotNodes: []v1.Node{
+				factory.BuildNode("node-1").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "40gb", n8sresource.StatusFree): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", n8sresource.StatusUsed): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 1, "40gb", n8sresource.StatusUsed): "1",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						constant.LabelNvidiaMemory:    strconv.Itoa(50000),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						timeslicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(2, resource.DecimalSI),
+					}).
+					Get(),
+				factory.BuildNode("node-2").
+					WithAnnotations(map[string]string{
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", n8sresource.StatusFree): "1",
+						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "30gb", n8sresource.StatusUsed): "1",
+					}).
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					}).
+					WithAllocatableResources(v1.ResourceList{
+						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+						timeslicing.ProfileName("30gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+					}).
+					Get(),
+				factory.BuildNode("node-3").
+					WithLabels(map[string]string{
+						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
+						constant.LabelNvidiaCount:     strconv.Itoa(1),
+						constant.LabelNvidiaMemory:    strconv.Itoa(20000),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					}).
+					Get(),
+			},
+			candidatePods: []v1.Pod{
+				factory.BuildPod("ns-1", "pd-1").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+				factory.BuildPod("ns-1", "pd-2").
+					WithContainer(
+						factory.BuildContainer("test", "test").
+							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							Get(),
+					).
+					Get(),
+			},
+			schedulerPreFilterStatus: framework.NewStatus(framework.Success),
+			schedulerFilterStatus:    framework.NewStatus(framework.Success),
+
+			expectedOverallPartitioning: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						timeslicing.ProfileName("20gb").AsResourceName(): 2,
+						timeslicing.ProfileName("10gb").AsResourceName(): 1,
+					},
+				},
+				{
+					GPUIndex: 1,
+					Resources: map[v1.ResourceName]int{
+						timeslicing.ProfileName("40gb").AsResourceName(): 1,
+					},
+				},
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						timeslicing.ProfileName("10gb").AsResourceName(): 1,
+						timeslicing.ProfileName("30gb").AsResourceName(): 1,
+					},
+				},
+				{
+					GPUIndex:  0,
+					Resources: map[v1.ResourceName]int{},
+				},
+			},
+			expectedErr: false,
+		},
 	}
 
 	for _, tt := range testCases {
@@ -712,17 +837,11 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 			planner := partitioning_ts.NewPlanner(mockedScheduler)
 			plan, err := planner.Plan(context.Background(), snapshot, tt.candidatePods)
 
-			// Compute overall partitioning ignoring GPU index
 			overallGpuPartitioning := make([]state.GPUPartitioning, 0)
 			for _, nodePartitioning := range plan.DesiredState {
 				for _, g := range nodePartitioning.GPUs {
-					g.GPUIndex = 0
 					overallGpuPartitioning = append(overallGpuPartitioning, g)
 				}
-			}
-			for i := range tt.expectedOverallPartitioning {
-				gpuPartitioning := &tt.expectedOverallPartitioning[i]
-				gpuPartitioning.GPUIndex = 0
 			}
 
 			// Run assertions
