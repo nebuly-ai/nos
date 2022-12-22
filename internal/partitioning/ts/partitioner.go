@@ -19,6 +19,7 @@ package ts
 import (
 	"context"
 	"fmt"
+	nvidiav1 "github.com/NVIDIA/k8s-device-plugin/api/config/v1"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
@@ -27,6 +28,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/yaml"
+	"strconv"
 	"strings"
 )
 
@@ -78,18 +81,42 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 
 	// Update ConfigMap with new node config
 	key := fmt.Sprintf("%s-%s", node.Name, planId)
-	devicePluginCm.Data[key] = "" // todo
-	if err := p.Patch(ctx, &devicePluginCm, client.MergeFrom(originalCm)); err != nil {
+	nvidiaSharing := ToNvidiaSharing(partitioning)
+	nvidiaSharingYaml, err := yaml.Marshal(nvidiaSharing)
+	if err != nil {
+		return fmt.Errorf("unable to marshal nvidia device plugin config: %v", err)
+	}
+	devicePluginCm.Data[key] = string(nvidiaSharingYaml)
+	if err = p.Patch(ctx, &devicePluginCm, client.MergeFrom(originalCm)); err != nil {
 		return err
 	}
 
 	// Update node labels to apply new config
 	originalNode := node.DeepCopy()
 	node.Labels[constant.LabelNvidiaDevicePluginConfig] = key
-	if err := p.Patch(ctx, &node, client.MergeFrom(originalNode)); err != nil {
+	if err = p.Patch(ctx, &node, client.MergeFrom(originalNode)); err != nil {
 		return err
 	}
 	logger.Info("node partitioning config updated", "node", node.Name, "plan", planId)
 
 	return nil
+}
+
+func ToNvidiaSharing(partitioning state.NodePartitioning) nvidiav1.Sharing {
+	replicatedResources := make([]nvidiav1.ReplicatedResource, 0)
+	for _, g := range partitioning.GPUs {
+		for r, q := range g.Resources {
+			nvidiaRes := nvidiav1.ReplicatedResource{
+				Rename: nvidiav1.ResourceName(r),
+				Devices: nvidiav1.ReplicatedDevices{
+					List: []nvidiav1.ReplicatedDeviceRef{
+						nvidiav1.ReplicatedDeviceRef(strconv.Itoa(g.GPUIndex)),
+					},
+				},
+				Replicas: q,
+			}
+			replicatedResources = append(replicatedResources, nvidiaRes)
+		}
+	}
+	return nvidiav1.Sharing{TimeSlicing: nvidiav1.TimeSlicing{Resources: replicatedResources}}
 }
