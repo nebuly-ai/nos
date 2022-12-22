@@ -61,6 +61,7 @@ type Snapshot interface {
 	GetNode(name string) (PartitionableNode, bool)
 	GetNodes() map[string]PartitionableNode
 	AddPod(node string, pod v1.Pod) error
+	Clone() Snapshot
 }
 
 type SnapshotTaker interface {

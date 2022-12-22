@@ -90,6 +90,21 @@ func (c *clusterSnapshot) Fork() error {
 	return nil
 }
 
+func (c *clusterSnapshot) Clone() Snapshot {
+	cloned := &clusterSnapshot{
+		partitioner:        c.partitioner,
+		profilesCalculator: c.profilesCalculator,
+		profilesFilter:     c.profilesFilter,
+	}
+	if c.forkedData != nil {
+		cloned.forkedData = c.forkedData.clone()
+	}
+	if c.data != nil {
+		cloned.data = c.data.clone()
+	}
+	return cloned
+}
+
 func (c *clusterSnapshot) Commit() {
 	if c.forkedData != nil {
 		c.data = c.forkedData
