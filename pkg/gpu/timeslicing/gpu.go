@@ -108,11 +108,24 @@ func (g *GPU) GetGeometry() gpu.Geometry {
 }
 
 func (g *GPU) Clone() GPU {
-	return GPU{
+	cloned := GPU{
 		Model:    g.Model,
 		Index:    g.Index,
 		MemoryGB: g.MemoryGB,
 	}
+	if g.UsedProfiles != nil {
+		cloned.UsedProfiles = make(map[ProfileName]int)
+		for k, v := range g.UsedProfiles {
+			cloned.UsedProfiles[k] = v
+		}
+	}
+	if g.FreeProfiles != nil {
+		cloned.FreeProfiles = make(map[ProfileName]int)
+		for k, v := range g.FreeProfiles {
+			cloned.FreeProfiles[k] = v
+		}
+	}
+	return cloned
 }
 
 func (g *GPU) HasFreeCapacity() bool {

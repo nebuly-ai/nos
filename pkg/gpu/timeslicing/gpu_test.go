@@ -340,3 +340,48 @@ func TestGPU_UpdateGeometryFor(t *testing.T) {
 		})
 	}
 }
+
+func TestGPU__Clone(t *testing.T) {
+	testCases := []struct {
+		name string
+		gpu  timeslicing.GPU
+	}{
+		{
+			name: "Full GPU",
+			gpu:  timeslicing.NewFullGPU(gpu.GPUModel_A100_SXM4_40GB, 0, 10),
+		},
+		{
+			name: "Partitioned GPU",
+			gpu: timeslicing.NewGpuOrPanic(
+				gpu.GPUModel_A100_PCIe_80GB,
+				0,
+				100,
+				map[timeslicing.ProfileName]int{
+					"20gb": 1,
+					"10gb": 2,
+				},
+				map[timeslicing.ProfileName]int{
+					"10gb": 1,
+					"15gb": 1,
+				},
+			),
+		},
+		{
+			name: "Used/Free profiles are nil",
+			gpu: timeslicing.GPU{
+				Model:        gpu.GPUModel_A100_PCIe_80GB,
+				Index:        0,
+				MemoryGB:     100,
+				UsedProfiles: nil,
+				FreeProfiles: nil,
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			clone := tt.gpu.Clone()
+			assert.Equalf(t, tt.gpu, clone, "Cloned GPU should be equal to original")
+		})
+	}
+}
