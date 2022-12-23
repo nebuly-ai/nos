@@ -22,7 +22,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
 	"github.com/nebuly-ai/nebulnetes/pkg/util/predicate"
@@ -36,9 +35,10 @@ import (
 
 type MigActuator struct {
 	client.Client
-	migClient   mig.Client
-	sharedState *SharedState
-	nodeName    string
+	migClient    mig.Client
+	sharedState  *SharedState
+	nodeName     string
+	devicePlugin gpu.DevicePluginClient
 
 	// lastAppliedPlan is the latest applied plan
 	lastAppliedPlan *plan.MigConfigPlan
@@ -48,10 +48,11 @@ type MigActuator struct {
 
 func NewActuator(client client.Client, migClient mig.Client, sharedState *SharedState, nodeName string) MigActuator {
 	return MigActuator{
-		Client:      client,
-		migClient:   migClient,
-		nodeName:    nodeName,
-		sharedState: sharedState,
+		Client:       client,
+		migClient:    migClient,
+		nodeName:     nodeName,
+		sharedState:  sharedState,
+		devicePlugin: gpu.NewDevicePluginClient(client),
 	}
 }
 
@@ -202,82 +203,9 @@ func (a *MigActuator) apply(ctx context.Context, plan plan.MigConfigPlan) (ctrl.
 // restartNvidiaDevicePlugin deletes the Nvidia Device Plugin pod and blocks until it is successfully recreated by
 // its daemonset
 func (a *MigActuator) restartNvidiaDevicePlugin(ctx context.Context) error {
-	logger := a.newLogger(ctx)
-	logger.Info("restarting nvidia device plugin")
-
-	// delete pod on the current node
-	var podList v1.PodList
-	if err := a.Client.List(
-		ctx,
-		&podList,
-		client.MatchingLabels{"app": "nvidia-device-plugin-daemonset"},
-		client.MatchingFields{constant.PodNodeNameKey: a.nodeName},
-	); err != nil {
-		return err
-	}
-	if len(podList.Items) != 1 {
-		return fmt.Errorf("error getting nvidia device plugin pod: expected exactly 1 but got %d", len(podList.Items))
-	}
-	if err := a.Client.Delete(ctx, &podList.Items[0]); err != nil {
-		return fmt.Errorf("error deleting nvidia device plugin pod: %s", err.Error())
-	}
-	logger.V(1).Info("deleted nvidia device plugin pod")
-
-	// wait for pod to restart
-	if err := a.waitNvidiaDevicePluginPodRestart(ctx, 1*time.Minute); err != nil {
-		return err
-	}
-	logger.Info("nvidia device plugin restarted")
-
-	return nil
-}
-
-func (a *MigActuator) waitNvidiaDevicePluginPodRestart(ctx context.Context, timeout time.Duration) error {
-	logger := a.newLogger(ctx)
-
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	var podList v1.PodList
-	checkPodRecreated := func() (bool, error) {
-		if err := a.Client.List(
-			ctx,
-			&podList,
-			client.MatchingLabels{"app": "nvidia-device-plugin-daemonset"},
-			client.MatchingFields{constant.PodNodeNameKey: a.nodeName},
-		); err != nil {
-			return false, err
-		}
-		if len(podList.Items) != 1 {
-			return false, nil
-		}
-		pod := podList.Items[0]
-		if pod.DeletionTimestamp != nil {
-			return false, nil
-		}
-		if pod.Status.Phase != v1.PodRunning {
-			return false, nil
-		}
-		return true, nil
-	}
-
-	for {
-		logger.V(1).Info("waiting for nvidia device plugin Pod to be recreated")
-		recreated, err := checkPodRecreated()
-		if err != nil {
-			return err
-		}
-		if recreated {
-			logger.V(1).Info("nvidia device plugin Pod recreated")
-			break
-		}
-		if ctx.Err() != nil {
-			return fmt.Errorf("error waiting for nvidia-device-plugin Pod on node %s: timeout", a.nodeName)
-		}
-		time.Sleep(5 * time.Second)
-	}
-
-	return nil
+	logger := log.FromContext(ctx)
+	logger.Info("restarting NVIDIA device plugin")
+	return a.devicePlugin.Restart(ctx, a.nodeName, 1*time.Minute)
 }
 
 func (a *MigActuator) applyDeleteOp(ctx context.Context, op plan.DeleteOperation) plan.OperationStatus {
