@@ -17,10 +17,19 @@
 package ts_test
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/ts"
+	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
+	"github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
 )
 
@@ -52,5 +61,124 @@ func TestToPluginConfig(t *testing.T) {
 		}
 		config := ts.ToPluginConfig(nodePartitioning)
 		assert.Len(t, config.Sharing.TimeSlicing.Resources, 4)
+	})
+}
+
+func TestPartitioner__ApplyPartitioning(t *testing.T) {
+	t.Run("Device Plugin ConfigMap does not exist - should create it", func(t *testing.T) {
+		node := factory.BuildNode("node-1").Get()
+		k8sClient := fake.NewClientBuilder().WithObjects(&node).Build()
+		devicePluginCm := types.NamespacedName{
+			Namespace: "test",
+			Name:      "test-cm",
+		}
+		devicePluginClient := mocks.NewDevicePluginClient(t)
+		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
+			Once().
+			Return(nil)
+		partitioner := ts.NewPartitioner(
+			k8sClient,
+			devicePluginCm,
+			devicePluginClient,
+		)
+		ctx := context.Background()
+
+		err := partitioner.ApplyPartitioning(ctx, node, "plan", state.NodePartitioning{})
+		assert.NoError(t, err)
+
+		cm := &v1.ConfigMap{}
+		err = k8sClient.Get(ctx, devicePluginCm, cm)
+		assert.NoError(t, err)
+		assert.Equal(t, cm.Namespace, devicePluginCm.Namespace)
+		assert.Equal(t, cm.Name, devicePluginCm.Name)
+	})
+
+	t.Run("Error restarting NVIDIA device plugin", func(t *testing.T) {
+		node := factory.BuildNode("node-1").Get()
+		k8sClient := fake.NewClientBuilder().WithObjects(&node).Build()
+		devicePluginCm := types.NamespacedName{
+			Namespace: "test",
+			Name:      "test-cm",
+		}
+		devicePluginClient := mocks.NewDevicePluginClient(t)
+		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
+			Once().
+			Return(errors.New(""))
+		partitioner := ts.NewPartitioner(
+			k8sClient,
+			devicePluginCm,
+			devicePluginClient,
+		)
+		ctx := context.Background()
+
+		err := partitioner.ApplyPartitioning(ctx, node, "plan", state.NodePartitioning{})
+		assert.Error(t, err)
+	})
+
+	t.Run("Updating partitioning should delete previous node configs from device plugin CM", func(t *testing.T) {
+		node := factory.BuildNode("node-1").Get()
+		devicePluginCM := v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-name",
+			},
+			Data: map[string]string{
+				fmt.Sprintf(ts.DevicePluginConfigKeyFormat, node.Name, "old-plan-1"): "old-config",
+				fmt.Sprintf(ts.DevicePluginConfigKeyFormat, node.Name, "old-plan-2"): "old-config",
+				fmt.Sprintf(ts.DevicePluginConfigKeyFormat, "node-2", "old-plan-2"):  "config",
+			},
+		}
+		cmNamespacedName := types.NamespacedName{
+			Namespace: devicePluginCM.Namespace,
+			Name:      devicePluginCM.Name,
+		}
+
+		k8sClient := fake.NewClientBuilder().
+			WithObjects(&node).
+			WithObjects(&devicePluginCM).
+			Build()
+		devicePluginClient := mocks.NewDevicePluginClient(t)
+		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
+			Once().
+			Return(nil)
+		partitioner := ts.NewPartitioner(
+			k8sClient,
+			cmNamespacedName,
+			devicePluginClient,
+		)
+		ctx := context.Background()
+
+		nodePartitioning := state.NodePartitioning{
+			GPUs: []state.GPUPartitioning{
+				{
+					GPUIndex: 0,
+					Resources: map[v1.ResourceName]int{
+						"nvidia.com/gpu-10gb": 2,
+						"nvidia.com/gpu-5gb":  2,
+					},
+				},
+			},
+		}
+		planId := "plan-id"
+		err := partitioner.ApplyPartitioning(ctx, node, planId, nodePartitioning)
+		assert.NoError(t, err)
+
+		// Fetch config map
+		var updatedCm v1.ConfigMap
+		assert.NoError(t, k8sClient.Get(ctx, cmNamespacedName, &updatedCm))
+
+		// Check current plan has been added to config
+		expectedKeys := []string{
+			fmt.Sprintf(ts.DevicePluginConfigKeyFormat, node.Name, planId),
+			fmt.Sprintf(ts.DevicePluginConfigKeyFormat, "node-2", "old-plan-2"),
+		}
+		updatedCmKeys := make([]string, 0, len(updatedCm.Data))
+		for k := range updatedCm.Data {
+			updatedCmKeys = append(updatedCmKeys, k)
+		}
+		assert.Equal(t, expectedKeys, updatedCmKeys)
+
+		// Check old entries have been deleted
+
 	})
 }

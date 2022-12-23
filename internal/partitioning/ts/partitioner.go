@@ -25,7 +25,6 @@ import (
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -34,6 +33,8 @@ import (
 	"strings"
 	"time"
 )
+
+const DevicePluginConfigKeyFormat = "%s-%s"
 
 var _ core.Partitioner = partitioner{}
 
@@ -59,24 +60,11 @@ func NewPartitioner(
 func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId string, partitioning state.NodePartitioning) error {
 	logger := log.FromContext(ctx)
 
-	// Fetch nvidia-device-plugin config or create it if it doesn't exist
 	var devicePluginCm v1.ConfigMap
-	cmObjectKey := client.ObjectKey{Name: p.devicePluginCM.Name, Namespace: p.devicePluginCM.Namespace}
-	if err := p.Client.Get(ctx, cmObjectKey, &devicePluginCm); err != nil {
-		if errors.IsNotFound(err) {
-			devicePluginCm.Name = p.devicePluginCM.Name
-			devicePluginCm.Namespace = p.devicePluginCM.Namespace
-			devicePluginCm.Data = map[string]string{}
-			logger.Info(
-				"device plugin ConfigMap not found, creating it",
-				"name",
-				devicePluginCm.Name,
-				"namespace",
-				devicePluginCm.Namespace,
-			)
-			return p.Create(ctx, &devicePluginCm)
-		}
-		logger.Error(err, "unable to get device plugin ConfigMap")
+	var err error
+
+	// Fetch nvidia-device-plugin config or create it if it doesn't exist
+	if devicePluginCm, err = p.getOrCreateDevicePluginCM(ctx); err != nil {
 		return err
 	}
 	originalCm := devicePluginCm.DeepCopy()
@@ -89,7 +77,7 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 	}
 
 	// Update ConfigMap with new node config
-	key := fmt.Sprintf("%s-%s", node.Name, planId)
+	key := fmt.Sprintf(DevicePluginConfigKeyFormat, node.Name, planId)
 	pluginConfig := ToPluginConfig(partitioning)
 	pluginConfigYaml, err := yaml.Marshal(pluginConfig)
 	if err != nil {
@@ -102,6 +90,9 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 
 	// Update node labels to apply new config
 	originalNode := node.DeepCopy()
+	if node.Labels == nil {
+		node.Labels = make(map[string]string)
+	}
 	node.Labels[constant.LabelNvidiaDevicePluginConfig] = key
 	if err = p.Patch(ctx, &node, client.MergeFrom(originalNode)); err != nil {
 		return err
@@ -116,6 +107,41 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 	}
 
 	return nil
+}
+
+func (p partitioner) getOrCreateDevicePluginCM(ctx context.Context) (v1.ConfigMap, error) {
+	logger := log.FromContext(ctx)
+	var res v1.ConfigMap
+
+	cmObjectKey := client.ObjectKey{Name: p.devicePluginCM.Name, Namespace: p.devicePluginCM.Namespace}
+	err := p.Client.Get(ctx, cmObjectKey, &res)
+
+	// Error fetching CM
+	if client.IgnoreNotFound(err) != nil {
+		return res, fmt.Errorf("unable to get device plugin ConfigMap: %v", err)
+	}
+
+	// CM found, return it
+	if err == nil {
+		return res, nil
+	}
+
+	// CM does not exist, create it
+	res.Name = p.devicePluginCM.Name
+	res.Namespace = p.devicePluginCM.Namespace
+	res.Data = map[string]string{}
+	logger.Info(
+		"device plugin ConfigMap not found, creating it",
+		"name",
+		res.Name,
+		"namespace",
+		res.Namespace,
+	)
+	if err = p.Create(ctx, &res); err != nil {
+		return res, fmt.Errorf("unable to create device plugin ConfigMap: %v", err)
+	}
+
+	return res, nil
 }
 
 func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
