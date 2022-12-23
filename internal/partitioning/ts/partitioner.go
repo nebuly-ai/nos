@@ -23,6 +23,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -31,19 +32,27 @@ import (
 	"sigs.k8s.io/yaml"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var _ core.Partitioner = partitioner{}
 
 type partitioner struct {
 	client.Client
-	devicePluginCM types.NamespacedName
+	devicePluginCM     types.NamespacedName
+	devicePluginClient gpu.DevicePluginClient
 }
 
-func NewPartitioner(client client.Client, devicePluginCM types.NamespacedName) core.Partitioner {
+func NewPartitioner(
+	client client.Client,
+	devicePluginCM types.NamespacedName,
+	devicePluginClient gpu.DevicePluginClient,
+) core.Partitioner {
+
 	return partitioner{
-		Client:         client,
-		devicePluginCM: devicePluginCM,
+		Client:             client,
+		devicePluginCM:     devicePluginCM,
+		devicePluginClient: devicePluginClient,
 	}
 }
 
@@ -98,6 +107,13 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 		return err
 	}
 	logger.Info("node partitioning config updated", "node", node.Name, "plan", planId)
+
+	// Restart the NVIDIA device plugin on the node
+	logger.Info("restarting NVIDIA device plugin", "node", node.Name)
+	if err = p.devicePluginClient.Restart(ctx, node.Name, 1*time.Minute); err != nil {
+		logger.Error(err, "unable to restart NVIDIA device plugin")
+		return err
+	}
 
 	return nil
 }

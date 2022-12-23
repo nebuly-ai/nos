@@ -32,7 +32,11 @@ import (
 func NewActuator(client client.Client, devicePluginCM types.NamespacedName) core.Actuator {
 	return core.NewActuator(
 		client,
-		NewPartitioner(client, devicePluginCM),
+		NewPartitioner(
+			client,
+			devicePluginCM,
+			gpu.NewDevicePluginClient(client),
+		),
 	)
 }
 
