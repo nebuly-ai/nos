@@ -1,0 +1,92 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "gpu-partitioner.name" . }}
+  labels:
+    {{- include "gpu-partitioner.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+      - persistentvolumeclaims
+      - persistentvolumes
+      - replicationcontrollers
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - patch
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - compositeelasticquotas
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - elasticquotas
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - policy
+    resources:
+      - poddisruptionbudgets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - storage.k8s.io
+    resources:
+      - csidrivers
+      - csinodes
+      - csistoragecapacities
+      - storageclasses
+    verbs:
+      - get
+      - list
+      - watch

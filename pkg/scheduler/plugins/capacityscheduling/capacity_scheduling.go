@@ -292,7 +292,7 @@ func (c *CapacityScheduling) AddPod(ctx context.Context, cycleState *framework.C
 
 	elasticQuotaInfo := elasticQuotaSnapshotState.elasticQuotaInfos[podToAdd.Pod.Namespace]
 	if elasticQuotaInfo != nil {
-		err := elasticQuotaInfo.addPodIfNotPresent(podToAdd.Pod)
+		err = elasticQuotaInfo.addPodIfNotPresent(podToAdd.Pod)
 		if err != nil {
 			klog.ErrorS(err, "Failed to add Pod to its associated elasticQuota", "pod", klog.KObj(podToAdd.Pod))
 		}

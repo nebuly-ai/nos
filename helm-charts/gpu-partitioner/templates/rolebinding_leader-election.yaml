@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "gpu-partitioner.name" . }}-leader-election
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "{{- include "gpu-partitioner.name" . }}-leader-election"
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "gpu-partitioner.name" . }}
+    namespace: n8s-system

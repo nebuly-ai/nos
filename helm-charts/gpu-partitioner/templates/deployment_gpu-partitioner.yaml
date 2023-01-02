@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gpu-partitioner.name" . }}
+  labels:
+    control-plane: "n8s-controller-manager"
+    {{- include "gpu-partitioner.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      control-plane: "n8s-controller-manager"
+      {{- include "gpu-partitioner.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: "{{ .Chart.Name }}"
+        {{- with .Values.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        control-plane: "n8s-controller-manager"
+        {{- include "gpu-partitioner.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "gpu-partitioner.name" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: 10
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          command:
+            - /gpupartitioner
+          args:
+            - --config=gpu_partitioner_config.yaml
+            - --zap-log-level={{ .Values.logLevel }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /gpu_partitioner_config.yaml
+              name: gpu-partitioner-config
+              subPath: {{ include "gpu-partitioner.configFileName" . }}
+            - mountPath: /known_mig_geometries.yaml
+              name: known-mig-geometries
+              subPath: {{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
+
+        - name: kube-rbac-proxy
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+          args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            - --v=0
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 5m
+              memory: 64Mi
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - configMap:
+            name: {{ include "gpu-partitioner.config.configMapName" . }}
+          name: gpu-partitioner-config
+        - configMap:
+            name: {{ include "gpu-partitioner.knownMigGeometriesConfigMapName" . }}
+          name: known-mig-geometries

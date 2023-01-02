@@ -1,0 +1,154 @@
+# Default values for gpu-partitioner.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namePrefix: n8s
+
+logLevel: 1
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/telemaco019
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+# Timeout of the window used by the GPU partitioner for batching pending Pods.
+#
+# Higher values make the GPU partitioner will potentially take into account more pending Pods when
+# deciding the GPU partitioning plan, but the partitioning will be performed less frequently
+batchWindowTimeoutSeconds: 60
+
+# Idle seconds before the GPU partitioner processes the current batch if no new pending Pods are created, and
+# the timeout has not been reached.
+#
+# Higher values make the GPU partitioner will potentially take into account more pending Pods when
+# deciding the GPU partitioning plan, but the partitioning will be performed less frequently
+batchWindowIdleSeconds: 10
+
+# Optional path to the configuration file of the k8s scheduler used internally by the GPU
+# partitioner for simulating Pods scheduling.
+#
+# Uncomment if you want to use a custom scheduler configuration file, otherwise the GPU partitioner
+# will use the default k8s scheduler profile
+#schedulerConfigFile: scheduler_config.yaml
+
+
+# Controller manager leader election
+leaderElection:
+  enabled: true
+
+podSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+securityContext:
+   capabilities:
+     drop:
+     - ALL
+   readOnlyRootFilesystem: true
+   runAsNonRoot: true
+   runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+podAnnotations: {}
+
+tolerations: []
+
+affinity: {}
+
+nodeSelector: {}
+
+# Map that associates to each GPU model its possible MIG configurations
+knownMigGeometries:
+  A30:
+    - 1g.6gb: 4
+    - 1g.6gb: 2
+      2g.12gb: 1
+    - 2g.12gb: 2
+    - 4g.24gb: 1
+  A100-SXM4-40GB:
+    - 1g.5gb: 7
+    - 1g.5gb: 5
+      2g.10gb: 1
+    - 1g.5gb: 3
+      2g.10gb: 2
+    - 1g.5gb: 1
+      2g.10gb: 3
+    - 1g.5gb: 2
+      2g.10gb: 1
+      3g.20gb: 1
+    - 2g.10gb: 2
+      3g.20gb: 1
+    - 1g.5gb: 3
+      3g.20gb: 1
+    - 1g.5gb: 1
+      2g.10gb: 1
+      3g.20gb: 1
+    - 3g.20gb: 2
+    - 1g.5gb: 3
+      4g.20gb: 1
+    - 1g.5gb: 1
+      2g.10gb: 1
+      4g.20gb: 1
+    - 7g.40gb: 1
+  NVIDIA-A100-40GB-PCIe:
+    - 1g.5gb: 7
+    - 1g.5gb: 5
+      2g.10gb: 1
+    - 1g.5gb: 3
+      2g.10gb: 2
+    - 1g.5gb: 1
+      2g.10gb: 3
+    - 1g.5gb: 2
+      2g.10gb: 1
+      3g.20gb: 1
+    - 2g.10gb: 2
+      3g.20gb: 1
+    - 1g.5gb: 3
+      3g.20gb: 1
+    - 1g.5gb: 1
+      2g.10gb: 1
+      3g.20gb: 1
+    - 3g.20gb: 2
+    - 1g.5gb: 3
+      4g.20gb: 1
+    - 1g.5gb: 1
+      2g.10gb: 1
+      4g.20gb: 1
+    - 7g.40gb: 1
+  NVIDIA-A100-80GB-PCIe:
+    - 1g.10gb: 7
+    - 1g.10gb: 5
+      2g.20gb: 1
+    - 1g.10gb: 3
+      2g.20gb: 2
+    - 1g.10gb: 1
+      2g.20gb: 3
+    - 1g.10gb: 2
+      2g.20gb: 1
+      3g.40gb: 1
+    - 2g.20gb: 2
+      3g.20gb: 1
+    - 1g.10gb: 3
+      3g.40gb: 1
+    - 1g.10gb: 1
+      2g.20gb: 1
+      3g.40gb: 1
+    - 3g.40gb: 2
+    - 1g.10gb: 3
+      4g.40gb: 1
+    - 1g.10gb: 1
+      2g.20gb: 1
+      4g.40gb: 1
+    - 7g.79gb: 1
