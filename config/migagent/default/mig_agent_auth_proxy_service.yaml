@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
-  name: controller-manager-metrics-service
+  name: mig-agent-metrics-service
   namespace: system
 spec:
   ports:
@@ -13,3 +13,4 @@ spec:
     targetPort: https
   selector:
     control-plane: controller-manager
+    app.kubernetes.io/component: mig-agent

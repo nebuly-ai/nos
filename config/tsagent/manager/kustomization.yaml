@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: time-slicing-agent
   newName: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
-  newTag: latest
+  newTag: 0.0.1-alpha.2
