@@ -2,60 +2,97 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- The prefix used for generating all the resource names.
 namePrefix: n8s
 
-logLevel: 1
+# -- The level of log of the GPU Partitioner.
+# Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+# **Must be >= 0**.
+logLevel: 0
 
+# -- Number of replicas of the gpu-manager Pod.
 replicaCount: 1
 
-# -- Namespaced name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
-# It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the
-# NVIDIA GPU Operator.
 devicePlugin:
   config:
+    # -- Name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
+    # It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the
+    # NVIDIA GPU Operator.
     name: nvidia-plugin-configs
+    # -- Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to
+    # the namespace where the NVIDIA Device Plugin has been deployed to.
     namespace: gpu-operator
 
 scheduler:
-  # -- Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the
-  # ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile.
   config:
-    name: n8s-scheduler-config # Name of the ConfigMap containing the k8s scheduler configuration file
+    # -- Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the
+    # ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile.
+    name: n8s-scheduler-config
 
 image:
+  # -- Overrides the GPU Partitioner image.
   repository: ghcr.io/telemaco019/nebulnetes-gpu-partitioner
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the GPU Partitioner image tag whose default is the chart appVersion.
   tag: ""
 
+# -- Configuration of the MIG Agent component of the GPU Partitioner.
+# @default -- -
 migAgent:
   # -- Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
   reportConfigIntervalSeconds: 10
-  logLevel: 1
+  # -- The level of log of the MIG Agent.
+  # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+  # **Must be >= 0**.
+  logLevel: 0
   image:
+    # -- Overrides the MIG Agent image.
     repository: ghcr.io/telemaco019/nebulnetes-mig-agent
     pullPolicy: IfNotPresent
-    # Overrides the image tag whose default is the chart appVersion.
+    # -- Overrides the MIG Agent image tag whose default is the chart appVersion.
     tag: ""
+  # -- Sets the resource requests and limits of the MIG Agent container.
   resources:
     limits:
       cpu: 100m
       memory: 128Mi
+  # -- Sets the tolerations of the MIG Agent Pod.
+  tolerations:
+    - key: "kubernetes.azure.com/scalesetpriority"
+      operator: "Equal"
+      value: "spot"
+      effect: "NoSchedule"
 
+# -- Configuration of the Time Slicing Agent component of the GPU Partitioner.
+# @default -- -
 timeSlicingAgent:
   # -- Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
   reportConfigIntervalSeconds: 10
-  logLevel: 1
+  # -- The level of log of the Time Slicing Agent.
+  # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+  # **Must be >= 0**.
+  logLevel: 0
   image:
+    # -- Overrides the Time Slicing Agent image.
     repository: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
     pullPolicy: IfNotPresent
-    # Overrides the image tag whose default is the chart appVersion.
+    # -- Overrides the Time Slicing Agent image tag whose default is the chart appVersion.
     tag: "latest"
+  # -- Sets the resource requests and limits of the Time Slicing Agent container.
   resources:
     limits:
       cpu: 100m
       memory: 128Mi
+  # -- Sets the tolerations of the Time Slicing Agent Pod.
+  tolerations:
+    - key: "kubernetes.azure.com/scalesetpriority"
+      operator: "Equal"
+      value: "spot"
+      effect: "NoSchedule"
 
+# -- Configuration of the [Kube RBAC Proxy](https://github.com/brancz/kube-rbac-proxy), which runs as sidecar of
+# all the GPU Partitioner components Pods.
+# @default -- -
 kubeRbacProxy:
   logLevel: 1
   image:
@@ -84,14 +121,16 @@ batchWindowTimeoutSeconds: 60
 # deciding the GPU partitioning plan, but the partitioning will be performed less frequently
 batchWindowIdleSeconds: 10
 
-# -- Controller manager leader election
 leaderElection:
+  # -- Enables/Disables the leader election of the GPU Partitioner controller manager.
   enabled: true
 
+# -- Sets the security context of the GPU partitioner Pod.
 podSecurityContext:
    runAsNonRoot: true
    runAsUser: 1000
 
+# -- Sets the resource limits and requests of the GPU partitioner container.
 resources:
   limits:
     cpu: 500m
@@ -100,12 +139,16 @@ resources:
     cpu: 10m
     memory: 64Mi
 
+# -- Sets the annotations of the GPU Partitioner Pod.
 podAnnotations: {}
 
+# -- Sets the tolerations of the GPU Partitioner Pod.
 tolerations: []
 
+# -- Sets the affinity config of the GPU Partitioner Pod.
 affinity: {}
 
+# -- Sets the nodeSelector config of the GPU Partitioner Pod.
 nodeSelector: {}
 
 # -- Map that associates to each GPU model its possible MIG configurations
