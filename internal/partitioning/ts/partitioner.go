@@ -67,6 +67,9 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 	if devicePluginCm, err = p.getOrCreateDevicePluginCM(ctx); err != nil {
 		return err
 	}
+	if devicePluginCm.Data == nil {
+		devicePluginCm.Data = map[string]string{}
+	}
 	originalCm := devicePluginCm.DeepCopy()
 
 	// Delete old node config
@@ -139,6 +142,11 @@ func (p partitioner) getOrCreateDevicePluginCM(ctx context.Context) (v1.ConfigMa
 	)
 	if err = p.Create(ctx, &res); err != nil {
 		return res, fmt.Errorf("unable to create device plugin ConfigMap: %v", err)
+	}
+
+	// Fetch the newly created CM
+	if err = p.Client.Get(ctx, cmObjectKey, &res); err != nil {
+		return res, fmt.Errorf("unable to get device plugin ConfigMap: %v", err)
 	}
 
 	return res, nil

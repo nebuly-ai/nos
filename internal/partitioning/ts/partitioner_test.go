@@ -93,6 +93,44 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 		assert.Equal(t, cm.Name, devicePluginCm.Name)
 	})
 
+	t.Run("Device Plugin ConfigMap exists but its data is nil - should init it", func(t *testing.T) {
+		node := factory.BuildNode("node-1").Get()
+		devicePluginCM := v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-name",
+			},
+		}
+		cmNamespacedName := types.NamespacedName{
+			Namespace: devicePluginCM.Namespace,
+			Name:      devicePluginCM.Name,
+		}
+		devicePluginClient := mocks.NewDevicePluginClient(t)
+		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
+			Once().
+			Return(nil)
+		k8sClient := fake.NewClientBuilder().
+			WithObjects(&node).
+			WithObjects(&devicePluginCM).
+			Build()
+		partitioner := ts.NewPartitioner(
+			k8sClient,
+			cmNamespacedName,
+			devicePluginClient,
+		)
+		ctx := context.Background()
+
+		err := partitioner.ApplyPartitioning(ctx, node, "plan", state.NodePartitioning{})
+		assert.NoError(t, err)
+
+		cm := &v1.ConfigMap{}
+		err = k8sClient.Get(ctx, cmNamespacedName, cm)
+		assert.NoError(t, err)
+		assert.Equal(t, cm.Namespace, cmNamespacedName.Namespace)
+		assert.Equal(t, cm.Name, cmNamespacedName.Name)
+		assert.NotNil(t, cm.Data)
+	})
+
 	t.Run("Error restarting NVIDIA device plugin", func(t *testing.T) {
 		node := factory.BuildNode("node-1").Get()
 		k8sClient := fake.NewClientBuilder().WithObjects(&node).Build()
