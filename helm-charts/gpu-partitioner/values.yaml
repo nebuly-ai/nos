@@ -8,7 +8,7 @@ logLevel: 1
 
 replicaCount: 1
 
-# Namespaced name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
+# -- Namespaced name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
 # It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the
 # NVIDIA GPU Operator.
 devicePlugin:
@@ -17,7 +17,7 @@ devicePlugin:
     namespace: gpu-operator
 
 scheduler:
-  # Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the
+  # -- Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the
   # ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile.
   config:
     name: n8s-scheduler-config # Name of the ConfigMap containing the k8s scheduler configuration file
@@ -29,7 +29,7 @@ image:
   tag: ""
 
 migAgent:
-  # Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
+  # -- Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
   reportConfigIntervalSeconds: 10
   logLevel: 1
   image:
@@ -43,14 +43,14 @@ migAgent:
       memory: 128Mi
 
 timeSlicingAgent:
-  # Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
+  # -- Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
   reportConfigIntervalSeconds: 10
   logLevel: 1
   image:
     repository: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: ""
+    tag: "latest"
   resources:
     limits:
       cpu: 100m
@@ -71,20 +71,20 @@ kubeRbacProxy:
       memory: 64Mi
 
 
-# Timeout of the window used by the GPU partitioner for batching pending Pods.
+# -- Timeout of the window used by the GPU partitioner for batching pending Pods.
 #
 # Higher values make the GPU partitioner will potentially take into account more pending Pods when
 # deciding the GPU partitioning plan, but the partitioning will be performed less frequently
 batchWindowTimeoutSeconds: 60
 
-# Idle seconds before the GPU partitioner processes the current batch if no new pending Pods are created, and
+# -- Idle seconds before the GPU partitioner processes the current batch if no new pending Pods are created, and
 # the timeout has not been reached.
 #
 # Higher values make the GPU partitioner will potentially take into account more pending Pods when
 # deciding the GPU partitioning plan, but the partitioning will be performed less frequently
 batchWindowIdleSeconds: 10
 
-# Controller manager leader election
+# -- Controller manager leader election
 leaderElection:
   enabled: true
 
@@ -108,8 +108,10 @@ affinity: {}
 
 nodeSelector: {}
 
-# Map that associates to each GPU model its possible MIG configurations
-knownMigGeometries:
+# -- Map that associates to each GPU model its possible MIG configurations
+# @default -- The default map does not include all the possible NVIDIA GPU model, so it might not include the exact
+# models of the GPUs of your node (exposed by the label `nvidia.com/gpu.product`).
+knownMigGeometries: |
   A30:
     - 1g.6gb: 4
     - 1g.6gb: 2

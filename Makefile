@@ -111,6 +111,10 @@ license-check: license-eye ## Check all files have the license header
 license-fix: license-eye ## Add license header to files that still don't have it
 	$(LICENSE_EYE) header fix
 
+.PHONY: helm-docs
+helm-docs: ## Generate Helm charts documentation
+	$(HELM_DOCS) --chart-search-root ./helm-charts
+
 ##@ Build
 
 .PHONY: cluster
@@ -244,12 +248,14 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 KIND ?= $(LOCALBIN)/kind
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 LICENSE_EYE ?= $(LOCALBIN)/license-eye
+HELM_DOCS ?= $(LOCALBIN)/helm-docs
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v4.5.5
 CONTROLLER_TOOLS_VERSION ?= v0.9.2
 CODE_GENERATOR_VERSION ?= v0.24.3
 GOLANGCI_LINT_VERSION ?= 1.50.1
+HELM_DOCS_VERSION ?= v1.11.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -291,3 +297,8 @@ $(GOLANGCI_LINT): $(LOCALBIN)
 license-eye: $(LICENSE_EYE)
 $(LICENSE_EYE): $(LOCALBIN)
 	test -s $(LOCALBIN)/license-eye || GOBIN=$(LOCALBIN) go install github.com/apache/skywalking-eyes/cmd/license-eye@latest
+
+.PHONY: helm-docs-bin ## Download helm-docs if necessary
+helm-docs-bin: $(HELM_DOCS)
+$(HELM_DOCS): $(LOCALBIN)
+	test -s $(LOCALBIN)/helm-docs || GOBIN=$(LOCALBIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION)
