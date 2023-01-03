@@ -51,6 +51,7 @@ rules:
       - pods
     verbs:
       - get
+      - delete
       - list
       - patch
       - update

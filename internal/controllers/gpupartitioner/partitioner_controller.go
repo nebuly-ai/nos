@@ -68,7 +68,7 @@ func NewController(
 	}
 }
 
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;patch;create
 //+kubebuilder:rbac:groups=core,resources=persistentvolumes;persistentvolumeclaims;namespaces;services;replicationcontrollers,verbs=get;list;watch
 //+kubebuilder:rbac:groups=apps,resources=statefulsets;replicasets,verbs=get;list;watch
