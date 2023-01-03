@@ -152,7 +152,7 @@ affinity: {}
 nodeSelector: {}
 
 # -- Map that associates to each GPU model its possible MIG configurations
-# @default -- The default map does not include all the possible NVIDIA GPU model, so it might not include the exact models of the GPUs of your node (exposed by the label `nvidia.com/gpu.product`).
+# @default -- -
 knownMigGeometries: |
   A30:
     - 1g.6gb: 4
