@@ -26,7 +26,9 @@ spec:
           name: {{ include "mig-agent.name" . }}
           args:
             - --config={{ include "mig-agent.configFileName" . }}
+            {{- if gt (int .Values.migAgent.logLevel) 0 }}
             - --zap-log-level={{ .Values.migAgent.logLevel }}
+            {{ end }}
           env:
             - name: NODE_NAME
               valueFrom:
@@ -63,7 +65,9 @@ spec:
             - --secure-listen-address=0.0.0.0:8443
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
+            {{- if gt (int .Values.kubeRbacProxy.logLevel) 0 }}
             - --v={{ .Values.kubeRbacProxy.logLevel }}
+            {{ end }}
           image: "{{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}"
           ports:
             - containerPort: 8443

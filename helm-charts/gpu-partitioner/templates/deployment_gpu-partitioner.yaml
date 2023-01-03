@@ -33,7 +33,9 @@ spec:
             - /gpupartitioner
           args:
             - --config={{ include "gpu-partitioner.configFileName" . }}
+            {{- if gt (int .Values.logLevel) 0 }}
             - --zap-log-level={{ .Values.logLevel }}
+            {{ end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           livenessProbe:
             httpGet:
@@ -67,7 +69,9 @@ spec:
             - --secure-listen-address=0.0.0.0:8443
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
+            {{- if gt (int .Values.kubeRbacProxy.logLevel) 0 }}
             - --v={{ .Values.kubeRbacProxy.logLevel }}
+            {{ end }}
 
           ports:
             - containerPort: 8443

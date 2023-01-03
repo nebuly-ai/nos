@@ -4,7 +4,7 @@
 
 namePrefix: n8s
 
-logLevel: 0
+logLevel: 1
 
 replicaCount: 1
 
@@ -17,7 +17,7 @@ image:
 migAgent:
   # Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
   reportConfigIntervalSeconds: 10
-  logLevel: 0
+  logLevel: 1
   image:
     repository: ghcr.io/telemaco019/nebulnetes-mig-agent
     pullPolicy: IfNotPresent
@@ -31,7 +31,7 @@ migAgent:
 timeSlicingAgent:
   # Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
   reportConfigIntervalSeconds: 10
-  logLevel: 0
+  logLevel: 1
   image:
     repository: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
     pullPolicy: IfNotPresent
@@ -43,7 +43,7 @@ timeSlicingAgent:
       memory: 128Mi
 
 kubeRbacProxy:
-  logLevel: 0
+  logLevel: 1
   image:
     repository: gcr.io/kubebuilder/kube-rbac-proxy
     pullPolicy: IfNotPresent
