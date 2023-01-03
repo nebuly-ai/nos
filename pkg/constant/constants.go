@@ -101,7 +101,7 @@ const (
 	DefaultPodResourcesMaxMsgSize = 1024 * 1024 * 16 // 16 Mb
 
 	// DefaultDevicePluginCMName is the default name of the ConfigMap used by the NVIDIA device plugin
-	DefaultDevicePluginCMName = "time-slicing-config"
+	DefaultDevicePluginCMName = "device-plugin-configs"
 	// DefaultDevicePluginCMNamespace is the default namespace of the ConfigMap used by the NVIDIA device plugin
 	DefaultDevicePluginCMNamespace = "gpu-operator"
 )

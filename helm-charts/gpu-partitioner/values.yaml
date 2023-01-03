@@ -8,6 +8,13 @@ logLevel: 1
 
 replicaCount: 1
 
+# Namespaced name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
+# It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the
+# NVIDIA GPU Operator.
+devicePluginConfigMap:
+  name: nvidia-plugin-configs
+  namespace: gpu-operator
+
 image:
   repository: ghcr.io/telemaco019/nebulnetes-gpu-partitioner
   pullPolicy: IfNotPresent

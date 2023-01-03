@@ -106,7 +106,7 @@ func main() {
 	}
 	if devicePluginCM.Name == "" {
 		devicePluginCM.Name = constant.DefaultDevicePluginCMName
-		setupLog.V(1).Info(
+		setupLog.Info(
 			"device plugin CM name is not set, using default value",
 			"name",
 			constant.DefaultDevicePluginCMName,
@@ -114,7 +114,7 @@ func main() {
 	}
 	if devicePluginCM.Namespace == "" {
 		devicePluginCM.Namespace = constant.DefaultDevicePluginCMNamespace
-		setupLog.V(1).Info(
+		setupLog.Info(
 			"device plugin CM namespace is not set, using default value",
 			"namespace",
 			constant.DefaultDevicePluginCMNamespace,

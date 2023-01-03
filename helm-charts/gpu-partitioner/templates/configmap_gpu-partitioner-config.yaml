@@ -20,6 +20,9 @@ data:
 
     batchWindowTimeoutSeconds: {{ .Values.batchWindowTimeoutSeconds }}
     batchWindowIdleSeconds: {{ .Values.batchWindowIdleSeconds }}
+    knownMigGeometriesFile:  {{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
+    devicePluginConfigMap:
+     name: {{ .Values.devicePluginConfigMap.name }}
+     namespace: {{ .Values.devicePluginConfigMap.namespace }}
 
     #schedulerConfigFile: scheduler_config.yaml TODO
-    knownMigGeometriesFile:  {{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
