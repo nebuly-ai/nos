@@ -16,7 +16,7 @@ namePrefix: n8s-
 
 resources:
 - gpu_partitioner_auth_proxy_role_binding.yaml
-- gpu_partitioner_auth_proxy_service.yaml
+- gpu_partitioner_metrics_service.yaml.yaml
 - ../../common
 - ../rbac
 - ../manager

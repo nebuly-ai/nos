@@ -16,7 +16,7 @@ namePrefix: n8s-
 
 resources:
   - ts_agent_auth_proxy_role_binding.yaml
-  - ts_agent_auth_proxy_service.yaml
+  - ts_agent_metrics_service.yaml.yaml
   - ../../common
   - ../rbac
   - ../manager
