@@ -1,0 +1,10 @@
+
+To enable automatic MIG partitioning on the GPUs of a node (only for MIG-enabled GPUs):
+```bash
+kubectl label nodes <node-name> "n8s.nebuly.ai/gpu-partitioning=mig"
+```
+
+To enable automatic time-slicing partitioning on the GPUs of a node:
+```bash
+kubectl label nodes <node-name> "n8s.nebuly.ai/gpu-partitioning=time-slicing"
+```

@@ -56,6 +56,10 @@ spec:
             - mountPath: /known_mig_geometries.yaml
               name: known-mig-geometries
               subPath: {{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
 
         - name: kube-rbac-proxy
           image: "{{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}"

@@ -9,7 +9,7 @@ logLevel: 0
 replicaCount: 1
 
 image:
-  repository: ghcr.io/telemaco019/nebulnetes/gpu-partitioner
+  repository: ghcr.io/telemaco019/nebulnetes-gpu-partitioner
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -19,7 +19,7 @@ migAgent:
   reportConfigIntervalSeconds: 10
   logLevel: 0
   image:
-    repository: ghcr.io/telemaco019/nebulnetes/mig-agent
+    repository: ghcr.io/telemaco019/nebulnetes-mig-agent
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
@@ -33,7 +33,7 @@ timeSlicingAgent:
   reportConfigIntervalSeconds: 10
   logLevel: 0
   image:
-    repository: ghcr.io/telemaco019/nebulnetes/time-slicing-agent
+    repository: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
@@ -83,16 +83,6 @@ leaderElection:
   enabled: true
 
 podSecurityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-
-securityContext:
-   capabilities:
-     drop:
-     - ALL
-   readOnlyRootFilesystem: true
    runAsNonRoot: true
    runAsUser: 1000
 
