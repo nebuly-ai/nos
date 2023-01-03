@@ -5,8 +5,3 @@ description: GPU Partitioner is a component of Nebulnetes that automatically par
 type: application
 version: 0.0.1-alpha.2
 appVersion: "0.0.1-alpha.2"
-
-# TODO
-# 1. We need to use lookup for shared object and create them only if they do not already exist:
-#   - scheduler config map
-# 2. We need to configure the scheduler in the gpu-partitioner through chart values

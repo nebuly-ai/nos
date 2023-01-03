@@ -22,7 +22,11 @@ data:
     batchWindowIdleSeconds: {{ .Values.batchWindowIdleSeconds }}
     knownMigGeometriesFile:  {{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
     devicePluginConfigMap:
-     name: {{ .Values.devicePluginConfigMap.name }}
-     namespace: {{ .Values.devicePluginConfigMap.namespace }}
+     name: {{ .Values.devicePlugin.config.name }}
+     namespace: {{ .Values.devicePlugin.config.namespace }}
 
-    #schedulerConfigFile: scheduler_config.yaml TODO
+    {{- if .Values.scheduler.config }}
+    {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.scheduler.config.name }}
+    schedulerConfigFile: {{ include "gpu-partitioner.schedulerConfigFileName" . }}
+    {{- end }}
+    {{- end }}

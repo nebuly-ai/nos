@@ -55,9 +55,16 @@ spec:
             - mountPath: /{{ include "gpu-partitioner.configFileName" . }}
               name: gpu-partitioner-config
               subPath: {{ include "gpu-partitioner.configFileName" . }}
-            - mountPath: /known_mig_geometries.yaml
+            - mountPath: /{{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
               name: known-mig-geometries
               subPath: {{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
+            {{- if .Values.scheduler.config }}
+            {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.scheduler.config.name }}
+            - mountPath: /{{ include "gpu-partitioner.schedulerConfigFileName" .}}
+              name: scheduler-config
+              subPath: {{ include "gpu-partitioner.schedulerConfigFileName" .}}
+            {{- end }}
+            {{- end }}
           securityContext:
             capabilities:
               drop:
@@ -98,3 +105,10 @@ spec:
         - configMap:
             name: {{ include "gpu-partitioner.knownMigGeometriesConfigMapName" . }}
           name: known-mig-geometries
+        {{- if .Values.scheduler.config }}
+        {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.scheduler.config.name }}
+        - configMap:
+            name: {{ .Values.scheduler.config.name }}
+          name: scheduler-config
+        {{- end }}
+        {{- end }}

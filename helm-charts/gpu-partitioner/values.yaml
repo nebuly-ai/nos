@@ -11,9 +11,16 @@ replicaCount: 1
 # Namespaced name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
 # It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the
 # NVIDIA GPU Operator.
-devicePluginConfigMap:
-  name: nvidia-plugin-configs
-  namespace: gpu-operator
+devicePlugin:
+  config:
+    name: nvidia-plugin-configs
+    namespace: gpu-operator
+
+scheduler:
+  # Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the
+  # ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile.
+  config:
+    name: n8s-scheduler-config # Name of the ConfigMap containing the k8s scheduler configuration file
 
 image:
   repository: ghcr.io/telemaco019/nebulnetes-gpu-partitioner

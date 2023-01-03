@@ -61,6 +61,13 @@ known_mig_geometries.yaml
 {{- end }}
 
 {{/*
+Create the name of the file storing the scheduler config
+*/}}
+{{- define "gpu-partitioner.schedulerConfigFileName" -}}
+scheduler_config.yaml
+{{- end }}
+
+{{/*
 Create the name of the file storing the GPU Partitioner configuration
 */}}
 {{- define "gpu-partitioner.configFileName" -}}
