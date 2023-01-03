@@ -83,7 +83,7 @@ spec:
         - effect: NoSchedule
           key: nvidia.com/gpu
           operator: Exists
-          {{- with .Values.tolerations }}
+          {{- with .Values.migAgent.tolerations }}
             {{- toYaml . | nindent 8 }}
           {{- end }}
       volumes:
