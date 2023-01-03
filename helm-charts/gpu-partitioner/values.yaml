@@ -84,14 +84,6 @@ batchWindowTimeoutSeconds: 60
 # deciding the GPU partitioning plan, but the partitioning will be performed less frequently
 batchWindowIdleSeconds: 10
 
-# Optional path to the configuration file of the k8s scheduler used internally by the GPU
-# partitioner for simulating Pods scheduling.
-#
-# Uncomment if you want to use a custom scheduler configuration file, otherwise the GPU partitioner
-# will use the default k8s scheduler profile
-#schedulerConfigFile: scheduler_config.yaml
-
-
 # Controller manager leader election
 leaderElection:
   enabled: true
