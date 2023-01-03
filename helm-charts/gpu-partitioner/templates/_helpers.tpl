@@ -61,5 +61,23 @@ Create the name of the file storing the GPU Partitioner configuration
 gpu_partitioner_config.yaml
 {{- end }}
 
+{{/*
+Create the name of the controller manager leader election role
+*/}}
+{{- define "leaderElectionRoleName" -}}
+{{ .Values.namePrefix }}-leader-election
+{{- end }}
 
+{{/*
+Create the name of the controller manager auth proxy role
+*/}}
+{{- define "authProxyRoleName" -}}
+{{ .Values.namePrefix }}-auth-proxy
+{{- end }}
 
+{{/*
+Create the name of the controller manager metrics reader role
+*/}}
+{{- define "metricsReaderRoleName" -}}
+{{ .Values.namePrefix }}-metrics-reader
+{{- end }}

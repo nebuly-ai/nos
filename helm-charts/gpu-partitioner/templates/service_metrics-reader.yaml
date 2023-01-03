@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    {{- include "gpu-partitioner.labels" . | nindent 4 }}
+  name: {{ include "gpu-partitioner.name" . }}-metrics
+spec:
+  ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: https
+  selector:
+    {{- include "gpu-partitioner.selectorLabels" .  | nindent 4 }}
