@@ -9,3 +9,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ include "gpu-partitioner.name" . }}
+  - kind: ServiceAccount
+    name: {{ include "mig-agent.name" . }}
+  - kind: ServiceAccount
+    name: {{ include "time-slicing-agent.name" . }}

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "time-slicing-agent.config.configMapName" . }}
+data:
+  {{ include "time-slicing-agent.configFileName" . }}: |-
+    apiVersion: config.n8s.nebuly.ai/v1alpha1
+    kind: TimeSlicingAgentConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    leaderElection:
+      leaderElect: false
+    reportConfigIntervalSeconds: {{ .Values.timeSlicingAgent.reportConfigIntervalSeconds}}

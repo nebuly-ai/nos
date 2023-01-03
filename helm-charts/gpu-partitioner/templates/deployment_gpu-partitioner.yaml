@@ -26,14 +26,13 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: 10
-
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           command:
             - /gpupartitioner
           args:
-            - --config=gpu_partitioner_config.yaml
+            - --config={{ include "gpu-partitioner.configFileName" . }}
             - --zap-log-level={{ .Values.logLevel }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           livenessProbe:
@@ -51,7 +50,7 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - mountPath: /gpu_partitioner_config.yaml
+            - mountPath: /{{ include "gpu-partitioner.configFileName" . }}
               name: gpu-partitioner-config
               subPath: {{ include "gpu-partitioner.configFileName" . }}
             - mountPath: /known_mig_geometries.yaml
@@ -59,23 +58,18 @@ spec:
               subPath: {{ include "gpu-partitioner.knownMigGeometriesFileName" . }}
 
         - name: kube-rbac-proxy
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+          image: "{{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}"
           args:
             - --secure-listen-address=0.0.0.0:8443
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
-            - --v=0
+            - --v={{ .Values.kubeRbacProxy.logLevel }}
+
           ports:
             - containerPort: 8443
               name: https
               protocol: TCP
-          resources:
-            limits:
-              cpu: 500m
-              memory: 128Mi
-            requests:
-              cpu: 5m
-              memory: 64Mi
+          resources: {{- toYaml .Values.kubeRbacProxy.resources | nindent 12 }}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:

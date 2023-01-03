@@ -4,15 +4,58 @@
 
 namePrefix: n8s
 
-logLevel: 1
+logLevel: 0
 
 replicaCount: 1
 
 image:
-  repository: ghcr.io/telemaco019
+  repository: ghcr.io/telemaco019/nebulnetes/gpu-partitioner
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
+
+migAgent:
+  # Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
+  reportConfigIntervalSeconds: 10
+  logLevel: 0
+  image:
+    repository: ghcr.io/telemaco019/nebulnetes/mig-agent
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+timeSlicingAgent:
+  # Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
+  reportConfigIntervalSeconds: 10
+  logLevel: 0
+  image:
+    repository: ghcr.io/telemaco019/nebulnetes/time-slicing-agent
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+kubeRbacProxy:
+  logLevel: 0
+  image:
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    pullPolicy: IfNotPresent
+    tag: "v0.13.0"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 5m
+      memory: 64Mi
+
 
 # Timeout of the window used by the GPU partitioner for batching pending Pods.
 #
