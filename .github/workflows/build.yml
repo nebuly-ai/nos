@@ -34,6 +34,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Run tests
+        run: make test
+
       - name: Check Version
         id: version
         run: head -2 Makefile | cut -d "=" -s -f 2 | xargs

@@ -35,6 +35,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Run tests
+        run: make test
+
       - name: Build Docker images
         run: make docker-build
 
