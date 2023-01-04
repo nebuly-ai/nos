@@ -9,6 +9,9 @@ appVersion: "0.0.1-alpha.2"
 
 sources:
   - https://github.com/Telemaco019/nebulnetes
+  - https://github.com/Telemaco019/nebulnetes/helm-charts/gpu-partitioner
+  - https://github.com/Telemaco019/nebulnetes/helm-charts/n8s-scheduler
+  - https://github.com/Telemaco019/nebulnetes/helm-charts/n8s-operator
 
 dependencies:
   - name: n8s-operator

@@ -14,6 +14,9 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 ## Source Code
 
 * <https://github.com/Telemaco019/nebulnetes>
+* <https://github.com/Telemaco019/nebulnetes/helm-charts/gpu-partitioner>
+* <https://github.com/Telemaco019/nebulnetes/helm-charts/n8s-scheduler>
+* <https://github.com/Telemaco019/nebulnetes/helm-charts/n8s-operator>
 
 ## Requirements
 
