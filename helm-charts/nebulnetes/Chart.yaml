@@ -1,0 +1,30 @@
+apiVersion: v2
+name: nebulnetes
+description: The open-source platform for running AI workloads on k8s in an optimized way, both in terms of hardware 
+  utilization and workload performance.
+
+type: application
+version: 0.0.1-alpha.2
+appVersion: "0.0.1-alpha.2"
+
+sources:
+  - https://github.com/Telemaco019/nebulnetes
+
+dependencies:
+  - name: n8s-operator
+    repository: "oci://ghcr.io/telemaco019/helm-charts"
+    version: 0.0.1-alpha.2
+  - name: n8s-scheduler
+    repository: "oci://ghcr.io/telemaco019/helm-charts"
+    version: 0.0.1-alpha.2
+  - name: gpu-partitioner
+    repository: "oci://ghcr.io/telemaco019/helm-charts"
+    version: 0.0.1-alpha.2
+
+maintainers:
+  - name: Michele Zanotti
+    email: m.zanotti@nebuly.ai
+    url: github.com/Telemaco019
+  - name: Diego Fiori
+    email: d.fiori@nebuly.ai
+    url: github.com/diegofiori

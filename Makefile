@@ -114,9 +114,9 @@ license-check: license-eye ## Check all files have the license header
 license-fix: license-eye ## Add license header to files that still don't have it
 	$(LICENSE_EYE) header fix
 
-.PHONY: helm-docs
-helm-docs: ## Generate Helm charts documentation
-	$(HELM_DOCS) --chart-search-root ./helm-charts
+.PHONY: helm-doc
+helm-doc: ## Generate Helm charts documentation
+	$(HELM_DOCS) --chart-search-root ./helm-charts --document-dependency-values
 
 ##@ Build
 
@@ -201,8 +201,14 @@ helm-push-n8s-operator: ## Push the n8s-operator Helm chart to the Helm reposito
 	helm push /tmp/n8s-operator-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
 	rm /tmp/n8s-operator-$(N8S_VERSION).tgz
 
+.PHONY: helm-push-nebulnetes
+helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository.
+	helm package helm-charts/nebulnetes --destination /tmp
+	helm push /tmp/nebulnetes-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/nebulnetes-$(N8S_VERSION).tgz
+
 .PHONY: helm-push
-helm-push: helm-push-gpu-partitioner helm-push-n8s-scheduler helm-push-n8s-operator ## Push the all the Helm charts to the Helm repository.
+helm-push: helm-push-gpu-partitioner helm-push-n8s-scheduler helm-push-n8s-operator helm-push-nebulnetes ## Push the all the Helm charts to the Helm repository.
 
 ##@ Deployment
 
