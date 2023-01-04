@@ -205,7 +205,7 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 		var updatedCm v1.ConfigMap
 		assert.NoError(t, k8sClient.Get(ctx, cmNamespacedName, &updatedCm))
 
-		// Check current plan has been added to config
+		// Check keys
 		expectedKeys := []string{
 			fmt.Sprintf(ts.DevicePluginConfigKeyFormat, node.Name, planId),
 			fmt.Sprintf(ts.DevicePluginConfigKeyFormat, "node-2", "old-plan-2"),
@@ -214,9 +214,6 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 		for k := range updatedCm.Data {
 			updatedCmKeys = append(updatedCmKeys, k)
 		}
-		assert.Equal(t, expectedKeys, updatedCmKeys)
-
-		// Check old entries have been deleted
-
+		assert.ElementsMatch(t, expectedKeys, updatedCmKeys)
 	})
 }
