@@ -28,6 +28,9 @@ jobs:
         with:
           version: v3.10.3
 
+      - name: Helm login
+        run: helm login ${{ env.REGISTRY }} -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+
       - name: Login to GitHub container registry
         uses: docker/login-action@v2
         with:
