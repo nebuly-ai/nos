@@ -9,4 +9,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ include "scheduler.name" . }}
-    namespace: n8s-system
+    namespace: {{ .Release.Namespace }}

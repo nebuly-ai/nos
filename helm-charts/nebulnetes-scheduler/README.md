@@ -16,6 +16,7 @@ Nebulnetes custom scheduler.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets the affinity config of the scheduler deployment. |
+| config | object | `{}` | Overrides the Kube Scheduler configuration |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
 | image.repository | string | `"ghcr.io/telemaco019/nebulnetes-scheduler"` | Overrides the scheduler image. |
 | image.tag | string | `""` | Overrides the scheduler image tag whose default is the chart appVersion. |

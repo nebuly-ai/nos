@@ -4,6 +4,9 @@ metadata:
   name: {{ include "scheduler.config.configMapName" . }}
 data:
   scheduler_config.yaml: |
+    {{- with .Values.config }}
+    {{- . | toYaml | nindent 4 }}
+    {{- else }}
     apiVersion: kubescheduler.config.k8s.io/v1beta3
     kind: KubeSchedulerConfiguration
     leaderElection:
@@ -28,3 +31,4 @@ data:
           - name: CapacityScheduling
             args:
               nvidiaGpuResourceMemoryGB: {{ .Values.nvidiaGpuResourceMemoryGB }}
+    {{- end }}

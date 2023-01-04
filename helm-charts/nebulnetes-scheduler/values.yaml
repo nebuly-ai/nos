@@ -11,6 +11,9 @@ namePrefix: n8s
 # **Must be >= 0**.
 logLevel: 0
 
+# -- Overrides the Kube Scheduler configuration
+config: {}
+
 # -- Number of replicas of the controller manager Pod.
 replicaCount: 1
 
