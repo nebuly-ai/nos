@@ -43,6 +43,3 @@ jobs:
 
       - name: Push Docker images
         run: make docker-push
-
-      - name: Push Helm charts
-        run: make helm-push
