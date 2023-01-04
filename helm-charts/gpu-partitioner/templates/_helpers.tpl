@@ -8,7 +8,7 @@
 Expand the name of the chart.
 */}}
 {{- define "gpu-partitioner.name" -}}
-{{- printf "%s-%s" .Values.namePrefix .Chart.Name | trunc 63 }}
+{{- printf "%s-%s" .Values.namePrefix "gpu-partitioner" }}
 {{- end }}
 
 {{/*
