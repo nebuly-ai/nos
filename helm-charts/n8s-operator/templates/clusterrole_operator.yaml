@@ -1,0 +1,69 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "operator.name" . }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - compositeelasticquotas
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - compositeelasticquotas/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - compositeelasticquotas/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - elasticquotas
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - elasticquotas/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - n8s.nebuly.ai
+    resources:
+      - elasticquotas/status
+    verbs:
+      - get
+      - patch
+      - update

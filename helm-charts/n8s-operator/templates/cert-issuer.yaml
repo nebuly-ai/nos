@@ -1,0 +1,6 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "selfSignedCertIssuerName" . }}
+spec:
+  selfSigned: {}

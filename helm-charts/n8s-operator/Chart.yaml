@@ -1,6 +1,6 @@
 apiVersion: v2
-name: nebulnetes-scheduler
-description: Nebulnetes custom scheduler.
+name: n8s-operator
+description: Custom Resource Definitions (CRDs) and controllers of Nebulnetes.
 
 type: application
 version: 0.0.1-alpha.2

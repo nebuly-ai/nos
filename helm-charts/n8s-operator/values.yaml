@@ -14,12 +14,16 @@ logLevel: 0
 # -- Number of replicas of the controller manager Pod.
 replicaCount: 1
 
+# -- Defines how much GB of memory does a nvidia.com/gpu has.
+nvidiaGpuResourceMemoryGB: 32
+
 image:
-  # -- Overrides the operator image.
+  # -- Sets the operator Docker repository
   repository: ghcr.io/telemaco019/nebulnetes-operator
-  pullPolicy: IfNotPresent
-  # -- Overrides the operator image tag whose default is the chart appVersion.
+  # -- Overrides the operator Docker image tag whose default is the chart appVersion.
   tag: ""
+  # -- Sets the operator Docker image pull policy.
+  pullPolicy: IfNotPresent
 
 # -- Configuration of the [Kube RBAC Proxy](https://github.com/brancz/kube-rbac-proxy), which runs as sidecar of
 # the operator Pods.

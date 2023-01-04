@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+  name: {{ include "operator.name" . }}-metrics
+spec:
+  ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: https
+  selector:
+    {{- include "operator.selectorLabels" .  | nindent 4 }}
