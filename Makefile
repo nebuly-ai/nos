@@ -1,12 +1,15 @@
 # Nebulnetes version. Used by release workflow, do not move this line.
 N8S_VERSION ?= 0.0.1-alpha.2
 
-# Image URL to use all building/pushing image targets
+# Image URLs to build/push Docker image targets
 OPERATOR_IMG ?= ghcr.io/telemaco019/nebulnetes-operator:$(N8S_VERSION)
 SCHEDULER_IMG ?= ghcr.io/telemaco019/nebulnetes-scheduler:$(N8S_VERSION)
 GPU_PARTITIONER_IMG ?= ghcr.io/telemaco019/nebulnetes-gpu-partitioner:$(N8S_VERSION)
 MIG_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-mig-agent:$(N8S_VERSION)
 TS_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-time-slicing-agent:$(N8S_VERSION)
+
+# Helm chart URL to push Helm charts
+HELM_CHART_REGISTRY ?= oci://ghcr.io/telemaco019/helm-charts
 
 CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -179,6 +182,27 @@ docker-push: docker-push-mig-agent \
 	docker-push-operator \
 	docker-push-scheduler \
 	docker-push-gpu-partitioner
+
+.PHONY: helm-push-gpu-partitioner
+helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm repository.
+	helm package helm-charts/gpu-partitioner --destination /tmp
+	helm push /tmp/gpu-partitioner-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/gpu-partitioner-$(N8S_VERSION).tgz
+
+.PHONY: helm-push-n8s-scheduler
+helm-push-n8s-scheduler: ## Push the n8s-scheduler Helm chart to the Helm repository.
+	helm package helm-charts/n8s-scheduler --destination /tmp
+	helm push /tmp/n8s-scheduler-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/n8s-scheduler-$(N8S_VERSION).tgz
+
+.PHONY: helm-push-n8s-operator
+helm-push-n8s-operator: ## Push the n8s-operator Helm chart to the Helm repository.
+	helm package helm-charts/n8s-operator --destination /tmp
+	helm push /tmp/n8s-operator-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/n8s-operator-$(N8S_VERSION).tgz
+
+.PHONY: helm-push
+helm-push: helm-push-gpu-partitioner helm-push-n8s-scheduler helm-push-n8s-operator ## Push the all the Helm charts to the Helm repository.
 
 ##@ Deployment
 
