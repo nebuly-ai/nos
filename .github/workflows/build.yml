@@ -1,4 +1,4 @@
-name: Docker images - current version
+name: Build Nebulnetes current version
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
@@ -22,6 +22,11 @@ jobs:
           go-version: 1.19
           cache: true
 
+      - name: Set up Helm
+        uses: Azure/setup-helm@v3
+        with:
+          version: v3.10.3
+
       - name: Login to GitHub container registry
         uses: docker/login-action@v2
         with:
@@ -33,8 +38,11 @@ jobs:
         id: version
         run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
 
-      - name: Build images
+      - name: Build Docker images
         run: make docker-build
 
-      - name: Push images
+      - name: Push Docker images
         run: make docker-push
+
+      - name: Push Helm charts
+        run: make helm-push

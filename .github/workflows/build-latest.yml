@@ -1,17 +1,14 @@
-name: Docker images - "latest"
+name: Build Nebulnetes - version "latest"
 
 on:
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  OPERATOR_IMG: "ghcr.io/telemaco019/nebulnetes-operator:latest"
-  SCHEDULER_IMG: "ghcr.io/telemaco019/nebulnetes-scheduler:latest"
-  MIGAGENT_IMG: "ghcr.io/telemaco019/nebulnetes-mig-agent:latest"
-  GPU_PARTITIONER_IMG: "ghcr.io/telemaco019/nebulnetes-gpu-partitioner:latest"
+  N8S_VERSION: "latest"
 
 jobs:
-  docker-build:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -26,6 +23,11 @@ jobs:
           go-version: 1.19
           cache: true
 
+      - name: Set up Helm
+        uses: Azure/setup-helm@v3
+        with:
+          version: v3.10.3
+
       - name: Login to GitHub container registry
         uses: docker/login-action@v2
         with:
@@ -33,8 +35,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build images
+      - name: Build Docker images
         run: make docker-build
 
-      - name: Push images
+      - name: Push Docker images
         run: make docker-push
+
+      - name: Push Helm charts
+        run: make helm-push
