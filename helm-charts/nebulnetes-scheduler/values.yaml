@@ -21,12 +21,12 @@ replicaCount: 1
 nvidiaGpuResourceMemoryGB: 32
 
 image:
-  # -- Overrides the scheduler image.
+  # -- Sets the scheduler Docker image.
   repository: ghcr.io/telemaco019/nebulnetes-scheduler
+  # -- Sets the scheduler Docker image pull policy.
   pullPolicy: IfNotPresent
   # -- Overrides the scheduler image tag whose default is the chart appVersion.
   tag: ""
-
 
 
 leaderElection:

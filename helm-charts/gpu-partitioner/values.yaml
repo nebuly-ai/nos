@@ -30,8 +30,9 @@ scheduler:
     name: n8s-scheduler-config
 
 image:
-  # -- Overrides the GPU Partitioner image.
+  # -- Sets the GPU Partitioner Docker image.
   repository: ghcr.io/telemaco019/nebulnetes-gpu-partitioner
+  # -- Sets the GPU Partitioner Docker image pull policy.
   pullPolicy: IfNotPresent
   # -- Overrides the GPU Partitioner image tag whose default is the chart appVersion.
   tag: ""
@@ -46,8 +47,9 @@ migAgent:
   # **Must be >= 0**.
   logLevel: 0
   image:
-    # -- Overrides the MIG Agent image.
+    # -- Sets the MIG Agent Docker image.
     repository: ghcr.io/telemaco019/nebulnetes-mig-agent
+    # -- Sets the MIG Agent Docker image pull policy.
     pullPolicy: IfNotPresent
     # -- Overrides the MIG Agent image tag whose default is the chart appVersion.
     tag: ""
@@ -73,8 +75,9 @@ timeSlicingAgent:
   # **Must be >= 0**.
   logLevel: 0
   image:
-    # -- Overrides the Time Slicing Agent image.
+    # -- Sets the Time Slicing Agent Docker image.
     repository: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
+    # -- Sets the Time Slicing Agent Docker image pull policy.
     pullPolicy: IfNotPresent
     # -- Overrides the Time Slicing Agent image tag whose default is the chart appVersion.
     tag: "latest"

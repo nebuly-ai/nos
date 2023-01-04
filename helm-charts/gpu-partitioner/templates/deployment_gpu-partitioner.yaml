@@ -66,6 +66,7 @@ spec:
             {{- end }}
             {{- end }}
           securityContext:
+            allowPrivilegeEscalation: false
             capabilities:
               drop:
                 - ALL
@@ -79,11 +80,15 @@ spec:
             {{- if gt (int .Values.kubeRbacProxy.logLevel) 0 }}
             - --v={{ .Values.kubeRbacProxy.logLevel }}
             {{ end }}
-
           ports:
             - containerPort: 8443
               name: https
               protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           resources: {{- toYaml .Values.kubeRbacProxy.resources | nindent 12 }}
 
       {{- with .Values.nodeSelector }}
