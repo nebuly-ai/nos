@@ -30,10 +30,10 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| gpu-partitioner | object | `{"enabled":true}` | Config of the GPU Partitioner component. Refer to the [chart documentation](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner) for all the available values. |
+| gpu-partitioner | object | `{"enabled":true}` | Config of the GPU Partitioner component. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner). |
 | gpu-partitioner.enabled | bool | `true` | Enable or disable the GPU Partitioner component |
-| n8s-operator | object | `{"enabled":true}` | Config of the Nebulnetes operator. Refer to the [chart documentation](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator) for all the available values. |
+| n8s-operator | object | `{"enabled":true}` | Config of the Nebulnetes operator. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator). |
 | n8s-operator.enabled | bool | `true` | Enable or disable the Nebulnetes Operator |
-| n8s-scheduler | object | `{"enabled":true}` | Config of the Nebulnetes scheduler. Refer to the [chart documentation](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-scheduler) for all the available values. |
+| n8s-scheduler | object | `{"enabled":true}` | Config of the Nebulnetes scheduler. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-scheduler). |
 | n8s-scheduler.enabled | bool | `true` | Enable or disable the Nebulnetes Scheduler |
 

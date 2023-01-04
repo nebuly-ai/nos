@@ -3,22 +3,19 @@
 # Declare variables to be passed into your templates.
 
 # -- Config of the Nebulnetes operator.
-# Refer to the [chart documentation](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator)
-# for all the available values.
+# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator).
 n8s-operator:
   # -- Enable or disable the Nebulnetes Operator
   enabled: true
 
 # -- Config of the Nebulnetes scheduler.
-# Refer to the [chart documentation](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-scheduler)
-# for all the available values.
+# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-scheduler).
 n8s-scheduler:
   # -- Enable or disable the Nebulnetes Scheduler
   enabled: true
 
 # -- Config of the GPU Partitioner component.
-# Refer to the [chart documentation](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner)
-# for all the available values.
+# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner).
 gpu-partitioner:
   # -- Enable or disable the GPU Partitioner component
   enabled: true
