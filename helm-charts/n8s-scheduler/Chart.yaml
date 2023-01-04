@@ -6,6 +6,9 @@ type: application
 version: 0.0.1-alpha.2
 appVersion: "0.0.1-alpha.2"
 
+sources:
+  - https://github.com/Telemaco019/nebulnetes
+
 maintainers:
   - name: Michele Zanotti
     email: m.zanotti@nebuly.ai

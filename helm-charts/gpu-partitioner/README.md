@@ -11,6 +11,10 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/Telemaco019> |
 | Diego Fiori | <d.fiori@nebuly.ai> | <github.com/diegofiori> |
 
+## Source Code
+
+* <https://github.com/Telemaco019/nebulnetes>
+
 ## Values
 
 | Key | Type | Default | Description |
