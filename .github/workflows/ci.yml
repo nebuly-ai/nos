@@ -8,12 +8,14 @@ on:
     - ".github/**"
     - "README.md"
     - "doc/**"
+    - "helm-charts/**"
   pull_request:
     branches: [ "main" ]
     paths-ignore:
     - ".github/**"
     - "README.md"
     - "doc/**"
+    - "helm-charts/**"
 
 permissions:
   contents: read
