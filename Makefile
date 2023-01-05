@@ -191,6 +191,7 @@ helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm re
 
 .PHONY: helm-push-nebulnetes
 helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository.
+	helm dependency update helm-charts/nebulnetes
 	helm package helm-charts/nebulnetes --destination /tmp
 	helm push /tmp/nebulnetes-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
 	rm /tmp/nebulnetes-$(N8S_VERSION).tgz
