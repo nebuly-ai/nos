@@ -27,7 +27,7 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Partitioner Docker image pull policy. |
 | image.repository | string | `"ghcr.io/telemaco019/nebulnetes-gpu-partitioner"` | Sets the GPU Partitioner Docker image. |
 | image.tag | string | `""` | Overrides the GPU Partitioner image tag whose default is the chart appVersion. |
-| knownMigGeometries | string | - | Map that associates to each GPU model its possible MIG configurations |
+| knownMigGeometries | object | - | Map that associates to each GPU model its possible MIG configurations |
 | kubeRbacProxy | object | - | Configuration of the [Kube RBAC Proxy](https://github.com/brancz/kube-rbac-proxy), which runs as sidecar of all the GPU Partitioner components Pods. |
 | leaderElection.enabled | bool | `true` | Enables/Disables the leader election of the GPU Partitioner controller manager. |
 | logLevel | int | `0` | The level of log of the GPU Partitioner. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
