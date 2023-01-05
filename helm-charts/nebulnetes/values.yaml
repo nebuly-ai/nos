@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 
-# -- Defines how much GB of memory does a nvidia.com/gpu has.
+# -- Defines how many GB of memory each nvidia.com/gpu resource has.
 nvidiaGpuResourceMemoryGB: 32
 
 # -- The prefix used for generating all the resource names.

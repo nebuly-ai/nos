@@ -30,7 +30,7 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 | gpu-partitioner | object | - | Config of the GPU Partitioner component. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner). |
 | gpu-partitioner.enabled | bool | `true` | Enable or disable the GPU Partitioner component |
 | namePrefix | string | `"n8s"` | The prefix used for generating all the resource names. |
-| nvidiaGpuResourceMemoryGB | int | `32` | Defines how much GB of memory does a nvidia.com/gpu has. |
+| nvidiaGpuResourceMemoryGB | int | `32` | Defines how many GB of memory each nvidia.com/gpu resource has. |
 | operator | object | - | Config of the Nebulnetes operator. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator). |
 | operator.affinity | object | `{}` | Sets the affinity config of the operator Pod. |
 | operator.enabled | bool | `true` | Enable or disable the Nebulnetes Operator |
