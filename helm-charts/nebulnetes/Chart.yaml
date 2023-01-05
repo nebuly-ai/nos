@@ -4,8 +4,8 @@ description: The open-source platform for running AI workloads on k8s in an opti
   utilization and workload performance.
 
 type: application
-version: 0.0.1-alpha.2
-appVersion: "0.0.1-alpha.2"
+version: 0.0.1-alpha.3
+appVersion: "0.0.1-alpha.3"
 
 sources:
   - https://github.com/Telemaco019/nebulnetes
@@ -15,7 +15,7 @@ sources:
 dependencies:
   - name: gpu-partitioner
     repository: "oci://ghcr.io/telemaco019/helm-charts"
-    version: 0.0.1-alpha.2
+    version: 0.0.1-alpha.3
     condition: gpu-partitioner.enabled
 
 maintainers:

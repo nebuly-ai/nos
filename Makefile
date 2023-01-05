@@ -1,5 +1,5 @@
 # Nebulnetes version. Used by release workflow, do not move this line.
-N8S_VERSION ?= 0.0.1-alpha.2
+N8S_VERSION ?= 0.0.1-alpha.3
 
 # Image URLs to build/push Docker image targets
 OPERATOR_IMG ?= ghcr.io/telemaco019/nebulnetes-operator:$(N8S_VERSION)

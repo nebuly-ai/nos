@@ -1,6 +1,6 @@
 dependencies:
 - name: gpu-partitioner
   repository: oci://ghcr.io/telemaco019/helm-charts
-  version: 0.0.1-alpha.2
+  version: 0.0.1-alpha.3
 digest: sha256:088bba13c63c246ec59e79d2e160670a485af7aaad4fe18b4f7d6334ee3cc4a3
 generated: "2023-01-05T11:08:38.220009+01:00"
