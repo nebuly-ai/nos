@@ -12,6 +12,7 @@ namePrefix: n8s
 
 # -- Config of the Nebulnetes operator.
 # All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator).
+# @default -- -
 operator:
   # -- Enable or disable the Nebulnetes Operator
   enabled: true
@@ -83,6 +84,7 @@ operator:
 
 
 # -- Config of the Nebulnetes scheduler.
+# @default -- -
 scheduler:
   # -- Enable or disable the Nebulnetes Scheduler
   enabled: true
@@ -136,6 +138,7 @@ scheduler:
 
 # -- Config of the GPU Partitioner component.
 # All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner).
+# @default -- -
 gpu-partitioner:
   # -- Enable or disable the GPU Partitioner component
   enabled: true

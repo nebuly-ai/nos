@@ -27,11 +27,11 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| gpu-partitioner | object | `{"enabled":true}` | Config of the GPU Partitioner component. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner). |
+| gpu-partitioner | object | - | Config of the GPU Partitioner component. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner). |
 | gpu-partitioner.enabled | bool | `true` | Enable or disable the GPU Partitioner component |
 | namePrefix | string | `"n8s"` | The prefix used for generating all the resource names. |
 | nvidiaGpuResourceMemoryGB | int | `32` | Defines how much GB of memory does a nvidia.com/gpu has. |
-| operator | object | `{"affinity":{},"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"ghcr.io/telemaco019/nebulnetes-operator","tag":""},"kubeRbacProxy":{"image":{"pullPolicy":"IfNotPresent","repository":"gcr.io/kubebuilder/kube-rbac-proxy","tag":"v0.13.0"},"logLevel":1,"resources":{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"5m","memory":"64Mi"}}},"leaderElection":{"enabled":true},"logLevel":0,"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"runAsNonRoot":true,"runAsUser":1000},"replicaCount":1,"resources":{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}},"tolerations":[]}` | Config of the Nebulnetes operator. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator). |
+| operator | object | - | Config of the Nebulnetes operator. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator). |
 | operator.affinity | object | `{}` | Sets the affinity config of the operator Pod. |
 | operator.enabled | bool | `true` | Enable or disable the Nebulnetes Operator |
 | operator.image.pullPolicy | string | `"IfNotPresent"` | Sets the operator Docker image pull policy. |
@@ -46,7 +46,7 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 | operator.replicaCount | int | `1` | Number of replicas of the controller manager Pod. |
 | operator.resources | object | `{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}` | Sets the resource limits and requests of the operator controller manager container. |
 | operator.tolerations | list | `[]` | Sets the tolerations of the operator Pod. |
-| scheduler | object | `{"affinity":{},"config":{},"enabled":true,"image":{"pullPolicy":"IfNotPresent","repository":"ghcr.io/telemaco019/nebulnetes-scheduler","tag":""},"leaderElection":{"enabled":true},"logLevel":0,"nodeSelector":{},"podAnnotations":{},"replicaCount":1,"resources":{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}},"tolerations":[]}` | Config of the Nebulnetes scheduler. |
+| scheduler | object | - | Config of the Nebulnetes scheduler. |
 | scheduler.affinity | object | `{}` | Sets the affinity config of the scheduler deployment. |
 | scheduler.config | object | `{}` | Overrides the Kube Scheduler configuration |
 | scheduler.enabled | bool | `true` | Enable or disable the Nebulnetes Scheduler |
