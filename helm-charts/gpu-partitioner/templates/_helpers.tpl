@@ -75,6 +75,27 @@ gpu_partitioner_config.yaml
 {{- end }}
 
 {{/*
+Create the name of the controller manager leader election role
+*/}}
+{{- define "gpu-partitioner.leaderElectionRoleName" -}}
+{{ .Values.namePrefix }}-leader-election-gp
+{{- end }}
+
+{{/*
+Create the name of the controller manager auth proxy role
+*/}}
+{{- define "gpu-partitioner.authProxyRoleName" -}}
+{{ .Values.namePrefix }}-auth-proxy-gp
+{{- end }}
+
+{{/*
+Create the name of the controller manager metrics reader role
+*/}}
+{{- define "gpu-partitioner.metricsReaderRoleName" -}}
+{{ .Values.namePrefix }}-metrics-reader-gp
+{{- end }}
+
+{{/*
 *********************************************************************
 * MIG Agent
 *********************************************************************
@@ -169,32 +190,4 @@ Create the name of the time-slicing agent config ConfigMap
 */}}
 {{- define "time-slicing-agent.config.configMapName" -}}
 {{- include "time-slicing-agent.name" . }}-config
-{{- end }}
-{{/*
-
-
-*********************************************************************
-* Misc
-*********************************************************************
-*/}}
-
-{{/*
-Create the name of the controller manager leader election role
-*/}}
-{{- define "leaderElectionRoleName" -}}
-{{ .Values.namePrefix }}-leader-election
-{{- end }}
-
-{{/*
-Create the name of the controller manager auth proxy role
-*/}}
-{{- define "authProxyRoleName" -}}
-{{ .Values.namePrefix }}-auth-proxy
-{{- end }}
-
-{{/*
-Create the name of the controller manager metrics reader role
-*/}}
-{{- define "metricsReaderRoleName" -}}
-{{ .Values.namePrefix }}-metrics-reader
 {{- end }}

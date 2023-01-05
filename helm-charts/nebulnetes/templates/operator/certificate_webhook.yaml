@@ -8,5 +8,5 @@ spec:
     - {{ include "operator.webhookServiceName" . }}.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
-    name: {{ include "selfSignedCertIssuerName" . }}
+    name: {{ include "n8s.selfSignedCertIssuerName" . }}
   secretName: {{ include "operator.webhookCertSecretName" . }}

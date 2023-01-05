@@ -1,8 +1,8 @@
-{{- if not (lookup "v1" "Role" (include "leaderElectionRoleName" .) .Release.Namespace) }}
+{{- if not (lookup "v1" "Role" (include "gpu-partitioner.leaderElectionRoleName" .) .Release.Namespace) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "leaderElectionRoleName" . }}
+  name: {{ include "gpu-partitioner.leaderElectionRoleName" . }}
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}

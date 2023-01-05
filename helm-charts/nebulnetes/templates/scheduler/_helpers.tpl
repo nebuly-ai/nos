@@ -6,17 +6,10 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "scheduler.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
 Common labels
 */}}
 {{- define "scheduler.labels" -}}
-helm.sh/chart: {{ include "scheduler.chart" . }}
+helm.sh/chart: {{ include "n8s.chart" . }}
 {{ include "scheduler.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -28,9 +21,9 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "scheduler.selectorLabels" -}}
-app.kubernetes.io/name: n8s-scheduler
+app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/part-of: {{ "nebulnetes" }}
+app.kubernetes.io/component: scheduler
 {{- end }}
 
 {{/*

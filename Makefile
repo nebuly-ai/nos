@@ -189,18 +189,6 @@ helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm re
 	helm push /tmp/gpu-partitioner-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
 	rm /tmp/gpu-partitioner-$(N8S_VERSION).tgz
 
-.PHONY: helm-push-n8s-scheduler
-helm-push-n8s-scheduler: ## Push the n8s-scheduler Helm chart to the Helm repository.
-	helm package helm-charts/n8s-scheduler --destination /tmp
-	helm push /tmp/n8s-scheduler-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/n8s-scheduler-$(N8S_VERSION).tgz
-
-.PHONY: helm-push-n8s-operator
-helm-push-n8s-operator: ## Push the n8s-operator Helm chart to the Helm repository.
-	helm package helm-charts/n8s-operator --destination /tmp
-	helm push /tmp/n8s-operator-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/n8s-operator-$(N8S_VERSION).tgz
-
 .PHONY: helm-push-nebulnetes
 helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository.
 	helm package helm-charts/nebulnetes --destination /tmp
@@ -208,7 +196,7 @@ helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository
 	rm /tmp/nebulnetes-$(N8S_VERSION).tgz
 
 .PHONY: helm-push
-helm-push: helm-push-gpu-partitioner helm-push-n8s-scheduler helm-push-n8s-operator helm-push-nebulnetes ## Push the all the Helm charts to the Helm repository.
+helm-push: helm-push-gpu-partitioner helm-push-nebulnetes ## Push the all the Helm charts to the Helm repository.
 
 ##@ Deployment
 

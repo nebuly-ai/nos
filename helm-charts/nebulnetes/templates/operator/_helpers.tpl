@@ -6,17 +6,10 @@ Create operator name
 {{- end }}
 
 {{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "operator.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
 Operator labels
 */}}
 {{- define "operator.labels" -}}
-helm.sh/chart: {{ include "operator.chart" . }}
+helm.sh/chart: {{ include "n8s.chart" . }}
 {{ include "operator.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -28,9 +21,9 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 GPU Partitioner selector labels
 */}}
 {{- define "operator.selectorLabels" -}}
-app.kubernetes.io/name: operator
+app.kubernetes.io/name: {{ .Chart.Name }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/part-of: {{ "nebulnetes" }}
+app.kubernetes.io/component: operator
 {{- end }}
 
 {{/*
@@ -67,38 +60,4 @@ Create the name of the service pointing to the operator webhook server
 */}}
 {{- define "operator.webhookServiceName" -}}
 {{ .Values.namePrefix }}-webhook
-{{- end }}
-
-{{/*
-*********************************************************************
-* Misc
-*********************************************************************
-*/}}
-
-{{/*
-Create the name of the controller manager leader election role
-*/}}
-{{- define "leaderElectionRoleName" -}}
-{{ .Values.namePrefix }}-leader-election
-{{- end }}
-
-{{/*
-Create the name of the controller manager auth proxy role
-*/}}
-{{- define "authProxyRoleName" -}}
-{{ .Values.namePrefix }}-auth-proxy
-{{- end }}
-
-{{/*
-Create the name of the controller manager metrics reader role
-*/}}
-{{- define "metricsReaderRoleName" -}}
-{{ .Values.namePrefix }}-metrics-reader
-{{- end }}
-
-{{/*
-Create the name of the self-signed certificate issuer
-*/}}
-{{- define "selfSignedCertIssuerName" -}}
-{{ .Values.namePrefix }}-selfsigned-issuer
 {{- end }}

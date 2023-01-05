@@ -5,7 +5,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "leaderElectionRoleName" . }}
+  name: {{ include "gpu-partitioner.leaderElectionRoleName" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "gpu-partitioner.name" . }}

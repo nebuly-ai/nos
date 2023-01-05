@@ -14,15 +14,10 @@ sources:
   - https://github.com/Telemaco019/nebulnetes/helm-charts/n8s-operator
 
 dependencies:
-  - name: n8s-operator
-    repository: "oci://ghcr.io/telemaco019/helm-charts"
-    version: 0.0.1-alpha.2
-  - name: n8s-scheduler
-    repository: "oci://ghcr.io/telemaco019/helm-charts"
-    version: 0.0.1-alpha.2
   - name: gpu-partitioner
     repository: "oci://ghcr.io/telemaco019/helm-charts"
     version: 0.0.1-alpha.2
+    condition: gpu-partitioner.enabled
 
 maintainers:
   - name: Michele Zanotti

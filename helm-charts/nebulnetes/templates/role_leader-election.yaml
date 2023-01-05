@@ -1,12 +1,10 @@
-{{- if not (lookup "v1" "Role" (include "leaderElectionRoleName" .) .Release.Namespace) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "leaderElectionRoleName" . }}
+  name: {{ include "n8s.leaderElectionRoleName" . }}
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/part-of: {{ "nebulnetes" }}
     {{- if .Chart.AppVersion }}
     app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
     {{- end }}
@@ -42,5 +40,4 @@ rules:
     verbs:
       - create
       - patch
-{{ end }}
 

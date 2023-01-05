@@ -1,12 +1,6 @@
 dependencies:
-- name: n8s-operator
-  repository: oci://ghcr.io/telemaco019/helm-charts
-  version: 0.0.1-alpha.2
-- name: n8s-scheduler
-  repository: oci://ghcr.io/telemaco019/helm-charts
-  version: 0.0.1-alpha.2
 - name: gpu-partitioner
   repository: oci://ghcr.io/telemaco019/helm-charts
   version: 0.0.1-alpha.2
-digest: sha256:dd0506f0228199871f59e93c0737e62392afa95763f4d1fe42f261d1771dfc6f
-generated: "2023-01-04T17:52:39.240903+01:00"
+digest: sha256:088bba13c63c246ec59e79d2e160670a485af7aaad4fe18b4f7d6334ee3cc4a3
+generated: "2023-01-05T11:08:38.220009+01:00"

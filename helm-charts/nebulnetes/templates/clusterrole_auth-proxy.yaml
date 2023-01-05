@@ -1,8 +1,7 @@
-{{- if not (lookup "v1" "Role" (include "authProxyRoleName" .) .Release.Namespace) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "authProxyRoleName" . }}
+  name: {{ include "n8s.authProxyRoleName" . }}
 rules:
   - apiGroups:
       - authentication.k8s.io
@@ -16,4 +15,3 @@ rules:
       - subjectaccessreviews
     verbs:
       - create
-{{ end }}

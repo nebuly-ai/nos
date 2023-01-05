@@ -6,7 +6,7 @@ metadata:
     control-plane: "n8s-controller-manager"
     {{- include "operator.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.operator.replicaCount }}
   selector:
     matchLabels:
       control-plane: "n8s-controller-manager"
@@ -14,8 +14,8 @@ spec:
   template:
     metadata:
       annotations:
-        kubectl.kubernetes.io/default-container: "{{ .Chart.Name }}"
-        {{- with .Values.podAnnotations }}
+        kubectl.kubernetes.io/default-container: "{{ include "operator.name" . }}"
+        {{- with .Values.operator.podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
@@ -27,16 +27,16 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: 10
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        - name: {{ include "operator.name" . }}
+          image: "{{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag | default .Chart.AppVersion }}"
           command:
             - /manager
           args:
             - --config={{ include "operator.configFileName" . }}
-            {{- if gt (int .Values.logLevel) 0 }}
-            - --zap-log-level={{ .Values.logLevel }}
+            {{- if gt (int .Values.operator.logLevel) 0 }}
+            - --zap-log-level={{ .Values.operator.logLevel }}
             {{ end }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
           ports:
             - containerPort: 9443
               name: webhook-server
@@ -54,7 +54,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.operator.resources | nindent 12 }}
           volumeMounts:
             - mountPath: /{{ include "operator.configFileName" . }}
               name: operator-config
@@ -69,29 +69,29 @@ spec:
                 - ALL
 
         - name: kube-rbac-proxy
-          image: "{{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}"
+          image: "{{ .Values.operator.kubeRbacProxy.image.repository }}:{{ .Values.operator.kubeRbacProxy.image.tag }}"
           args:
             - --secure-listen-address=0.0.0.0:8443
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
-            {{- if gt (int .Values.kubeRbacProxy.logLevel) 0 }}
-            - --v={{ .Values.kubeRbacProxy.logLevel }}
+            {{- if gt (int .Values.operator.kubeRbacProxy.logLevel) 0 }}
+            - --v={{ .Values.operator.kubeRbacProxy.logLevel }}
             {{ end }}
           ports:
             - containerPort: 8443
               name: https
               protocol: TCP
-          resources: {{- toYaml .Values.kubeRbacProxy.resources | nindent 12 }}
+          resources: {{- toYaml .Values.operator.kubeRbacProxy.resources | nindent 12 }}
 
-      {{- with .Values.nodeSelector }}
+      {{- with .Values.operator.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.operator.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.operator.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

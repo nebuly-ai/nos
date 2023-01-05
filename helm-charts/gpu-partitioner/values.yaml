@@ -156,7 +156,7 @@ nodeSelector: {}
 
 # -- Map that associates to each GPU model its possible MIG configurations
 # @default -- -
-knownMigGeometries: |
+knownMigGeometries:
   A30:
     - 1g.6gb: 4
     - 1g.6gb: 2
