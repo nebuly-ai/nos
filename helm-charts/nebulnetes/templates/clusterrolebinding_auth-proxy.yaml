@@ -8,5 +8,5 @@ roleRef:
   name: {{ include "n8s.authProxyRoleName" .}}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "operator.name" . }}
+    name: {{ include "operator.fullname" . }}
     namespace: {{ .Release.Namespace }}

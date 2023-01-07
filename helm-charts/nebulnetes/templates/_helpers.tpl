@@ -6,29 +6,41 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
+Define nebulnetes full name including the Chart release name
+*/}}
+{{- define "n8s.fullname" -}}
+{{- $name := .Chart.Name -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create the name of the controller manager leader election role
 */}}
 {{- define "n8s.leaderElectionRoleName" -}}
-{{ .Values.namePrefix }}-leader-election
+{{ include "n8s.fullname" . }}-leader-election
 {{- end }}
 
 {{/*
 Create the name of the controller manager auth proxy role
 */}}
 {{- define "n8s.authProxyRoleName" -}}
-{{ .Values.namePrefix }}-auth-proxy
+{{ include "n8s.fullname" . }}-auth-proxy
 {{- end }}
 
 {{/*
 Create the name of the controller manager metrics reader role
 */}}
 {{- define "n8s.metricsReaderRoleName" -}}
-{{ .Values.namePrefix }}-metrics-reader
+{{ include "n8s.fullname" . }}-metrics-reader
 {{- end }}
 
 {{/*
 Create the name of the self-signed certificate issuer
 */}}
 {{- define "n8s.selfSignedCertIssuerName" -}}
-{{ .Values.namePrefix }}-selfsigned-issuer
+{{ include "n8s.fullname" . }}-self-signed-issuer
 {{- end }}

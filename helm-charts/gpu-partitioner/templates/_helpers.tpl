@@ -11,6 +11,9 @@ Expand the name of the chart.
 {{- .Chart.Name -}}
 {{- end }}
 
+{{/*
+Define the full name of the GPU partitioner
+*/}}
 {{- define "gpu-partitioner.fullname" -}}
 {{- $name := .Chart.Name -}}
 {{- if contains $name .Release.Name -}}
@@ -118,7 +121,7 @@ Name of the mig-agent
 {{- end }}
 
 {{- define "mig-agent.fullname" -}}
-{{- $name := "mig-agent" -}}
+{{- $name := include "mig-agent.name" . -}}
 {{- if contains .Chart.Name .Release.Name -}}
 {{- .Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -176,7 +179,7 @@ Name of the time-slicing-agent
 {{- end }}
 
 {{- define "time-slicing-agent.fullname" -}}
-{{- $name := "time-slicing-agent" -}}
+{{- $name := include "time-slicing-agent.name" . -}}
 {{- if contains .Chart.Name .Release.Name -}}
 {{- .Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}

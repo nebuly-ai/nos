@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     {{- include "scheduler.labels" . | nindent 4 }}
-  name: {{ include "scheduler.name" . }}
+  name: {{ include "scheduler.fullname" . }}
 spec:
   replicas: {{ .Values.scheduler.replicaCount }}
   selector:
@@ -18,7 +18,7 @@ spec:
         {{- end }}
     spec:
       containers:
-        - name: {{ include "scheduler.name" . }}
+        - name: {{ include "scheduler.fullname" . }}
           image: "{{ .Values.scheduler.image.repository }}:{{ .Values.scheduler.image.tag | default .Chart.AppVersion }}"
           args:
             - --config
@@ -48,7 +48,7 @@ spec:
               readOnly: true
       hostNetwork: false
       hostPID: false
-      serviceAccountName: {{ include "scheduler.name" . }}
+      serviceAccountName: {{ include "scheduler.fullname" . }}
       {{- with .Values.scheduler.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

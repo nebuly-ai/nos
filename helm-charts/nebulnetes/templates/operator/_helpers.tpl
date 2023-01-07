@@ -2,8 +2,17 @@
 Create operator name
 */}}
 {{- define "operator.name" -}}
-{{- printf "%s-%s" .Values.namePrefix "operator" }}
+{{- "operator" -}}
 {{- end }}
+
+{{- define "operator.fullname" -}}
+{{- $name := include "operator.name" . -}}
+{{- if contains .Chart.Name .Release.Name -}}
+{{- printf "%s-%s" .Chart.Name (.Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-") -}}
+{{- else -}}
+{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Operator labels
@@ -30,7 +39,7 @@ app.kubernetes.io/component: operator
 Create the name of the gpu partitioner config ConfigMap
 */}}
 {{- define "operator.config.configMapName" -}}
-{{- include "operator.name" . }}-config
+{{- include "operator.fullname" . }}-config
 {{- end }}
 
 {{/*
@@ -51,7 +60,7 @@ gpu_partitioner_config.yaml
 Create the name of the secret containing the cert of the webhook used for validating CRDs
 */}}
 {{- define "operator.webhookCertSecretName" -}}
-{{ .Values.namePrefix }}-webhook-server-cert
+{{ include "operator.fullname" . }}-webhook-server-cert
 {{- end }}
 
 
@@ -59,5 +68,5 @@ Create the name of the secret containing the cert of the webhook used for valida
 Create the name of the service pointing to the operator webhook server
 */}}
 {{- define "operator.webhookServiceName" -}}
-{{ .Values.namePrefix }}-webhook
+{{ include "operator.fullname" . }}-webhook
 {{- end }}

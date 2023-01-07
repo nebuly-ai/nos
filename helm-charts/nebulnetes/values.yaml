@@ -6,9 +6,6 @@
 # -- Defines how many GB of memory each nvidia.com/gpu resource has.
 nvidiaGpuResourceMemoryGB: 32
 
-# -- The prefix used for generating all the resource names.
-namePrefix: n8s
-
 # -- Overrides the name of the deployed resources.
 nameOverride: ""
 

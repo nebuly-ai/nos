@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     {{- include "operator.labels" . | nindent 4 }}
-  name: {{ include "operator.name" . }}-metrics
+  name: {{ include "operator.fullname" . }}-metrics
 spec:
   ports:
     - name: https

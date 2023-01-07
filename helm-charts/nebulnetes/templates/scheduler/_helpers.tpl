@@ -2,8 +2,17 @@
 Expand the name of the chart.
 */}}
 {{- define "scheduler.name" -}}
-{{- printf "%s-%s" .Values.namePrefix "scheduler" }}
+{{- "scheduler" -}}
 {{- end }}
+
+{{- define "scheduler.fullname" -}}
+{{- $name := include "scheduler.name" . -}}
+{{- if contains .Chart.Name .Release.Name -}}
+{{- printf "%s-%s" .Chart.Name (.Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-") -}}
+{{- else -}}
+{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Common labels
@@ -30,5 +39,5 @@ app.kubernetes.io/component: scheduler
 Create the name of the scheduler config ConfigMap
 */}}
 {{- define "scheduler.config.configMapName" -}}
-{{- include "scheduler.name" . }}-config
+{{- include "scheduler.fullname" . }}-config
 {{- end }}
