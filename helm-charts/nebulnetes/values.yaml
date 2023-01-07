@@ -6,9 +6,6 @@
 # -- Defines how many GB of memory each nvidia.com/gpu resource has.
 nvidiaGpuResourceMemoryGB: 32
 
-# -- Overrides the name of the deployed resources.
-nameOverride: ""
-
 # -- Config of the Nebulnetes operator.
 # All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator).
 # @default -- -
