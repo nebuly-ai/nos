@@ -9,6 +9,8 @@ nvidiaGpuResourceMemoryGB: 32
 # -- The prefix used for generating all the resource names.
 namePrefix: n8s
 
+# -- Overrides the name of the deployed resources.
+nameOverride: ""
 
 # -- Config of the Nebulnetes operator.
 # All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator).

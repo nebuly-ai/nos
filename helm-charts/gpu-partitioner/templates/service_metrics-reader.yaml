@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
     {{- include "gpu-partitioner.labels" . | nindent 4 }}
-  name: {{ include "gpu-partitioner.name" . }}-metrics
+  name: {{ include "gpu-partitioner.fullname" . }}-metrics
 spec:
   ports:
     - name: https

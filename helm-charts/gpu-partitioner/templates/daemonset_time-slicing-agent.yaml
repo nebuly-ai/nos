@@ -4,7 +4,7 @@ metadata:
   labels:
     control-plane: n8s-controller-manager
     {{- include "time-slicing-agent.labels" . | nindent 4 }}
-  name: {{ include "time-slicing-agent.name" . }}
+  name: {{ include "time-slicing-agent.fullname" . }}
 spec:
   selector:
     matchLabels:
@@ -16,14 +16,14 @@ spec:
         control-plane: n8s-controller-manager
         {{- include "time-slicing-agent.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "time-slicing-agent.name" . }}
+      serviceAccountName: {{ include "time-slicing-agent.fullname" . }}
       nodeSelector:
         n8s.nebuly.ai/gpu-partitioning: time-slicing
       priorityClassName: system-node-critical
       terminationGracePeriodSeconds: 20
       containers:
         - image: "{{ .Values.timeSlicingAgent.image.repository }}:{{ .Values.timeSlicingAgent.image.tag | default .Chart.AppVersion }}"
-          name: {{ include "time-slicing-agent.name" . }}
+          name: {{ include "time-slicing-agent.fullname" . }}
           args:
             - --config={{ include "time-slicing-agent.configFileName" . }}
             {{- if gt (int .Values.timeSlicingAgent.logLevel) 0 }}

@@ -2,9 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# -- The prefix used for generating all the resource names.
-namePrefix: n8s
-
 # -- The level of log of the GPU Partitioner.
 # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
 # **Must be >= 0**.

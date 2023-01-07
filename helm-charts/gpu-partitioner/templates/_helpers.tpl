@@ -8,8 +8,17 @@
 Expand the name of the chart.
 */}}
 {{- define "gpu-partitioner.name" -}}
-{{- printf "%s-%s" .Values.namePrefix "gpu-partitioner" }}
+{{- .Chart.Name -}}
 {{- end }}
+
+{{- define "gpu-partitioner.fullname" -}}
+{{- $name := .Chart.Name -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Create chart name and version as used by the chart label.
@@ -43,14 +52,14 @@ app.kubernetes.io/part-of: {{ "nebulnetes" }}
 Create the name of the gpu partitioner config ConfigMap
 */}}
 {{- define "gpu-partitioner.config.configMapName" -}}
-{{- include "gpu-partitioner.name" . }}-config
+{{- include "gpu-partitioner.fullname" . }}-config
 {{- end }}
 
 {{/*
 Create the name of the known MIG geometries ConfigMap
 */}}
 {{- define "gpu-partitioner.knownMigGeometriesConfigMapName" -}}
-{{- include "gpu-partitioner.name" . }}-known-mig-geometries
+{{- include "gpu-partitioner.fullname" . }}-known-mig-geometries
 {{- end }}
 
 {{/*
@@ -78,21 +87,21 @@ gpu_partitioner_config.yaml
 Create the name of the controller manager leader election role
 */}}
 {{- define "gpu-partitioner.leaderElectionRoleName" -}}
-{{ .Values.namePrefix }}-leader-election-gp
+{{ include "gpu-partitioner.fullname" . }}-leader-election
 {{- end }}
 
 {{/*
 Create the name of the controller manager auth proxy role
 */}}
 {{- define "gpu-partitioner.authProxyRoleName" -}}
-{{ .Values.namePrefix }}-auth-proxy-gp
+{{ include "gpu-partitioner.fullname" . }}-auth-proxy
 {{- end }}
 
 {{/*
 Create the name of the controller manager metrics reader role
 */}}
 {{- define "gpu-partitioner.metricsReaderRoleName" -}}
-{{ .Values.namePrefix }}-metrics-reader-gp
+{{ include "gpu-partitioner.fullname" . }}-metrics-reader
 {{- end }}
 
 {{/*
@@ -105,8 +114,17 @@ Create the name of the controller manager metrics reader role
 Name of the mig-agent
 */}}
 {{- define "mig-agent.name" -}}
-{{- printf "%s-%s" .Values.namePrefix "mig-agent" | trunc 63 }}
+{{- "mig-agent" -}}
 {{- end }}
+
+{{- define "mig-agent.fullname" -}}
+{{- $name := "mig-agent" -}}
+{{- if contains .Chart.Name .Release.Name -}}
+{{- .Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 MIG Agent labels
@@ -141,7 +159,7 @@ mig_agent_config.yaml
 Create the name of the MIG Agent config ConfigMap
 */}}
 {{- define "mig-agent.config.configMapName" -}}
-{{- include "mig-agent.name" . }}-config
+{{- include "mig-agent.fullname" . }}-config
 {{- end }}
 
 {{/*
@@ -154,8 +172,17 @@ Create the name of the MIG Agent config ConfigMap
 Name of the time-slicing-agent
 */}}
 {{- define "time-slicing-agent.name" -}}
-{{- printf "%s-%s" .Values.namePrefix "time-slicing-agent" | trunc 63 }}
+{{- "time-slicing-agent" -}}
 {{- end }}
+
+{{- define "time-slicing-agent.fullname" -}}
+{{- $name := "time-slicing-agent" -}}
+{{- if contains .Chart.Name .Release.Name -}}
+{{- .Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Time Slicing Agent labels
@@ -189,5 +216,5 @@ time_slicing_agent_config.yaml
 Create the name of the time-slicing agent config ConfigMap
 */}}
 {{- define "time-slicing-agent.config.configMapName" -}}
-{{- include "time-slicing-agent.name" . }}-config
+{{- include "time-slicing-agent.fullname" . }}-config
 {{- end }}

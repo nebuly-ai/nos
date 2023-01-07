@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "gpu-partitioner.name" . }}
+  name: {{ include "gpu-partitioner.fullname" . }}
   labels:
     control-plane: "n8s-controller-manager"
     {{- include "gpu-partitioner.labels" . | nindent 4 }}
@@ -22,7 +22,7 @@ spec:
         control-plane: "n8s-controller-manager"
         {{- include "gpu-partitioner.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "gpu-partitioner.name" . }}
+      serviceAccountName: {{ include "gpu-partitioner.fullname" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: 10

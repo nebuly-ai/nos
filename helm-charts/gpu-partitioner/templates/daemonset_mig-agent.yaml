@@ -4,7 +4,7 @@ metadata:
   labels:
     control-plane: n8s-controller-manager
     {{- include "mig-agent.labels" . | nindent 4 }}
-  name: {{ include "mig-agent.name" . }}
+  name: {{ include "mig-agent.fullname" . }}
 spec:
   selector:
     matchLabels:
@@ -16,14 +16,14 @@ spec:
         control-plane: n8s-controller-manager
         {{- include "mig-agent.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "mig-agent.name" . }}
+      serviceAccountName: {{ include "mig-agent.fullname" . }}
       nodeSelector:
         n8s.nebuly.ai/gpu-partitioning: mig
       priorityClassName: system-node-critical
       terminationGracePeriodSeconds: 20
       containers:
         - image: "{{ .Values.migAgent.image.repository }}:{{ .Values.migAgent.image.tag | default .Chart.AppVersion }}"
-          name: {{ include "mig-agent.name" . }}
+          name: {{ include "mig-agent.fullname" . }}
           args:
             - --config={{ include "mig-agent.configFileName" . }}
             {{- if gt (int .Values.migAgent.logLevel) 0 }}
