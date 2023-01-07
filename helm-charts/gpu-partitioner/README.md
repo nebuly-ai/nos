@@ -39,7 +39,6 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | migAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node |
 | migAgent.resources | object | `{"limits":{"cpu":"100m","memory":"128Mi"}}` | Sets the resource requests and limits of the MIG Agent container. |
 | migAgent.tolerations | list | `[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]` | Sets the tolerations of the MIG Agent Pod. |
-| namePrefix | string | `"n8s"` | The prefix used for generating all the resource names. |
 | nodeSelector | object | `{}` | Sets the nodeSelector config of the GPU Partitioner Pod. |
 | podAnnotations | object | `{}` | Sets the annotations of the GPU Partitioner Pod. |
 | podSecurityContext | object | `{"runAsNonRoot":true,"runAsUser":1000}` | Sets the security context of the GPU partitioner Pod. |
