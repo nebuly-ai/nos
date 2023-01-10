@@ -14,11 +14,30 @@
  * limitations under the License.
  */
 
-package v1alpha1
+package mps
 
-func init() {
-	SchemeBuilder.Register(&OperatorConfig{})
-	SchemeBuilder.Register(&GpuPartitionerConfig{})
-	SchemeBuilder.Register(&MigAgentConfig{})
-	SchemeBuilder.Register(&GpuAgentConfig{})
+import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
+	v1 "k8s.io/api/core/v1"
+)
+
+var _ gpu.SliceFilter = sliceFilter{}
+
+type sliceFilter struct {
+}
+
+func (s sliceFilter) ExtractSlices(resources map[v1.ResourceName]int64) map[gpu.Slice]int {
+	var res = make(map[gpu.Slice]int)
+	for r, q := range resources {
+		if slicing.IsGpuSlice(r) {
+			profileName, _ := slicing.ExtractProfileName(r)
+			res[profileName] += int(q)
+		}
+	}
+	return res
+}
+
+func NewSliceFilter() gpu.SliceFilter {
+	return sliceFilter{}
 }

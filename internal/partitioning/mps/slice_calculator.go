@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 
-package v1alpha1
+package mps
 
-func init() {
-	SchemeBuilder.Register(&OperatorConfig{})
-	SchemeBuilder.Register(&GpuPartitionerConfig{})
-	SchemeBuilder.Register(&MigAgentConfig{})
-	SchemeBuilder.Register(&GpuAgentConfig{})
+import (
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
+	v1 "k8s.io/api/core/v1"
+)
+
+var _ gpu.SliceCalculator = sliceCalculator{}
+
+type sliceCalculator struct {
+}
+
+func (s sliceCalculator) GetRequestedSlices(pod v1.Pod) map[gpu.Slice]int {
+	requestedProfiles := slicing.GetRequestedProfiles(pod)
+	res := make(map[gpu.Slice]int, len(requestedProfiles))
+	for p, q := range requestedProfiles {
+		res[p] = q
+	}
+	return res
+}
+
+func NewSliceCalculator() gpu.SliceCalculator {
+	return sliceCalculator{}
 }

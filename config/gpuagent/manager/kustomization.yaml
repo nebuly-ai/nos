@@ -1,0 +1,16 @@
+resources:
+- ts_agent.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- files:
+  - gpu_agent_config.yaml
+  name: gpu-agent-config
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: gpu-agent
+  newName: ghcr.io/telemaco019/nebulnetes-gpu-agent
+  newTag: 0.0.1-alpha.3

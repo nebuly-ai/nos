@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: gpu-agent
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+        - name: gpu-agent
+          args:
+            - "--config=gpu_agent_config.yaml"
+#           - "--zap-log-level=1"  # Uncomment this line to enable debug logging
+          volumeMounts:
+            - name: gpu-agent-config
+              mountPath: /gpu_agent_config.yaml
+              subPath: gpu_agent_config.yaml
+      volumes:
+        - name: gpu-agent-config
+          configMap:
+            name: gpu-agent-config

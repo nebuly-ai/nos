@@ -6,7 +6,7 @@ OPERATOR_IMG ?= ghcr.io/telemaco019/nebulnetes-operator:$(N8S_VERSION)
 SCHEDULER_IMG ?= ghcr.io/telemaco019/nebulnetes-scheduler:$(N8S_VERSION)
 GPU_PARTITIONER_IMG ?= ghcr.io/telemaco019/nebulnetes-gpu-partitioner:$(N8S_VERSION)
 MIG_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-mig-agent:$(N8S_VERSION)
-TS_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-time-slicing-agent:$(N8S_VERSION)
+GPU_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-gpu-agent:$(N8S_VERSION)
 
 # Helm chart URL to push Helm charts
 HELM_CHART_REGISTRY ?= oci://ghcr.io/telemaco019/helm-charts
@@ -70,17 +70,17 @@ mig-agent-manifests: controller-gen
 	rbac:roleName=mig-agent-role \
 	output:rbac:artifacts:config=config/migagent/rbac
 
-.PHONY: ts-agent-manifests	## Generate manifests for the time-slicing-agent (ClusterRole, etc.).
-ts-agent-manifests: controller-gen
-	$(CONTROLLER_GEN) paths="./internal/controllers/tsagent/..." \
-	rbac:roleName=time-slicing-agent-role \
-	output:rbac:artifacts:config=config/tsagent/rbac
+.PHONY: gpu-agent-manifests	## Generate manifests for the gpu-agent (ClusterRole, etc.).
+gpu-agent-manifests: controller-gen
+	$(CONTROLLER_GEN) paths="./internal/controllers/gpuagent/..." \
+	rbac:roleName=gpu-agent-role \
+	output:rbac:artifacts:config=config/gpuagent/rbac
 
 .PHONY: manifests
 manifests: operator-manifests \
 	mig-agent-manifests \
 	gpu-partitioner-manifests \
-	ts-agent-manifests
+	gpu-agent-manifests
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -136,9 +136,9 @@ docker-build-gpu-partitioner: ## Build docker image with the gpu-partitioner.
 docker-build-mig-agent: ## Build docker image with the mig-agent.
 	docker build -t ${MIG_AGENT_IMG} -f build/migagent/Dockerfile .
 
-.PHONY: docker-build-ts-agent
-docker-build-ts-agent: ## Build docker image with the time-slicing-agent.
-	docker build -t ${TS_AGENT_IMG} -f build/tsagent/Dockerfile .
+.PHONY: docker-build-gpu-agent
+docker-build-gpu-agent: ## Build docker image with the gpu-agent.
+	docker build -t ${GPU_AGENT_IMG} -f build/gpuagent/Dockerfile .
 
 .PHONY: docker-build-operator
 docker-build-operator: ## Build docker image with the operator.
@@ -156,9 +156,9 @@ docker-push-operator: ## Push docker image with the operator.
 docker-push-mig-agent: ## Push docker image with the mig-agent.
 	docker push ${MIG_AGENT_IMG}
 
-.PHONY: docker-push-ts-agent
-docker-push-ts-agent: ## Push docker image with the time-slicing-agent.
-	docker push ${TS_AGENT_IMG}
+.PHONY: docker-push-gpu-agent
+docker-push-gpu-agent: ## Push docker image with the gpu-agent.
+	docker push ${GPU_AGENT_IMG}
 
 .PHONY: docker-push-scheduler
 docker-push-scheduler: ## Push docker image with the scheduler.
@@ -171,14 +171,14 @@ docker-push-gpu-partitioner: ## Push docker image with the gpu-partitioner.
 .PHONY: docker-build
 docker-build: test \
 	docker-build-mig-agent \
-	docker-build-ts-agent \
+	docker-build-gpu-agent \
 	docker-build-operator \
 	docker-build-scheduler \
 	docker-build-gpu-partitioner \
 
 .PHONY: docker-push
 docker-push: docker-push-mig-agent \
-	docker-build-ts-agent \
+	docker-build-gpu-agent \
 	docker-push-operator \
 	docker-push-scheduler \
 	docker-push-gpu-partitioner
@@ -224,13 +224,13 @@ deploy-mig-agent: kustomize ## Deploy the MIG Agent to the K8s cluster specified
 	cd config/migagent/manager && $(KUSTOMIZE) edit set image mig-agent=${MIG_AGENT_IMG}
 	$(KUSTOMIZE) build config/migagent/default | kubectl apply -f -
 
-.PHONY: deploy-ts-agent
-deploy-ts-agent: kustomize ## Deploy the Time Slicing Agent to the K8s cluster specified in ~/.kube/config.
-	cd config/tsagent/manager && $(KUSTOMIZE) edit set image time-slicing-agent=${TS_AGENT_IMG}
-	$(KUSTOMIZE) build config/tsagent/default | kubectl apply -f -
+.PHONY: deploy-gpu-agent
+deploy-gpu-agent: kustomize ## Deploy the GPU Agent to the K8s cluster specified in ~/.kube/config.
+	cd config/gpuagent/manager && $(KUSTOMIZE) edit set image gpu-agent=${GPU_AGENT_IMG}
+	$(KUSTOMIZE) build config/gpuagent/default | kubectl apply -f -
 
 .PHONY: deploy-gpu-partitioner
-deploy-gpu-partitioner: kustomize deploy-mig-agent deploy-ts-agent ## Deploy the GPU Partitioner to the K8s cluster specified in ~/.kube/config.
+deploy-gpu-partitioner: kustomize deploy-mig-agent deploy-gpu-agent ## Deploy the GPU Partitioner to the K8s cluster specified in ~/.kube/config.
 	cd config/gpupartitioner/manager && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}
 	$(KUSTOMIZE) build config/gpupartitioner/default | kubectl apply -f -
 

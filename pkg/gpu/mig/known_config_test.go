@@ -19,7 +19,7 @@ package mig_test
 import (
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -44,8 +44,8 @@ func TestValidateConfigs(t *testing.T) {
 			configs: map[gpu.Model][]gpu.Geometry{
 				gpu.GPUModel_A30: {
 					{
-						timeslicing.ProfileName("1gb"): 1,
-						mig.Profile1g10gb:              2,
+						slicing.ProfileName("1gb"): 1,
+						mig.Profile1g10gb:          2,
 					},
 					{
 						mig.Profile1g10gb: 1,

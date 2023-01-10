@@ -1,0 +1,11 @@
+apiVersion: config.n8s.nebuly.ai/v1alpha1
+kind: GpuAgentConfig
+health:
+  healthProbeBindAddress: :8081
+metrics:
+  bindAddress: 127.0.0.1:8080
+leaderElection:
+  leaderElect: false
+
+# Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
+reportConfigIntervalSeconds: 10

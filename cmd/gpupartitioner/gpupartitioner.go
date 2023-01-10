@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
+	"github.com/nebuly-ai/nebulnetes/internal/partitioning/mps"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/ts"
 	configv1alpha1 "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/config/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
@@ -230,7 +230,7 @@ func main() {
 	}
 
 	// Setup time-slicing controller
-	timeSlicingController := ts.NewController(
+	timeSlicingController := mps.NewController(
 		mgr.GetScheme(),
 		mgr.GetClient(),
 		podBatcher,
@@ -238,12 +238,12 @@ func main() {
 		schedulerFramework,
 		devicePluginCM,
 	)
-	if err = timeSlicingController.SetupWithManager(mgr, constant.TsPartitionerControllerName); err != nil {
+	if err = timeSlicingController.SetupWithManager(mgr, constant.MpsPartitionerControllerName); err != nil {
 		setupLog.Error(
 			err,
 			"unable to create controller",
 			"controller",
-			constant.TsPartitionerControllerName,
+			constant.MpsPartitionerControllerName,
 		)
 		os.Exit(1)
 	}

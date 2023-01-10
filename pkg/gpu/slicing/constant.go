@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package v1alpha1
+package slicing
 
-func init() {
-	SchemeBuilder.Register(&OperatorConfig{})
-	SchemeBuilder.Register(&GpuPartitionerConfig{})
-	SchemeBuilder.Register(&MigAgentConfig{})
-	SchemeBuilder.Register(&GpuAgentConfig{})
-}
+const (
+	// ReplicaGpuIdSeparator is the separator used to separate the GPU ID from the replica ID in the
+	// GPU devices exposed by the NVIDIA device plugin as shared GPUs.
+	ReplicaGpuIdSeparator = "::"
+	// MinSliceMemoryGB is the smallest slice size that can be created on slicing shared GPUs.
+	MinSliceMemoryGB = 1
+)

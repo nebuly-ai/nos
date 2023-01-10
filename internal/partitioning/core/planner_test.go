@@ -21,13 +21,13 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
 	partitioning_mig "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
+	partitioning_ts "github.com/nebuly-ai/nebulnetes/internal/partitioning/mps"
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	partitioning_ts "github.com/nebuly-ai/nebulnetes/internal/partitioning/ts"
 	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/timeslicing"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
 	n8sresource "github.com/nebuly-ai/nebulnetes/pkg/resource"
 	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
 	scheduler_mock "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/scheduler"
@@ -535,14 +535,14 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				factory.BuildPod("ns-1", "pd-1").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("10gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("10gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
 				factory.BuildPod("ns-2", "pd-2").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("20gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
@@ -561,7 +561,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						fmt.Sprintf(v1alpha1.AnnotationGpuStatusFormat, 0, "10gb", n8sresource.StatusFree): "1",
 					}).
 					WithAllocatableResources(v1.ResourceList{
-						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+						slicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 			},
@@ -569,14 +569,14 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				factory.BuildPod("ns-1", "pd-1").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("10gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("10gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
 				factory.BuildPod("ns-1", "pd-2").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("5gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("5gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
@@ -601,7 +601,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
-						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+						slicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 			},
@@ -609,14 +609,14 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				factory.BuildPod("ns-1", "pd-1").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("10gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("10gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
 				factory.BuildPod("ns-1", "pd-2").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("5gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("5gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
@@ -628,8 +628,8 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
-						timeslicing.ProfileName("10gb").AsResourceName(): 1,
-						timeslicing.ProfileName("5gb").AsResourceName():  1,
+						slicing.ProfileName("10gb").AsResourceName(): 1,
+						slicing.ProfileName("5gb").AsResourceName():  1,
 					},
 				},
 			},
@@ -650,7 +650,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
-						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(4, resource.DecimalSI),
+						slicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(4, resource.DecimalSI),
 					}).
 					Get(),
 				factory.BuildNode("node-2").
@@ -665,7 +665,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
-						timeslicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+						slicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 				factory.BuildNode("node-3").
@@ -681,14 +681,14 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				factory.BuildPod("ns-1", "pd-1").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("40gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("40gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
 				factory.BuildPod("ns-1", "pd-2").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("20gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
@@ -700,20 +700,20 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
-						timeslicing.ProfileName("40gb").AsResourceName(): 1,
+						slicing.ProfileName("40gb").AsResourceName(): 1,
 					},
 				},
 				{
 					GPUIndex: 1,
 					Resources: map[v1.ResourceName]int{
-						timeslicing.ProfileName("40gb").AsResourceName(): 1,
+						slicing.ProfileName("40gb").AsResourceName(): 1,
 					},
 				},
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
-						timeslicing.ProfileName("20gb").AsResourceName(): 1,
-						timeslicing.ProfileName("10gb").AsResourceName(): 2,
+						slicing.ProfileName("20gb").AsResourceName(): 1,
+						slicing.ProfileName("10gb").AsResourceName(): 2,
 					},
 				},
 				{
@@ -739,7 +739,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
-						timeslicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(2, resource.DecimalSI),
+						slicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(2, resource.DecimalSI),
 					}).
 					Get(),
 				factory.BuildNode("node-2").
@@ -754,8 +754,8 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
-						timeslicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
-						timeslicing.ProfileName("30gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+						slicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
+						slicing.ProfileName("30gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
 					}).
 					Get(),
 				factory.BuildNode("node-3").
@@ -771,14 +771,14 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				factory.BuildPod("ns-1", "pd-1").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("20gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
 				factory.BuildPod("ns-1", "pd-2").
 					WithContainer(
 						factory.BuildContainer("test", "test").
-							WithScalarResourceRequest(timeslicing.ProfileName("20gb").AsResourceName(), 1).
+							WithScalarResourceRequest(slicing.ProfileName("20gb").AsResourceName(), 1).
 							Get(),
 					).
 					Get(),
@@ -790,21 +790,21 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
-						timeslicing.ProfileName("20gb").AsResourceName(): 2,
-						timeslicing.ProfileName("10gb").AsResourceName(): 1,
+						slicing.ProfileName("20gb").AsResourceName(): 2,
+						slicing.ProfileName("10gb").AsResourceName(): 1,
 					},
 				},
 				{
 					GPUIndex: 1,
 					Resources: map[v1.ResourceName]int{
-						timeslicing.ProfileName("40gb").AsResourceName(): 1,
+						slicing.ProfileName("40gb").AsResourceName(): 1,
 					},
 				},
 				{
 					GPUIndex: 0,
 					Resources: map[v1.ResourceName]int{
-						timeslicing.ProfileName("10gb").AsResourceName(): 1,
-						timeslicing.ProfileName("30gb").AsResourceName(): 1,
+						slicing.ProfileName("10gb").AsResourceName(): 1,
+						slicing.ProfileName("30gb").AsResourceName(): 1,
 					},
 				},
 				{
