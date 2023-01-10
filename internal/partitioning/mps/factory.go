@@ -62,7 +62,7 @@ func NewController(
 		client,
 		podBatcher,
 		clusterState,
-		gpu.PartitioningKindTimeSlicing,
+		gpu.PartitioningKindMps,
 		NewPlanner(scheduler),
 		NewActuator(client, devicePluginCM),
 		NewSnapshotTaker(),

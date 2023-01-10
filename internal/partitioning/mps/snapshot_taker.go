@@ -34,7 +34,7 @@ func (s snapshotTaker) TakeSnapshot(clusterState *state.ClusterState) (core.Snap
 		if v.Node() == nil {
 			continue
 		}
-		if !gpu.IsTimeSlicingPartitioningEnabled(*v.Node()) {
+		if !gpu.IsMpsPartitioningEnabled(*v.Node()) {
 			continue
 		}
 		slicingNode, err := slicing.NewNode(v)

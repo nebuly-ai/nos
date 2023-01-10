@@ -229,8 +229,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Setup time-slicing controller
-	timeSlicingController := mps.NewController(
+	// Setup mps-slicing controller
+	mpsSlicingController := mps.NewController(
 		mgr.GetScheme(),
 		mgr.GetClient(),
 		podBatcher,
@@ -238,7 +238,7 @@ func main() {
 		schedulerFramework,
 		devicePluginCM,
 	)
-	if err = timeSlicingController.SetupWithManager(mgr, constant.MpsPartitionerControllerName); err != nil {
+	if err = mpsSlicingController.SetupWithManager(mgr, constant.MpsPartitionerControllerName); err != nil {
 		setupLog.Error(
 			err,
 			"unable to create controller",

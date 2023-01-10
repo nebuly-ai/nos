@@ -25,10 +25,13 @@ require (
 	k8s.io/kubelet v0.0.0
 	k8s.io/kubernetes v1.25.4
 	sigs.k8s.io/controller-runtime v0.13.1
+	sigs.k8s.io/yaml v1.3.0
 )
 
 // TODO: remove this replace when PR !22 that adds create methods will be merged into go-nvilib
 replace gitlab.com/nvidia/cloud-native/go-nvlib => gitlab.com/Telemaco019/go-nvlib v0.0.0-20221108194233-54ab63a99eb3
+
+replace github.com/NVIDIA/k8s-device-plugin v0.13.0 => ../k8s-device-plugin
 
 replace (
 	k8s.io/api => k8s.io/api v0.25.4
@@ -162,5 +165,4 @@ require (
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.33 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )

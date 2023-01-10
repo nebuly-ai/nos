@@ -37,7 +37,7 @@ func TestToPluginConfig(t *testing.T) {
 	t.Run("Empty node partitioning", func(t *testing.T) {
 		nodePartitioning := state.NodePartitioning{GPUs: []state.GPUPartitioning{}}
 		config := mps.ToPluginConfig(nodePartitioning)
-		assert.Empty(t, config.Sharing.TimeSlicing.Resources)
+		assert.Empty(t, config.Sharing.MPS.Resources)
 	})
 
 	t.Run("Multiple GPUs, multiple resources with replicas", func(t *testing.T) {
@@ -60,39 +60,11 @@ func TestToPluginConfig(t *testing.T) {
 			},
 		}
 		config := mps.ToPluginConfig(nodePartitioning)
-		assert.Len(t, config.Sharing.TimeSlicing.Resources, 4)
+		assert.Len(t, config.Sharing.MPS.Resources, 4)
 	})
 }
 
 func TestPartitioner__ApplyPartitioning(t *testing.T) {
-	t.Run("Device Plugin ConfigMap does not exist - should create it", func(t *testing.T) {
-		node := factory.BuildNode("node-1").Get()
-		k8sClient := fake.NewClientBuilder().WithObjects(&node).Build()
-		devicePluginCm := types.NamespacedName{
-			Namespace: "test",
-			Name:      "test-cm",
-		}
-		devicePluginClient := mocks.NewDevicePluginClient(t)
-		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
-			Once().
-			Return(nil)
-		partitioner := mps.NewPartitioner(
-			k8sClient,
-			devicePluginCm,
-			devicePluginClient,
-		)
-		ctx := context.Background()
-
-		err := partitioner.ApplyPartitioning(ctx, node, "plan", state.NodePartitioning{})
-		assert.NoError(t, err)
-
-		cm := &v1.ConfigMap{}
-		err = k8sClient.Get(ctx, devicePluginCm, cm)
-		assert.NoError(t, err)
-		assert.Equal(t, cm.Namespace, devicePluginCm.Namespace)
-		assert.Equal(t, cm.Name, devicePluginCm.Name)
-	})
-
 	t.Run("Device Plugin ConfigMap exists but its data is nil - should init it", func(t *testing.T) {
 		node := factory.BuildNode("node-1").Get()
 		devicePluginCM := v1.ConfigMap{
@@ -133,10 +105,19 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 
 	t.Run("Error restarting NVIDIA device plugin", func(t *testing.T) {
 		node := factory.BuildNode("node-1").Get()
-		k8sClient := fake.NewClientBuilder().WithObjects(&node).Build()
-		devicePluginCm := types.NamespacedName{
-			Namespace: "test",
-			Name:      "test-cm",
+		devicePluginCM := v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-name",
+			},
+		}
+		k8sClient := fake.NewClientBuilder().
+			WithObjects(&node).
+			WithObjects(&devicePluginCM).
+			Build()
+		cmNamespacedName := types.NamespacedName{
+			Namespace: devicePluginCM.Namespace,
+			Name:      devicePluginCM.Name,
 		}
 		devicePluginClient := mocks.NewDevicePluginClient(t)
 		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
@@ -144,7 +125,7 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 			Return(errors.New(""))
 		partitioner := mps.NewPartitioner(
 			k8sClient,
-			devicePluginCm,
+			cmNamespacedName,
 			devicePluginClient,
 		)
 		ctx := context.Background()

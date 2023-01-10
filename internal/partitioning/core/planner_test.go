@@ -507,7 +507,7 @@ func TestPlanner__Plan__MIG(t *testing.T) {
 	}
 }
 
-func TestPlanner__Plan__TimeSlicing(t *testing.T) {
+func TestPlanner__Plan__MPS(t *testing.T) {
 	testCases := []struct {
 		name                     string
 		snapshotNodes            []v1.Node
@@ -598,7 +598,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
 						constant.LabelNvidiaCount:     strconv.Itoa(1),
 						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
-						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
 						slicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
@@ -647,7 +647,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
 						constant.LabelNvidiaCount:     strconv.Itoa(1),
 						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
-						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
 						slicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(4, resource.DecimalSI),
@@ -662,7 +662,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
 						constant.LabelNvidiaCount:     strconv.Itoa(1),
 						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
-						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
 						slicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
@@ -673,7 +673,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
 						constant.LabelNvidiaCount:     strconv.Itoa(1),
 						constant.LabelNvidiaMemory:    strconv.Itoa(20000),
-						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					}).
 					Get(),
 			},
@@ -736,7 +736,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
 						constant.LabelNvidiaCount:     strconv.Itoa(1),
 						constant.LabelNvidiaMemory:    strconv.Itoa(50000),
-						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
 						slicing.ProfileName("40gb").AsResourceName(): *resource.NewQuantity(2, resource.DecimalSI),
@@ -751,7 +751,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
 						constant.LabelNvidiaCount:     strconv.Itoa(1),
 						constant.LabelNvidiaMemory:    strconv.Itoa(40000),
-						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					}).
 					WithAllocatableResources(v1.ResourceList{
 						slicing.ProfileName("10gb").AsResourceName(): *resource.NewQuantity(1, resource.DecimalSI),
@@ -763,7 +763,7 @@ func TestPlanner__Plan__TimeSlicing(t *testing.T) {
 						constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_PCIe_80GB),
 						constant.LabelNvidiaCount:     strconv.Itoa(1),
 						constant.LabelNvidiaMemory:    strconv.Itoa(20000),
-						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+						v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					}).
 					Get(),
 			},

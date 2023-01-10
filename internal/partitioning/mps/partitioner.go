@@ -24,6 +24,7 @@ import (
 	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
 	"github.com/nebuly-ai/nebulnetes/pkg/constant"
 	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -63,8 +64,8 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 	var devicePluginCm v1.ConfigMap
 	var err error
 
-	// Fetch nvidia-device-plugin config or create it if it doesn't exist
-	if devicePluginCm, err = p.getOrCreateDevicePluginCM(ctx); err != nil {
+	// Fetch nvidia-device-plugin config
+	if devicePluginCm, err = p.getDevicePluginCM(ctx); err != nil {
 		return err
 	}
 	if devicePluginCm.Data == nil {
@@ -112,61 +113,31 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 	return nil
 }
 
-func (p partitioner) getOrCreateDevicePluginCM(ctx context.Context) (v1.ConfigMap, error) {
-	logger := log.FromContext(ctx)
+func (p partitioner) getDevicePluginCM(ctx context.Context) (v1.ConfigMap, error) {
 	var res v1.ConfigMap
-
 	cmObjectKey := client.ObjectKey{Name: p.devicePluginCM.Name, Namespace: p.devicePluginCM.Namespace}
 	err := p.Client.Get(ctx, cmObjectKey, &res)
-
-	// Error fetching CM
-	if client.IgnoreNotFound(err) != nil {
-		return res, fmt.Errorf("unable to get device plugin ConfigMap: %v", err)
-	}
-
-	// CM found, return it
-	if err == nil {
-		return res, nil
-	}
-
-	// CM does not exist, create it
-	res.Name = p.devicePluginCM.Name
-	res.Namespace = p.devicePluginCM.Namespace
-	res.Data = map[string]string{}
-	logger.Info(
-		"device plugin ConfigMap not found, creating it",
-		"name",
-		res.Name,
-		"namespace",
-		res.Namespace,
-	)
-	if err = p.Create(ctx, &res); err != nil {
-		return res, fmt.Errorf("unable to create device plugin ConfigMap: %v", err)
-	}
-
-	// Fetch the newly created CM
-	if err = p.Client.Get(ctx, cmObjectKey, &res); err != nil {
-		return res, fmt.Errorf("unable to get device plugin ConfigMap: %v", err)
-	}
-
-	return res, nil
+	return res, err
 }
 
 func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
-	replicatedResources := make([]nvidiav1.ReplicatedResource, 0)
+	replicatedResources := make([]nvidiav1.MPSResource, 0)
 	for _, g := range partitioning.GPUs {
 		for r, q := range g.Resources {
-			nvidiaRes := nvidiav1.ReplicatedResource{
-				Name:   nvidiav1.ResourceName(constant.ResourceNvidiaGPU),
-				Rename: nvidiav1.ResourceName(strings.TrimPrefix(r.String(), constant.NvidiaResourcePrefix)),
-				Devices: nvidiav1.ReplicatedDevices{
-					List: []nvidiav1.ReplicatedDeviceRef{
-						nvidiav1.ReplicatedDeviceRef(strconv.Itoa(g.GPUIndex)),
-					},
+			slicingProfile, err := slicing.ExtractProfileName(r) // TODO: move size info into state.NodePartitioning
+			if err != nil {
+				continue
+			}
+			mpsResource := nvidiav1.MPSResource{
+				Name:     nvidiav1.ResourceName(constant.ResourceNvidiaGPU),
+				Rename:   nvidiav1.ResourceName(strings.TrimPrefix(r.String(), constant.NvidiaResourcePrefix)),
+				MemoryGB: slicingProfile.GetMemorySizeGB(),
+				Devices: []nvidiav1.ReplicatedDeviceRef{
+					nvidiav1.ReplicatedDeviceRef(strconv.Itoa(g.GPUIndex)),
 				},
 				Replicas: q,
 			}
-			replicatedResources = append(replicatedResources, nvidiaRes)
+			replicatedResources = append(replicatedResources, mpsResource)
 		}
 	}
 	return nvidiav1.Config{
@@ -174,7 +145,7 @@ func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
 		Flags:     nvidiav1.Flags{},
 		Resources: nvidiav1.Resources{},
 		Sharing: nvidiav1.Sharing{
-			TimeSlicing: nvidiav1.TimeSlicing{Resources: replicatedResources},
+			MPS: nvidiav1.MPS{Resources: replicatedResources},
 		},
 	}
 }

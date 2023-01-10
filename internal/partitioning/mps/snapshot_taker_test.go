@@ -53,7 +53,7 @@ func TestSnapshotTaker__TakeSnapshot(t *testing.T) {
 					constant.LabelNvidiaMemory:    "1000",
 				}).Get(),
 				factory.BuildNode("node-3").WithLabels(map[string]string{
-					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					constant.LabelNvidiaCount:     "1",
 					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 					constant.LabelNvidiaMemory:    "1000",
@@ -66,12 +66,12 @@ func TestSnapshotTaker__TakeSnapshot(t *testing.T) {
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").Get(),
 				factory.BuildNode("node-2").WithLabels(map[string]string{
-					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 					constant.LabelNvidiaMemory:    "1000",
 				}).Get(),
 				factory.BuildNode("node-3").WithLabels(map[string]string{
-					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					constant.LabelNvidiaCount:     "1",
 					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 					constant.LabelNvidiaMemory:    "1000",

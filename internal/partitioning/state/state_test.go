@@ -645,12 +645,12 @@ func TestClusterState_IsPartitioningEnabled(t *testing.T) {
 		assert.True(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
 
 		// node-2 changes its partitioning kind to time-slicing
-		nodeTwo.Labels[v1alpha1.LabelGpuPartitioning] = gpu.PartitioningKindTimeSlicing.String()
+		nodeTwo.Labels[v1alpha1.LabelGpuPartitioning] = gpu.PartitioningKindMps.String()
 		clusterState.UpdateNode(nodeTwo, []v1.Pod{})
 
 		// enabled partitioning kinds should be updated
 		assert.False(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
-		assert.True(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindTimeSlicing))
+		assert.True(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMps))
 	})
 
 	t.Run("a node is deleted, partitioning kind should be updated", func(t *testing.T) {

@@ -52,7 +52,7 @@ func TestSnapshotTaker(t *testing.T) {
 					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 				}).Get(),
 				factory.BuildNode("node-3").WithLabels(map[string]string{
-					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+					v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 					constant.LabelNvidiaCount:     "1",
 					constant.LabelNvidiaProduct:   string(gpu.GPUModel_A100_SXM4_40GB),
 				}).Get(),

@@ -70,9 +70,9 @@ func (p PartitioningKind) String() string {
 }
 
 const (
-	PartitioningKindMig         PartitioningKind = "mig"
-	PartitioningKindTimeSlicing PartitioningKind = "time-slicing"
-	PartitioningKindHybrid      PartitioningKind = "hybrid"
+	PartitioningKindMig    PartitioningKind = "mig"
+	PartitioningKindMps    PartitioningKind = "mps"
+	PartitioningKindHybrid PartitioningKind = "hybrid"
 )
 
 // IsMigPartitioningEnabled returns true if the node is enabled for automatic MIG GPU partitioning, false otherwise
@@ -84,14 +84,14 @@ func IsMigPartitioningEnabled(node v1.Node) bool {
 	return partitioningKind == PartitioningKindMig.String()
 }
 
-// IsTimeSlicingPartitioningEnabled returns true if the node is enabled for
+// IsMpsPartitioningEnabled returns true if the node is enabled for
 // automatic time-slicing GPU partitioning, false otherwise
-func IsTimeSlicingPartitioningEnabled(node v1.Node) bool {
+func IsMpsPartitioningEnabled(node v1.Node) bool {
 	partitioningKind, ok := node.Labels[v1alpha1.LabelGpuPartitioning]
 	if !ok {
 		return false
 	}
-	return partitioningKind == PartitioningKindTimeSlicing.String()
+	return partitioningKind == PartitioningKindMps.String()
 }
 
 func GetPartitioningKind(node v1.Node) (PartitioningKind, bool) {
@@ -110,8 +110,8 @@ func asPartitioningKind(kind string) (PartitioningKind, bool) {
 	switch kind {
 	case PartitioningKindMig.String():
 		return PartitioningKindMig, true
-	case PartitioningKindTimeSlicing.String():
-		return PartitioningKindTimeSlicing, true
+	case PartitioningKindMps.String():
+		return PartitioningKindMps, true
 	case PartitioningKindHybrid.String():
 		return PartitioningKindHybrid, true
 	default:

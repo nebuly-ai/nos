@@ -39,7 +39,7 @@ func TestIsMigPartitioningEnabled(t *testing.T) {
 		{
 			name: "Node with partitioning label, but not MIG",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
-				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 			}).Get(),
 			expected: false,
 		},
@@ -60,7 +60,7 @@ func TestIsMigPartitioningEnabled(t *testing.T) {
 	}
 }
 
-func TestIsTimeSlicingPartitioningEnabled(t *testing.T) {
+func TestIsMpsSlicingPartitioningEnabled(t *testing.T) {
 	testCases := []struct {
 		name     string
 		node     v1.Node
@@ -72,16 +72,16 @@ func TestIsTimeSlicingPartitioningEnabled(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "Node with partitioning label, but not time-slicing",
+			name: "Node with partitioning label, but not mps",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
 				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMig.String(),
 			}).Get(),
 			expected: false,
 		},
 		{
-			name: "Noe with partitioning label, time-slicing",
+			name: "Noe with partitioning label, mps",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
-				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 			}).Get(),
 			expected: true,
 		},
@@ -89,7 +89,7 @@ func TestIsTimeSlicingPartitioningEnabled(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			enabled := gpu.IsTimeSlicingPartitioningEnabled(tt.node)
+			enabled := gpu.IsMpsPartitioningEnabled(tt.node)
 			assert.Equal(t, tt.expected, enabled)
 		})
 	}
@@ -119,9 +119,9 @@ func TestGetPartitioningKind(t *testing.T) {
 		{
 			name: "Node with time-slicing partitioning kind",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
-				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindTimeSlicing.String(),
+				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 			}).Get(),
-			expected:   gpu.PartitioningKindTimeSlicing,
+			expected:   gpu.PartitioningKindMps,
 			expectedOk: true,
 		},
 		{
