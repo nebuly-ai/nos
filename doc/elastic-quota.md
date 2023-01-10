@@ -7,20 +7,21 @@
 * [How to define resource quotas](#how-to-define-resource-quotas)
 * [Scheduler installation options](#scheduler-installation-options)
 * [Over-quotas and GPU memory limits](#over-quotas-and-gpu-memory-limits)
-    * [Over-quota fair sharing](#over-quota-fair-sharing)
-    * [GPU memory limits](#gpu-memory-limits)
+  * [Over-quota fair sharing](#over-quota-fair-sharing)
+  * [GPU memory limits](#gpu-memory-limits)
 * [Demo](#demo)
 * [Troubleshooting](#trouble-shooting)
 * [Uninstall](#uninstall)
 
 ## Overview
-Nebulnetes extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
+
+nos extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 by implementing
 the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
 and adding more flexibility through two custom resources: `ElasticQuotas` and `CompositeElasticQuotas`.
 
 While standard Kubernetes resource quotas allow you only to define limits on the maximum
-overall resource allocation of each namespace, Nebulnetes elastic quotas let you define two
+overall resource allocation of each namespace, nos elastic quotas let you define two
 different limits:
 
 1. `min`: the minimum resources that are guaranteed to the namespace
@@ -32,14 +33,14 @@ When a namespace claims back its reserved `min` resources, pods borrowing resour
 over-quota pods) are preempted to make up space.
 
 Moreover, while the standard Kubernetes quota management computes the used quotas as the aggregation of the resources
-of the resource requests specified in the Pods spec, Nebulnetes computes the used quotas by taking into account
+of the resource requests specified in the Pods spec, nos computes the used quotas by taking into account
 only running Pods in order to avoid lower resource utilization due to scheduled Pods that failed to start.
 
 Elastic Resource Quota management is based on the
 [Capacity Scheduling](https://github.com/kubernetes-sigs/scheduler-plugins/tree/master/pkg/capacityscheduling) scheduler
 plugin, which implements
 the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
-. Nebulnetes extends the former implementation by adding the following features:
+. nos extends the former implementation by adding the following features:
 
 * over-quota pods preemption
 * `CompositeElasticQuota` resources for defining limits on multiple namespaces
@@ -57,22 +58,23 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
   can manually create the SSL certificates and inject them in the n8s operator controller manager.
 
 ### Installation
+
 You can install Elastic Resource Quotas management in your cluster running the two Makefile
 targets described below, which install and deploy the required resources to the k8s cluster
 specified in your `~/.kube/config`.
 
 By default, all the resources are installed in the `n8s-system` namespace.
 
-1. Deploy the Nebulnetes operator: the target installs the custom resource definitions (CRDs) and
+1. Deploy the nos operator: the target installs the custom resource definitions (CRDs) and
    it deploys the controllers for managing them.
 
 ```bash
 make deploy-operator
 ```
 
-2. Deploy the Nebulnetes scheduler. The target deploys a Kubernetes scheduler that runs alongside the
+2. Deploy the nos scheduler. The target deploys a Kubernetes scheduler that runs alongside the
    default one and schedules Pods which specify its profile name in the "schedulerName"
-   field of their specification. If you want to deploy the Nebulnetes scheduler as the default scheduler of
+   field of their specification. If you want to deploy the nos scheduler as the default scheduler of
    your cluster, you can refer to [documentation](doc/elastic-quota.md#installation-options) for detailed installation
    instructions.
 
@@ -107,7 +109,7 @@ For more details please refer to the [Elastic Resource Quota](doc/elastic-quota.
 
 ### Create Pods subject to Elastic Resource Quota
 
-Unless you deployed the Nebulnetes scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
+Unless you deployed the nos scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
 to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas.
 
 You can do that by setting the value of the `schedulerName` field of your Pods specification to `n8s-scheduler`, as
@@ -128,22 +130,21 @@ spec:
         - containerPort: 80
 ```
 
-
 ## How to define resource quotas
 
 You can define resource limits on namespaces using two custom resources: `ElasticQuota` and `CompositeElasticQuota`.
 They both work in the same way, the only difference is that the latter defines limits on multiple
 namespaces instead of on a single one. Limits are specified through two fields:
 
-* `min`: the minimum resources that are guaranteed to the namespace. Nebulnetes will make sure that, at any time,
+* `min`: the minimum resources that are guaranteed to the namespace. nos will make sure that, at any time,
   the namespace subject to the quota will always have access to **at least** these resources.
 * `max`: optional field that limits the total amount of resources that can be requested by a namespace. If not
-  max is not specified, then Nebulnetes does not enforce any upper limits on the resources that can be requested by
+  max is not specified, then nos does not enforce any upper limits on the resources that can be requested by
   the namespace.
 
 You can find sample definitions of these resources under the [examples](../config/operator/samples) directory.
 
-Note that `ElasticQuota` and `CompositeElasticQuota` are treated by Nebulnetes in the same way: a
+Note that `ElasticQuota` and `CompositeElasticQuota` are treated by nos in the same way: a
 namespace subject to an `ElasticQuota` can borrow resources from namespaces subject to either other elastic quotas or
 composite elastic quotas and, vice-versa, namespaces subject to a `CompositeElasticQuota` can borrow resources
 from namespaces subject to either elastic quotas or composite elastic quotas.
@@ -159,9 +160,9 @@ The following constraints are enforced over elastic quota resources:
 
 ### How used resources are computed
 
-When a namespace is subject to an ElasticQuota (or to a CompositeElasticQuota), Nebulnetes computes the number
+When a namespace is subject to an ElasticQuota (or to a CompositeElasticQuota), nos computes the number
 of quotas consumed by that namespace by aggregating the resources requested by its pods, considering **only** the
-ones whose phase is `Running`. In this way, Nebulnetes avoid lower resource utilization due to scheduled pods that
+ones whose phase is `Running`. In this way, nos avoid lower resource utilization due to scheduled pods that
 failed to start.
 
 Every time the amount of resources consumed by a namespace changes (e.g a Pod changes its phase to or from `Running`),
@@ -173,15 +174,15 @@ of the `ElasticQuota` and `CompositeElasticQuota` objects status.
 ## Scheduler installation options
 
 You can add scheduling support for Elastic Resource Quota to your cluster by choosing one of the following options.
-In both cases, you also need to install the Nebulnetes operator.
+In both cases, you also need to install the nos operator.
 
-### Option 1 - Use Nebulnetes scheduler (recommended)
+### Option 1 - Use nos scheduler (recommended)
 
-This is the recommended option. You can deploy the Nebulnetes scheduler to your cluster either as the default scheduler
+This is the recommended option. You can deploy the nos scheduler to your cluster either as the default scheduler
 or as a second scheduler that runs alongside the default one.
 In the latter case, you can use the `schedulerName` field of the Pod spec to specify which scheduler should be used.
 
-To deploy the Nebulnetes scheduler you can run the following command:
+To deploy the nos scheduler you can run the following command:
 
 ```bash
 make deploy-scheduler
@@ -189,7 +190,7 @@ make deploy-scheduler
 
 ### Option 2 - Use your k8s scheduler
 
-Since Nebulnetes Elastic Quota support is implemented as a scheduler plugin, you can compile it into your k8s scheduler
+Since nos Elastic Quota support is implemented as a scheduler plugin, you can compile it into your k8s scheduler
 and then enable it through the kube-scheduler configuration as follows:
 
 ```yaml
@@ -227,31 +228,31 @@ of your scheduler:
 package main
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/scheduler/plugins/capacityscheduling"
-	"k8s.io/kubernetes/cmd/kube-scheduler/app"
+ "github.com/nebuly-ai/nos/pkg/scheduler/plugins/capacityscheduling"
+ "k8s.io/kubernetes/cmd/kube-scheduler/app"
 
-	// Import plugin config
-	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
+ // Import plugin config
+ "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
+ "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
 
-	// Ensure n8s.nebuly.ai/v1alpha1 package is initialized
-	_ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+ // Ensure n8s.nebuly.ai/v1alpha1 package is initialized
+ _ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
 )
 
 func main() {
-	// - rest of your code here -
+ // - rest of your code here -
 
-	// Add plugin config to scheme
-	utilruntime.Must(scheduler.AddToScheme(scheme))
-	utilruntime.Must(v1beta3.AddToScheme(scheme))
+ // Add plugin config to scheme
+ utilruntime.Must(scheduler.AddToScheme(scheme))
+ utilruntime.Must(v1beta3.AddToScheme(scheme))
 
-	// Add plugin to scheduler command
-	command := app.NewSchedulerCommand(
-		// - your other plugins here - 
-		app.WithPlugin(capacityscheduling.Name, capacityscheduling.New),
-	)
+ // Add plugin to scheduler command
+ command := app.NewSchedulerCommand(
+  // - your other plugins here - 
+  app.WithPlugin(capacityscheduling.Name, capacityscheduling.New),
+ )
 
-	// - rest of your code here -
+ // - rest of your code here -
 }
 ```
 
@@ -325,9 +326,9 @@ Let's assume we have a K8s cluster with the following Elastic Quota resources:
 
 The table below shows the quotas usage of the cluster at two different times:
 
-| Time | Elastic Quota A | Elastic Quota B                       | Elastic Quota C | 
+| Time | Elastic Quota A | Elastic Quota B                       | Elastic Quota C |
 |------|-----------------|---------------------------------------|-----------------|
-| _t1_ | Used: 40/40 GB  | Used: 40/10 GB<br/> Over-quota: 30 GB | Used: 0 GB      | 
+| _t1_ | Used: 40/40 GB  | Used: 40/10 GB<br/> Over-quota: 30 GB | Used: 0 GB      |
 | _t2_ | Used: 50/40 GB  | Used 30/10 GB<br/> Over-quota: 20 GB  | Used: 0 GB      |
 
 The cluster has a total of 30 GB of memory of available over-quotas, which at time _t1_ are all being consumed by the
@@ -348,9 +349,9 @@ Assuming that all the pods in the cluster are requesting only 10 GB of GPU memor
 Elastic Quota B is preempted because the following conditions are true:
 
 * ✅ used quotas A + new Pod A <= min quota A + guaranteed over-quota A
-    * 40 + 10 <= 40 + 15
+  * 40 + 10 <= 40 + 15
 * ✅ used over-quotas B > guaranteed over-quotas
-    * 30 > 3
+  * 30 > 3
 
 ### GPU memory limits
 
@@ -388,21 +389,25 @@ You can change the value of `nvidiaGpuResourceMemoryGB` by editing both the
 and [Scheduler](../config/scheduler/deployment/scheduler_config.yaml)
 configurations. The value used in both configurations must always be the same.
 
-## Demo 
+## Demo
+
 Todo
 
 ## Troubleshooting
-You can check the logs of the scheduler by running the following command: 
+
+You can check the logs of the scheduler by running the following command:
 
 ```shell
  kubectl logs -n n8s-system -l app.kubernetes.io/component=scheduler -f
 ```
 
 ### How to increase log verbosity
-You can increase the scheduler log verbosity by editing the Scheduler deployment manifest 
+
+You can increase the scheduler log verbosity by editing the Scheduler deployment manifest
 [deployment.yaml](../config/scheduler/deployment/deployment.yaml).
 
 ## Uninstall
+
 To uninstall the Nebulnetes Operator and Scheduler, run the following commands:
 
 ```shell
