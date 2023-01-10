@@ -10,6 +10,9 @@ logLevel: 0
 # -- Number of replicas of the gpu-manager Pod.
 replicaCount: 1
 
+nameOverride: ""
+fullnameOverride: ""
+
 devicePlugin:
   config:
     # -- Name of the ConfigMap containing the NVIDIA Device Plugin configuration files.

@@ -8,20 +8,26 @@
 Expand the name of the chart.
 */}}
 {{- define "gpu-partitioner.name" -}}
-{{- .Chart.Name -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Define the full name of the GPU partitioner
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
 */}}
 {{- define "gpu-partitioner.fullname" -}}
-{{- $name := .Chart.Name -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
 
 {{/*
 Create chart name and version as used by the chart label.
@@ -40,6 +46,7 @@ helm.sh/chart: {{ include "gpu-partitioner.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/part-of: {{ "nebulnetes" }}
 {{- end }}
 
 {{/*
@@ -48,7 +55,6 @@ GPU Partitioner selector labels
 {{- define "gpu-partitioner.selectorLabels" -}}
 app.kubernetes.io/name: gpu-partitioner
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/part-of: {{ "nebulnetes" }}
 {{- end }}
 
 {{/*
@@ -139,6 +145,7 @@ helm.sh/chart: {{ include "gpu-partitioner.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/part-of: {{ "nebulnetes" }}
 {{- end }}
 
 {{/*
@@ -147,7 +154,6 @@ MIG Agent selector labels
 {{- define "mig-agent.selectorLabels" -}}
 app.kubernetes.io/name: mig-agent
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/part-of: {{ "nebulnetes" }}
 {{- end }}
 
 {{/*
@@ -180,11 +186,7 @@ Name of the gpu-agent
 
 {{- define "gpu-agent.fullname" -}}
 {{- $name := include "gpu-agent.name" . -}}
-{{- if contains .Chart.Name .Release.Name -}}
-{{- .Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
+{{- include "gpu-partitioner.fullname" . | replace .Chart.Name  | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
@@ -197,6 +199,7 @@ helm.sh/chart: {{ include "gpu-partitioner.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/part-of: {{ "nebulnetes" }}
 {{- end }}
 
 {{/*
@@ -205,7 +208,6 @@ GPU agent selector labels
 {{- define "gpu-agent.selectorLabels" -}}
 app.kubernetes.io/name: gpu-agent
 app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/part-of: {{ "nebulnetes" }}
 {{- end }}
 
 {{/*

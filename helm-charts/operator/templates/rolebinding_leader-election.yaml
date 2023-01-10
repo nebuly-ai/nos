@@ -5,7 +5,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "n8s.leaderElectionRoleName" . }}
+  name: {{ include "operator.leaderElectionRoleName" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ include "operator.fullname" . }}

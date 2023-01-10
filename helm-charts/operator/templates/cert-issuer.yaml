@@ -1,6 +1,6 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: {{ include "n8s.selfSignedCertIssuerName" . }}
+  name: {{ include "operator.selfSignedCertIssuerName" . }}
 spec:
   selfSigned: {}

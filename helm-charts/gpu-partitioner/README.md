@@ -24,6 +24,7 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | batchWindowTimeoutSeconds | int | `60` | Timeout of the window used by the GPU partitioner for batching pending Pods.  Higher values make the GPU partitioner will potentially take into account more pending Pods when deciding the GPU partitioning plan, but the partitioning will be performed less frequently |
 | devicePlugin.config.name | string | `"nvidia-plugin-configs"` | Name of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the NVIDIA GPU Operator. |
 | devicePlugin.config.namespace | string | `"gpu-operator"` | Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the namespace where the NVIDIA Device Plugin has been deployed to. |
+| fullnameOverride | string | `""` |  |
 | gpuAgent | object | - | Configuration of the GPU Agent component of the GPU Partitioner. |
 | gpuAgent.image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Agent Docker image pull policy. |
 | gpuAgent.image.repository | string | `"ghcr.io/telemaco019/nebulnetes-gpu-agent"` | Sets the GPU Agent Docker image. |
@@ -47,6 +48,7 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | migAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node |
 | migAgent.resources | object | `{"limits":{"cpu":"100m","memory":"128Mi"}}` | Sets the resource requests and limits of the MIG Agent container. |
 | migAgent.tolerations | list | `[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]` | Sets the tolerations of the MIG Agent Pod. |
+| nameOverride | string | `""` |  |
 | nodeSelector | object | `{}` | Sets the nodeSelector config of the GPU Partitioner Pod. |
 | podAnnotations | object | `{}` | Sets the annotations of the GPU Partitioner Pod. |
 | podSecurityContext | object | `{"runAsNonRoot":true,"runAsUser":1000}` | Sets the security context of the GPU partitioner Pod. |

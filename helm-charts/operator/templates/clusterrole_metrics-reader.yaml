@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "n8s.metricsReaderRoleName" . }}
+  name: {{ include "operator.metricsReaderRoleName" . }}
 rules:
   - nonResourceURLs:
       - "/metrics"

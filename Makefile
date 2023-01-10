@@ -189,6 +189,18 @@ helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm re
 	helm push /tmp/gpu-partitioner-*.tgz $(HELM_CHART_REGISTRY)
 	rm /tmp/gpu-partitioner-*.tgz
 
+.PHONY: helm-push-scheduler
+helm-push-scheduler: ## Push the scheduler Helm chart to the Helm repository.
+	helm package helm-charts/scheduler --destination /tmp
+	helm push /tmp/scheduler-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/scheduler-*.tgz
+
+.PHONY: helm-push-operator
+helm-push-operator: ## Push the operator Helm chart to the Helm repository.
+	helm package helm-charts/operator --destination /tmp
+	helm push /tmp/operator-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/operator-*.tgz
+
 .PHONY: helm-push-nebulnetes
 helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository.
 	helm dependency update helm-charts/nebulnetes
@@ -197,7 +209,7 @@ helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository
 	rm /tmp/nebulnetes-*.tgz
 
 .PHONY: helm-push
-helm-push: helm-push-gpu-partitioner helm-push-nebulnetes ## Push the all the Helm charts to the Helm repository.
+helm-push: helm-push-gpu-partitioner helm-push-operator helm-push-scheduler helm-push-nebulnetes ## Push the all the Helm charts to the Helm repository.
 
 ##@ Deployment
 

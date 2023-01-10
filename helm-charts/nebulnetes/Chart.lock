@@ -2,5 +2,11 @@ dependencies:
 - name: gpu-partitioner
   repository: oci://ghcr.io/telemaco019/helm-charts
   version: 0.0.1-alpha.3
-digest: sha256:421c50e61f67d6860fff131eb39d460336cbbfb9e85100b8ecee8c797d51cb95
-generated: "2023-01-07T11:40:24.68382+01:00"
+- name: scheduler
+  repository: oci://ghcr.io/telemaco019/helm-charts
+  version: 0.0.1-alpha.3
+- name: operator
+  repository: oci://ghcr.io/telemaco019/helm-charts
+  version: 0.0.1-alpha.3
+digest: sha256:5ec2ab620cc7905c9ff1cbe27e2902a5cacc215ff9045c308f614cd4271ccda7
+generated: "2023-01-10T18:59:02.493169+01:00"

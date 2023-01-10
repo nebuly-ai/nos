@@ -17,6 +17,14 @@ dependencies:
     repository: "oci://ghcr.io/telemaco019/helm-charts"
     version: 0.0.1-alpha.3
     condition: gpu-partitioner.enabled
+  - name: scheduler
+    repository: "oci://ghcr.io/telemaco019/helm-charts"
+    version: 0.0.1-alpha.3
+    condition: scheduler.enabled
+  - name: operator
+    repository: "oci://ghcr.io/telemaco019/helm-charts"
+    version: 0.0.1-alpha.3
+    condition: operator.enabled
 
 maintainers:
   - name: Michele Zanotti

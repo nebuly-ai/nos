@@ -17,4 +17,4 @@ data:
       resourceName: operator.n8s.nebuly.ai
       leaderElectionReleaseOnCancel: true
 
-    nvidiaGpuResourceMemoryGB: {{ .Values.nvidiaGpuResourceMemoryGB }}
+    nvidiaGpuResourceMemoryGB: {{ .Values.global.nvidiaGpuResourceMemoryGB }}

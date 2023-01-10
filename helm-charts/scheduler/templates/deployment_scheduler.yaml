@@ -5,7 +5,7 @@ metadata:
     {{- include "scheduler.labels" . | nindent 4 }}
   name: {{ include "scheduler.fullname" . }}
 spec:
-  replicas: {{ .Values.scheduler.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "scheduler.selectorLabels" . | nindent 6 }}
@@ -13,18 +13,20 @@ spec:
     metadata:
       labels:
         {{- include "scheduler.selectorLabels" . | nindent 8 }}
-        {{- with .Values.scheduler.podAnnotations }}
+        {{- with .Values.podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ include "scheduler.fullname" . }}
-          image: "{{ .Values.scheduler.image.repository }}:{{ .Values.scheduler.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           args:
             - --config
             - /etc/kubernetes/scheduler_config.yaml
-            - --v={{ .Values.scheduler.logLevel }}
-            {{- if .Values.scheduler.leaderElection.enabled }}
+            - --v={{ .Values.logLevel }}
+            {{- if .Values.leaderElection.enabled }}
             - --leader-elect
             {{- end }}
           livenessProbe:
@@ -39,9 +41,9 @@ spec:
               port: 10259
               scheme: HTTPS
           resources:
-            {{- toYaml .Values.scheduler.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
           securityContext:
-            privileged: false
+            {{- toYaml .Values.securityContext | nindent 12 }}
           volumeMounts:
             - mountPath: /etc/kubernetes
               name: scheduler-config
@@ -49,15 +51,15 @@ spec:
       hostNetwork: false
       hostPID: false
       serviceAccountName: {{ include "scheduler.fullname" . }}
-      {{- with .Values.scheduler.nodeSelector }}
+      {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.scheduler.affinity }}
+      {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.scheduler.tolerations }}
+      {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
