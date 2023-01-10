@@ -24,6 +24,14 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | batchWindowTimeoutSeconds | int | `60` | Timeout of the window used by the GPU partitioner for batching pending Pods.  Higher values make the GPU partitioner will potentially take into account more pending Pods when deciding the GPU partitioning plan, but the partitioning will be performed less frequently |
 | devicePlugin.config.name | string | `"nvidia-plugin-configs"` | Name of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the NVIDIA GPU Operator. |
 | devicePlugin.config.namespace | string | `"gpu-operator"` | Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the namespace where the NVIDIA Device Plugin has been deployed to. |
+| gpuAgent | object | - | Configuration of the GPU Agent component of the GPU Partitioner. |
+| gpuAgent.image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Agent Docker image pull policy. |
+| gpuAgent.image.repository | string | `"ghcr.io/telemaco019/nebulnetes-gpu-agent"` | Sets the GPU Agent Docker image. |
+| gpuAgent.image.tag | string | `"latest"` | Overrides the GPU Agent image tag whose default is the chart appVersion. |
+| gpuAgent.logLevel | int | `0` | The level of log of the GPU Agent. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
+| gpuAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s status of the GPUs of the Node |
+| gpuAgent.resources | object | `{"limits":{"cpu":"100m","memory":"128Mi"}}` | Sets the resource requests and limits of the GPU Agent container. |
+| gpuAgent.tolerations | list | `[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]` | Sets the tolerations of the GPU Agent Pod. |
 | image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Partitioner Docker image pull policy. |
 | image.repository | string | `"ghcr.io/telemaco019/nebulnetes-gpu-partitioner"` | Sets the GPU Partitioner Docker image. |
 | image.tag | string | `""` | Overrides the GPU Partitioner image tag whose default is the chart appVersion. |
@@ -45,13 +53,5 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | replicaCount | int | `1` | Number of replicas of the gpu-manager Pod. |
 | resources | object | `{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}` | Sets the resource limits and requests of the GPU partitioner container. |
 | scheduler.config.name | string | `"n8s-scheduler-config"` | Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile. |
-| timeSlicingAgent | object | - | Configuration of the Time Slicing Agent component of the GPU Partitioner. |
-| timeSlicingAgent.image.pullPolicy | string | `"IfNotPresent"` | Sets the Time Slicing Agent Docker image pull policy. |
-| timeSlicingAgent.image.repository | string | `"ghcr.io/telemaco019/nebulnetes-time-slicing-agent"` | Sets the Time Slicing Agent Docker image. |
-| timeSlicingAgent.image.tag | string | `"latest"` | Overrides the Time Slicing Agent image tag whose default is the chart appVersion. |
-| timeSlicingAgent.logLevel | int | `0` | The level of log of the Time Slicing Agent. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
-| timeSlicingAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node |
-| timeSlicingAgent.resources | object | `{"limits":{"cpu":"100m","memory":"128Mi"}}` | Sets the resource requests and limits of the Time Slicing Agent container. |
-| timeSlicingAgent.tolerations | list | `[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]` | Sets the tolerations of the Time Slicing Agent Pod. |
 | tolerations | list | `[]` | Sets the tolerations of the GPU Partitioner Pod. |
 

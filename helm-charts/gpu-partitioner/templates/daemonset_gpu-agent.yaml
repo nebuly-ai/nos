@@ -3,31 +3,31 @@ kind: DaemonSet
 metadata:
   labels:
     control-plane: n8s-controller-manager
-    {{- include "time-slicing-agent.labels" . | nindent 4 }}
-  name: {{ include "time-slicing-agent.fullname" . }}
+    {{- include "gpu-agent.labels" . | nindent 4 }}
+  name: {{ include "gpu-agent.fullname" . }}
 spec:
   selector:
     matchLabels:
       control-plane: n8s-controller-manager
-      {{- include "time-slicing-agent.selectorLabels" . | nindent 6 }}
+      {{- include "gpu-agent.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
         control-plane: n8s-controller-manager
-        {{- include "time-slicing-agent.selectorLabels" . | nindent 8 }}
+        {{- include "gpu-agent.selectorLabels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ include "time-slicing-agent.fullname" . }}
+      serviceAccountName: {{ include "gpu-agent.fullname" . }}
       nodeSelector:
-        n8s.nebuly.ai/gpu-partitioning: time-slicing
+        n8s.nebuly.ai/gpu-partitioning: mps
       priorityClassName: system-node-critical
       terminationGracePeriodSeconds: 20
       containers:
-        - image: "{{ .Values.timeSlicingAgent.image.repository }}:{{ .Values.timeSlicingAgent.image.tag | default .Chart.AppVersion }}"
-          name: {{ include "time-slicing-agent.fullname" . }}
+        - image: "{{ .Values.gpuAgent.image.repository }}:{{ .Values.gpuAgent.image.tag | default .Chart.AppVersion }}"
+          name: {{ include "gpu-agent.fullname" . }}
           args:
-            - --config={{ include "time-slicing-agent.configFileName" . }}
-            {{- if gt (int .Values.timeSlicingAgent.logLevel) 0 }}
-            - --zap-log-level={{ .Values.timeSlicingAgent.logLevel }}
+            - --config={{ include "gpu-agent.configFileName" . }}
+            {{- if gt (int .Values.gpuAgent.logLevel) 0 }}
+            - --zap-log-level={{ .Values.gpuAgent.logLevel }}
             {{ end }}
           env:
             - name: NODE_NAME
@@ -47,13 +47,13 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
-            {{- toYaml .Values.timeSlicingAgent.resources | nindent 12 }}
+            {{- toYaml .Values.gpuAgent.resources | nindent 12 }}
           securityContext:
             privileged: true
           volumeMounts:
-            - mountPath: /{{ include "time-slicing-agent.configFileName" . }}
-              name: time-slicing-agent-config
-              subPath: {{ include "time-slicing-agent.configFileName" . }}
+            - mountPath: /{{ include "gpu-agent.configFileName" . }}
+              name: gpu-agent-config
+              subPath: {{ include "gpu-agent.configFileName" . }}
             - mountPath: /var/lib/kubelet/pod-resources/kubelet.sock
               name: device-plugin
             - mountPath: /run/nvidia
@@ -83,13 +83,13 @@ spec:
         - effect: NoSchedule
           key: nvidia.com/gpu
           operator: Exists
-          {{- with .Values.timeSlicingAgent.tolerations }}
+          {{- with .Values.gpuAgent.tolerations }}
             {{- toYaml . | nindent 8 }}
           {{- end }}
       volumes:
         - configMap:
-            name: {{ include "time-slicing-agent.config.configMapName" . }}
-          name: time-slicing-agent-config
+            name: {{ include "gpu-agent.config.configMapName" . }}
+          name: gpu-agent-config
         - hostPath:
             path: /var/lib/kubelet/pod-resources/kubelet.sock
           name: device-plugin

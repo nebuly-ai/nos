@@ -167,19 +167,19 @@ Create the name of the MIG Agent config ConfigMap
 
 {{/*
 *********************************************************************
-* Time Slicing Agent
+* GPU Agent
 *********************************************************************
 */}}
 
 {{/*
-Name of the time-slicing-agent
+Name of the gpu-agent
 */}}
-{{- define "time-slicing-agent.name" -}}
-{{- "time-slicing-agent" -}}
+{{- define "gpu-agent.name" -}}
+{{- "gpu-agent" -}}
 {{- end }}
 
-{{- define "time-slicing-agent.fullname" -}}
-{{- $name := include "time-slicing-agent.name" . -}}
+{{- define "gpu-agent.fullname" -}}
+{{- $name := include "gpu-agent.name" . -}}
 {{- if contains .Chart.Name .Release.Name -}}
 {{- .Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -188,11 +188,11 @@ Name of the time-slicing-agent
 {{- end -}}
 
 {{/*
-Time Slicing Agent labels
+GPU Agent labels
 */}}
-{{- define "time-slicing-agent.labels" -}}
+{{- define "gpu-agent.labels" -}}
 helm.sh/chart: {{ include "gpu-partitioner.chart" . }}
-{{ include "time-slicing-agent.selectorLabels" . }}
+{{ include "gpu-agent.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -200,24 +200,24 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
-Time Slicing agent selector labels
+GPU agent selector labels
 */}}
-{{- define "time-slicing-agent.selectorLabels" -}}
-app.kubernetes.io/name: time-slicing-agent
+{{- define "gpu-agent.selectorLabels" -}}
+app.kubernetes.io/name: gpu-agent
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/part-of: {{ "nebulnetes" }}
 {{- end }}
 
 {{/*
-Create the name of the file storing the time-slicing Agent configuration
+Create the name of the file storing the GPU Agent configuration
 */}}
-{{- define "time-slicing-agent.configFileName" -}}
-time_slicing_agent_config.yaml
+{{- define "gpu-agent.configFileName" -}}
+gpu_agent_config.yaml
 {{- end }}
 
 {{/*
-Create the name of the time-slicing agent config ConfigMap
+Create the name of the GPU agent config ConfigMap
 */}}
-{{- define "time-slicing-agent.config.configMapName" -}}
-{{- include "time-slicing-agent.fullname" . }}-config
+{{- define "gpu-agent.config.configMapName" -}}
+{{- include "gpu-agent.fullname" . }}-config
 {{- end }}

@@ -14,5 +14,5 @@ subjects:
     name: {{ include "mig-agent.fullname" . }}
     namespace: {{ .Release.Namespace }}
   - kind: ServiceAccount
-    name: {{ include "time-slicing-agent.fullname" . }}
+    name: {{ include "gpu-agent.fullname" . }}
     namespace: {{ .Release.Namespace }}

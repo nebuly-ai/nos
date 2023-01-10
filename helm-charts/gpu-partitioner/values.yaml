@@ -62,28 +62,28 @@ migAgent:
       value: "spot"
       effect: "NoSchedule"
 
-# -- Configuration of the Time Slicing Agent component of the GPU Partitioner.
+# -- Configuration of the GPU Agent component of the GPU Partitioner.
 # @default -- -
-timeSlicingAgent:
-  # -- Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
+gpuAgent:
+  # -- Interval at which the mig-agent will report to k8s status of the GPUs of the Node
   reportConfigIntervalSeconds: 10
-  # -- The level of log of the Time Slicing Agent.
+  # -- The level of log of the GPU Agent.
   # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
   # **Must be >= 0**.
   logLevel: 0
   image:
-    # -- Sets the Time Slicing Agent Docker image.
-    repository: ghcr.io/telemaco019/nebulnetes-time-slicing-agent
-    # -- Sets the Time Slicing Agent Docker image pull policy.
+    # -- Sets the GPU Agent Docker image.
+    repository: ghcr.io/telemaco019/nebulnetes-gpu-agent
+    # -- Sets the GPU Agent Docker image pull policy.
     pullPolicy: IfNotPresent
-    # -- Overrides the Time Slicing Agent image tag whose default is the chart appVersion.
+    # -- Overrides the GPU Agent image tag whose default is the chart appVersion.
     tag: "latest"
-  # -- Sets the resource requests and limits of the Time Slicing Agent container.
+  # -- Sets the resource requests and limits of the GPU Agent container.
   resources:
     limits:
       cpu: 100m
       memory: 128Mi
-  # -- Sets the tolerations of the Time Slicing Agent Pod.
+  # -- Sets the tolerations of the GPU Agent Pod.
   tolerations:
     - key: "kubernetes.azure.com/scalesetpriority"
       operator: "Equal"
