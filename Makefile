@@ -186,15 +186,15 @@ docker-push: docker-push-mig-agent \
 .PHONY: helm-push-gpu-partitioner
 helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm repository.
 	helm package helm-charts/gpu-partitioner --destination /tmp
-	helm push /tmp/gpu-partitioner-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/gpu-partitioner-$(N8S_VERSION).tgz
+	helm push /tmp/gpu-partitioner-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/gpu-partitioner-*.tgz
 
 .PHONY: helm-push-nebulnetes
 helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository.
 	helm dependency update helm-charts/nebulnetes
 	helm package helm-charts/nebulnetes --destination /tmp
-	helm push /tmp/nebulnetes-$(N8S_VERSION).tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/nebulnetes-$(N8S_VERSION).tgz
+	helm push /tmp/nebulnetes-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/nebulnetes-*.tgz
 
 .PHONY: helm-push
 helm-push: helm-push-gpu-partitioner helm-push-nebulnetes ## Push the all the Helm charts to the Helm repository.
