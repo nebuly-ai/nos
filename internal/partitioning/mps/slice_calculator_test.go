@@ -40,7 +40,7 @@ func TestSliceCalculator(t *testing.T) {
 			expected: map[gpu.Slice]int{},
 		},
 		{
-			name: "Should include only time-slicing profiles",
+			name: "Should include only MPS profiles",
 			pod: factory.BuildPod("ns-1", "pd-1").WithContainer(
 				factory.BuildContainer("c-1", "im-1").
 					WithScalarResourceRequest(constant.ResourceNvidiaGPU, 1).

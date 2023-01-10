@@ -117,7 +117,7 @@ func TestGetPartitioningKind(t *testing.T) {
 			expectedOk: false,
 		},
 		{
-			name: "Node with time-slicing partitioning kind",
+			name: "Node with MPS partitioning kind",
 			node: factory.BuildNode("node-1").WithLabels(map[string]string{
 				v1alpha1.LabelGpuPartitioning: gpu.PartitioningKindMps.String(),
 			}).Get(),

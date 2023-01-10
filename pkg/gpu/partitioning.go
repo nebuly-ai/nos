@@ -85,7 +85,7 @@ func IsMigPartitioningEnabled(node v1.Node) bool {
 }
 
 // IsMpsPartitioningEnabled returns true if the node is enabled for
-// automatic time-slicing GPU partitioning, false otherwise
+// automatic MPS GPU partitioning, false otherwise
 func IsMpsPartitioningEnabled(node v1.Node) bool {
 	partitioningKind, ok := node.Labels[v1alpha1.LabelGpuPartitioning]
 	if !ok {

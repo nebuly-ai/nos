@@ -644,7 +644,7 @@ func TestClusterState_IsPartitioningEnabled(t *testing.T) {
 		})
 		assert.True(t, clusterState.IsPartitioningEnabled(gpu.PartitioningKindMig))
 
-		// node-2 changes its partitioning kind to time-slicing
+		// node-2 changes its partitioning kind to MPS
 		nodeTwo.Labels[v1alpha1.LabelGpuPartitioning] = gpu.PartitioningKindMps.String()
 		clusterState.UpdateNode(nodeTwo, []v1.Pod{})
 

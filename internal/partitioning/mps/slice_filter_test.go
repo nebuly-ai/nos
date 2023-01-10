@@ -38,7 +38,7 @@ func TestSliceFilter__ExtractSlices(t *testing.T) {
 			expected:  map[gpu.Slice]int{},
 		},
 		{
-			name: "Should include only time-slicing profiles",
+			name: "Should include only MPS profiles",
 			resources: map[v1.ResourceName]int64{
 				constant.ResourceNvidiaGPU:                   1,
 				v1.ResourceCPU:                               2,

@@ -114,13 +114,13 @@ func main() {
 	}
 
 	// Setup Reporter
-	migReporter := gpuagent.NewReporter(
+	reporter := gpuagent.NewReporter(
 		mgr.GetClient(),
 		gpuClient,
 		reportingSeconds,
 	)
-	if err = migReporter.SetupWithManager(mgr, "reporter", nodeName); err != nil {
-		setupLog.Error(err, "unable to create time-slicing Reporter")
+	if err = reporter.SetupWithManager(mgr, "reporter", nodeName); err != nil {
+		setupLog.Error(err, "unable to create Reporter")
 		os.Exit(1)
 	}
 

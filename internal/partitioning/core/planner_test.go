@@ -554,7 +554,7 @@ func TestPlanner__Plan__MPS(t *testing.T) {
 			expectedErr:                 false,
 		},
 		{
-			name: "No nodes with time-slicing partitioning enabled, should do nothing",
+			name: "No nodes with MPS partitioning enabled, should do nothing",
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").
 					WithAnnotations(map[string]string{

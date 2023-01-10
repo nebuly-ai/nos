@@ -51,12 +51,12 @@ func TestPartitionCalculator__GetPartitioning(t *testing.T) {
 		expected state.NodePartitioning
 	}{
 		{
-			name:     "Node is not time-slicing node, should return empty partitioning",
+			name:     "Node is not MPS node, should return empty partitioning",
 			node:     &mocks.PartitionableNode{},
 			expected: state.NodePartitioning{GPUs: make([]state.GPUPartitioning, 0)},
 		},
 		{
-			name: "Time-slicing node without any slice",
+			name: "MPS node without any slice",
 			node: newSliceNodeOrPanic(
 				factory.BuildNode("node-1").WithLabels(map[string]string{
 					constant.LabelNvidiaMemory:  "2000",
@@ -78,7 +78,7 @@ func TestPartitionCalculator__GetPartitioning(t *testing.T) {
 			},
 		},
 		{
-			name: "Time-slicing node with slice annotations",
+			name: "MPS node with slice annotations",
 			node: newSliceNodeOrPanic(
 				factory.BuildNode("node-1").WithLabels(map[string]string{
 					constant.LabelNvidiaMemory:  "20000",

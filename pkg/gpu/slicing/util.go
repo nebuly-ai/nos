@@ -25,7 +25,7 @@ import (
 )
 
 // ExtractProfileName extracts the name of the slicing profile from the provided resource name,
-// and returns an error if the resource name is not a valid NVIDIA time-slicing resource.
+// and returns an error if the resource name is not a valid NVIDIA slicing resource.
 //
 // Example:
 //

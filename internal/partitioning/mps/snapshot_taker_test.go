@@ -43,7 +43,7 @@ func TestSnapshotTaker__TakeSnapshot(t *testing.T) {
 			expectedErr:           false,
 		},
 		{
-			name: "Time-slicing snapshot should include only nodes with gpu-partitioning=time-slicing",
+			name: "MPS snapshot should include only nodes with gpu-partitioning=mps",
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").Get(),
 				factory.BuildNode("node-2").WithLabels(map[string]string{
@@ -62,7 +62,7 @@ func TestSnapshotTaker__TakeSnapshot(t *testing.T) {
 			expectedSnapshotNodes: []string{"node-3"},
 		},
 		{
-			name: "Should return error if a node is gpu-partitioning=time-slicing but it's missing required NVIDIA labels",
+			name: "Should return error if a node is gpu-partitioning=mps but it's missing required NVIDIA labels",
 			snapshotNodes: []v1.Node{
 				factory.BuildNode("node-1").Get(),
 				factory.BuildNode("node-2").WithLabels(map[string]string{

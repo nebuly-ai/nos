@@ -154,13 +154,13 @@ func (n *Node) UpdateGeometryFor(slices map[gpu.Slice]int) (bool, error) {
 func (n *Node) computeScalarResources() map[v1.ResourceName]int64 {
 	res := make(map[v1.ResourceName]int64)
 
-	// Set all non-time-slicing scalar resources
+	// Set all non-slicing scalar resources
 	for r, v := range n.nodeInfo.Allocatable.ScalarResources {
 		if !IsGpuSlice(r) {
 			res[r] = v
 		}
 	}
-	// Set time-slicing scalar resources
+	// Set slicing scalar resources
 	for r, v := range n.Geometry() {
 		resource := r.(ProfileName).AsResourceName()
 		res[resource] = int64(v)
@@ -189,7 +189,7 @@ func (n *Node) NodeInfo() framework.NodeInfo {
 	return n.nodeInfo
 }
 
-// AddPod adds a Pod to the node by updating the free and used time-slicing slices of the Node GPUs according to the
+// AddPod adds a Pod to the node by updating the free and used slices of the Node GPUs according to the
 // slices requested by the Pod.
 //
 // AddPod returns an error if the node does not have any GPU providing enough free slices resources for the Pod.
