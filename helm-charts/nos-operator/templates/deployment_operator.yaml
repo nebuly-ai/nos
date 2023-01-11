@@ -3,13 +3,13 @@ kind: Deployment
 metadata:
   name: {{ include "operator.fullname" . }}
   labels:
-    control-plane: "n8s-controller-manager"
+    control-plane: "nos-controller-manager"
     {{- include "operator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      control-plane: "n8s-controller-manager"
+      control-plane: "nos-controller-manager"
       {{- include "operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
@@ -19,7 +19,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
-        control-plane: "n8s-controller-manager"
+        control-plane: "nos-controller-manager"
         {{- include "operator.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "operator.fullname" . }}

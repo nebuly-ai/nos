@@ -44,7 +44,7 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
 
 * over-quota pods preemption
 * `CompositeElasticQuota` resources for defining limits on multiple namespaces
-* custom resource `n8s.nebuly.ai/gpu-memory`
+* custom resource `nos.nebuly.ai/gpu-memory`
 * fair sharing of over-quota resources
 * optional `max` limits
 
@@ -55,7 +55,7 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
 * it is recommended to have [cert-manager](https://cert-manager.io/docs/installation/) installed on your cluster in
   order to automatically manage the SSL certificates of the HTTP endpoints of the webhook used for validating the
   custom resources. You can install it on your k8s cluster by running `make install-cert-manager`. Alternatively, you
-  can manually create the SSL certificates and inject them in the n8s operator controller manager.
+  can manually create the SSL certificates and inject them in the nos operator controller manager.
 
 ### Installation
 
@@ -63,7 +63,7 @@ You can install Elastic Resource Quotas management in your cluster running the t
 targets described below, which install and deploy the required resources to the k8s cluster
 specified in your `~/.kube/config`.
 
-By default, all the resources are installed in the `n8s-system` namespace.
+By default, all the resources are installed in the `nos-system` namespace.
 
 1. Deploy the nos operator: the target installs the custom resource definitions (CRDs) and
    it deploys the controllers for managing them.
@@ -85,7 +85,7 @@ make deploy-scheduler
 ### Create elastic quotas
 
 ```yaml
-apiVersion: n8s.nebuly.ai/v1alpha1
+apiVersion: nos.nebuly.ai/v1alpha1
 kind: ElasticQuota
 metadata:
   name: quota-a
@@ -93,7 +93,7 @@ metadata:
 spec:
   min:
     cpu: 2
-    n8s.nebuly.ai/gpu-memory: 16
+    nos.nebuly.ai/gpu-memory: 16
   max:
     cpu: 10
 ```
@@ -112,7 +112,7 @@ For more details please refer to the [Elastic Resource Quota](doc/elastic-quota.
 Unless you deployed the nos scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
 to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas.
 
-You can do that by setting the value of the `schedulerName` field of your Pods specification to `n8s-scheduler`, as
+You can do that by setting the value of the `schedulerName` field of your Pods specification to `nos-scheduler`, as
 shown in the
 example below.
 
@@ -122,7 +122,7 @@ kind: Pod
 metadata:
   name: my-pod
 spec:
-  schedulerName: n8s-scheduler
+  schedulerName: nos-scheduler
   containers:
     - name: nginx
       image: nginx:1.14.2
@@ -235,8 +235,8 @@ import (
  "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
  "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
 
- // Ensure n8s.nebuly.ai/v1alpha1 package is initialized
- _ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+ // Ensure nos.nebuly.ai/v1alpha1 package is initialized
+ _ "github.com/nebuly-ai/nebulnetes/pkg/api/nos.nebuly.ai/v1alpha1"
 )
 
 func main() {
@@ -268,14 +268,14 @@ being completely used).
 Over-quota pods can be preempted at any time to free up resources if any of the namespaces
 lending the quotas claims back its resources.
 
-You can check whether a Pod is in over-quota by checking the value of the label `n8s.nebuly.ai/capacity`, which is
+You can check whether a Pod is in over-quota by checking the value of the label `nos.nebuly.ai/capacity`, which is
 automatically created and updated by the Nebulnetes operator for every Pod created in a namespace subject to
 an ElasticQuota or to a CompositeElasticQuota. The two possible values for this label are `in-quota` and `over-quota`.
 
 You can use this label to easily find out at any time which are the over-quota pods subject to preemption risk:
 
 ```shell
-kubectl get pods --all-namespaces -l n8s.nebuly.ai/capacity="over-quota"
+kubectl get pods --all-namespaces -l nos.nebuly.ai/capacity="over-quota"
 ```
 
 #### How over-quota pods are labelled
@@ -320,9 +320,9 @@ Let's assume we have a K8s cluster with the following Elastic Quota resources:
 
 | Elastic Quota   | Min                            | Max  |
 |-----------------|--------------------------------|------|
-| Elastic Quota A | n8s.nebuly.ai/gpu-memory: 40 | None |
-| Elastic Quota B | n8s.nebuly.ai/gpu-memory: 10 | None |
-| Elastic Quota C | n8s.nebuly.ai/gpu-memory: 30 | None |
+| Elastic Quota A | nos.nebuly.ai/gpu-memory: 40 | None |
+| Elastic Quota B | nos.nebuly.ai/gpu-memory: 10 | None |
+| Elastic Quota C | nos.nebuly.ai/gpu-memory: 30 | None |
 
 The table below shows the quotas usage of the cluster at two different times:
 
@@ -355,7 +355,7 @@ Elastic Quota B is preempted because the following conditions are true:
 
 ### GPU memory limits
 
-Both `ElasticQuota` and `CompositeElasticQuota` resources support the custom resource `n8s.nebuly.ai/gpu-memory`.
+Both `ElasticQuota` and `CompositeElasticQuota` resources support the custom resource `nos.nebuly.ai/gpu-memory`.
 You can use this resource in the `min` and `max` fields of the elastic quotas specification to define the
 minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace and its maximum limit,
 respectively.
@@ -365,7 +365,7 @@ by its containers and enforces the limits accordingly. The amount of memory GB c
 generic resource `nvidia.com/gpu` is defined by the field `nvidiaGpuResourceMemoryGB` of the Nebulnetes Operator
 configuration, which is 32 by default.
 
-For instance, using the default configuration, the value of the resource `n8s.nebuly.ai/gpu-memory` computed from
+For instance, using the default configuration, the value of the resource `nos.nebuly.ai/gpu-memory` computed from
 the Pod specification below is 42 (10 + 16 * 2).
 
 ```yaml
@@ -374,7 +374,7 @@ kind: Pod
 metadata:
   name: nginx-deployment
 spec:
-  schedulerName: n8s-scheduler
+  schedulerName: nos-scheduler
   containers:
     - name: my-container
       image: my-image:0.0.1
@@ -398,7 +398,7 @@ Todo
 You can check the logs of the scheduler by running the following command:
 
 ```shell
- kubectl logs -n n8s-system -l app.kubernetes.io/component=scheduler -f
+ kubectl logs -n nos-system -l app.kubernetes.io/component=scheduler -f
 ```
 
 ### How to increase log verbosity

@@ -19,7 +19,7 @@ package mps_test
 import (
 	ts_partitioning "github.com/nebuly-ai/nos/internal/partitioning/mps"
 	"github.com/nebuly-ai/nos/internal/partitioning/state"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/test/factory"

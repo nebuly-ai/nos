@@ -4,7 +4,7 @@ Since at the moment Nebulnetes is not publicly available, you need to provide cr
 images from our private GitHub container registry.
 
 The k8s manifests for deploying Nebulnetes components expect the Docker credentials to be stored in a secret
-called `ghcr` in the namespace `n8s-system`. You can create the secret by following these steps:
+called `ghcr` in the namespace `nos-system`. You can create the secret by following these steps:
 
 1. Create a personal access token with the `read:packages` scope on GitHub. You can find more information on how to
    create a personal access
@@ -31,7 +31,7 @@ called `ghcr` in the namespace `n8s-system`. You can create the secret by follow
     apiVersion: v1
     metadata:
        name: ghcr
-       namespace: n8s-system
+       namespace: nos-system
     data:
        .dockerconfigjson: <previous-step-output>
     ```

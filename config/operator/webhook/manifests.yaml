@@ -11,12 +11,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-n8s-nebuly-ai-v1alpha1-compositeelasticquota
+      path: /validate-nos-nebuly-ai-v1alpha1-compositeelasticquota
   failurePolicy: Fail
   name: vcompositeelasticquota.kb.io
   rules:
   - apiGroups:
-    - n8s.nebuly.ai
+    - nos.nebuly.ai
     apiVersions:
     - v1alpha1
     operations:
@@ -31,12 +31,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-n8s-nebuly-ai-v1alpha1-elasticquota
+      path: /validate-nos-nebuly-ai-v1alpha1-elasticquota
   failurePolicy: Fail
   name: velasticquota.kb.io
   rules:
   - apiGroups:
-    - n8s.nebuly.ai
+    - nos.nebuly.ai
     apiVersions:
     - v1alpha1
     operations:

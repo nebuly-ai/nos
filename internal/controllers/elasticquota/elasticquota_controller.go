@@ -18,7 +18,7 @@ package elasticquota
 
 import (
 	"context"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	gpu_util "github.com/nebuly-ai/nos/pkg/gpu/util"
 	"github.com/nebuly-ai/nos/pkg/resource"
@@ -58,9 +58,9 @@ func NewElasticQuotaReconciler(client client.Client, scheme *runtime.Scheme, nvi
 	}
 }
 
-//+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas/finalizers,verbs=update
+//+kubebuilder:rbac:groups=nos.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=nos.nebuly.ai,resources=elasticquotas/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=nos.nebuly.ai,resources=elasticquotas/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;update;patch
 
 func (r *ElasticQuotaReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

@@ -20,7 +20,7 @@ package capacityscheduling
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	schedulerconfig "github.com/nebuly-ai/nos/pkg/api/scheduler"
 	gpu_util "github.com/nebuly-ai/nos/pkg/gpu/util"
 	"github.com/nebuly-ai/nos/pkg/resource"

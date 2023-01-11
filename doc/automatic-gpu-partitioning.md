@@ -55,7 +55,7 @@ official documentation provided by NVIDIA.
 You can install the automatic GPU partitioning components by running the Makefile targets below, which deploys them
 required to the k8s cluster specified in your `~/.kube/config`.
 
-By default, all the resources are installed in the `n8s-system` namespace.
+By default, all the resources are installed in the `nos-system` namespace.
 
 1. Deploy the Nebulnetes operator
 
@@ -92,31 +92,31 @@ where `<index>` correspond to the index of the GPU: `sudo nvidia-smi -i <index> 
 You can enable automatic MIG partitioning on a node by adding to it the following label:
 
 ```shell
-kubectl label nodes <node-name> "n8s.nebuly.ai/gpu-partitioning=mig"
+kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mig"
 ```
 
 The label delegates to Nebulnetes the management of the MIG resources of all the GPUs of that node, so you don't have 
-to manually configure the MIG geometry of the GPUs anymore: n8s will dynamically apply the most proper geometry 
+to manually configure the MIG geometry of the GPUs anymore: nos will dynamically apply the most proper geometry 
 according to the resources requested by the pods submitted to the cluster.
 
 
 ## MIG partitioning
 In the case of MIG partitioning, the agent that creates/deletes the MIG resources is 
 the [MIG Agent](../config/migagent), which is a daemonset running on every node labeled 
-with `n8s.nebuly.ai/gpu-partitioning: mig`.
+with `nos.nebuly.ai/gpu-partitioning: mig`.
 
 The MIG Agent exposes to the GPU Partitioner the used/free MIG resources of all the GPUs of the node
 on which it is running through the following node annotations:
 
-* `n8s.nebuly.ai/status-gpu-<index>-<mig-profile>-free: <quantity>`
-* `n8s.nebuly.ai/status-gpu-<index>-<mig-profile>-used: <quantity>`
+* `nos.nebuly.ai/status-gpu-<index>-<mig-profile>-free: <quantity>`
+* `nos.nebuly.ai/status-gpu-<index>-<mig-profile>-used: <quantity>`
 
 The MIG Agent also watches the node's annotations and, every time there desired MIG partitioning specified by the
 GPU Partitioner does not match the current state, it tries to apply it by creating and deleting the MIG profiles
 on the target GPUs. The GPU Partitioner specifies the desired MIG geometry of the GPUs of a node through annotations in
 the following format:
 
-`n8s.nebuly.ai/spec-gpu-<index>-<mig-profile>: <quantity>`
+`nos.nebuly.ai/spec-gpu-<index>-<mig-profile>: <quantity>`
 
 
 Note that in some cases the MIG Agent might not be able to apply the desired MIG geometry specified by the 
@@ -167,7 +167,7 @@ are taken into account when performing the GPUs partitioning, you can follow the
 
 * deploy the Nebulnetes scheduler
 * uncomment the last patch of this [kustomization file](../config/gpupartitioner/default/kustomization.yaml), which
-  mounts the n8s scheduler config file to the GPU partitioner pod filesystem
+  mounts the nos scheduler config file to the GPU partitioner pod filesystem
 * set the `schedulerConfigFile` value to `scheduler_config.yam`
 
 ### Available MIG geometries
@@ -188,12 +188,12 @@ and MIG Agent pods. You can do that by running the following commands:
 
 Check GPU Partitioner logs
 ```shell
- kubectl logs -n n8s-system -l app.kubernetes.io/component=gpu-partitioner -f
+ kubectl logs -n nos-system -l app.kubernetes.io/component=gpu-partitioner -f
 ```
 
 Check MIG Agent logs:
 ```shell
- kubectl logs -n n8s-system -l app.kubernetes.io/component=mig-agent -f
+ kubectl logs -n nos-system -l app.kubernetes.io/component=mig-agent -f
 ```
 
 ### How to increase log verbosity

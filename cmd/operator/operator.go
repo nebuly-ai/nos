@@ -20,8 +20,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/nebuly-ai/nos/internal/controllers/elasticquota"
-	configv1alpha1 "github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/config/v1alpha1"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	configv1alpha1 "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/config/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	"os"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)

@@ -50,7 +50,7 @@ help: ## Display this help.
 
 ##@ Development
 
-.PHONY: operator-manifests ## Generate manifests for the n8s operator (CRD, ClusterRole, WebhookConfig, etc.).
+.PHONY: operator-manifests ## Generate manifests for the nos operator (CRD, ClusterRole, WebhookConfig, etc.).
 operator-manifests: controller-gen ## Generate CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) crd paths="./internal/controllers/elasticquota/;./pkg/api/..." \
 	webhook \
@@ -170,8 +170,7 @@ docker-push-gpu-partitioner: ## Push docker image with the gpu-partitioner.
 	docker push ${GPU_PARTITIONER_IMG}
 
 .PHONY: docker-build
-docker-build: test \
-	docker-build-mig-agent \
+docker-build: docker-build-mig-agent \
 	docker-build-gpu-agent \
 	docker-build-operator \
 	docker-build-scheduler \

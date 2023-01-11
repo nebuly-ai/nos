@@ -1,4 +1,4 @@
-apiVersion: n8s.nebuly.ai/v1alpha1
+apiVersion: nos.nebuly.ai/v1alpha1
 kind: ElasticQuota
 metadata:
   name: quota-a
@@ -11,7 +11,7 @@ spec:
 
 ---
 
-apiVersion: n8s.nebuly.ai/v1alpha1
+apiVersion: nos.nebuly.ai/v1alpha1
 kind: ElasticQuota
 metadata:
   name: quota-b
@@ -19,4 +19,4 @@ metadata:
 spec:
   min:
     cpu: 2
-    n8s.nebuly.ai/gpu-memory: 16
+    nos.nebuly.ai/gpu-memory: 16

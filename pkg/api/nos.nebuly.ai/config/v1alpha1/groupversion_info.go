@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains API Schema definitions for the n8s.nebuly.ai v1alpha1 API group
 // +genclient
 // +kubebuilder:object:generate=true
-// +groupName=n8s.nebuly.ai
+// +groupName=nos.nebuly.ai
+
+// Package v1alpha1 contains API Schema definitions for the config.nos.nebuly.ai v1alpha1 API group
 package v1alpha1
 
 import (
@@ -26,7 +27,7 @@ import (
 )
 
 const (
-	GroupName = "n8s.nebuly.ai"
+	GroupName = "config.nos.nebuly.ai"
 )
 
 var (

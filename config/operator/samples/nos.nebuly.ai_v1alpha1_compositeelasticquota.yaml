@@ -1,4 +1,4 @@
-apiVersion: n8s.nebuly.ai/v1alpha1
+apiVersion: nos.nebuly.ai/v1alpha1
 kind: CompositeElasticQuota
 metadata:
   name: composite-quota-a
@@ -10,4 +10,4 @@ spec:
     - team-c
   min:
     cpu: 10
-    n8s.nebuly.ai/gpu-memory: 24
+    nos.nebuly.ai/gpu-memory: 24

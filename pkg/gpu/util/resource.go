@@ -17,7 +17,7 @@
 package util
 
 import (
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/gpu/mig"
 	"github.com/nebuly-ai/nos/pkg/resource"

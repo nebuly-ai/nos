@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  N8S_VERSION: "latest"
+  NOS_VERSION: "latest"
 
 jobs:
   build:

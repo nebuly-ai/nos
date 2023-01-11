@@ -65,14 +65,14 @@ rules:
     resources: ["leases"]
     verbs: ["create"]
   - apiGroups: ["coordination.k8s.io"]
-    resourceNames: ["kube-scheduler", "n8s-scheduler"]
+    resourceNames: ["kube-scheduler", "nos-scheduler"]
     resources: ["leases"]
     verbs: ["get", "update"]
   ## Custom resources
-  - apiGroups: ["n8s.nebuly.ai"]
+  - apiGroups: ["nos.nebuly.ai"]
     resources: ["elasticquotas"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: ["n8s.nebuly.ai"]
+  - apiGroups: ["nos.nebuly.ai"]
     resources: ["compositeelasticquotas"]
     verbs: ["get", "list", "watch"]
 

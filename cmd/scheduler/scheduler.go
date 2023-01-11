@@ -29,8 +29,8 @@ import (
 	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 	kubeschedulerscheme "k8s.io/kubernetes/pkg/scheduler/apis/config/scheme"
 
-	// Ensure n8s.nebuly.ai/v1alpha1 package is initialized
-	_ "github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	// Ensure nos.nebuly.ai/v1alpha1 package is initialized
+	_ "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	// Ensure scheduler package is initialized.
 	_ "github.com/nebuly-ai/nos/pkg/api/scheduler"
 )

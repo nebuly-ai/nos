@@ -31,7 +31,7 @@ type Node struct {
 
 // NewNode creates a new MIG Node starting from the node provided as argument.
 //
-// The function constructs the MIG GPUs of the provided node using both the n8s.nebuly.ai MIG status annotations
+// The function constructs the MIG GPUs of the provided node using both the nos.nebuly.ai MIG status annotations
 // and the labels exposed by the NVIDIA gpu-feature-discovery tool. Specifically, the following labels are used:
 // - GPU product ("nvidia.com/gpu.product")
 // - GPU count ("nvidia.com/gpu.count")

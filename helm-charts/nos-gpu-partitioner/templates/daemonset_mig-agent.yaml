@@ -2,23 +2,23 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    control-plane: n8s-controller-manager
+    control-plane: nos-controller-manager
     {{- include "mig-agent.labels" . | nindent 4 }}
   name: {{ include "mig-agent.fullname" . }}
 spec:
   selector:
     matchLabels:
-      control-plane: n8s-controller-manager
+      control-plane: nos-controller-manager
       {{- include "mig-agent.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        control-plane: n8s-controller-manager
+        control-plane: nos-controller-manager
         {{- include "mig-agent.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "mig-agent.fullname" . }}
       nodeSelector:
-        n8s.nebuly.ai/gpu-partitioning: mig
+        nos.nebuly.ai/gpu-partitioning: mig
       priorityClassName: system-node-critical
       terminationGracePeriodSeconds: 20
       containers:

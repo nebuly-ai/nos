@@ -1,12 +1,12 @@
 # Adds namespace to all resources.
-namespace: n8s-system
+namespace: nos-system
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: n8s-
+namePrefix: nos-
 
 # Labels to add to all resources and selectors.
 #labels:
@@ -33,8 +33,8 @@ patchesStrategicMerge:
 # through a ComponentConfig type
 - gpu_partitioner_config_patch.yaml
 
-# Mount the n8s scheduler config file for making the GPU partitioner use the n8s scheduler
+# Mount the nos scheduler config file for making the GPU partitioner use the nos scheduler
 # for simulating Pods scheduling.
 #
-# If you uncomment this, you also need to deploy the n8s operator and the n8s scheduler to your cluster.
+# If you uncomment this, you also need to deploy the nos operator and the nos scheduler to your cluster.
 #- gpu_partitioner_scheduler_config_patch.yaml

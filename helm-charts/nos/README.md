@@ -32,7 +32,7 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 | global.nvidiaGpuResourceMemoryGB | int | `32` | Defines how many GB of memory each nvidia.com/gpu resource has. |
 | gpu-partitioner | object | - | Config of the GPU Partitioner component. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner). |
 | gpu-partitioner.enabled | bool | `true` | Enable or disable the GPU Partitioner |
-| operator | object | - | Config of the Nebulnetes operator. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator). |
+| operator | object | - | Config of the Nebulnetes operator. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/nos-operator). |
 | operator.enabled | bool | `true` | Enable or disable the Nebulnetes Operator |
 | scheduler | object | - | Config of the Nebulnetes scheduler. All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/scheduler). |
 | scheduler.enabled | bool | `true` | Enable or disable the Nebulnetes Scheduler |

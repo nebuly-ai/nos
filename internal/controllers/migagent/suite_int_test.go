@@ -21,7 +21,7 @@ package migagent
 import (
 	"context"
 	"github.com/go-logr/logr"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/test/factory"
 	mockedmig "github.com/nebuly-ai/nos/pkg/test/mocks/mig"
 	. "github.com/onsi/ginkgo/v2"

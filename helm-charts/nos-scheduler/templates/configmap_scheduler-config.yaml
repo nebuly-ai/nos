@@ -12,9 +12,9 @@ data:
     leaderElection:
       leaderElect: true
       resourceNamespace: kube-system
-      resourceName: n8s-scheduler
+      resourceName: nos-scheduler
     profiles:
-      - schedulerName: n8s-scheduler
+      - schedulerName: nos-scheduler
         plugins:
           preFilter:
             enabled:

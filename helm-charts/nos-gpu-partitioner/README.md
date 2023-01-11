@@ -55,6 +55,6 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | podSecurityContext | object | `{"runAsNonRoot":true,"runAsUser":1000}` | Sets the security context of the GPU partitioner Pod. |
 | replicaCount | int | `1` | Number of replicas of the gpu-manager Pod. |
 | resources | object | `{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}` | Sets the resource limits and requests of the GPU partitioner container. |
-| scheduler.config.name | string | `"n8s-scheduler-config"` | Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile. |
+| scheduler.config.name | string | `"nos-scheduler-config"` | Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile. |
 | tolerations | list | `[]` | Sets the tolerations of the GPU Partitioner Pod. |
 

@@ -22,6 +22,6 @@ import (
 
 // Resources
 const (
-	// ResourceGPUMemory is the name of the custom resource used by n8s for specifying GPU memory GigaBytes
-	ResourceGPUMemory v1.ResourceName = "n8s.nebuly.ai/gpu-memory"
+	// ResourceGPUMemory is the name of the custom resource used by nos for specifying GPU memory GigaBytes
+	ResourceGPUMemory v1.ResourceName = "nos.nebuly.ai/gpu-memory"
 )

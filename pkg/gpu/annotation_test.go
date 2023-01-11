@@ -18,7 +18,7 @@ package gpu_test
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/resource"
 	"github.com/nebuly-ai/nos/pkg/test/factory"
@@ -277,7 +277,7 @@ func TestGetGPUAnnotationsFromNode(t *testing.T) {
 					map[string]string{
 						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 2, "1g.10gb"): "1",
 						fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, "2g.10gb"): "2",
-						"n8s.nebuly.ai/status-gpu-0-1g.10gb-free":                   "3",
+						"nos.nebuly.ai/status-gpu-0-1g.10gb-free":                   "3",
 					},
 				).
 				Get(),
@@ -330,7 +330,7 @@ func TestParseStatusAnnotation(t *testing.T) {
 		},
 		{
 			name:        "Key without prefix",
-			key:         "n8s.nebuly.ai/foo",
+			key:         "nos.nebuly.ai/foo",
 			value:       "1",
 			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
@@ -351,21 +351,21 @@ func TestParseStatusAnnotation(t *testing.T) {
 		},
 		{
 			name:        "Index is not an integer",
-			key:         "n8s.nebuly.ai/status-gpu-foo-1g.10gb-free",
+			key:         "nos.nebuly.ai/status-gpu-foo-1g.10gb-free",
 			value:       "1",
 			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:        "Invalid status",
-			key:         "n8s.nebuly.ai/status-gpu-0-1g.10gb-foo",
+			key:         "nos.nebuly.ai/status-gpu-0-1g.10gb-foo",
 			value:       "1",
 			expected:    gpu.StatusAnnotation{},
 			expectedErr: true,
 		},
 		{
 			name:  "Valid annotation",
-			key:   "n8s.nebuly.ai/status-gpu-1-1g.10gb-used",
+			key:   "nos.nebuly.ai/status-gpu-1-1g.10gb-used",
 			value: "1",
 			expected: gpu.StatusAnnotation{
 				ProfileName: "1g.10gb",
@@ -405,7 +405,7 @@ func TestParseSpecAnnotation(t *testing.T) {
 		},
 		{
 			name:        "Key without prefix",
-			key:         "n8s.nebuly.ai/foo",
+			key:         "nos.nebuly.ai/foo",
 			value:       "1",
 			expected:    gpu.SpecAnnotation{},
 			expectedErr: true,

@@ -19,24 +19,24 @@ package v1alpha1
 import "fmt"
 
 const (
-	AnnotationGpuSpecPrefix   = "n8s.nebuly.ai/spec-gpu"
-	AnnotationGpuStatusPrefix = "n8s.nebuly.ai/status-gpu"
+	AnnotationGpuSpecPrefix   = "nos.nebuly.ai/spec-gpu"
+	AnnotationGpuStatusPrefix = "nos.nebuly.ai/status-gpu"
 
 	// AnnotationPartitioningPlan indicates the partitioning plan that was applied to the node.
-	AnnotationPartitioningPlan = "n8s.nebuly.ai/spec-partitioning-plan"
+	AnnotationPartitioningPlan = "nos.nebuly.ai/spec-partitioning-plan"
 	// AnnotationReportedPartitioningPlan indicates the last partitioning plan reported by the node.
-	AnnotationReportedPartitioningPlan = "n8s.nebuly.ai/status-partitioning-plan"
+	AnnotationReportedPartitioningPlan = "nos.nebuly.ai/status-partitioning-plan"
 )
 
 // AnnotationGpuStatusFormat is the format of the annotation used to expose the profiles the GPUs of a node
 //
 // Format:
 //
-//	"n8s.nebuly.ai/status-gpu-<gpu-index>-<profile>"
+//	"nos.nebuly.ai/status-gpu-<gpu-index>-<profile>"
 //
 // Example:
 //
-//	"n8s.nebuly.ai/status-gpu-0-1g.10gb-free"
+//	"nos.nebuly.ai/status-gpu-0-1g.10gb-free"
 var AnnotationGpuStatusFormat = fmt.Sprintf(
 	"%s-%%d-%%s-%%s",
 	AnnotationGpuStatusPrefix,
@@ -47,11 +47,11 @@ var AnnotationGpuStatusFormat = fmt.Sprintf(
 //
 // Format:
 //
-//	"n8s.nebuly.ai/spec-gpu-<gpu-index>-<profile>"
+//	"nos.nebuly.ai/spec-gpu-<gpu-index>-<profile>"
 //
 // Example:
 //
-//	"n8s.nebuly.ai/spec-gpu-0-1g.10gb"
+//	"nos.nebuly.ai/spec-gpu-0-1g.10gb"
 var AnnotationGpuSpecFormat = fmt.Sprintf(
 	"%s-%%d-%%s",
 	AnnotationGpuSpecPrefix,

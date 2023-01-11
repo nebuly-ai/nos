@@ -16,7 +16,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - compositeelasticquotas
   verbs:
@@ -28,13 +28,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - compositeelasticquotas/finalizers
   verbs:
   - update
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - compositeelasticquotas/status
   verbs:
@@ -42,7 +42,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - elasticquotas
   verbs:
@@ -54,13 +54,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - elasticquotas/finalizers
   verbs:
   - update
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - elasticquotas/status
   verbs:

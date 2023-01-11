@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/nebuly-ai/nos/internal/partitioning/core"
 	"github.com/nebuly-ai/nos/internal/partitioning/state"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/util"
@@ -75,8 +75,8 @@ func NewController(
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=csinodes;storageclasses;csidrivers;csistoragecapacities,verbs=get;list;watch
 //+kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;patch
-//+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;
-//+kubebuilder:rbac:groups=n8s.nebuly.ai,resources=compositeelasticquotas,verbs=get;list;watch
+//+kubebuilder:rbac:groups=nos.nebuly.ai,resources=elasticquotas,verbs=get;list;watch;
+//+kubebuilder:rbac:groups=nos.nebuly.ai,resources=compositeelasticquotas,verbs=get;list;watch
 
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// If there isn't any node with this kind of partitioning then there's noting to do

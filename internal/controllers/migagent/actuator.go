@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/nebuly-ai/nos/internal/controllers/migagent/plan"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/gpu/mig"
 	"github.com/nebuly-ai/nos/pkg/util/predicate"

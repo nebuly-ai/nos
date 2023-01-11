@@ -27,7 +27,7 @@ scheduler:
   config:
     # -- Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the
     # ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile.
-    name: n8s-scheduler-config
+    name: nos-scheduler-config
 
 image:
   # -- Sets the GPU Partitioner Docker image.

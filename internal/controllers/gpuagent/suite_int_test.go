@@ -21,7 +21,7 @@ package gpuagent_test
 import (
 	"context"
 	"github.com/nebuly-ai/nos/internal/controllers/gpuagent"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	gpumock "github.com/nebuly-ai/nos/pkg/test/mocks/gpu"
 	. "github.com/onsi/ginkgo/v2"

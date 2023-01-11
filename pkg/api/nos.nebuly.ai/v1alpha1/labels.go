@@ -18,7 +18,7 @@ package v1alpha1
 
 const (
 	// LabelCapacityInfo specifies the status of a Pod in regard to the ElasticQuota it belongs to
-	LabelCapacityInfo = "n8s.nebuly.ai/capacity"
+	LabelCapacityInfo = "nos.nebuly.ai/capacity"
 	// LabelGpuPartitioning specifies the PartitioningKind that should be performed on the GPUs of a node
-	LabelGpuPartitioning = "n8s.nebuly.ai/gpu-partitioning"
+	LabelGpuPartitioning = "nos.nebuly.ai/gpu-partitioning"
 )

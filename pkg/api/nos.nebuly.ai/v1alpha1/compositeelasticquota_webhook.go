@@ -40,7 +40,7 @@ func (r *CompositeElasticQuota) SetupWebhookWithManager(mgr ctrl.Manager) error 
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/validate-n8s-nebuly-ai-v1alpha1-compositeelasticquota,mutating=false,failurePolicy=fail,sideEffects=None,groups=n8s.nebuly.ai,resources=compositeelasticquotas,verbs=create;update,versions=v1alpha1,name=vcompositeelasticquota.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-nos-nebuly-ai-v1alpha1-compositeelasticquota,mutating=false,failurePolicy=fail,sideEffects=None,groups=nos.nebuly.ai,resources=compositeelasticquotas,verbs=create;update,versions=v1alpha1,name=vcompositeelasticquota.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &CompositeElasticQuota{}
 

@@ -57,7 +57,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - compositeelasticquotas
   verbs:
@@ -65,7 +65,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - n8s.nebuly.ai
+  - nos.nebuly.ai
   resources:
   - elasticquotas
   verbs:

@@ -18,7 +18,7 @@ package gpu
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/resource"
 	"github.com/nebuly-ai/nos/pkg/util"
 	v1 "k8s.io/api/core/v1"
@@ -130,7 +130,7 @@ func (a StatusAnnotation) GetValue() string {
 //
 // Annotation:
 //
-//	"n8s.nebuly.ai/status-gpu-0-1g.10gb-used"
+//	"nos.nebuly.ai/status-gpu-0-1g.10gb-used"
 //
 // Result:
 //
@@ -158,7 +158,7 @@ func (a SpecAnnotation) GetValue() string {
 //
 // Annotation:
 //
-//	"n8s.nebuly.ai/status-gpu-0-1g.10gb-used"
+//	"nos.nebuly.ai/status-gpu-0-1g.10gb-used"
 //
 // Result:
 //

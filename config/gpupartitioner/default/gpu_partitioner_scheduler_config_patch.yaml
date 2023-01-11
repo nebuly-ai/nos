@@ -15,4 +15,4 @@ spec:
       volumes:
         - name: scheduler-config
           configMap:
-            name: n8s-scheduler-config
+            name: nos-scheduler-config

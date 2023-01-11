@@ -5,23 +5,22 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
-  name: elasticquotas.n8s.nebuly.ai
+  name: compositeelasticquotas.nos.nebuly.ai
 spec:
-  group: n8s.nebuly.ai
+  group: nos.nebuly.ai
   names:
-    kind: ElasticQuota
-    listKind: ElasticQuotaList
-    plural: elasticquotas
+    kind: CompositeElasticQuota
+    listKind: CompositeElasticQuotaList
+    plural: compositeelasticquotas
     shortNames:
-    - eq
-    - eqs
-    singular: elasticquota
+    - ceq
+    - ceqs
+    singular: compositeelasticquota
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ElasticQuota sets elastic quota restrictions per namespace
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -36,7 +35,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ElasticQuotaSpec defines the Min and Max for Quota.
+            description: CompositeElasticQuotaSpec defines the Min and Max for Quota.
             properties:
               max:
                 additionalProperties:
@@ -59,9 +58,16 @@ spec:
                 description: Min is the set of desired guaranteed limits for each
                   named resource.
                 type: object
+              namespaces:
+                description: Namespaces is the desired list of namespaces in which
+                  the specified limits will be enforced
+                items:
+                  type: string
+                minItems: 1
+                type: array
             type: object
           status:
-            description: ElasticQuotaStatus defines the observed use.
+            description: CompositeElasticQuotaStatus defines the observed use.
             properties:
               used:
                 additionalProperties:

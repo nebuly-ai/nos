@@ -9,7 +9,7 @@ global:
   nvidiaGpuResourceMemoryGB: 32
 
 # -- Config of the Nebulnetes operator.
-# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/n8s-operator).
+# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/nos-operator).
 # @default -- -
 operator:
   # -- Enable or disable the Nebulnetes Operator

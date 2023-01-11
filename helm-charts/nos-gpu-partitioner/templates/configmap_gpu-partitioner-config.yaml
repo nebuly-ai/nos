@@ -5,7 +5,7 @@ metadata:
   name: {{ include "gpu-partitioner.config.configMapName" . }}
 data:
   {{ include "gpu-partitioner.configFileName" . }}: |
-    apiVersion: config.n8s.nebuly.ai/v1alpha1
+    apiVersion: config.nos.nebuly.ai/v1alpha1
     kind: GpuPartitionerConfig
     health:
       healthProbeBindAddress: :8081

@@ -162,14 +162,14 @@ rules:
       - coordination.k8s.io
     resourceNames:
       - kube-scheduler
-      - n8s-scheduler
+      - nos-scheduler
     resources:
       - leases
     verbs:
       - get
       - update
   - apiGroups:
-      - n8s.nebuly.ai
+      - nos.nebuly.ai
     resources:
       - elasticquotas
     verbs:
@@ -177,7 +177,7 @@ rules:
       - list
       - watch
   - apiGroups:
-      - n8s.nebuly.ai
+      - nos.nebuly.ai
     resources:
       - compositeelasticquotas
     verbs:
