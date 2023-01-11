@@ -18,10 +18,10 @@ devicePlugin:
     # -- Name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
     # It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the
     # NVIDIA GPU Operator.
-    name: nvidia-plugin-configs
+    name: nos-device-plugin-configs
     # -- Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to
-    # the namespace where the NVIDIA Device Plugin has been deployed to.
-    namespace: gpu-operator
+    # the namespace where the Nebuly NVIDIA Device Plugin has been deployed to.
+    namespace: nebuly-nvidia
 
 scheduler:
   config:
