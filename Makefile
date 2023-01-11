@@ -178,7 +178,7 @@ docker-build: docker-build-mig-agent \
 
 .PHONY: docker-push
 docker-push: docker-push-mig-agent \
-	docker-build-gpu-agent \
+	docker-push-gpu-agent \
 	docker-push-operator \
 	docker-push-scheduler \
 	docker-push-gpu-partitioner
