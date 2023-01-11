@@ -8,7 +8,7 @@
 Expand the name of the chart.
 */}}
 {{- define "gpu-partitioner.name" -}}
-{{- default "gpu-partitioner" .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -127,13 +127,10 @@ Name of the mig-agent
 {{- end }}
 
 {{- define "mig-agent.fullname" -}}
-{{- $name := include "mig-agent.name" . -}}
-{{- if contains .Chart.Name .Release.Name -}}
-{{- .Release.Name | replace .Chart.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- (printf "%s-%s" .Release.Name $name) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
+{{- $gpuPartitionerName := include "gpu-partitioner.name" . }}
+{{- $migAgentName := include "mig-agent.name" . }}
+{{- include "gpu-partitioner.fullname" . | replace $gpuPartitionerName $migAgentName -}}
+{{- end }}
 
 {{/*
 MIG Agent labels
@@ -185,9 +182,10 @@ Name of the gpu-agent
 {{- end }}
 
 {{- define "gpu-agent.fullname" -}}
-{{- $name := include "gpu-agent.name" . -}}
-{{- include "gpu-partitioner.fullname" . | replace .Chart.Name $name  | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
+{{- $gpuPartitionerName := include "gpu-partitioner.name" . }}
+{{- $gpuAgentName := include "gpu-agent.name" . }}
+{{- include "gpu-partitioner.fullname" . | replace $gpuPartitionerName $gpuAgentName -}}
+{{- end }}
 
 {{/*
 GPU Agent labels
