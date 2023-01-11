@@ -1,4 +1,4 @@
-name: Build Nebulnetes current version
+name: Build nos
 
 on:
   workflow_dispatch:
