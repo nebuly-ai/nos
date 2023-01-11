@@ -56,7 +56,7 @@ func (d devicePluginClient) Restart(ctx context.Context, nodeName string, timeou
 	if err := d.List(
 		ctx,
 		&podList,
-		client.MatchingLabels{"app": "nvidia-device-plugin-daemonset"},
+		client.MatchingLabels{"app.kubernetes.io/name": "nvidia-device-plugin"},
 		client.MatchingFields{constant.PodNodeNameKey: nodeName},
 	); err != nil {
 		return err
@@ -94,7 +94,7 @@ func (d devicePluginClient) WaitUntilRunning(ctx context.Context, nodeName strin
 		if err := d.List(
 			ctx,
 			&podList,
-			client.MatchingLabels{"app": "nvidia-device-plugin-daemonset"},
+			client.MatchingLabels{"app.kubernetes.io/name": "nvidia-device-plugin"},
 			client.MatchingFields{constant.PodNodeNameKey: nodeName},
 		); err != nil {
 			return false, err

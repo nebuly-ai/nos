@@ -104,12 +104,12 @@ var _ = BeforeSuite(func() {
 
 	// Create nvidia-device-plugin pods
 	actuatorNvidiaDevicePluginPod := factory.BuildPod(nvidiaDevicePluginPodNamespace, actuatorNvidiaDevicePluginPodName).
-		WithLabel("app", "nvidia-device-plugin-daemonset").
+		WithLabel("app.kubernetes.io/name", "nvidia-device-plugin").
 		WithNodeName(actuatorNodeName).
 		WithContainer(factory.BuildContainer("test", "test").Get()).
 		Get()
 	reporterNvidiaDevicePluginPod := factory.BuildPod(nvidiaDevicePluginPodNamespace, reporterNvidiaDevicePluginPodName).
-		WithLabel("app", "nvidia-device-plugin-daemonset").
+		WithLabel("app.kubernetes.io/name", "nvidia-device-plugin").
 		WithNodeName(reporterNodeName).
 		WithContainer(factory.BuildContainer("test", "test").Get()).
 		Get()
