@@ -23,13 +23,13 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | affinity | object | `{}` | Sets the affinity config of the GPU Partitioner Pod. |
 | batchWindowIdleSeconds | int | `10` | Idle seconds before the GPU partitioner processes the current batch if no new pending Pods are created, and the timeout has not been reached.  Higher values make the GPU partitioner will potentially take into account more pending Pods when deciding the GPU partitioning plan, but the partitioning will be performed less frequently |
 | batchWindowTimeoutSeconds | int | `60` | Timeout of the window used by the GPU partitioner for batching pending Pods.  Higher values make the GPU partitioner will potentially take into account more pending Pods when deciding the GPU partitioning plan, but the partitioning will be performed less frequently |
-| devicePlugin.config.name | string | `"nvidia-plugin-configs"` | Name of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the NVIDIA GPU Operator. |
-| devicePlugin.config.namespace | string | `"gpu-operator"` | Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the namespace where the NVIDIA Device Plugin has been deployed to. |
+| devicePlugin.config.name | string | `"nos-device-plugin-configs"` | Name of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the NVIDIA GPU Operator. |
+| devicePlugin.config.namespace | string | `"nebuly-nvidia"` | Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the namespace where the Nebuly NVIDIA Device Plugin has been deployed to. |
 | fullnameOverride | string | `""` |  |
 | gpuAgent | object | - | Configuration of the GPU Agent component of the GPU Partitioner. |
 | gpuAgent.image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Agent Docker image pull policy. |
 | gpuAgent.image.repository | string | `"ghcr.io/nebuly-ai/nos-gpu-agent"` | Sets the GPU Agent Docker image. |
-| gpuAgent.image.tag | string | `"latest"` | Overrides the GPU Agent image tag whose default is the chart appVersion. |
+| gpuAgent.image.tag | string | `""` | Overrides the GPU Agent image tag whose default is the chart appVersion. |
 | gpuAgent.logLevel | int | `0` | The level of log of the GPU Agent. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
 | gpuAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s status of the GPUs of the Node |
 | gpuAgent.resources | object | `{"limits":{"cpu":"100m","memory":"128Mi"}}` | Sets the resource requests and limits of the GPU Agent container. |

@@ -30,10 +30,10 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | global.nvidiaGpuResourceMemoryGB | int | `32` | Defines how many GB of memory each nvidia.com/gpu resource has. |
-| gpu-partitioner | object | - | Config of the GPU Partitioner component. All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/gpu-partitioner). |
-| gpu-partitioner.enabled | bool | `true` | Enable or disable the GPU Partitioner |
-| operator | object | - | Config of the nos operator. All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-operator). |
-| operator.enabled | bool | `true` | Enable or disable the nos Operator |
-| scheduler | object | - | Config of the nos scheduler. All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/scheduler). |
-| scheduler.enabled | bool | `true` | Enable or disable the nos Scheduler |
+| nos-gpu-partitioner | object | - | All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-gpu-partitioner). |
+| nos-gpu-partitioner.enabled | bool | `true` | Enable or disable `GPU partitioner` |
+| nos-operator | object | - | All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-operator). |
+| nos-operator.enabled | bool | `true` | Enable or disable the `nos operator` |
+| nos-scheduler | object | - | All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-scheduler). |
+| nos-scheduler.enabled | bool | `true` | Enable or disable the `nos scheduler` |
 
