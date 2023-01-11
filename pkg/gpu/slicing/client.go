@@ -18,10 +18,10 @@ package slicing
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/nvml"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/nvml"
+	"github.com/nebuly-ai/nos/pkg/resource"
+	"github.com/nebuly-ai/nos/pkg/util"
 )
 
 type tsClient struct {

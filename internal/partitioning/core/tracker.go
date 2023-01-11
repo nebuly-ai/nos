@@ -17,8 +17,8 @@
 package core
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/util"
 	v1 "k8s.io/api/core/v1"
 )
 

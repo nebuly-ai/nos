@@ -19,8 +19,8 @@
 package mocks
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	"github.com/nebuly-ai/nos/internal/partitioning/core"
+	"github.com/nebuly-ai/nos/internal/partitioning/state"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -17,10 +17,10 @@
 package plan_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	"github.com/nebuly-ai/nos/internal/controllers/migagent/plan"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/mig"
+	"github.com/nebuly-ai/nos/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

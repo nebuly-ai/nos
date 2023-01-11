@@ -19,8 +19,8 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nos/internal/partitioning/state"
+	"github.com/nebuly-ai/nos/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/log"

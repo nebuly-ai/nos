@@ -18,7 +18,7 @@ package mig
 
 import (
 	"github.com/google/go-cmp/cmp"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu"
 )
 
 func SpecMatchesStatus(specAnnotations gpu.SpecAnnotationList, statusAnnotations gpu.StatusAnnotationList) bool {

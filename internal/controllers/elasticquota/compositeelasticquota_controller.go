@@ -18,11 +18,11 @@ package elasticquota
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	gpu_util "github.com/nebuly-ai/nebulnetes/pkg/gpu/util"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/constant"
+	gpu_util "github.com/nebuly-ai/nos/pkg/gpu/util"
+	"github.com/nebuly-ai/nos/pkg/resource"
+	"github.com/nebuly-ai/nos/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"

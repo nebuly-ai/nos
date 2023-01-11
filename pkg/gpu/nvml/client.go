@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/go-logr/logr"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/util"
 	nvlibdevice "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvlib/device"
 	nvlibNvml "gitlab.com/nvidia/cloud-native/go-nvlib/pkg/nvml"
 )

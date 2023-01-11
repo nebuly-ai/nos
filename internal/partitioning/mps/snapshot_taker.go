@@ -17,10 +17,10 @@
 package mps
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
+	"github.com/nebuly-ai/nos/internal/partitioning/core"
+	"github.com/nebuly-ai/nos/internal/partitioning/state"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/slicing"
 )
 
 var _ core.SnapshotTaker = snapshotTaker{}

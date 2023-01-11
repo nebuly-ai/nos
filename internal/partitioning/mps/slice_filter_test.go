@@ -17,10 +17,10 @@
 package mps_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/mps"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
+	"github.com/nebuly-ai/nos/internal/partitioning/mps"
+	"github.com/nebuly-ai/nos/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/slicing"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"

@@ -18,10 +18,10 @@ package migagent
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/migagent/plan"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
-	migtest "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/mig"
+	"github.com/nebuly-ai/nos/internal/controllers/migagent/plan"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/resource"
+	migtest "github.com/nebuly-ai/nos/pkg/test/mocks/mig"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

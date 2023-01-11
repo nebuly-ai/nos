@@ -23,7 +23,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	state "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	state "github.com/nebuly-ai/nos/internal/partitioning/state"
 
 	v1 "k8s.io/api/core/v1"
 )

@@ -19,12 +19,12 @@
 package mocks
 
 import (
-	core "github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	gpu "github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	core "github.com/nebuly-ai/nos/internal/partitioning/core"
+	gpu "github.com/nebuly-ai/nos/pkg/gpu"
 
 	mock "github.com/stretchr/testify/mock"
 
-	state "github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
+	state "github.com/nebuly-ai/nos/internal/partitioning/state"
 
 	v1 "k8s.io/api/core/v1"
 )

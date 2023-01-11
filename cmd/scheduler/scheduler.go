@@ -17,9 +17,9 @@
 package main
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
-	"github.com/nebuly-ai/nebulnetes/pkg/scheduler/plugins/capacityscheduling"
+	"github.com/nebuly-ai/nos/pkg/api/scheduler"
+	"github.com/nebuly-ai/nos/pkg/api/scheduler/v1beta3"
+	"github.com/nebuly-ai/nos/pkg/scheduler/plugins/capacityscheduling"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"math/rand"
 	"os"
@@ -30,9 +30,9 @@ import (
 	kubeschedulerscheme "k8s.io/kubernetes/pkg/scheduler/apis/config/scheme"
 
 	// Ensure n8s.nebuly.ai/v1alpha1 package is initialized
-	_ "github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
+	_ "github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
 	// Ensure scheduler package is initialized.
-	_ "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
+	_ "github.com/nebuly-ai/nos/pkg/api/scheduler"
 )
 
 var (

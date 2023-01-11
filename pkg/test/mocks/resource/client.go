@@ -21,7 +21,7 @@ package resource
 import (
 	context "context"
 
-	resource "github.com/nebuly-ai/nebulnetes/pkg/resource"
+	resource "github.com/nebuly-ai/nos/pkg/resource"
 	mock "github.com/stretchr/testify/mock"
 )
 

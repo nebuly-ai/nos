@@ -17,9 +17,9 @@
 package mig_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/mig"
+	"github.com/nebuly-ai/nos/pkg/gpu/slicing"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

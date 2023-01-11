@@ -17,8 +17,8 @@
 package mps
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/slicing"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/slicing"
 	v1 "k8s.io/api/core/v1"
 )
 

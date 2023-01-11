@@ -18,9 +18,9 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	"github.com/nebuly-ai/nos/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/resource"
 	"k8s.io/api/core/v1"
 	"regexp"
 	"strconv"

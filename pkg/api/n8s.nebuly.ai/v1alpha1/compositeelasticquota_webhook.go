@@ -19,8 +19,8 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	. "sigs.k8s.io/controller-runtime/pkg/client"

@@ -17,10 +17,10 @@
 package mig_test
 
 import (
-	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/mig"
+	mig_partitioner "github.com/nebuly-ai/nos/internal/partitioning/mig"
+	"github.com/nebuly-ai/nos/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/mig"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"

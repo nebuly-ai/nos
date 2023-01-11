@@ -22,7 +22,7 @@ limitations under the License.
 package v1beta3
 
 import (
-	scheduler "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
+	scheduler "github.com/nebuly-ai/nos/pkg/api/scheduler"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"

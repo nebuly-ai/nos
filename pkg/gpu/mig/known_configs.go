@@ -18,7 +18,7 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu"
 )
 
 var (

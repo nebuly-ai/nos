@@ -19,10 +19,10 @@ package capacityscheduling
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/util"
-	"github.com/nebuly-ai/nebulnetes/pkg/resource"
+	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/gpu/util"
+	"github.com/nebuly-ai/nos/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sort"
@@ -47,7 +47,7 @@ import (
 	st "k8s.io/kubernetes/pkg/scheduler/testing"
 	imageutils "k8s.io/kubernetes/test/utils/image"
 
-	testutil "github.com/nebuly-ai/nebulnetes/pkg/test/util"
+	testutil "github.com/nebuly-ai/nos/pkg/test/util"
 )
 
 var (

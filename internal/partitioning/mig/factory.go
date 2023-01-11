@@ -17,11 +17,11 @@
 package mig
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpupartitioner"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/internal/controllers/gpupartitioner"
+	"github.com/nebuly-ai/nos/internal/partitioning/core"
+	"github.com/nebuly-ai/nos/internal/partitioning/state"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubernetes/pkg/scheduler/framework"

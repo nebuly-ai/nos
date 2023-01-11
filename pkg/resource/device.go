@@ -18,7 +18,7 @@ package resource
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/constant"
 	"k8s.io/api/core/v1"
 	"strings"
 )

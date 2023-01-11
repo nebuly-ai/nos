@@ -21,7 +21,7 @@ package gpu
 import (
 	context "context"
 
-	gpu "github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	gpu "github.com/nebuly-ai/nos/pkg/gpu"
 	mock "github.com/stretchr/testify/mock"
 )
 

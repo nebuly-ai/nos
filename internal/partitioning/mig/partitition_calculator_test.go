@@ -17,10 +17,10 @@
 package mig_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/core"
-	mig_partitioner "github.com/nebuly-ai/nebulnetes/internal/partitioning/mig"
-	"github.com/nebuly-ai/nebulnetes/internal/partitioning/state"
-	"github.com/nebuly-ai/nebulnetes/pkg/test/mocks"
+	"github.com/nebuly-ai/nos/internal/partitioning/core"
+	mig_partitioner "github.com/nebuly-ai/nos/internal/partitioning/mig"
+	"github.com/nebuly-ai/nos/internal/partitioning/state"
+	"github.com/nebuly-ai/nos/pkg/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -19,7 +19,7 @@
 package mocks
 
 import (
-	gpu "github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	gpu "github.com/nebuly-ai/nos/pkg/gpu"
 	framework "k8s.io/kubernetes/pkg/scheduler/framework"
 
 	mock "github.com/stretchr/testify/mock"

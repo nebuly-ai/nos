@@ -17,7 +17,7 @@
 package util_test
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

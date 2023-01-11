@@ -17,7 +17,7 @@
 package core
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/component-helpers/scheduling/corev1"
 	"sort"

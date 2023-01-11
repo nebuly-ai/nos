@@ -18,8 +18,8 @@ package util_test
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
-	"github.com/nebuly-ai/nebulnetes/pkg/util"
+	"github.com/nebuly-ai/nos/pkg/test/factory"
+	"github.com/nebuly-ai/nos/pkg/util"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"testing"

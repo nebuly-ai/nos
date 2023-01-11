@@ -17,9 +17,9 @@
 package elasticquota
 
 import (
-	"github.com/nebuly-ai/nebulnetes/pkg/constant"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu/util"
-	"github.com/nebuly-ai/nebulnetes/pkg/test/factory"
+	"github.com/nebuly-ai/nos/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/gpu/util"
+	"github.com/nebuly-ai/nos/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

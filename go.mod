@@ -1,4 +1,4 @@
-module github.com/nebuly-ai/nebulnetes
+module github.com/nebuly-ai/nos
 
 go 1.18
 

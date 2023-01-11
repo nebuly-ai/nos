@@ -20,10 +20,10 @@ package gpuagent_test
 
 import (
 	"context"
-	"github.com/nebuly-ai/nebulnetes/internal/controllers/gpuagent"
-	"github.com/nebuly-ai/nebulnetes/pkg/api/n8s.nebuly.ai/v1alpha1"
-	"github.com/nebuly-ai/nebulnetes/pkg/gpu"
-	gpumock "github.com/nebuly-ai/nebulnetes/pkg/test/mocks/gpu"
+	"github.com/nebuly-ai/nos/internal/controllers/gpuagent"
+	"github.com/nebuly-ai/nos/pkg/api/n8s.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/gpu"
+	gpumock "github.com/nebuly-ai/nos/pkg/test/mocks/gpu"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
