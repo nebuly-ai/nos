@@ -186,7 +186,7 @@ Name of the gpu-agent
 
 {{- define "gpu-agent.fullname" -}}
 {{- $name := include "gpu-agent.name" . -}}
-{{- include "gpu-partitioner.fullname" . | replace .Chart.Name  | trunc 63 | trimSuffix "-" -}}
+{{- include "gpu-partitioner.fullname" . | replace .Chart.Name $name  | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
