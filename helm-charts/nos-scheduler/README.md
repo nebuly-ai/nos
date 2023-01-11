@@ -8,7 +8,7 @@ Kubernetes scheduler optimized for managing AI workloads.
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/Telemaco019> |
+| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/nebuly-ai> |
 | Diego Fiori | <d.fiori@nebuly.ai> | <github.com/diegofiori> |
 
 ## Source Code
@@ -25,7 +25,7 @@ Kubernetes scheduler optimized for managing AI workloads.
 | fullnameOverride | string | `""` |  |
 | global.nvidiaGpuResourceMemoryGB | int | `32` | Defines how many GB of memory each nvidia.com/gpu resource has. |
 | image.pullPolicy | string | `"IfNotPresent"` | Sets Docker image pull policy. |
-| image.repository | string | `"ghcr.io/telemaco019/nebulnetes-scheduler"` | Sets Docker image. |
+| image.repository | string | `"ghcr.io/nebuly-ai/nos-scheduler"` | Sets Docker image. |
 | image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | leaderElection.enabled | bool | `true` | Enables/Disables the leader election when deployed with multiple replicas. |
 | logLevel | int | `0` | The level of log of the scheduler. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |

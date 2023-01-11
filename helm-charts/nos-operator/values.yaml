@@ -15,7 +15,7 @@ fullnameOverride: ""
 
 image:
   # -- Sets the operator Docker repository
-  repository: ghcr.io/telemaco019/nebulnetes-operator
+  repository: ghcr.io/nebuly-ai/nos-operator
   # -- Overrides the operator Docker image tag whose default is the chart appVersion.
   tag: ""
   # -- Sets the operator Docker image pull policy.

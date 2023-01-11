@@ -15,14 +15,14 @@ The target uses [Kind](https://kind.sigs.k8s.io/) to create a local Kubernetes c
 nodes.
 
 
-The Nebulnetes operator uses webhooks that require SSL certificates. You can let cert-manager create and manage
+The nos operator uses webhooks that require SSL certificates. You can let cert-manager create and manage
 them by installing it on the cluster you have created in the previous step:
 ```shell
 make install-cert-manager
 ```
 
 ### Build components
-You can build the Nebulnetes components by running the `docker-build-<component-name>` targets. The targets build 
+You can build the nos components by running the `docker-build-<component-name>` targets. The targets build 
 the Docker images using the default image name tagged with the version defined in the first line of
 the [Makefile](../../Makefile). 
 
@@ -72,7 +72,7 @@ kind load docker-image <image-name>:<image-tag>
 
 ### Install components
 
-You can install single Nebulnetes components by running:
+You can install single nos components by running:
 ```shell
 make deploy-<component> 
 ````

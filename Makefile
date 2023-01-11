@@ -222,12 +222,12 @@ install-cert-manager: ## Deploy cert-manager on the K8s cluster specified in ~/.
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MANAGER_VERSION)/cert-manager.yaml
 
 .PHONY: deploy-operator
-deploy-operator: operator-manifests kustomize ## Deploy the Nebulnetes Operator to the K8s cluster specified in ~/.kube/config.
+deploy-operator: operator-manifests kustomize ## Deploy the nos Operator to the K8s cluster specified in ~/.kube/config.
 	cd config/operator/manager && $(KUSTOMIZE) edit set image controller=${OPERATOR_IMG}
 	$(KUSTOMIZE) build config/operator/default | kubectl apply -f -
 
 .PHONY: deploy-scheduler
-deploy-scheduler: kustomize ## Deploy the Nebulnetes scheduler to the K8s cluster specified in ~/.kube/config.
+deploy-scheduler: kustomize ## Deploy the nos scheduler to the K8s cluster specified in ~/.kube/config.
 	cd config/scheduler/deployment && $(KUSTOMIZE) edit set image scheduler=${SCHEDULER_IMG}
 	$(KUSTOMIZE) build config/scheduler/default | kubectl apply -f -
 
@@ -247,11 +247,11 @@ deploy-gpu-partitioner: kustomize deploy-mig-agent deploy-gpu-agent ## Deploy th
 	$(KUSTOMIZE) build config/gpupartitioner/default | kubectl apply -f -
 
 .PHONY: undeploy-operator
-undeploy-operator: ## Undeploy the Nebulnetes operator from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+undeploy-operator: ## Undeploy the nos operator from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/operator/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: undeploy-scheduler
-undeploy-scheduler: ## Undeploy the Nebulnetes scheduler from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+undeploy-scheduler: ## Undeploy the nos scheduler from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/scheduler/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: undeploy-mig-agent

@@ -19,7 +19,7 @@ fullnameOverride: ""
 
 image:
   # -- Sets Docker image.
-  repository: ghcr.io/telemaco019/nebulnetes-scheduler
+  repository: ghcr.io/nebuly-ai/nos-scheduler
   # -- Sets Docker image pull policy.
   pullPolicy: IfNotPresent
   # -- Overrides the image tag whose default is the chart appVersion.

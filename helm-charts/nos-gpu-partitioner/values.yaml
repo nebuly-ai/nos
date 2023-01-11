@@ -31,7 +31,7 @@ scheduler:
 
 image:
   # -- Sets the GPU Partitioner Docker image.
-  repository: ghcr.io/telemaco019/nebulnetes-gpu-partitioner
+  repository: ghcr.io/nebuly-ai/nos-gpu-partitioner
   # -- Sets the GPU Partitioner Docker image pull policy.
   pullPolicy: IfNotPresent
   # -- Overrides the GPU Partitioner image tag whose default is the chart appVersion.
@@ -48,7 +48,7 @@ migAgent:
   logLevel: 0
   image:
     # -- Sets the MIG Agent Docker image.
-    repository: ghcr.io/telemaco019/nebulnetes-mig-agent
+    repository: ghcr.io/nebuly-ai/nos-mig-agent
     # -- Sets the MIG Agent Docker image pull policy.
     pullPolicy: IfNotPresent
     # -- Overrides the MIG Agent image tag whose default is the chart appVersion.
@@ -76,7 +76,7 @@ gpuAgent:
   logLevel: 0
   image:
     # -- Sets the GPU Agent Docker image.
-    repository: ghcr.io/telemaco019/nebulnetes-gpu-agent
+    repository: ghcr.io/nebuly-ai/nos-gpu-agent
     # -- Sets the GPU Agent Docker image pull policy.
     pullPolicy: IfNotPresent
     # -- Overrides the GPU Agent image tag whose default is the chart appVersion.

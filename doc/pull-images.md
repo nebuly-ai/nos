@@ -1,9 +1,9 @@
-# How to pull Nebulnetes images
+# How to pull nos images
 
-Since at the moment Nebulnetes is not publicly available, you need to provide credentials for pulling the Docker
+Since at the moment nos is not publicly available, you need to provide credentials for pulling the Docker
 images from our private GitHub container registry.
 
-The k8s manifests for deploying Nebulnetes components expect the Docker credentials to be stored in a secret
+The k8s manifests for deploying nos components expect the Docker credentials to be stored in a secret
 called `ghcr` in the namespace `nos-system`. You can create the secret by following these steps:
 
 1. Create a personal access token with the `read:packages` scope on GitHub. You can find more information on how to

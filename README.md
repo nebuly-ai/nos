@@ -17,7 +17,7 @@ Currently, this layer provides two features [Automatic GPU partitioning](doc/aut
   - [Enable nodes for automatic partitioning](doc/automatic-gpu-partitioning.md#enable-nodes-for-automatic-partitioning)
   - [MIG Partitioning](doc/automatic-gpu-partitioning.md#mig-partitioning)
   - [Configuration](doc/automatic-gpu-partitioning.md#configuration)
-  - [Integration with nos scheduler](doc/automatic-gpu-partitioning.md#integration-with-nebulnetes-scheduler)
+  - [Integration with nos scheduler](doc/automatic-gpu-partitioning.md#integration-with-nos-scheduler)
   - [Troubleshooting](doc/automatic-gpu-partitioning.md#troubleshooting)
 - [Elastic Resource Quota management](doc/elastic-quota.md)
   - [Getting started](doc/elastic-quota.md#getting-started)

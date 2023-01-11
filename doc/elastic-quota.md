@@ -232,11 +232,11 @@ import (
  "k8s.io/kubernetes/cmd/kube-scheduler/app"
 
  // Import plugin config
- "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler"
- "github.com/nebuly-ai/nebulnetes/pkg/api/scheduler/v1beta3"
+ "github.com/nebuly-ai/nos/pkg/api/scheduler"
+ "github.com/nebuly-ai/nos/pkg/api/scheduler/v1beta3"
 
  // Ensure nos.nebuly.ai/v1alpha1 package is initialized
- _ "github.com/nebuly-ai/nebulnetes/pkg/api/nos.nebuly.ai/v1alpha1"
+ _ "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
 )
 
 func main() {
@@ -269,7 +269,7 @@ Over-quota pods can be preempted at any time to free up resources if any of the 
 lending the quotas claims back its resources.
 
 You can check whether a Pod is in over-quota by checking the value of the label `nos.nebuly.ai/capacity`, which is
-automatically created and updated by the Nebulnetes operator for every Pod created in a namespace subject to
+automatically created and updated by the nos operator for every Pod created in a namespace subject to
 an ElasticQuota or to a CompositeElasticQuota. The two possible values for this label are `in-quota` and `over-quota`.
 
 You can use this label to easily find out at any time which are the over-quota pods subject to preemption risk:
@@ -284,20 +284,20 @@ All the pods created within a namespace subject to a quota are labelled as `in-q
 resources of the quota do not exceed its `min` resources. When this happens and news pods are created in that namespace,
 they are labelled as `over-quota` when they reach the running phase.
 
-Nebulnetes re-evaluates the over-quota status of each Pod of a namespace every time a new Pod in that
-namespace changes its phase to/from "Running". With the default configuration, Nebulnetes sorts the pods by creation
+nos re-evaluates the over-quota status of each Pod of a namespace every time a new Pod in that
+namespace changes its phase to/from "Running". With the default configuration, nos sorts the pods by creation
 date and, if the creation timestamp is the same, by requested resources, placing first the pods with older creation
-timestamp and with fewer requested resources. After the pods are sorted, Nebulnetes computes the aggregated requested
+timestamp and with fewer requested resources. After the pods are sorted, nos computes the aggregated requested
 resources by summing the request of each Pod, and it marks as `over-quota` all the pods for which `used`
 is greater than `min`.
 
 > 🚧 Soon it will be possible to customize the order criteria used for sorting the pods during this process through the
-> Nebulnetes operator configuration.
+> nos operator configuration.
 
 ### Over-quota fair sharing
 
 In order to prevent a single namespace from consuming all the over-quotas available in the cluster and starving the
-others, Nebulnetes implements a fair-sharing mechanism that guarantees that each namespace subject to an ElasticQuota
+others, nos implements a fair-sharing mechanism that guarantees that each namespace subject to an ElasticQuota
 has right to a part of the available over-quotas proportional to its `min` field.
 
 The fair-sharing mechanism does not enforce any hard limit on the amount of over-quotas pods that a namespace can
@@ -336,7 +336,7 @@ pods in the namespace subject to Elastic Quota B.
 
 At time _t2_, a new Pod is created in the namespace subject to Elastic Quota A. Even though all the quotas of the
 cluster are currently being used, the fair sharing mechanism grants to Elastic Quota A a certain amount of over-quotas
-that it can use, and in order to grant these quotas Nebulnetes can preempt one or more over-quota pods from the
+that it can use, and in order to grant these quotas nos can preempt one or more over-quota pods from the
 namespace subject to Elastic Quota B.
 
 Specifically, the following are the amounts of over-quotas guaranteed to each of the namespaces subject to the
@@ -360,9 +360,9 @@ You can use this resource in the `min` and `max` fields of the elastic quotas sp
 minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace and its maximum limit,
 respectively.
 
-Nebulnetes automatically computes the GPU memory requested by each Pod from the GPU resources requested
+nos automatically computes the GPU memory requested by each Pod from the GPU resources requested
 by its containers and enforces the limits accordingly. The amount of memory GB corresponding to the
-generic resource `nvidia.com/gpu` is defined by the field `nvidiaGpuResourceMemoryGB` of the Nebulnetes Operator
+generic resource `nvidia.com/gpu` is defined by the field `nvidiaGpuResourceMemoryGB` of the nos Operator
 configuration, which is 32 by default.
 
 For instance, using the default configuration, the value of the resource `nos.nebuly.ai/gpu-memory` computed from
@@ -408,7 +408,7 @@ You can increase the scheduler log verbosity by editing the Scheduler deployment
 
 ## Uninstall
 
-To uninstall the Nebulnetes Operator and Scheduler, run the following commands:
+To uninstall the nos Operator and Scheduler, run the following commands:
 
 ```shell
 make undeploy-operator

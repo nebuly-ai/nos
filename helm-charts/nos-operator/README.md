@@ -8,7 +8,7 @@ Install and manage `nos` custom resources.
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/Telemaco019> |
+| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/nebuly-ai> |
 | Diego Fiori | <d.fiori@nebuly.ai> | <github.com/diegofiori> |
 
 ## Source Code
@@ -24,7 +24,7 @@ Install and manage `nos` custom resources.
 | fullnameOverride | string | `""` |  |
 | global.nvidiaGpuResourceMemoryGB | int | `32` | Defines how many GB of memory each nvidia.com/gpu resource has. |
 | image.pullPolicy | string | `"IfNotPresent"` | Sets the operator Docker image pull policy. |
-| image.repository | string | `"ghcr.io/telemaco019/nebulnetes-operator"` | Sets the operator Docker repository |
+| image.repository | string | `"ghcr.io/nebuly-ai/nos-operator"` | Sets the operator Docker repository |
 | image.tag | string | `""` | Overrides the operator Docker image tag whose default is the chart appVersion. |
 | kubeRbacProxy | object | - | Configuration of the [Kube RBAC Proxy](https://github.com/brancz/kube-rbac-proxy), which runs as sidecar of the operator Pods. |
 | leaderElection.enabled | bool | `true` | Enables/Disables the leader election of the operator controller manager. |

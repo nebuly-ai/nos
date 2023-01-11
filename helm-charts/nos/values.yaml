@@ -1,4 +1,4 @@
-# Default values for nebulnetes.
+# Default values for nos.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -8,27 +8,27 @@ global:
   # -- Defines how many GB of memory each nvidia.com/gpu resource has.
   nvidiaGpuResourceMemoryGB: 32
 
-# -- Config of the Nebulnetes operator.
-# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/nos-operator).
+# -- Config of the nos operator.
+# All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-operator).
 # @default -- -
 nos-operator:
-  # -- Enable or disable the Nebulnetes Operator
+  # -- Enable or disable the nos Operator
   enabled: true
   image:
     pullPolicy: Always
 
-# -- Config of the Nebulnetes scheduler.
-# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/scheduler).
+# -- Config of the nos scheduler.
+# All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/scheduler).
 # @default -- -
 nos-scheduler:
-  # -- Enable or disable the Nebulnetes Scheduler
+  # -- Enable or disable the nos Scheduler
   enabled: true
   image:
     pullPolicy: Always
 
 
 # -- Config of the GPU Partitioner component.
-# All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner).
+# All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/gpu-partitioner).
 # @default -- -
 nos-gpu-partitioner:
   # -- Enable or disable the GPU Partitioner

@@ -8,7 +8,7 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/Telemaco019> |
+| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/nebuly-ai> |
 | Diego Fiori | <d.fiori@nebuly.ai> | <github.com/diegofiori> |
 
 ## Source Code
@@ -28,14 +28,14 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | fullnameOverride | string | `""` |  |
 | gpuAgent | object | - | Configuration of the GPU Agent component of the GPU Partitioner. |
 | gpuAgent.image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Agent Docker image pull policy. |
-| gpuAgent.image.repository | string | `"ghcr.io/telemaco019/nebulnetes-gpu-agent"` | Sets the GPU Agent Docker image. |
+| gpuAgent.image.repository | string | `"ghcr.io/nebuly-ai/nos-gpu-agent"` | Sets the GPU Agent Docker image. |
 | gpuAgent.image.tag | string | `"latest"` | Overrides the GPU Agent image tag whose default is the chart appVersion. |
 | gpuAgent.logLevel | int | `0` | The level of log of the GPU Agent. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
 | gpuAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s status of the GPUs of the Node |
 | gpuAgent.resources | object | `{"limits":{"cpu":"100m","memory":"128Mi"}}` | Sets the resource requests and limits of the GPU Agent container. |
 | gpuAgent.tolerations | list | `[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]` | Sets the tolerations of the GPU Agent Pod. |
 | image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Partitioner Docker image pull policy. |
-| image.repository | string | `"ghcr.io/telemaco019/nebulnetes-gpu-partitioner"` | Sets the GPU Partitioner Docker image. |
+| image.repository | string | `"ghcr.io/nebuly-ai/nos-gpu-partitioner"` | Sets the GPU Partitioner Docker image. |
 | image.tag | string | `""` | Overrides the GPU Partitioner image tag whose default is the chart appVersion. |
 | knownMigGeometries | object | - | Map that associates to each GPU model its possible MIG configurations |
 | kubeRbacProxy | object | - | Configuration of the [Kube RBAC Proxy](https://github.com/brancz/kube-rbac-proxy), which runs as sidecar of all the GPU Partitioner components Pods. |
@@ -43,7 +43,7 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | logLevel | int | `0` | The level of log of the GPU Partitioner. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
 | migAgent | object | - | Configuration of the MIG Agent component of the GPU Partitioner. |
 | migAgent.image.pullPolicy | string | `"IfNotPresent"` | Sets the MIG Agent Docker image pull policy. |
-| migAgent.image.repository | string | `"ghcr.io/telemaco019/nebulnetes-mig-agent"` | Sets the MIG Agent Docker image. |
+| migAgent.image.repository | string | `"ghcr.io/nebuly-ai/nos-mig-agent"` | Sets the MIG Agent Docker image. |
 | migAgent.image.tag | string | `""` | Overrides the MIG Agent image tag whose default is the chart appVersion. |
 | migAgent.logLevel | int | `0` | The level of log of the MIG Agent. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
 | migAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node |

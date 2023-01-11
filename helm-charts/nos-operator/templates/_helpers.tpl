@@ -40,7 +40,7 @@ helm.sh/chart: {{ include "operator.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/part-of: nebulnetes
+app.kubernetes.io/part-of: nos
 app.kubernetes.io/component: operator
 {{- end }}
 

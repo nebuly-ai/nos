@@ -6,7 +6,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Define nebulnetes full name including the Chart release name
+Define nos full name including the Chart release name
 */}}
 {{- define "nos.fullname" -}}
 {{- $name := .Chart.Name -}}

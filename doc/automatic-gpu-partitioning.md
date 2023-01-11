@@ -1,6 +1,6 @@
 # Automatic GPU partitioning
 
-> ⚠️ At the moment Nebulnetes only
+> ⚠️ At the moment nos only
 > supports [Multi-instance GPU (MIG) partitioning](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html),
 > which is available only for NVIDIA GPUs based on Ampere and Hopper architectures.
 
@@ -12,14 +12,14 @@
 - [Configuration](#configuration)
   - [Pods batch size](#pods-batch-size)
   - [Scheduler configuration](#scheduler-configuration)
-  - [Integration with Nebulnetes scheduler](#integration-with-nebulnetes-scheduler)
+  - [Integration with nos scheduler](#integration-with-nos-scheduler)
   - [Available MIG geometries](#available-mig-geometries)
 - [Troubleshooting](#troubleshooting)
 - [Uninstall](#uninstall)
 
 ## Overview
 
-Nebulnetes allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
+nos allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
 the partitioning is performed dynamically based on the pending and running Pods in your cluster, so that the GPUs
 are always fully utilized.
 
@@ -57,7 +57,7 @@ required to the k8s cluster specified in your `~/.kube/config`.
 
 By default, all the resources are installed in the `nos-system` namespace.
 
-1. Deploy the Nebulnetes operator
+1. Deploy the nos operator
 
 ```shell
 make deploy-operator
@@ -95,7 +95,7 @@ You can enable automatic MIG partitioning on a node by adding to it the followin
 kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mig"
 ```
 
-The label delegates to Nebulnetes the management of the MIG resources of all the GPUs of that node, so you don't have 
+The label delegates to nos the management of the MIG resources of all the GPUs of that node, so you don't have 
 to manually configure the MIG geometry of the GPUs anymore: nos will dynamically apply the most proper geometry 
 according to the resources requested by the pods submitted to the cluster.
 
@@ -160,12 +160,12 @@ a candidate GPU partitioning plan would make the pending pods schedulable.
 You can provide a custom scheduler configuration by editing the `schedulerConfigFile` parameter, which is the path
 to a YAML file containing the scheduler configuration.
 
-### Integration with Nebulnetes scheduler
+### Integration with nos scheduler
 
-If you want to use Automatic GPU partitioning together with the Nebulnetes scheduler so that Elastic Resource quotas
+If you want to use Automatic GPU partitioning together with the nos scheduler so that Elastic Resource quotas
 are taken into account when performing the GPUs partitioning, you can follow these steps:
 
-* deploy the Nebulnetes scheduler
+* deploy the nos scheduler
 * uncomment the last patch of this [kustomization file](../config/gpupartitioner/default/kustomization.yaml), which
   mounts the nos scheduler config file to the GPU partitioner pod filesystem
 * set the `schedulerConfigFile` value to `scheduler_config.yam`
