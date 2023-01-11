@@ -14,8 +14,6 @@ global:
 nos-operator:
   # -- Enable or disable the nos Operator
   enabled: true
-  image:
-    pullPolicy: Always
 
 # -- Config of the nos scheduler.
 # All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/scheduler).
@@ -23,8 +21,6 @@ nos-operator:
 nos-scheduler:
   # -- Enable or disable the nos Scheduler
   enabled: true
-  image:
-    pullPolicy: Always
 
 
 # -- Config of the GPU Partitioner component.
@@ -33,11 +29,3 @@ nos-scheduler:
 nos-gpu-partitioner:
   # -- Enable or disable the GPU Partitioner
   enabled: true
-  image:
-    pullPolicy: Always
-  migAgent:
-    image:
-      pullPolicy: Always
-  gpuAgent:
-    image:
-      pullPolicy: Always

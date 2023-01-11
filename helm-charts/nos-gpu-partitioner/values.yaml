@@ -80,7 +80,7 @@ gpuAgent:
     # -- Sets the GPU Agent Docker image pull policy.
     pullPolicy: IfNotPresent
     # -- Overrides the GPU Agent image tag whose default is the chart appVersion.
-    tag: "latest"
+    tag: ""
   # -- Sets the resource requests and limits of the GPU Agent container.
   resources:
     limits:
