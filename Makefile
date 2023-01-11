@@ -1,17 +1,18 @@
-# Nebulnetes version. Used by release workflow, do not move this line.
-N8S_VERSION ?= 0.0.1-alpha.3
+# nos version. Used by release workflow, do not move this line.
+NOS_VERSION ?= 0.0.1-alpha.3
+
+DOCKER_REGISTRY ?= ghcr.io/nebuly-ai
 
 # Image URLs to build/push Docker image targets
-OPERATOR_IMG ?= ghcr.io/telemaco019/nebulnetes-operator:$(N8S_VERSION)
-SCHEDULER_IMG ?= ghcr.io/telemaco019/nebulnetes-scheduler:$(N8S_VERSION)
-GPU_PARTITIONER_IMG ?= ghcr.io/telemaco019/nebulnetes-gpu-partitioner:$(N8S_VERSION)
-MIG_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-mig-agent:$(N8S_VERSION)
-GPU_AGENT_IMG ?= ghcr.io/telemaco019/nebulnetes-gpu-agent:$(N8S_VERSION)
+OPERATOR_IMG ?= $(DOCKER_REGISTRY)/nos-operator:$(NOS_VERSION)
+SCHEDULER_IMG ?= $(DOCKER_REGISTRY)/nos-scheduler:$(NOS_VERSION)
+GPU_PARTITIONER_IMG ?= $(DOCKER_REGISTRY)/nos-gpu-partitioner:$(NOS_VERSION)
+MIG_AGENT_IMG ?= $(DOCKER_REGISTRY)/nos-mig-agent:$(NOS_VERSION)
+GPU_AGENT_IMG ?= $(DOCKER_REGISTRY)/nos-gpu-agent:$(NOS_VERSION)
 
 # Helm chart URL to push Helm charts
-HELM_CHART_REGISTRY ?= oci://ghcr.io/telemaco019/helm-charts
+HELM_CHART_REGISTRY ?= oci://ghcr.io/nebuly-ai/helm-charts
 
-CERT_MANAGER_VERSION ?= v1.9.1
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.24.2
 
@@ -115,7 +116,7 @@ license-fix: license-eye ## Add license header to files that still don't have it
 	$(LICENSE_EYE) header fix
 
 .PHONY: helm-doc
-helm-doc: ## Generate Helm charts documentation
+helm-doc: helm-docs-bin ## Generate Helm charts documentation
 	$(HELM_DOCS) --chart-search-root ./helm-charts --document-dependency-values
 
 ##@ Build
@@ -185,31 +186,31 @@ docker-push: docker-push-mig-agent \
 
 .PHONY: helm-push-gpu-partitioner
 helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm repository.
-	helm package helm-charts/gpu-partitioner --destination /tmp
-	helm push /tmp/gpu-partitioner-*.tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/gpu-partitioner-*.tgz
+	helm package helm-charts/nos-gpu-partitioner --destination /tmp
+	helm push /tmp/nos-gpu-partitioner-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/nos-gpu-partitioner-*.tgz
 
 .PHONY: helm-push-scheduler
 helm-push-scheduler: ## Push the scheduler Helm chart to the Helm repository.
-	helm package helm-charts/scheduler --destination /tmp
-	helm push /tmp/scheduler-*.tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/scheduler-*.tgz
+	helm package helm-charts/nos-scheduler --destination /tmp
+	helm push /tmp/nos-scheduler-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/nos-scheduler-*.tgz
 
 .PHONY: helm-push-operator
 helm-push-operator: ## Push the operator Helm chart to the Helm repository.
-	helm package helm-charts/operator --destination /tmp
-	helm push /tmp/operator-*.tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/operator-*.tgz
+	helm package helm-charts/nos-operator --destination /tmp
+	helm push /tmp/nos-operator-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/nos-operator-*.tgz
 
-.PHONY: helm-push-nebulnetes
-helm-push-nebulnetes: ## Push the n8s-operator Helm chart to the Helm repository.
-	helm dependency update helm-charts/nebulnetes
-	helm package helm-charts/nebulnetes --destination /tmp
-	helm push /tmp/nebulnetes-*.tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/nebulnetes-*.tgz
+.PHONY: helm-push-nos
+helm-push-nos: ## Push the nos Helm chart to the Helm repository.
+	helm dependency update helm-charts/nos
+	helm package helm-charts/nos --destination /tmp
+	helm push /tmp/nos-*.tgz $(HELM_CHART_REGISTRY)
+	rm /tmp/nos-*.tgz
 
 .PHONY: helm-push
-helm-push: helm-push-gpu-partitioner helm-push-operator helm-push-scheduler helm-push-nebulnetes ## Push the all the Helm charts to the Helm repository.
+helm-push: helm-push-gpu-partitioner helm-push-operator helm-push-scheduler helm-push-nos ## Push the all the Helm charts to the Helm repository.
 
 ##@ Deployment
 
@@ -287,6 +288,7 @@ CONTROLLER_TOOLS_VERSION ?= v0.9.2
 CODE_GENERATOR_VERSION ?= v0.24.3
 GOLANGCI_LINT_VERSION ?= 1.50.1
 HELM_DOCS_VERSION ?= v1.11.0
+CERT_MANAGER_VERSION ?= v1.9.1
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize

@@ -1,4 +1,4 @@
-# nebulnetes
+# nos
 
 ![Version: 0.0.1-alpha.3](https://img.shields.io/badge/Version-0.0.1--alpha.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.0.1-alpha.3](https://img.shields.io/badge/AppVersion-0.0.1--alpha.3-informational?style=flat-square)
 
@@ -13,17 +13,17 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 
 ## Source Code
 
-* <https://github.com/Telemaco019/nebulnetes>
-* <https://github.com/Telemaco019/nebulnetes/helm-charts/nebulnetes>
-* <https://github.com/Telemaco019/nebulnetes/helm-charts/gpu-partitioner>
+* <https://github.com/nebuly-ai/nos>
+* <https://github.com/nebuly-ai/nos/helm-charts/nos>
+* <https://github.com/nebuly-ai/nos/helm-charts/nos-gpu-partitioner>
 
 ## Requirements
 
 | Repository | Name | Version |
 |------------|------|---------|
-| oci://ghcr.io/telemaco019/helm-charts | gpu-partitioner | 0.0.1-alpha.3 |
-| oci://ghcr.io/telemaco019/helm-charts | operator | 0.0.1-alpha.3 |
-| oci://ghcr.io/telemaco019/helm-charts | scheduler | 0.0.1-alpha.3 |
+| oci://ghcr.io/nebuly-ai/helm-charts | nos-gpu-partitioner | 0.0.1-alpha.3 |
+| oci://ghcr.io/nebuly-ai/helm-charts | nos-operator | 0.0.1-alpha.3 |
+| oci://ghcr.io/nebuly-ai/helm-charts | nos-scheduler | 0.0.1-alpha.3 |
 
 ## Values
 

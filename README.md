@@ -1,6 +1,6 @@
 # Nebuly Operating System (nos)
 
-```nos``` is the open-source module for running AI workloads on Kubernetes in an optimized way, both in terms of
+`nos` is the open-source module for running AI workloads on Kubernetes in an optimized way, both in terms of
 hardware utilization and workload performance.
 
 The operating system layer is responsible for workloads scheduling and hardware abstraction.

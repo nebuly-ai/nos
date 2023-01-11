@@ -1,14 +1,14 @@
 apiVersion: v2
-name: scheduler
-description: Scheduler - TODO
+name: nos-operator
+description: Install and manage `nos` custom resources.
 
 type: application
 version: 0.0.1-alpha.3
 appVersion: "0.0.1-alpha.3"
 
 sources:
-  - https://github.com/Telemaco019/nebulnetes
-  - https://github.com/Telemaco019/helm-charts/scheduler
+  - https://github.com/nebuly-ai/nos
+  - https://github.com/nebuly-ai/helm-charts/nos-operator
 
 maintainers:
   - name: Michele Zanotti

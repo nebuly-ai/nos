@@ -1,5 +1,5 @@
 apiVersion: v2
-name: gpu-partitioner
+name: nos-gpu-partitioner
 description: Automatically partitions GPUs exposing them to Kubernetes as multiple resources (slices).
 
 type: application
@@ -7,7 +7,8 @@ version: 0.0.1-alpha.3
 appVersion: "0.0.1-alpha.3"
 
 sources:
-  - https://github.com/Telemaco019/nebulnetes
+  - https://github.com/nebuly-ai/nos
+  - https://github.com/nebuly-ai/nos-gpu-partitioner
 
 maintainers:
   - name: Michele Zanotti

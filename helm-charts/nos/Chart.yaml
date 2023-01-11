@@ -1,5 +1,5 @@
 apiVersion: v2
-name: nebulnetes
+name: nos
 description: The open-source platform for running AI workloads on k8s in an optimized way, both in terms of hardware 
   utilization and workload performance.
 
@@ -8,21 +8,21 @@ version: 0.0.1-alpha.3
 appVersion: "0.0.1-alpha.3"
 
 sources:
-  - https://github.com/Telemaco019/nebulnetes
-  - https://github.com/Telemaco019/nebulnetes/helm-charts/nebulnetes
-  - https://github.com/Telemaco019/nebulnetes/helm-charts/gpu-partitioner
+  - https://github.com/nebuly-ai/nos
+  - https://github.com/nebuly-ai/nos/helm-charts/nos
+  - https://github.com/nebuly-ai/nos/helm-charts/nos-gpu-partitioner
 
 dependencies:
-  - name: gpu-partitioner
-    repository: "oci://ghcr.io/telemaco019/helm-charts"
+  - name: nos-gpu-partitioner
+    repository: "oci://ghcr.io/nebuly-ai/helm-charts"
     version: 0.0.1-alpha.3
     condition: gpu-partitioner.enabled
-  - name: scheduler
-    repository: "oci://ghcr.io/telemaco019/helm-charts"
+  - name: nos-scheduler
+    repository: "oci://ghcr.io/nebuly-ai/helm-charts"
     version: 0.0.1-alpha.3
     condition: scheduler.enabled
-  - name: operator
-    repository: "oci://ghcr.io/telemaco019/helm-charts"
+  - name: nos-operator
+    repository: "oci://ghcr.io/nebuly-ai/helm-charts"
     version: 0.0.1-alpha.3
     condition: operator.enabled
 
