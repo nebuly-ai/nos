@@ -25,6 +25,7 @@ import (
 	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/gpu/slicing"
+	"github.com/nebuly-ai/nos/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -141,9 +142,12 @@ func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
 		}
 	}
 	return nvidiav1.Config{
-		Version:   nvidiav1.Version,
-		Flags:     nvidiav1.Flags{},
-		Resources: nvidiav1.Resources{},
+		Version: nvidiav1.Version,
+		Flags: nvidiav1.Flags{
+			CommandLineFlags: nvidiav1.CommandLineFlags{
+				MigStrategy: util.StringAddr("none"),
+			},
+		},
 		Sharing: nvidiav1.Sharing{
 			MPS: nvidiav1.MPS{Resources: replicatedResources},
 		},
