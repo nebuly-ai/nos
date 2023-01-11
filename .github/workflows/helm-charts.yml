@@ -1,0 +1,32 @@
+name: Push Helm charts
+
+on:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Helm
+        uses: Azure/setup-helm@v3
+        with:
+          version: v3.10.3
+
+      - name: Helm login
+        run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }} -u $ --password-stdin
+
+      - name: Check Version
+        id: version
+        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
+
+      - name: Push Helm charts
+        run: make helm-push
