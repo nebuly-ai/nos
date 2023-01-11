@@ -24,6 +24,7 @@ spec:
       containers:
         - image: "{{ .Values.gpuAgent.image.repository }}:{{ .Values.gpuAgent.image.tag | default .Chart.AppVersion }}"
           name: {{ include "gpu-agent.fullname" . }}
+          imagePullPolicy: {{ .Values.gpuAgent.image.pullPolicy }}
           args:
             - --config={{ include "gpu-agent.configFileName" . }}
             {{- if gt (int .Values.gpuAgent.logLevel) 0 }}

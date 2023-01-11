@@ -23,6 +23,7 @@ spec:
       terminationGracePeriodSeconds: 20
       containers:
         - image: "{{ .Values.migAgent.image.repository }}:{{ .Values.migAgent.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.migAgent.image.pullPolicy }}
           name: {{ include "mig-agent.fullname" . }}
           args:
             - --config={{ include "mig-agent.configFileName" . }}

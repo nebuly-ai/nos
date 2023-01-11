@@ -11,21 +11,33 @@ global:
 # -- Config of the Nebulnetes operator.
 # All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/nos-operator).
 # @default -- -
-operator:
+nos-operator:
   # -- Enable or disable the Nebulnetes Operator
   enabled: true
+  image:
+    pullPolicy: Always
 
 # -- Config of the Nebulnetes scheduler.
 # All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/scheduler).
 # @default -- -
-scheduler:
+nos-scheduler:
   # -- Enable or disable the Nebulnetes Scheduler
   enabled: true
+  image:
+    pullPolicy: Always
 
 
 # -- Config of the GPU Partitioner component.
 # All possible values available [here](https://github.com/Telemaco019/nebulnetes/tree/main/helm-charts/gpu-partitioner).
 # @default -- -
-gpu-partitioner:
+nos-gpu-partitioner:
   # -- Enable or disable the GPU Partitioner
   enabled: true
+  image:
+    pullPolicy: Always
+  migAgent:
+    image:
+      pullPolicy: Always
+  gpuAgent:
+    image:
+      pullPolicy: Always

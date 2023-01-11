@@ -1,12 +1,12 @@
 dependencies:
-- name: gpu-partitioner
-  repository: oci://ghcr.io/telemaco019/helm-charts
+- name: nos-gpu-partitioner
+  repository: oci://ghcr.io/nebuly-ai/helm-charts
   version: 0.0.1-alpha.3
-- name: scheduler
-  repository: oci://ghcr.io/telemaco019/helm-charts
+- name: nos-scheduler
+  repository: oci://ghcr.io/nebuly-ai/helm-charts
   version: 0.0.1-alpha.3
-- name: operator
-  repository: oci://ghcr.io/telemaco019/helm-charts
+- name: nos-operator
+  repository: oci://ghcr.io/nebuly-ai/helm-charts
   version: 0.0.1-alpha.3
-digest: sha256:5ec2ab620cc7905c9ff1cbe27e2902a5cacc215ff9045c308f614cd4271ccda7
-generated: "2023-01-10T18:59:02.493169+01:00"
+digest: sha256:261cd6130fe56d1ecd6748554f54830c1c7393a7ed099fa95750ef8762ff85d9
+generated: "2023-01-11T11:38:44.793124+01:00"

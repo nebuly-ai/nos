@@ -22,6 +22,7 @@ spec:
       containers:
         - name: {{ include "scheduler.fullname" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - --config
             - /etc/kubernetes/scheduler_config.yaml
