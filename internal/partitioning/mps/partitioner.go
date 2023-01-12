@@ -82,7 +82,10 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 
 	// Update ConfigMap with new node config
 	key := fmt.Sprintf(DevicePluginConfigKeyFormat, node.Name, planId)
-	pluginConfig := ToPluginConfig(partitioning)
+	pluginConfig, err := ToPluginConfig(partitioning)
+	if err != nil {
+		return fmt.Errorf("unable to convert node partitioning state to device plugin config: %v", err)
+	}
 	pluginConfigYaml, err := yaml.Marshal(pluginConfig)
 	if err != nil {
 		return fmt.Errorf("unable to marshal nvidia device plugin config: %v", err)
@@ -117,13 +120,13 @@ func (p partitioner) getDevicePluginCM(ctx context.Context) (v1.ConfigMap, error
 	return res, err
 }
 
-func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
+func ToPluginConfig(partitioning state.NodePartitioning) (nvidiav1.Config, error) {
 	replicatedResources := make([]nvidiav1.MPSResource, 0)
 	for _, g := range partitioning.GPUs {
 		for r, q := range g.Resources {
-			slicingProfile, err := slicing.ExtractProfileName(r) // TODO: move size info into state.NodePartitioning
+			slicingProfile, err := slicing.ExtractProfileName(r)
 			if err != nil {
-				continue
+				return nvidiav1.Config{}, err
 			}
 			mpsResource := nvidiav1.MPSResource{
 				Name:     nvidiav1.ResourceName(constant.ResourceNvidiaGPU),
@@ -147,5 +150,5 @@ func ToPluginConfig(partitioning state.NodePartitioning) nvidiav1.Config {
 		Sharing: nvidiav1.Sharing{
 			MPS: nvidiav1.MPS{Resources: replicatedResources},
 		},
-	}
+	}, nil
 }

@@ -36,7 +36,8 @@ import (
 func TestToPluginConfig(t *testing.T) {
 	t.Run("Empty node partitioning", func(t *testing.T) {
 		nodePartitioning := state.NodePartitioning{GPUs: []state.GPUPartitioning{}}
-		config := mps.ToPluginConfig(nodePartitioning)
+		config, err := mps.ToPluginConfig(nodePartitioning)
+		assert.NoError(t, err)
 		assert.Empty(t, config.Sharing.MPS.Resources)
 	})
 
@@ -59,8 +60,23 @@ func TestToPluginConfig(t *testing.T) {
 				},
 			},
 		}
-		config := mps.ToPluginConfig(nodePartitioning)
+		config, err := mps.ToPluginConfig(nodePartitioning)
+		assert.NoError(t, err)
 		assert.Len(t, config.Sharing.MPS.Resources, 4)
+	})
+
+	t.Run("Invalid resources in GPU partitioning, should return error", func(t *testing.T) {
+		nodePartitioning := state.NodePartitioning{GPUs: []state.GPUPartitioning{
+			{
+				GPUIndex: 0,
+				Resources: map[v1.ResourceName]int{
+					v1.ResourceCPU: 2,
+				},
+			},
+		}}
+		config, err := mps.ToPluginConfig(nodePartitioning)
+		assert.Error(t, err)
+		assert.Empty(t, config.Sharing.MPS.Resources)
 	})
 }
 
