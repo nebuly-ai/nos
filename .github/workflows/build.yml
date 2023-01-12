@@ -9,9 +9,6 @@ env:
 jobs:
   test:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-      packages: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -21,191 +18,74 @@ jobs:
         with:
           go-version: 1.19
           cache: true
-
-      - name: Login to GitHub container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run tests
         run: make test
 
 
-  build-operator:
+  operator:
     needs: test
-    runs-on: ubuntu-22.04
     permissions:
       contents: write
       packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
+    with:
+      component-name: operator
+      registry-user: ${{ github.actor }}
+    secrets: inherit
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-          cache: true
-
-      - name: Login to GitHub container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check Version
-        id: version
-        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
-
-      - name: Build Docker image
-        run: make docker-build-operator
-
-      - name: Push Docker image
-        run: make docker-push-operator
-
-  build-scheduler:
+  scheduler:
     needs: test
-    runs-on: ubuntu-22.04
     permissions:
       contents: write
       packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
+    with:
+      component-name: scheduler
+      registry-user: ${{ github.actor }}
+    secrets: inherit
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-          cache: true
-
-      - name: Login to GitHub container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check Version
-        id: version
-        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
-
-      - name: Build Docker image
-        run: make docker-build-scheduler
-
-      - name: Push Docker image
-        run: make docker-push-scheduler
-
-  build-gpu-partitioner:
+  gpu-partitioner:
     needs: test
-    runs-on: ubuntu-22.04
     permissions:
       contents: write
       packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
+    with:
+      component-name: scheduler
+      registry-user: ${{ github.actor }}
+    secrets: inherit
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-          cache: true
-
-      - name: Login to GitHub container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check Version
-        id: version
-        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
-
-      - name: Build Docker image
-        run: make docker-build-gpu-partitioner
-
-      - name: Push Docker image
-        run: make docker-push-gpu-partitioner
-
-  build-gpu-agent:
+  gpu-agent:
     needs: test
-    runs-on: ubuntu-22.04
     permissions:
       contents: write
       packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
+    with:
+      component-name: scheduler
+      registry-user: ${{ github.actor }}
+    secrets: inherit
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-          cache: true
-
-      - name: Login to GitHub container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check Version
-        id: version
-        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
-
-      - name: Build Docker image
-        run: make docker-build-gpu-agent
-
-      - name: Push Docker image
-        run: make docker-push-gpu-agent
-
-  build-mig-agent:
+  mig-agent:
     needs: test
-    runs-on: ubuntu-22.04
     permissions:
       contents: write
       packages: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-          cache: true
-
-      - name: Login to GitHub container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check Version
-        id: version
-        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
-
-      - name: Build Docker image
-        run: make docker-build-mig-agent
-
-      - name: Push Docker image
-        run: make docker-push-mig-agent
+    uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
+    with:
+      component-name: scheduler
+      registry-user: ${{ github.actor }}
+    secrets: inherit
 
   helm-charts:
     runs-on: ubuntu-22.04
     needs:
-      - build-operator
-      - build-scheduler
-      - build-gpu-partitioner
-      - build-gpu-agent
-      - build-mig-agent
+      - operator
+      - scheduler
+      - gpu-partitioner
+      - gpu-agent
+      - mig-agent
     permissions:
       contents: write
       packages: write

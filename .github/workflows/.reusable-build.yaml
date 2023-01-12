@@ -1,0 +1,48 @@
+name: _build
+
+on:
+  workflow_call:
+    inputs:
+      component-name:
+        required: true
+        type: string
+      registry:
+        required: false
+        type: string
+        default: ghcr.io
+      registry-user:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+          cache: true
+
+      - name: Login to GitHub container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ inputs.registry-user }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Version
+        id: version
+        run: head -2 Makefile | cut -d "=" -s -f 2 | xargs
+
+      - name: Build Docker image
+        run: make docker-build-${{ inputs.component-name }}
+
+      - name: Push Docker image
+        run: make docker-push-${{ inputs.component-name }}
