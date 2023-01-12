@@ -3,8 +3,8 @@ name: nos-scheduler
 description: Kubernetes scheduler optimized for managing AI workloads.
 
 type: application
-version: 0.0.1-alpha.3
-appVersion: "0.0.1-alpha.3"
+version: 0.1.0
+appVersion: "0.1.0"
 
 sources:
   - https://github.com/nebuly-ai/nos

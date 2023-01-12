@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: mig-agent
   newName: ghcr.io/nebuly-ai/nos-mig-agent
-  newTag: 0.0.1-alpha.3
+  newTag: 0.1.0

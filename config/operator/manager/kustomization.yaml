@@ -13,7 +13,7 @@ kind: Kustomization
 images:
 - name: controller
   newName: ghcr.io/nebuly-ai/nos-operator
-  newTag: 0.0.1-alpha.3
+  newTag: 0.1.0
 - name: operator
   newName: ghcr.io/nebuly-ai/nos-operator
   newTag: latest

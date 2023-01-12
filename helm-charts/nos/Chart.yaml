@@ -4,8 +4,8 @@ description: The open-source platform for running AI workloads on k8s in an opti
   utilization and workload performance.
 
 type: application
-version: 0.0.1-alpha.3
-appVersion: "0.0.1-alpha.3"
+version: 0.1.0
+appVersion: "0.1.0"
 
 sources:
   - https://github.com/nebuly-ai/nos
@@ -15,15 +15,15 @@ sources:
 dependencies:
   - name: nos-gpu-partitioner
     repository: "oci://ghcr.io/nebuly-ai/helm-charts"
-    version: 0.0.1-alpha.3
+    version: 0.1.0
     condition: nos-gpu-partitioner.enabled
   - name: nos-scheduler
     repository: "oci://ghcr.io/nebuly-ai/helm-charts"
-    version: 0.0.1-alpha.3
+    version: 0.1.0
     condition: nos-scheduler.enabled
   - name: nos-operator
     repository: "oci://ghcr.io/nebuly-ai/helm-charts"
-    version: 0.0.1-alpha.3
+    version: 0.1.0
     condition: nos-operator.enabled
 
 maintainers:
