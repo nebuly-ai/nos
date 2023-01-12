@@ -52,7 +52,7 @@ jobs:
       packages: write
     uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
     with:
-      component-name: scheduler
+      component-name: gpu-partitioner
       registry-user: ${{ github.actor }}
     secrets: inherit
 
@@ -63,7 +63,7 @@ jobs:
       packages: write
     uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
     with:
-      component-name: scheduler
+      component-name: gpu-agent
       registry-user: ${{ github.actor }}
     secrets: inherit
 
@@ -74,7 +74,7 @@ jobs:
       packages: write
     uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
     with:
-      component-name: scheduler
+      component-name: mig-agent
       registry-user: ${{ github.actor }}
     secrets: inherit
 
