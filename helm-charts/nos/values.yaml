@@ -25,4 +25,7 @@ nos-scheduler:
 # @default -- -
 nos-gpu-partitioner:
   # -- Enable or disable `GPU partitioner`
-  enabled: false
+  enabled: true
+
+# -- If true allows to deploy `nos` chart in the `default` namespace
+allowDefaultNamespace: false
