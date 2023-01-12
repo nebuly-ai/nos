@@ -148,7 +148,10 @@ func ToPluginConfig(partitioning state.NodePartitioning) (nvidiav1.Config, error
 			},
 		},
 		Sharing: nvidiav1.Sharing{
-			MPS: nvidiav1.MPS{Resources: replicatedResources},
+			MPS: nvidiav1.MPS{
+				Resources:                  replicatedResources,
+				FailRequestsGreaterThanOne: true,
+			},
 		},
 	}, nil
 }
