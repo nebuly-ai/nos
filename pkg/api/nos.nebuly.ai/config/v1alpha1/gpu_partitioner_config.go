@@ -32,7 +32,8 @@ type GpuPartitionerConfig struct {
 	KnownMigGeometriesFile                 string           `json:"knownMigGeometriesFile,omitempty"`
 	BatchWindowTimeoutSeconds              time.Duration    `json:"batchWindowTimeoutSeconds"`
 	BatchWindowIdleSeconds                 time.Duration    `json:"batchWindowIdleSeconds"`
-	NvidiaDevicePluginConfigMap            NamespacedObject `json:"devicePluginConfigMap,omitempty"`
+	DevicePluginConfigMap                  NamespacedObject `json:"devicePluginConfigMap,omitempty"`
+	DevicePluginDelaySeconds               time.Duration    `json:"devicePluginConfigUpdateDelaySeconds"`
 }
 
 func (c *GpuPartitionerConfig) Validate() error {
@@ -41,6 +42,9 @@ func (c *GpuPartitionerConfig) Validate() error {
 	}
 	if c.BatchWindowIdleSeconds.Seconds() <= 0 {
 		return errors.New("batchWindowIdleSeconds must be greater than 0")
+	}
+	if c.DevicePluginDelaySeconds.Seconds() <= 0 {
+		return errors.New("devicePluginDelaySeconds must be greater than 0")
 	}
 	return nil
 }

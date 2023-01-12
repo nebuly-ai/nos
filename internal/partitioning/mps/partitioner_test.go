@@ -18,19 +18,19 @@ package mps_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/nebuly-ai/nos/internal/partitioning/mps"
 	"github.com/nebuly-ai/nos/internal/partitioning/state"
+	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/test/factory"
-	"github.com/nebuly-ai/nos/pkg/test/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"testing"
+	"time"
 )
 
 func TestToPluginConfig(t *testing.T) {
@@ -77,10 +77,6 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 			Namespace: devicePluginCM.Namespace,
 			Name:      devicePluginCM.Name,
 		}
-		devicePluginClient := mocks.NewDevicePluginClient(t)
-		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
-			Once().
-			Return(nil)
 		k8sClient := fake.NewClientBuilder().
 			WithObjects(&node).
 			WithObjects(&devicePluginCM).
@@ -88,7 +84,7 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 		partitioner := mps.NewPartitioner(
 			k8sClient,
 			cmNamespacedName,
-			devicePluginClient,
+			1*time.Millisecond,
 		)
 		ctx := context.Background()
 
@@ -103,35 +99,51 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 		assert.NotNil(t, cm.Data)
 	})
 
-	t.Run("Error restarting NVIDIA device plugin", func(t *testing.T) {
+	t.Run("Should wait device-plugin-delay before updating node labels with new config", func(t *testing.T) {
 		node := factory.BuildNode("node-1").Get()
 		devicePluginCM := v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "test-namespace",
 				Name:      "test-name",
 			},
+			Data: map[string]string{
+				fmt.Sprintf(mps.DevicePluginConfigKeyFormat, node.Name, "old-plan-1"): "old-config",
+				fmt.Sprintf(mps.DevicePluginConfigKeyFormat, node.Name, "old-plan-2"): "old-config",
+				fmt.Sprintf(mps.DevicePluginConfigKeyFormat, "node-2", "old-plan-2"):  "config",
+			},
 		}
-		k8sClient := fake.NewClientBuilder().
-			WithObjects(&node).
-			WithObjects(&devicePluginCM).
-			Build()
 		cmNamespacedName := types.NamespacedName{
 			Namespace: devicePluginCM.Namespace,
 			Name:      devicePluginCM.Name,
 		}
-		devicePluginClient := mocks.NewDevicePluginClient(t)
-		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
-			Once().
-			Return(errors.New(""))
+
+		// config
+		delay := 1 * time.Second
+		planId := "plan-id"
+		k8sClient := fake.NewClientBuilder().
+			WithObjects(&node).
+			WithObjects(&devicePluginCM).
+			Build()
 		partitioner := mps.NewPartitioner(
 			k8sClient,
 			cmNamespacedName,
-			devicePluginClient,
+			delay,
 		)
 		ctx := context.Background()
 
-		err := partitioner.ApplyPartitioning(ctx, node, "plan", state.NodePartitioning{})
-		assert.Error(t, err)
+		// apply partitioning
+		start := time.Now()
+		err := partitioner.ApplyPartitioning(ctx, node, planId, state.NodePartitioning{GPUs: []state.GPUPartitioning{}})
+		end := time.Now()
+
+		// check no errors
+		assert.NoError(t, err)
+		// check delay is enforced
+		assert.Greater(t, end.Sub(start), delay)
+		// check node labels have been updated
+		assert.NoError(t, k8sClient.Get(ctx, client.ObjectKey{Namespace: node.Namespace, Name: node.Name}, &node))
+		assert.Contains(t, node.Labels, constant.LabelNvidiaDevicePluginConfig)
+		assert.Equal(t, fmt.Sprintf(mps.DevicePluginConfigKeyFormat, node.Name, planId), node.Labels[constant.LabelNvidiaDevicePluginConfig])
 	})
 
 	t.Run("Updating partitioning should delete previous node configs from device plugin CM", func(t *testing.T) {
@@ -156,14 +168,10 @@ func TestPartitioner__ApplyPartitioning(t *testing.T) {
 			WithObjects(&node).
 			WithObjects(&devicePluginCM).
 			Build()
-		devicePluginClient := mocks.NewDevicePluginClient(t)
-		devicePluginClient.On("Restart", mock.Anything, mock.Anything, mock.Anything).
-			Once().
-			Return(nil)
 		partitioner := mps.NewPartitioner(
 			k8sClient,
 			cmNamespacedName,
-			devicePluginClient,
+			1*time.Millisecond,
 		)
 		ctx := context.Background()
 

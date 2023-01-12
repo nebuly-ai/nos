@@ -25,6 +25,7 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 | batchWindowTimeoutSeconds | int | `60` | Timeout of the window used by the GPU partitioner for batching pending Pods.  Higher values make the GPU partitioner will potentially take into account more pending Pods when deciding the GPU partitioning plan, but the partitioning will be performed less frequently |
 | devicePlugin.config.name | string | `"nos-device-plugin-configs"` | Name of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the NVIDIA GPU Operator. |
 | devicePlugin.config.namespace | string | `"nebuly-nvidia"` | Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the namespace where the Nebuly NVIDIA Device Plugin has been deployed to. |
+| devicePlugin.configUpdateDelaySeconds | int | `5` | Duration of the delay between when the new partitioning config is computed and when it is sent to the NVIDIA device plugin. Since the config is provided to the plugin as a mounted ConfigMap, this delay is required to ensure that the updated ConfigMap is propagated to the mounted volume. |
 | fullnameOverride | string | `""` |  |
 | gpuAgent | object | - | Configuration of the GPU Agent component of the GPU Partitioner. |
 | gpuAgent.image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Agent Docker image pull policy. |

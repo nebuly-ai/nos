@@ -101,8 +101,8 @@ func main() {
 		os.Exit(1)
 	}
 	devicePluginCM := types.NamespacedName{
-		Name:      config.NvidiaDevicePluginConfigMap.Name,
-		Namespace: config.NvidiaDevicePluginConfigMap.Namespace,
+		Name:      config.DevicePluginConfigMap.Name,
+		Namespace: config.DevicePluginConfigMap.Namespace,
 	}
 	if devicePluginCM.Name == "" {
 		devicePluginCM.Name = constant.DefaultDevicePluginCMName
@@ -237,6 +237,7 @@ func main() {
 		clusterState,
 		schedulerFramework,
 		devicePluginCM,
+		config.DevicePluginDelaySeconds*time.Second,
 	)
 	if err = mpsSlicingController.SetupWithManager(mgr, constant.MpsPartitionerControllerName); err != nil {
 		setupLog.Error(

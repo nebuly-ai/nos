@@ -23,7 +23,6 @@ import (
 	"github.com/nebuly-ai/nos/internal/partitioning/core"
 	"github.com/nebuly-ai/nos/internal/partitioning/state"
 	"github.com/nebuly-ai/nos/pkg/constant"
-	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/gpu/slicing"
 	"github.com/nebuly-ai/nos/pkg/util"
 	v1 "k8s.io/api/core/v1"
@@ -42,20 +41,20 @@ var _ core.Partitioner = partitioner{}
 
 type partitioner struct {
 	client.Client
-	devicePluginCM     types.NamespacedName
-	devicePluginClient gpu.DevicePluginClient
+	devicePluginCM    types.NamespacedName
+	devicePluginDelay time.Duration
 }
 
 func NewPartitioner(
 	client client.Client,
 	devicePluginCM types.NamespacedName,
-	devicePluginClient gpu.DevicePluginClient,
+	devicePluginDelay time.Duration,
 ) core.Partitioner {
 
 	return partitioner{
-		Client:             client,
-		devicePluginCM:     devicePluginCM,
-		devicePluginClient: devicePluginClient,
+		Client:            client,
+		devicePluginCM:    devicePluginCM,
+		devicePluginDelay: devicePluginDelay,
 	}
 }
 
@@ -93,6 +92,10 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 		return err
 	}
 
+	// Wait for CM propagation time
+	logger.Info(fmt.Sprintf("waiting %f seconds for device plugin config config propagation...", p.devicePluginDelay.Seconds()))
+	time.Sleep(p.devicePluginDelay)
+
 	// Update node labels to apply new config
 	originalNode := node.DeepCopy()
 	if node.Labels == nil {
@@ -103,13 +106,6 @@ func (p partitioner) ApplyPartitioning(ctx context.Context, node v1.Node, planId
 		return err
 	}
 	logger.Info("node partitioning config updated", "node", node.Name, "plan", planId)
-
-	// Restart the NVIDIA device plugin on the node
-	logger.Info("restarting NVIDIA device plugin", "node", node.Name)
-	if err = p.devicePluginClient.Restart(ctx, node.Name, 1*time.Minute); err != nil {
-		logger.Error(err, "unable to restart NVIDIA device plugin")
-		return err
-	}
 
 	return nil
 }

@@ -24,6 +24,7 @@ data:
     devicePluginConfigMap:
      name: {{ .Values.devicePlugin.config.name }}
      namespace: {{ .Values.devicePlugin.config.namespace }}
+    devicePluginDelaySeconds: {{ .Values.devicePlugin.configUpdateDelaySeconds }}
 
     {{- if .Values.scheduler.config }}
     {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.scheduler.config.name }}

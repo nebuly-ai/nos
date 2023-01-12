@@ -22,6 +22,10 @@ devicePlugin:
     # -- Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to
     # the namespace where the Nebuly NVIDIA Device Plugin has been deployed to.
     namespace: nebuly-nvidia
+  # -- Duration of the delay between when the new partitioning config is computed and when it is sent to
+  # the NVIDIA device plugin. Since the config is provided to the plugin as a mounted ConfigMap, this delay is required
+  # to ensure that the updated ConfigMap is propagated to the mounted volume.
+  configUpdateDelaySeconds: 5
 
 scheduler:
   config:

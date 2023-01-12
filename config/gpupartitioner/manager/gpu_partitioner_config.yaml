@@ -48,3 +48,8 @@ knownMigGeometriesFile: known_mig_geometries.yaml
 devicePluginConfigMap:
   name: nvidia-plugin-configs
   namespace: gpu-operator
+
+# Duration of the delay between when the new partitioning config is computed and when it is sent to
+# the device plugin. Since the config is provided to the plugin as a mounted ConfigMap, this delay is required
+# to ensure that the updated ConfigMap is propagated to the mounted volume.
+devicePluginDelaySeconds: 5

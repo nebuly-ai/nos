@@ -27,15 +27,16 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"time"
 )
 
-func NewActuator(client client.Client, devicePluginCM types.NamespacedName) core.Actuator {
+func NewActuator(client client.Client, devicePluginCM types.NamespacedName, devicePluginDelay time.Duration) core.Actuator {
 	return core.NewActuator(
 		client,
 		NewPartitioner(
 			client,
 			devicePluginCM,
-			gpu.NewDevicePluginClient(client),
+			devicePluginDelay,
 		),
 	)
 }
@@ -55,6 +56,7 @@ func NewController(
 	clusterState *state.ClusterState,
 	scheduler framework.Framework,
 	devicePluginCM types.NamespacedName,
+	devicePluginDelay time.Duration,
 ) gpupartitioner.Controller {
 
 	return gpupartitioner.NewController(
@@ -64,7 +66,7 @@ func NewController(
 		clusterState,
 		gpu.PartitioningKindMps,
 		NewPlanner(scheduler),
-		NewActuator(client, devicePluginCM),
+		NewActuator(client, devicePluginCM, devicePluginDelay),
 		NewSnapshotTaker(),
 	)
 }
