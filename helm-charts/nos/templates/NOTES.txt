@@ -1,0 +1,12 @@
+{{- if index .Values "nos-gpu-partitioner" "enabled" -}}
+*** GPU Partitioner is enabled ***
+To enable automatic MIG partitioning on the GPUs of a node (only for MIG-enabled GPUs):
+```bash
+kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mig"
+```
+
+To enable automatic MPS partitioning on the GPUs of a node:
+```bash
+kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mps"
+```
+{{- end -}}

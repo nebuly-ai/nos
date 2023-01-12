@@ -25,4 +25,4 @@ nos-scheduler:
 # @default -- -
 nos-gpu-partitioner:
   # -- Enable or disable `GPU partitioner`
-  enabled: true
+  enabled: false
