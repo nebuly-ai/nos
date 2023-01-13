@@ -1,4 +1,14 @@
-{{- if index .Values "nos-gpu-partitioner" "enabled" -}}
+{{- $gpuPartitionerEnabled :=  index .Values "nos-gpu-partitioner" "enabled" -}}
+
+{{- if $gpuPartitionerEnabled -}}
+
+{{- if not (.Capabilities.APIVersions.Has "cert-manager.io/v1") -}}
+*** WARNING ***
+CertManager is not installed in your cluster, you can follow the cert-manager documentation to install it:
+https://cert-manager.io/docs/installation/
+Otherwise, you have to provision and install SSL certificates manually.
+{{- end }}
+
 *** GPU Partitioner is enabled ***
 To enable automatic MIG partitioning on the GPUs of a node (only for MIG-enabled GPUs):
 ```bash
@@ -10,3 +20,4 @@ To enable automatic MPS partitioning on the GPUs of a node:
 kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mps"
 ```
 {{- end -}}
+

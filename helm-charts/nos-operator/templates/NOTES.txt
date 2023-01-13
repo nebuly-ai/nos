@@ -1,0 +1,7 @@
+{{- if not (.Capabilities.APIVersions.Has "cert-manager.io/v1") -}}
+*** WARNING ***
+CertManager is not installed in your cluster, you can follow the cert-manager documentation to install it:
+https://cert-manager.io/docs/installation/
+
+Otherwise, you have to provision and install SSL certificates manually.
+{{- end -}}

@@ -1,3 +1,4 @@
+{{- if .Capabilities.APIVersions.Has "cert-manager.io/v1" -}}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -10,3 +11,4 @@ spec:
     kind: Issuer
     name: {{ include "operator.selfSignedCertIssuerName" . }}
   secretName: {{ include "operator.webhookCertSecretName" . }}
+{{- end -}}
