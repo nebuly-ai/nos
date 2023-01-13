@@ -27,38 +27,7 @@ helm install oci://ghcr.io/nebuly-ai/helm-charts/nos \
   --generate-name \
   --create-namespace
 ```
-
 Alternatively, you can use Kustomize by cloning the repository and running `make deploy`.
-
-### Enable GPU partitioning
-You can enable automatic GPU partitioning on a node by labelling it with the partitioning mode 
-you want for the GPUs of that node. Currently, we support [MIG](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/) 
-and [MPS](https://docs.nvidia.com/deploy/mps/index.html) partitioning for NVIDIA GPUs.
-
-For instance, you can enable MIG partitioning on a node by labelling it as follows:
-```bash
-kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mig"
-```
-
-Please refer to the [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md) documentation for the 
-pre-requisites and the limitations of each supported partitioning mode.
-
-### Create Elastic Resource Quotas
-```yaml
-$ kubectl apply -f - <<EOF 
-apiVersion: nos.nebuly.ai/v1alpha1
-kind: ElasticQuota
-metadata:
-  name: quota-a
-  namespace: team-a
-spec:
-  min:
-    cpu: 2
-    nos.nebuly.ai/gpu-memory: 16
-  max:
-    cpu: 10
-EOF
-```
 
 ## Documentation
 
