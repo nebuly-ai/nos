@@ -1,109 +1,90 @@
 # Automatic GPU partitioning
 
-> ⚠️ At the moment nos only
-> supports [Multi-instance GPU (MIG) partitioning](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html),
-> which is available only for NVIDIA GPUs based on Ampere and Hopper architectures.
-
 ## Table of contents
 - [Overview](#overview)
-- [Getting started](#getting-started)
-- [Enable nodes for automatic partitioning](#enable-nodes-for-automatic-partitioning)
+- [Partitioning modes comparison](#partitioning-modes-comparison)
 - [MIG partitioning](#mig-partitioning)
+- [MPS partitioning](#mps-partitioning)
 - [Configuration](#configuration)
   - [Pods batch size](#pods-batch-size)
   - [Scheduler configuration](#scheduler-configuration)
-  - [Integration with nos scheduler](#integration-with-nos-scheduler)
   - [Available MIG geometries](#available-mig-geometries)
 - [Troubleshooting](#troubleshooting)
-- [Uninstall](#uninstall)
 
 ## Overview
-
-nos allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
+`nos` allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
 the partitioning is performed dynamically based on the pending and running Pods in your cluster, so that the GPUs
 are always fully utilized.
 
-The GPU partitioning is performed by the [GPU Partitioner](../config/gpupartitioner) component, which
+The GPU partitioning is performed by the [GPU Partitioner](../helm-charts/nos-gpu-partitioner) component, which
 constantly watches the GPU resources of the cluster and finds the best possible partitioning of the available GPUs
 in order to schedule the highest number of pods requesting fractions of GPUs, which otherwise could not be scheduled
 due to the lack of available resources.
 
 You can see the GPU Partitioner as a sort of [Cluster Autoscaler](https://github.com/kubernetes/autoscaler) for GPUs:
 instead of scaling up the number of nodes and GPUs, it dynamically partitions the available GPUs to maximize
-their utilization.
+their utilization. 
 
-The actual partitioning of the GPUs is not performed directly by the GPU Partitioner, but instead it is carried out
-by an agent deployed on every node of the cluster eligible for automatic partitioning. This agent exposes
-to the GPU Partitioner the partitioning state of the GPUs of the node on which it is running, and applies the desired
-partitioning state decided by the GPU Partitioner.
+The GPU partitioning is performed either using 
+[Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/) or 
+[Multi-Process Service (MPS)](https://docs.nvidia.com/deploy/mps/index.html), depending on the partitioning mode 
+you choose for each node. You can find more info about these two in the section below.
 
-## Getting started 
+## Partitioning modes comparison
 
+| Partitioning mode          | Supported by `nos` | Workload isolation level | Pros                                                                                                                            | Cons                                                                                                                                                        |
+|----------------------------|:-------------------|:-------------------------|---------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Multi-instance GPU (MIG)   | ✅                  | Best                     | <ul><li>Processes are executed concurrently</li><li>Full isolation (dedicated memory and compute resources)</li></ul>           | <ul><li>Supported by fewer GPU models (only Ampere or more recent architectures)</li><li>Coarse-grained control over memory and compute resources</li></ul> |
+| Multi-process server (MPS) | ✅                  | Good                     | <ul><li>Processes are executed concurrently</li><li>Fine-grained control over memory and compute resources allocation</li></ul> | <ul><li>No error isolation and memory protection</li></ul>                                                                                                  |
+| Time-slicing               | ❌                  | None                     | <ul><li>Supported by older GPU architectures (Pascal or newer)</li></ul>                                                        | <ul><li>No resource limits</li><li>No memory isolation</li><li>Lower performance due to context-switching overhead</li></ul>                                |
+
+
+### Multi-instance GPU (MIG)
+todo
+### Multi-Process Service (MPS)
+todo
+
+
+
+
+## MIG partitioning
 ### Prerequisites
+> ⚠️ [Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html) mode
+> is supported only by NVIDIA GPUs based on Ampere and Hopper architectures.
 
-* you need the [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) deployed on your cluster, configured to
-  use the `mixed` MIG strategy
-* you need at least one node with a GPU supporting [MIG](https://www.nvidia.com/en-us/technologies/multi-instance-gpu/)
+
+* you need the [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) deployed on your cluster
+  * MIG strategy must be set to `mixed` (`--set mig.strategy=mixed`)
+  * mig-manager must be disabled (`--set migManager.enabled=false`)
 * if a node has multiple GPUs, all the GPUs must be of the same model
+* all the GPUs of the nodes for which you want to enable MIG partitioning must have MIG mode enabled
+  * you can enable MIG mode by running the following command for each GPU want to enable,
+    where `<index>` correspond to the index of the GPU: `sudo nvidia-smi -i <index> -mig 1`
+  * depending on the kind of machine you are using, it may be necessary to reboot the node after enabling MIG mode 
+  for one of its GPUs.
 
-For further information regarding NVIDIA MIG and its integration with Kubernetes, please refer to the
-[NVIDIA MIG User Guide](https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf) and to the
-[MIG Support in Kubernetes](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/mig-k8s.html)
-official documentation provided by NVIDIA.
-
-### Installation
-You can install the automatic GPU partitioning components by running the Makefile targets below, which deploys them
-required to the k8s cluster specified in your `~/.kube/config`.
-
-By default, all the resources are installed in the `nos-system` namespace.
-
-1. Deploy the nos operator
-
-```shell
-make deploy-operator
-```
-
-2. Deploy the GPU Partitioner
-
-```shell
-make deploy-gpu-partitioner
-```
-
-3. Deploy the MIG Agent
-
-```shell
-make deploy-mig-agent
-```
-
-The targets above deploy the components using their default configuration. If you want to customize their configuration,
-you can refer to the [GPU Partitioner Configuration](doc/automatic-gpu-partitioning.md#configuration) page for more
-information.
-
-## How to enable automatic GPU partitioning on a Node
-
-> ⚠️ Prerequisite: to enable automatic MIG partitioning on a node, first you need to enable MIG mode on its GPUs.
-You can do that by running the following command for each GPU want to enable,
-where `<index>` correspond to the index of the GPU: `sudo nvidia-smi -i <index> -mig 1`
-> 
-> Depending on the kind of machine you are using, it may be necessary to reboot the node after enabling MIG mode for
-> one of its GPUs.
-
+### Enable automatic MIG partitioning on a node
 
 You can enable automatic MIG partitioning on a node by adding to it the following label:
 
 ```shell
 kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mig"
 ```
+The label delegates to `nos` the management of the MIG resources of all the GPUs of that node, so you don't have
+to manually configure the MIG geometry of the GPUs anymore: `nos` will dynamically create and delete the MIG profiles 
+according to the resources requested by the pods submitted to the cluster, and according to the possible MIG geometries
+supported by the GPUs in the cluster.
 
-The label delegates to nos the management of the MIG resources of all the GPUs of that node, so you don't have 
-to manually configure the MIG geometry of the GPUs anymore: nos will dynamically apply the most proper geometry 
-according to the resources requested by the pods submitted to the cluster.
+The available MIG geometries supported by each GPU model are defined in a ConfigMap, which by default is filled 
+with the supported geometries of the most popular GPU models. You can override the values of this 
+ConfigMap through the `nos-gpu-partitioner.knownMigGeometries` value of the 
+[nos-gpu-partitioner Helm chart](../helm-charts/nos-gpu-partitioner). For more information you can refer to the 
+[configuration section](#available-mig-geometries) of this document.
 
 
-## MIG partitioning
-In the case of MIG partitioning, the agent that creates/deletes the MIG resources is 
-the [MIG Agent](../config/migagent), which is a daemonset running on every node labeled 
-with `nos.nebuly.ai/gpu-partitioning: mig`.
+### How it works
+The actual partitioning for MIG GPUs is performed by MIG Agent, which is a daemonset running on every node labeled 
+with `nos.nebuly.ai/gpu-partitioning: mig` that creates/deletes MIG profiles as requested by the GPU Partitioner.
 
 The MIG Agent exposes to the GPU Partitioner the used/free MIG resources of all the GPUs of the node
 on which it is running through the following node annotations:
@@ -129,10 +110,19 @@ In these cases, the MIG Agent tries to apply the desired partitioning by creatin
 possible, in order to maximize the number of schedulable Pods. This can result in the MIG Agent applying the 
 desired MIG geometry only partially.
 
+For further information regarding NVIDIA MIG and its integration with Kubernetes, please refer to the
+[NVIDIA MIG User Guide](https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf) and to the
+[MIG Support in Kubernetes](https://docs.nvidia.com/datacenter/cloud-native/kubernetes/mig-k8s.html)
+official documentation provided by NVIDIA.
+
+## MPS Partitioning
+
+
 ## Configuration
 
-You can customize the GPU Partitioning settings by editing the
-[GPU Partitioner configuration file](../config/gpupartitioner/manager/gpu_partitioner_config.yaml).
+You can customize the GPU Partitioning settings by editing the values file of the 
+[nos-gpu-partitioner](../helm-charts/nos-gpu-partitioner/README.md) Helm chart. 
+In this section we focus on some of the values that you would typically want to customize.
 
 ### Pods batch size
 
@@ -157,26 +147,20 @@ Set lower values if you want the partitioning to be performed more frequently
 The GPU Partitioner uses an internal scheduler to simulate the scheduling of the pending pods to determine whether
 a candidate GPU partitioning plan would make the pending pods schedulable.
 
-You can provide a custom scheduler configuration by editing the `schedulerConfigFile` parameter, which is the path
-to a YAML file containing the scheduler configuration.
+The GPU Partitioner reads the scheduler configuration from the ConfigMap defined by the field 
+`nos-gpu-partitioner.scheduler.config`, and it falls back to the default configuration if the ConfigMap is not found. 
+You can edit this field to provide your custom scheduler configuration.
 
-### Integration with nos scheduler
+If you installed `nos` with the `nos-scheduler` flag enabled, the GPU Partitioner will use its configuration unless 
+you specify a custom ConfigMap.
 
-If you want to use Automatic GPU partitioning together with the nos scheduler so that Elastic Resource quotas
-are taken into account when performing the GPUs partitioning, you can follow these steps:
-
-* deploy the nos scheduler
-* uncomment the last patch of this [kustomization file](../config/gpupartitioner/default/kustomization.yaml), which
-  mounts the nos scheduler config file to the GPU partitioner pod filesystem
-* set the `schedulerConfigFile` value to `scheduler_config.yam`
 
 ### Available MIG geometries
 The GPU Partitioner determines the most proper partitioning plan to apply by considering the possible MIG geometries 
 allowed by the GPUs of the cluster.
 
-The MIG geometries allowed by each known GPU model are specified in the configuration file 
-[known_mig_geometries.yaml](../config/gpupartitioner/manager/known_mig_geometries.yaml), 
-which is provided to the GPU partitioner through the configuration param `knownMigGeometriesFile`.
+You can set the MIG geometries supported by each GPU model by editing the `nos-gpu-partitioner.knownMigGeometries` value 
+of the [nos-gpu-partitioner Helm chart](../helm-charts/nos-gpu-partitioner/README.md). 
 
 You can edit this file to add new MIG geometries for new GPU models, or to edit the existing ones according 
 to your specific needs. For instance, you can remove some MIG geometries if you don't want to allow them to be used for a 
@@ -188,26 +172,10 @@ and MIG Agent pods. You can do that by running the following commands:
 
 Check GPU Partitioner logs
 ```shell
- kubectl logs -n nos-system -l app.kubernetes.io/component=gpu-partitioner -f
+ kubectl logs -l app.kubernetes.io/component=gpu-partitioner -f
 ```
 
 Check MIG Agent logs:
 ```shell
- kubectl logs -n nos-system -l app.kubernetes.io/component=mig-agent -f
-```
-
-### How to increase log verbosity
-You can increase the log verbosity by providing the argument `--zap-log-level=<level>` to the 
-GPU Partitioner and MIG Agent containers, where `<level>` is an integer between 0 and 3. 
-Higher values means higher verbosity (0 is the default value, 1 corresponds to the DEBUG level).
-
-You can do that by editing the [MIG Agent](../config/migagent/default/mig_agent_config_patch.yaml) and 
-[GPU Partitioner](../config/gpupartitioner/default/gpu_partitioner_config_patch.yaml) Kustomize manifests and 
-re-deploying the two components.
-
-## Uninstall
-To uninstall Automatic GPU Partitioning, you can run the following command:
-
-```shell
-make undeploy-mig-agent ; make undeploy-gpu-partitioner
+ kubectl logs -l app.kubernetes.io/component=mig-agent -f
 ```
