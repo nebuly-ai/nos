@@ -1,6 +1,6 @@
 # nos
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.0.1--alpha.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.0.1--alpha.3-informational?style=flat-square)
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 The open-source platform for running AI workloads on k8s in an optimized way, both in terms of hardware utilization and workload performance.
 
@@ -29,11 +29,12 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| allowDefaultNamespace | bool | `false` | If true allows to deploy `nos` chart in the `default` namespace |
 | global.nvidiaGpuResourceMemoryGB | int | `32` | Defines how many GB of memory each nvidia.com/gpu resource has. |
-| nos-gpu-partitioner | object | - | All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-gpu-partitioner). |
-| nos-gpu-partitioner.enabled | bool | `true` | Enable or disable `GPU partitioner` |
-| nos-operator | object | - | All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-operator). |
+| nos-gpu-partitioner | object | - | All values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-gpu-partitioner). |
+| nos-gpu-partitioner.enabled | bool | `true` | Enable or disable the `nos gpu partitioner` |
+| nos-operator | object | - | All values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-operator). |
 | nos-operator.enabled | bool | `true` | Enable or disable the `nos operator` |
-| nos-scheduler | object | - | All possible values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-scheduler). |
+| nos-scheduler | object | - | All values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-scheduler). |
 | nos-scheduler.enabled | bool | `true` | Enable or disable the `nos scheduler` |
 
