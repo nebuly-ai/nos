@@ -28,7 +28,7 @@ their utilization.
 The GPU partitioning is performed either using 
 [Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/) or 
 [Multi-Process Service (MPS)](https://docs.nvidia.com/deploy/mps/index.html), depending on the partitioning mode 
-you choose for each node. You can find more info about these two in the section below.
+you choose for each node. You can find more info about the partitioning modes in the section below.
 
 ## Partitioning modes comparison
 
@@ -83,6 +83,19 @@ ConfigMap through the `nos-gpu-partitioner.knownMigGeometries` value of the
 
 
 ### How it works
+The GPU Partitioner component watches for pending pods that cannot be scheduled due to lack of MIG resources
+they request. If it finds such pods, it checks the current partitioning state of the MIG GPUs available in the cluster
+and tries to find a new partitioning that would allow to schedule them without deleting any of the used MIG profiles.
+
+It does that also using an internal k8s scheduler, so that before choosing a candidate partitioning, it simulates 
+the scheduling to check whether the partitioning would actually allow to schedule the pending Pods. If multiple 
+partitioning can be used to schedule the pending Pods, the one that would result in the highest number of schedulable
+pods is chosen.
+
+Each specific GPU model allows to create only certain combinations of MIG profiles, which are called MIG geometries, so 
+the GPU partitioner takes this constraint into account when trying to find a new partitioning. The available MIG 
+geometries of each GPU model are defined in the field `nos-gpu-partitioner.knownMigGeometries` field of the Helm chart.
+
 The actual partitioning for MIG GPUs is performed by MIG Agent, which is a daemonset running on every node labeled 
 with `nos.nebuly.ai/gpu-partitioning: mig` that creates/deletes MIG profiles as requested by the GPU Partitioner.
 

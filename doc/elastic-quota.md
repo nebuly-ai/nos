@@ -15,7 +15,7 @@
 
 ## Overview
 
-nos extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
+`nos` extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
 by implementing
 the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
 and adding more flexibility through two custom resources: `ElasticQuotas` and `CompositeElasticQuotas`.
@@ -49,42 +49,10 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
 * optional `max` limits
 
 ## Getting started
-
-### Prerequisites
-
-* it is recommended to have [cert-manager](https://cert-manager.io/docs/installation/) installed on your cluster in
-  order to automatically manage the SSL certificates of the HTTP endpoints of the webhook used for validating the
-  custom resources. You can install it on your k8s cluster by running `make install-cert-manager`. Alternatively, you
-  can manually create the SSL certificates and inject them in the nos operator controller manager.
-
-### Installation
-
-You can install Elastic Resource Quotas management in your cluster running the two Makefile
-targets described below, which install and deploy the required resources to the k8s cluster
-specified in your `~/.kube/config`.
-
-By default, all the resources are installed in the `nos-system` namespace.
-
-1. Deploy the nos operator: the target installs the custom resource definitions (CRDs) and
-   it deploys the controllers for managing them.
-
-```bash
-make deploy-operator
-```
-
-2. Deploy the nos scheduler. The target deploys a Kubernetes scheduler that runs alongside the
-   default one and schedules Pods which specify its profile name in the "schedulerName"
-   field of their specification. If you want to deploy the nos scheduler as the default scheduler of
-   your cluster, you can refer to [documentation](doc/elastic-quota.md#installation-options) for detailed installation
-   instructions.
-
-```bash
-make deploy-scheduler
-```
-
 ### Create elastic quotas
 
 ```yaml
+$ kubectl apply -f -- <<EOF 
 apiVersion: nos.nebuly.ai/v1alpha1
 kind: ElasticQuota
 metadata:
@@ -96,6 +64,7 @@ spec:
     nos.nebuly.ai/gpu-memory: 16
   max:
     cpu: 10
+EOF
 ```
 
 The example above creates a quota for the namespace ``team-a``, guaranteeing it 2 CPUs and 16 GB of GPU memory,
@@ -103,9 +72,7 @@ and limiting the maximum number of CPUs it can use to 10. Note that:
 
 * the ``max`` field is optional. If it is not specified, then the Elastic Quota does not enforce any upper limits on the
   amount resources that can be created in the namespace
-* you can specify any resource you want in ``max`` and ``min`` fields
-
-For more details please refer to the [Elastic Resource Quota](doc/elastic-quota.md) documentation page.
+* you can specify any valid Kubernetes resource you want in ``max`` and ``min`` fields
 
 ### Create Pods subject to Elastic Resource Quota
 
@@ -399,21 +366,4 @@ You can check the logs of the scheduler by running the following command:
 
 ```shell
  kubectl logs -n nos-system -l app.kubernetes.io/component=scheduler -f
-```
-
-### How to increase log verbosity
-
-You can increase the scheduler log verbosity by editing the Scheduler deployment manifest
-[deployment.yaml](../config/scheduler/deployment/deployment.yaml).
-
-## Uninstall
-
-To uninstall the nos Operator and Scheduler, run the following commands:
-
-```shell
-make undeploy-operator
-```
-
-```shell
-make undeploy-scheduler
 ```

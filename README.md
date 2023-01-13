@@ -32,11 +32,11 @@ Alternatively, you can use Kustomize by cloning the repository and running `make
 ## Documentation
 
 - [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md)
-  - [Getting started](doc/automatic-gpu-partitioning.md#getting-started)
-  - [Enable nodes for automatic partitioning](doc/automatic-gpu-partitioning.md#enable-nodes-for-automatic-partitioning)
+  - [Overview](doc/automatic-gpu-partitioning.md#overview)
+  - [Partitioning modes comparison](doc/automatic-gpu-partitioning.md#partitioning-modes-comparison)
   - [MIG Partitioning](doc/automatic-gpu-partitioning.md#mig-partitioning)
+  - [MPS Partitioning](doc/automatic-gpu-partitioning.md#mps-partitioning)
   - [Configuration](doc/automatic-gpu-partitioning.md#configuration)
-  - [Integration with nos scheduler](doc/automatic-gpu-partitioning.md#integration-with-nos-scheduler)
   - [Troubleshooting](doc/automatic-gpu-partitioning.md#troubleshooting)
 - [Elastic Resource Quota management](doc/elastic-quota.md)
   - [Getting started](doc/elastic-quota.md#getting-started)
