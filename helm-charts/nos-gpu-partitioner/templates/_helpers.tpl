@@ -47,13 +47,14 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/part-of: {{ "nos" }}
+app.kubernetes.io/component: gpu-partitioner
 {{- end }}
 
 {{/*
 GPU Partitioner selector labels
 */}}
 {{- define "gpu-partitioner.selectorLabels" -}}
-app.kubernetes.io/name: gpu-partitioner
+app.kubernetes.io/name: {{ include "gpu-partitioner.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
@@ -123,7 +124,7 @@ Create the name of the controller manager metrics reader role
 Name of the mig-agent
 */}}
 {{- define "mig-agent.name" -}}
-{{- "mig-agent" -}}
+{{- "nos-mig-agent" -}}
 {{- end }}
 
 {{- define "mig-agent.fullname" -}}
@@ -143,13 +144,14 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/part-of: {{ "nos" }}
+app.kubernetes.io/component: mig-agent
 {{- end }}
 
 {{/*
 MIG Agent selector labels
 */}}
 {{- define "mig-agent.selectorLabels" -}}
-app.kubernetes.io/name: mig-agent
+app.kubernetes.io/name: {{ include "mig-agent.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
@@ -178,7 +180,7 @@ Create the name of the MIG Agent config ConfigMap
 Name of the gpu-agent
 */}}
 {{- define "gpu-agent.name" -}}
-{{- "gpu-agent" -}}
+{{- "nos-gpu-agent" -}}
 {{- end }}
 
 {{- define "gpu-agent.fullname" -}}
@@ -198,13 +200,14 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/part-of: {{ "nos" }}
+app.kubernetes.io/component: gpu-agent
 {{- end }}
 
 {{/*
 GPU agent selector labels
 */}}
 {{- define "gpu-agent.selectorLabels" -}}
-app.kubernetes.io/name: gpu-agent
+app.kubernetes.io/name: {{ include "gpu-agent.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
