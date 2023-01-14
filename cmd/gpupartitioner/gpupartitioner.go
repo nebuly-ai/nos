@@ -29,7 +29,6 @@ import (
 	"github.com/nebuly-ai/nos/pkg/api/scheduler"
 	schedulerv1beta3 "github.com/nebuly-ai/nos/pkg/api/scheduler/v1beta3"
 	"github.com/nebuly-ai/nos/pkg/constant"
-	"github.com/nebuly-ai/nos/pkg/gpu"
 	gpumig "github.com/nebuly-ai/nos/pkg/gpu/mig"
 	"github.com/nebuly-ai/nos/pkg/scheduler/plugins/capacityscheduling"
 	testutil "github.com/nebuly-ai/nos/pkg/test/util"
@@ -128,7 +127,7 @@ func main() {
 			setupLog.Error(err, "unable to load known MIG geometries")
 			os.Exit(1)
 		}
-		if err = gpumig.SetKnownGeometries(knownGeometries); err != nil {
+		if err = gpumig.SetKnownGeometries(knownGeometries.GroupByModel()); err != nil {
 			setupLog.Error(err, "unable to set known MIG geometries")
 			os.Exit(1)
 		}
@@ -367,36 +366,14 @@ func decodeSchedulerConfig(data []byte) (*schedulerconfig.KubeSchedulerConfigura
 	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)
 }
 
-func loadKnownMigGeometriesFromFile(file string) (map[gpu.Model][]gpu.Geometry, error) {
-	var knownMigGeometries = make(map[gpu.Model]migGeometryList)
-	var empty = map[gpu.Model][]gpu.Geometry{}
-
+func loadKnownMigGeometriesFromFile(file string) (gpumig.AllowedMigGeometriesList, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
-		return empty, err
+		return nil, err
 	}
-	if err = yaml.Unmarshal(data, &knownMigGeometries); err != nil {
-		return empty, err
+	var allowedGeometries = make(gpumig.AllowedMigGeometriesList, 0)
+	if err = yaml.Unmarshal(data, &allowedGeometries); err != nil {
+		return nil, err
 	}
-
-	var res = make(map[gpu.Model][]gpu.Geometry, len(knownMigGeometries))
-	for k, v := range knownMigGeometries {
-		res[k] = v.asGpuGeometry()
-	}
-
-	return res, nil
-}
-
-type migGeometryList []map[gpumig.ProfileName]int
-
-func (m migGeometryList) asGpuGeometry() []gpu.Geometry {
-	var res = make([]gpu.Geometry, len(m))
-	for i, migGeometry := range m {
-		gpuGeometry := make(gpu.Geometry, len(migGeometry))
-		for k, v := range migGeometry {
-			gpuGeometry[k] = v
-		}
-		res[i] = gpuGeometry
-	}
-	return res
+	return allowedGeometries, nil
 }

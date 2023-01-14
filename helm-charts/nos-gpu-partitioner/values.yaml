@@ -158,16 +158,18 @@ affinity: {}
 # -- Sets the nodeSelector config of the GPU Partitioner Pod.
 nodeSelector: {}
 
-# -- Map that associates to each GPU model its possible MIG configurations
+# -- List that associates GPU models to the respective allowed MIG configurations
 # @default -- -
 knownMigGeometries:
-  A30:
+- models: [ "A30" ]
+  allowedGeometries:
     - 1g.6gb: 4
     - 1g.6gb: 2
       2g.12gb: 1
     - 2g.12gb: 2
     - 4g.24gb: 1
-  A100-SXM4-40GB:
+- models: [ "A100-SXM4-40GB", "NVIDIA-A100-40GB-PCIe" ]
+  allowedGeometries:
     - 1g.5gb: 7
     - 1g.5gb: 5
       2g.10gb: 1
@@ -192,32 +194,8 @@ knownMigGeometries:
       2g.10gb: 1
       4g.20gb: 1
     - 7g.40gb: 1
-  NVIDIA-A100-40GB-PCIe:
-    - 1g.5gb: 7
-    - 1g.5gb: 5
-      2g.10gb: 1
-    - 1g.5gb: 3
-      2g.10gb: 2
-    - 1g.5gb: 1
-      2g.10gb: 3
-    - 1g.5gb: 2
-      2g.10gb: 1
-      3g.20gb: 1
-    - 2g.10gb: 2
-      3g.20gb: 1
-    - 1g.5gb: 3
-      3g.20gb: 1
-    - 1g.5gb: 1
-      2g.10gb: 1
-      3g.20gb: 1
-    - 3g.20gb: 2
-    - 1g.5gb: 3
-      4g.20gb: 1
-    - 1g.5gb: 1
-      2g.10gb: 1
-      4g.20gb: 1
-    - 7g.40gb: 1
-  NVIDIA-A100-80GB-PCIe:
+- models: [ "NVIDIA-A100-80GB-PCIe" ]
+  allowedGeometries:
     - 1g.10gb: 7
     - 1g.10gb: 5
       2g.20gb: 1
