@@ -7,14 +7,14 @@ on:
     paths-ignore:
     - ".github/**"
     - "README.md"
-    - "doc/**"
+    - "docs/**"
     - "helm-charts/**"
   pull_request:
     branches: [ "main" ]
     paths-ignore:
     - ".github/**"
     - "README.md"
-    - "doc/**"
+    - "docs/**"
     - "helm-charts/**"
 
 permissions:
