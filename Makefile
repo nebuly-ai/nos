@@ -246,6 +246,9 @@ deploy-gpu-partitioner: kustomize deploy-mig-agent deploy-gpu-agent ## Deploy th
 	cd config/gpupartitioner/manager && $(KUSTOMIZE) edit set image gpu-partitioner=${GPU_PARTITIONER_IMG}
 	$(KUSTOMIZE) build config/gpupartitioner/default | kubectl apply -f -
 
+.PHONY: deploy
+deploy: deploy-operator deploy-scheduler deploy-gpu-partitioner deploy-gpu-agent deploy-mig-agent ## Deploy the all the components to the K8s cluster specified in ~/.kube/config.
+
 .PHONY: undeploy-operator
 undeploy-operator: ## Undeploy the nos operator from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/operator/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
@@ -258,9 +261,16 @@ undeploy-scheduler: ## Undeploy the nos scheduler from the K8s cluster specified
 undeploy-mig-agent: ## Undeploy the MIG agent from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/migagent/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
+.PHONY: undeploy-gpu-agent
+undeploy-gpu-agent: ## Undeploy the GPU agent from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	$(KUSTOMIZE) build config/gpuagent/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
 .PHONY: undeploy-gpu-partitioner
 undeploy-gpu-partitioner: ## Undeploy the GPU Partitioner from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/gpupartitioner/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+.PHONY: undeploy
+undeploy: undeploy-operator undeploy-scheduler undeploy-gpu-partitioner undeploy-gpu-agent undeploy-mig-agent ## Undeploy the all the components to the K8s cluster specified in ~/.kube/config.
 
 ##@ Build Dependencies
 
