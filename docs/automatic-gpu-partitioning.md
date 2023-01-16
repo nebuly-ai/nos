@@ -14,7 +14,7 @@
 
 ## Overview
 `nos` allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
-the partitioning is performed dynamically based on the pending and running Pods in your cluster, so that the GPUs
+the partitioning is performed automatically in real-time based on the pending and running Pods in your cluster, so that the GPUs
 are always fully utilized.
 
 The GPU partitioning is performed by the [GPU Partitioner](../helm-charts/nos-gpu-partitioner) component, which
@@ -24,7 +24,8 @@ due to the lack of available resources.
 
 You can see the GPU Partitioner as a sort of [Cluster Autoscaler](https://github.com/kubernetes/autoscaler) for GPUs:
 instead of scaling up the number of nodes and GPUs, it dynamically partitions the available GPUs to maximize
-their utilization. 
+their utilization, leading to spare GPU capacity that can reduce the number of required GPU nodes (and thus the costs 
+of your cluster).
 
 The GPU partitioning is performed either using 
 [Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/) or 
@@ -33,7 +34,7 @@ you choose for each node. You can find more info about the partitioning modes in
 
 ## Partitioning modes comparison
 The following tables summarizes the difference between the different partitioning modes supported by NVIDIA GPUs.
-Note that they are not mutually exclusive: `nos` allows to you choose a different partitioning mode for each node in your
+Note that they are not mutually exclusive: `nos` allows you to choose a different partitioning mode for each node in your
 cluster according to your needs and available hardware.
 
 | Partitioning mode          | Supported by `nos` | Workload isolation level | Pros                                                                                                                            | Cons                                                                                                                                                        |
@@ -80,6 +81,18 @@ It is however important to point out that, even though allocatable memory and co
 processes sharing a GPU through MPS are not fully isolated from each other. For instance, MPS does not provide error 
 isolation and memory protection, which means that a process can crash and cause the entire GPU to be reset (this 
 can however often been avoided by gracefully handling CUDA errors and SIGTERM signals).
+
+### Time-slicing
+Time-slicing consists of oversubscribing a GPU leveraging its time-slicing scheduler, which executes multiple CUDA 
+processes concurrently through *temporal sharing*. This means that the GPU shares its compute resources among the 
+different processes in a fair-sharing manner by switching between them at regular intervals of time. This brings 
+the cost of context-switching overhead, which translates into jitter and higher latency that affects the workloads. 
+
+Time-slicing also does not enforce any memory isolation between the different processes sharing a GPU, nor 
+any memory allocation limits, which can lead to frequent out-of-memory (OOM) errors.
+
+Given the drawbacks above the availability of more robust technologies such as MIG and MPS, at the moment we 
+decided to not support time-slicing partitioning in `nos`.
 
 ## Getting started with MIG partitioning
 > ⚠️ [Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html) mode
