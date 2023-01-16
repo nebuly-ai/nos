@@ -33,7 +33,7 @@ type GpuPartitionerConfig struct {
 	BatchWindowTimeoutSeconds              time.Duration    `json:"batchWindowTimeoutSeconds"`
 	BatchWindowIdleSeconds                 time.Duration    `json:"batchWindowIdleSeconds"`
 	DevicePluginConfigMap                  NamespacedObject `json:"devicePluginConfigMap,omitempty"`
-	DevicePluginDelaySeconds               time.Duration    `json:"devicePluginConfigUpdateDelaySeconds"`
+	DevicePluginDelaySeconds               time.Duration    `json:"devicePluginDelaySeconds"`
 }
 
 func (c *GpuPartitionerConfig) Validate() error {
