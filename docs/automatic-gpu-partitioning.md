@@ -44,12 +44,39 @@ cluster according to your needs and available hardware.
 
 
 ### Multi-instance GPU (MIG)
-todo
+Multi-instance GPU (MIG) is a technology available on NVIDIA Ampere or more recent architectures that allows to securely 
+partition a GPU into separate GPU instances for CUDA applications, each fully isolated with its own high-bandwidth 
+memory, cache, and compute cores.
+
+The isolated GPU slices created through MIG are called MIG devices, and they are named according to the following 
+naming convention: `<gpu-instance>g.<gpu-memory>gb`, where the GPU instance part corresponds to the computing 
+resources of the device, while the GPU Memory indicates its GB of memory. Example: `2g.20gb`
+
+Each GPU model allows only a pre-defined set of MIG Geometries (e.g. set of MIG devices with the respective max quantity), 
+which limits the granularity of the partitioning. Moreover, the MIG devices allowed by a certain geometry must be 
+created in a specific order, further limiting the flexibility of the partitioning.
+
+Even though MIG partitioning is less flexibly, it is important to point out that it is the technology that offers the 
+highest level of isolation among the created GPU slices, which are equivalent to independent and fully-isolated 
+different GPUs.
+
+You can find out more on how MIG technology works in the official 
+[NVIDIA MIG User Guide](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/).
+
 ### Multi-Process Service (MPS)
-todo
+Multi-Process Service (MPS) is a client-server implementation of the CUDA Application Programming Interface (API) 
+for running multiple processes concurrently on the same GPU:
+* the server manages GPU access providing concurrency between clients
+* clients connect to the server through the client runtime, which is built into the CUDA Driver library 
+  and may be used transparently by any CUDA application.
 
+The main advantage of MPS is that it provides a fine-grained control over the GPU assigned to each client, allowing to 
+specify arbitrary limits on both the amount of allocatable memory and the available compute.
 
-
+It is however important to point out that, even though allocatable memory and compute resources limits are enforced, 
+processes sharing a GPU through MPS are not fully isolated from each other. For instance, MPS does not provide error 
+isolation and memory protection, which means that a process can crash and cause the entire GPU to be reset (this 
+can however often been avoided by gracefully handling CUDA errors and SIGTERM signals).
 
 ## Getting started with MIG partitioning
 > ⚠️ [Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html) mode
@@ -120,7 +147,9 @@ spec:
 EOF
 ```
 In the example above, the pod requests a slice of a 10GB of memory, which is the smallest available in 
-`NVIDIA-A100-80GB-PCIe` GPUs. 
+`NVIDIA-A100-80GB-PCIe` GPUs. If in your cluster you have different GPU models, the `nos` might not be able to create 
+the specified MIG resource. You can find the MIG profiles supported by each GPU model in the 
+[NVIDIA documentation](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/#supported-profiles).
 
 Note that each container is supposed to request at most one MIG device: if a container needs more resources, 
 then it should ask for a larger, single device as opposed to multiple smaller devices. 
@@ -187,7 +216,8 @@ must run with the same user if they request MPS resources.
 
 Please note that:
 * as for MIG resources, each container is supposed to request at most one MPS device: if a container needs more resources, 
-then it should ask for a larger, single device as opposed to multiple smaller devices.
+then it should ask for a larger, single device as opposed to multiple smaller devices
+* the computing resources of a GPU are equally shared among all its MPS resources
 * the output of `nvidia-smi` run inside a container requesting MPS resources still shows the whole memory of the respective 
 GPU. Nevertheless, the container is only able to access the amount of memory of the MPS slice it requested, which is 
 specified by the environment variable `CUDA_MPS_PINNED_DEVICE_MEM_LIMIT`.

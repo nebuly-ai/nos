@@ -7,8 +7,8 @@ The operating system layer is responsible for workloads scheduling and hardware 
 It orchestrates the workloads taking into account considerations specific for AI/ML workloads and leveraging
 techniques typical of High-performance Computing (HPC), and it hides the underlying hardware complexities.
 
-Currently, this layer provides two features [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md) and
-[Elastic Resource Quota management](doc/elastic-quota.md).
+Currently, this layer provides two features [Automatic GPU partitioning](docs/automatic-gpu-partitioning.md) and
+[Elastic Resource Quota management](docs/elastic-quota.md).
 
 ## Getting started
 
@@ -31,23 +31,23 @@ Alternatively, you can use Kustomize by cloning the repository and running `make
 
 ## Documentation
 
-- [Automatic GPU partitioning](doc/automatic-gpu-partitioning.md)
-  - [Overview](doc/automatic-gpu-partitioning.md#overview)
-  - [Partitioning modes comparison](doc/automatic-gpu-partitioning.md#partitioning-modes-comparison)
-  - [MIG Partitioning](doc/automatic-gpu-partitioning.md#mig-partitioning)
-  - [MPS Partitioning](doc/automatic-gpu-partitioning.md#mps-partitioning)
-  - [Configuration](doc/automatic-gpu-partitioning.md#configuration)
-  - [Troubleshooting](doc/automatic-gpu-partitioning.md#troubleshooting)
-- [Elastic Resource Quota management](doc/elastic-quota.md)
-  - [Getting started](doc/elastic-quota.md#getting-started)
-  - [How to define Resource Quotas](doc/elastic-quota.md#how-to-define-resource-quotas)
-  - [Installation options](doc/elastic-quota.md#scheduler-installation-options)
-  - [Troubleshooting](doc/elastic-quota.md#troubleshooting)
+- [Automatic GPU partitioning](docs/automatic-gpu-partitioning.md)
+  - [Overview](docs/automatic-gpu-partitioning.md#overview)
+  - [Partitioning modes comparison](docs/automatic-gpu-partitioning.md#partitioning-modes-comparison)
+  - [MIG Partitioning](docs/automatic-gpu-partitioning.md#mig-partitioning)
+  - [MPS Partitioning](docs/automatic-gpu-partitioning.md#mps-partitioning)
+  - [Configuration](docs/automatic-gpu-partitioning.md#configuration)
+  - [Troubleshooting](docs/automatic-gpu-partitioning.md#troubleshooting)
+- [Elastic Resource Quota management](docs/elastic-quota.md)
+  - [Getting started](docs/elastic-quota.md#getting-started)
+  - [How to define Resource Quotas](docs/elastic-quota.md#how-to-define-resource-quotas)
+  - [Installation options](docs/elastic-quota.md#scheduler-installation-options)
+  - [Troubleshooting](docs/elastic-quota.md#troubleshooting)
 
 ## Developer
 
-- [Getting started](doc/developer/get-started.md)
-- [Contribution guidelines](doc/developer/contribution-guidelines.md)
+- [Getting started](docs/developer/get-started.md)
+- [Contribution guidelines](docs/developer/contribution-guidelines.md)
 - [Roadmap]()
 
 ---
