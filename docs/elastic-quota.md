@@ -9,9 +9,7 @@
 * [Over-quotas and GPU memory limits](#over-quotas-and-gpu-memory-limits)
   * [Over-quota fair sharing](#over-quota-fair-sharing)
   * [GPU memory limits](#gpu-memory-limits)
-* [Demo](#demo)
-* [Troubleshooting](#trouble-shooting)
-* [Uninstall](#uninstall)
+* [Troubleshooting](#troubleshooting)
 
 ## Overview
 
@@ -21,7 +19,7 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
 and adding more flexibility through two custom resources: `ElasticQuotas` and `CompositeElasticQuotas`.
 
 While standard Kubernetes resource quotas allow you only to define limits on the maximum
-overall resource allocation of each namespace, nos elastic quotas let you define two
+overall resource allocation of each namespace, `nos` elastic quotas let you define two
 different limits:
 
 1. `min`: the minimum resources that are guaranteed to the namespace
@@ -33,14 +31,14 @@ When a namespace claims back its reserved `min` resources, pods borrowing resour
 over-quota pods) are preempted to make up space.
 
 Moreover, while the standard Kubernetes quota management computes the used quotas as the aggregation of the resources
-of the resource requests specified in the Pods spec, nos computes the used quotas by taking into account
+of the resource requests specified in the Pods spec, `nos` computes the used quotas by taking into account
 only running Pods in order to avoid lower resource utilization due to scheduled Pods that failed to start.
 
 Elastic Resource Quota management is based on the
 [Capacity Scheduling](https://github.com/kubernetes-sigs/scheduler-plugins/tree/master/pkg/capacityscheduling) scheduler
-plugin, which implements
+plugin, which also implements
 the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugins/blob/master/kep/9-capacity-scheduling/README.md)
-. nos extends the former implementation by adding the following features:
+. `nos` extends the former implementation by adding the following features:
 
 * over-quota pods preemption
 * `CompositeElasticQuota` resources for defining limits on multiple namespaces
@@ -76,12 +74,11 @@ and limiting the maximum number of CPUs it can use to 10. Note that:
 
 ### Create Pods subject to Elastic Resource Quota
 
-Unless you deployed the nos scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
+Unless you deployed the `nos` scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
 to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas.
 
-You can do that by setting the value of the `schedulerName` field of your Pods specification to `nos-scheduler`, as
-shown in the
-example below.
+You can do that by setting the value of the `schedulerName` field of your Pods specification to `nos-scheduler` (or to 
+any name you chose when installing `nos`), as shown in the example below.
 
 ```yaml
 apiVersion: v1
@@ -103,15 +100,15 @@ You can define resource limits on namespaces using two custom resources: `Elasti
 They both work in the same way, the only difference is that the latter defines limits on multiple
 namespaces instead of on a single one. Limits are specified through two fields:
 
-* `min`: the minimum resources that are guaranteed to the namespace. nos will make sure that, at any time,
+* `min`: the minimum resources that are guaranteed to the namespace. `nos` will make sure that, at any time,
   the namespace subject to the quota will always have access to **at least** these resources.
 * `max`: optional field that limits the total amount of resources that can be requested by a namespace. If not
-  max is not specified, then nos does not enforce any upper limits on the resources that can be requested by
+  max is not specified, then `nos` does not enforce any upper limits on the resources that can be requested by
   the namespace.
 
 You can find sample definitions of these resources under the [examples](../config/operator/samples) directory.
 
-Note that `ElasticQuota` and `CompositeElasticQuota` are treated by nos in the same way: a
+Note that `ElasticQuota` and `CompositeElasticQuota` are treated by `nos` in the same way: a
 namespace subject to an `ElasticQuota` can borrow resources from namespaces subject to either other elastic quotas or
 composite elastic quotas and, vice-versa, namespaces subject to a `CompositeElasticQuota` can borrow resources
 from namespaces subject to either elastic quotas or composite elastic quotas.
@@ -127,9 +124,9 @@ The following constraints are enforced over elastic quota resources:
 
 ### How used resources are computed
 
-When a namespace is subject to an ElasticQuota (or to a CompositeElasticQuota), nos computes the number
+When a namespace is subject to an ElasticQuota (or to a CompositeElasticQuota), `nos` computes the number
 of quotas consumed by that namespace by aggregating the resources requested by its pods, considering **only** the
-ones whose phase is `Running`. In this way, nos avoid lower resource utilization due to scheduled pods that
+ones whose phase is `Running`. In this way, `nos` avoid lower resource utilization due to scheduled pods that
 failed to start.
 
 Every time the amount of resources consumed by a namespace changes (e.g a Pod changes its phase to or from `Running`),
@@ -141,19 +138,16 @@ of the `ElasticQuota` and `CompositeElasticQuota` objects status.
 ## Scheduler installation options
 
 You can add scheduling support for Elastic Resource Quota to your cluster by choosing one of the following options.
-In both cases, you also need to install the nos operator.
+In both cases, you also need to install the `nos operator` to manage the CRDs.
 
-### Option 1 - Use nos scheduler (recommended)
+### Option 1 - Use nos-scheduler (recommended)
 
 This is the recommended option. You can deploy the nos scheduler to your cluster either as the default scheduler
 or as a second scheduler that runs alongside the default one.
 In the latter case, you can use the `schedulerName` field of the Pod spec to specify which scheduler should be used.
 
-To deploy the nos scheduler you can run the following command:
-
-```bash
-make deploy-scheduler
-```
+If you installed `nos` through the Helm chart, the scheduler is deployed automatically unless you set the value
+`nos-scheduler.enabled=false`. 
 
 ### Option 2 - Use your k8s scheduler
 
@@ -184,7 +178,6 @@ profiles:
       - name: CapacityScheduling
         args:
           # Defines how much GB of memory does a nvidia.com/gpu has.
-          # Should be equal to controller-manager config field "nvidiaGpuResourceMemoryGB" (controller_manager_config.yaml)
           nvidiaGpuResourceMemoryGB: 32
 ```
 
@@ -223,6 +216,9 @@ func main() {
 }
 ```
 
+If you choose this installation option, you don't need to deploy `nos` scheduler, so you can disable it 
+by setting `--set nos-scheduler.enabled=false` when installing the `nos` chart.
+
 ## Over-quotas and GPU memory limits
 
 If a namespace subject to an `ElasticQuota` (or, equivalently, to a `CompositeElasticQuota`) is using all the resources
@@ -251,20 +247,20 @@ All the pods created within a namespace subject to a quota are labelled as `in-q
 resources of the quota do not exceed its `min` resources. When this happens and news pods are created in that namespace,
 they are labelled as `over-quota` when they reach the running phase.
 
-nos re-evaluates the over-quota status of each Pod of a namespace every time a new Pod in that
-namespace changes its phase to/from "Running". With the default configuration, nos sorts the pods by creation
+`nos` re-evaluates the over-quota status of each Pod of a namespace every time a new Pod in that
+namespace changes its phase to/from "Running". With the default configuration, `nos` sorts the pods by creation
 date and, if the creation timestamp is the same, by requested resources, placing first the pods with older creation
-timestamp and with fewer requested resources. After the pods are sorted, nos computes the aggregated requested
+timestamp and with fewer requested resources. After the pods are sorted, `nos` computes the aggregated requested
 resources by summing the request of each Pod, and it marks as `over-quota` all the pods for which `used`
 is greater than `min`.
 
 > 🚧 Soon it will be possible to customize the order criteria used for sorting the pods during this process through the
-> nos operator configuration.
+> nos-operator configuration.
 
 ### Over-quota fair sharing
 
 In order to prevent a single namespace from consuming all the over-quotas available in the cluster and starving the
-others, nos implements a fair-sharing mechanism that guarantees that each namespace subject to an ElasticQuota
+others, `nos` implements a fair-sharing mechanism that guarantees that each namespace subject to an ElasticQuota
 has right to a part of the available over-quotas proportional to its `min` field.
 
 The fair-sharing mechanism does not enforce any hard limit on the amount of over-quotas pods that a namespace can
@@ -327,13 +323,19 @@ You can use this resource in the `min` and `max` fields of the elastic quotas sp
 minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace and its maximum limit,
 respectively.
 
-nos automatically computes the GPU memory requested by each Pod from the GPU resources requested
+This resource is particularly useful if you use Elastic Quotas together with 
+[automatic GPU partitioning](./automatic-gpu-partitioning.md), since it allows you to assign resources to different 
+teams (e.g. namespaces) in terms of GPU memory instead of in number of GPUs, and the users can than consume 
+request in the same terms by claiming GPU slices with a specific amount of memory, enabling an overall fine-grained
+control over the GPUs of the cluster.
+
+`nos` automatically computes the GPU memory requested by each Pod from the GPU resources requested
 by its containers and enforces the limits accordingly. The amount of memory GB corresponding to the
-generic resource `nvidia.com/gpu` is defined by the field `nvidiaGpuResourceMemoryGB` of the nos Operator
-configuration, which is 32 by default.
+generic resource `nvidia.com/gpu` is defined by the field `global.nvidiaGpuResourceMemoryGB` of the 
+installation chart, which is `32` by default.
 
 For instance, using the default configuration, the value of the resource `nos.nebuly.ai/gpu-memory` computed from
-the Pod specification below is 42 (10 + 16 * 2).
+the Pod specification below is `10+32=42`.
 
 ```yaml
 apiVersion: apps/v1
@@ -348,22 +350,19 @@ spec:
       resources:
         limits:
           nvidia.com/mig-1g.10gb: 1
-          nvidia.com/gpu: 2
+          nvidia.com/gpu: 1
 ```
-
-You can change the value of `nvidiaGpuResourceMemoryGB` by editing both the
-[Operator](../config/operator/manager/operator_config.yaml)
-and [Scheduler](../config/scheduler/deployment/scheduler_config.yaml)
-configurations. The value used in both configurations must always be the same.
-
-## Demo
-
-Todo
 
 ## Troubleshooting
 
 You can check the logs of the scheduler by running the following command:
 
 ```shell
- kubectl logs -n nos-system -l app.kubernetes.io/component=scheduler -f
+ kubectl logs -n nebuly-nos -l app.kubernetes.io/component=nos-scheduler -f
+```
+
+You can check the logs of the operator by running the following command:
+
+```shell
+ kubectl logs -n nebuly-nos -l app.kubernetes.io/component=nos-operator -f
 ```

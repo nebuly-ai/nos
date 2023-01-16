@@ -71,7 +71,10 @@ for running multiple processes concurrently on the same GPU:
   and may be used transparently by any CUDA application.
 
 The main advantage of MPS is that it provides a fine-grained control over the GPU assigned to each client, allowing to 
-specify arbitrary limits on both the amount of allocatable memory and the available compute.
+specify arbitrary limits on both the amount of allocatable memory and the available compute. The Nebuly 
+[k8s-device-plugin](https://github.com/nebuly-ai/k8s-device-plugin)
+takes advantage of this feature for exposing to Kubernetes GPU resources with an arbitrary amount of allocatable 
+memory defined by the user. 
 
 It is however important to point out that, even though allocatable memory and compute resources limits are enforced, 
 processes sharing a GPU through MPS are not fully isolated from each other. For instance, MPS does not provide error 
@@ -319,23 +322,31 @@ For further information regarding NVIDIA MIG and its integration with Kubernetes
 official documentation provided by NVIDIA.
 
 #### MPS Partitioning
-The creation and deletion of MPS resources is handled by the 
-[k8s-device-plugin](https://github.com/nebuly-ai/k8s-device-plugin), which can expose a single GPU as multiple 
-MPS resources according to its configuration.
+The creation and deletion of MPS resources is handled by the k8s-device-plugin, which can expose a single GPU as 
+multiple MPS resources according to its configuration.
 
 When allocating a container requesting an MPS resource, the device plugin takes care of injecting the 
-environment variables and mounting the volumes required by the container to communicate to the MPS server.
+environment variables and mounting the volumes required by the container to communicate to the MPS server, making 
+sure that the resource limits defined by the device requested by the container are enforced.
+
+For more information about MPS integration with Kubernetes you can refer to the 
+Nebuly [k8s-device-plugin](https://github.com/nebuly-ai/k8s-device-plugin) documentation.
 
 ## Troubleshooting
 If you run into issues with Automatic GPU Partitioning, you can troubleshoot by checking the logs of the GPU Partitioner
 and MIG Agent pods. You can do that by running the following commands:
 
-Check GPU Partitioner logs
+Check GPU Partitioner logs:
 ```shell
- kubectl logs -l app.kubernetes.io/component=gpu-partitioner -f
+ kubectl logs -n nebuly-nos -l app.kubernetes.io/component=nos-gpu-partitioner -f
 ```
 
 Check MIG Agent logs:
 ```shell
- kubectl logs -l app.kubernetes.io/component=mig-agent -f
+ kubectl logs -n nebuly-nos -l app.kubernetes.io/component=nos-mig-agent -f
+```
+
+Check Nebuly k8s-device-plugin logs:
+```shell
+kubectl logs -n nebuly-nos -l app.kubernetes.io/name=nebuly-k8s-device-plugin -f
 ```
