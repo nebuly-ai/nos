@@ -89,8 +89,9 @@ decided to not support time-slicing partitioning in `nos`.
 
 ## Getting started with MIG partitioning
 
-> ⚠️ [Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html) mode
-> is supported only by NVIDIA GPUs based on Ampere, Hopper and newer architectures.
+!!! warning
+    [Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/index.html) mode
+    is supported only by NVIDIA GPUs based on Ampere, Hopper and newer architectures.
 
 ### Prerequisites
 
@@ -174,8 +175,9 @@ then it should ask for a larger, single device as opposed to multiple smaller de
 
 ## Getting started with MPS partitioning
 
-> ⚠️ [Multi-Process Service (MPS)](https://docs.nvidia.com/deploy/mps/index.html) is supported only by NVIDIA GPUs
-> based on Volta and newer architectures.
+!!! warning
+    [Multi-Process Service (MPS)](https://docs.nvidia.com/deploy/mps/index.html) is supported only by NVIDIA GPUs
+    based on Volta and newer architectures.
 
 ### Prerequisites
 

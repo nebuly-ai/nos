@@ -174,7 +174,7 @@ profiles:
 In order to compile the plugin with your scheduler, you just need to add the following line to the `main.go` file
 of your scheduler:
 
-```go
+``` go
 package main
 
 import (
