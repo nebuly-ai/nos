@@ -1,4 +1,4 @@
-# Automatic GPU partitioning
+# Dynamic GPU partitioning
 
 ## Overview
 

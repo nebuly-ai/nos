@@ -6,7 +6,7 @@ nav:
   - Installation: installation.md
   - Overview: overview.md
   - Dynamic GPU Partitioning: dynamic-gpu-partitioning.md
-  - Elastic Quotas: elastic-quotas.md
+  - Elastic Resource Quota: elastic-quota.md
   - Developer:
       - Getting started: developer/getting-started.md
       - Contribution guidelines: developer/contribution-guidelines.md
