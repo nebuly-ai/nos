@@ -1,0 +1,7 @@
+site_name: Helm Charts
+
+nav:
+  - nos: nos/README.md
+  - nos-gpu-partitioner: nos-gpu-partitioner/README.md
+  - nos-operator: nos-operator/README.md
+  - nos-scheduler: nos-gpu-partitioner/README.md
