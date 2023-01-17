@@ -6,20 +6,23 @@
 the partitioning is performed automatically in real-time based on the pending and running Pods in your cluster, so that the GPUs
 are always fully utilized.
 
-The GPU partitioning is performed by the [GPU Partitioner](./helm-charts/nos-gpu-partitioner/README.md) component, which
-constantly watches the GPU resources of the cluster and finds the best possible partitioning of the available GPUs
-in order to schedule the highest number of pods requesting fractions of GPUs, which otherwise could not be scheduled
-due to the lack of available resources.
+The [GPU Partitioner](./helm-charts/nos-gpu-partitioner/README.md) component
+constantly watches the pending Pods and finds the best possible GPU partitioning configuration
+to schedule the highest number of the ones requesting fractions of GPUs, which otherwise would not 
+be possible to schedule due to lack of resources.
 
-You can see the GPU Partitioner as a sort of [Cluster Autoscaler](https://github.com/kubernetes/autoscaler) for GPUs:
+You can see it as a sort of [Cluster Autoscaler](https://github.com/kubernetes/autoscaler) for GPUs:
 instead of scaling up the number of nodes and GPUs, it dynamically partitions the available GPUs to maximize
 their utilization, leading to spare GPU capacity that can reduce the number of required GPU nodes (and thus the costs
 of your cluster).
 
 The GPU partitioning is performed either using
-[Multi-instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/) or
-[Multi-Process Service (MPS)](https://docs.nvidia.com/deploy/mps/index.html), depending on the partitioning mode
+[Multi-instance GPU (MIG)](#multi-instance-gpu-mig) or
+[Multi-Process Service (MPS)](#multi-process-service-mps), depending on the partitioning mode
 you choose for each node. You can find more info about the partitioning modes in the section below.
+
+* [Get started with MIG partitioning](#getting-started-with-mig-partitioning)
+* [Get started with MPS partitioning](#getting-started-with-mps-partitioning)
 
 ## Partitioning modes comparison
 
