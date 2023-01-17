@@ -5,17 +5,17 @@ on:
   push:
     branches: [ "main", "dev" ]
     paths-ignore:
-    - ".github/**"
-    - "README.md"
-    - "docs/**"
-    - "helm-charts/**"
+      - '.github/**'
+      - 'README.md'
+      - 'docs/**'
+      - 'helm-charts/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
-    - ".github/**"
-    - "README.md"
-    - "docs/**"
-    - "helm-charts/**"
+      - '.github/**'
+      - 'README.md'
+      - 'docs/**'
+      - 'helm-charts/**'
 
 permissions:
   contents: read

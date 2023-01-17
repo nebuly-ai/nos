@@ -24,7 +24,7 @@ make install-cert-manager
 ### Build components
 You can build the nos components by running the `docker-build-<component-name>` targets. The targets build 
 the Docker images using the default image name tagged with the version defined in the first line of
-the [Makefile](../../../../Makefile). 
+the Makefile. 
 
 Optionally, you can override the name and the tag of the Docker image by providing them as argument to the target.
 
