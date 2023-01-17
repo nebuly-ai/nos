@@ -47,6 +47,7 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
 * optional `max` limits
 
 ## Getting started
+
 ### Create elastic quotas
 
 ```yaml
@@ -77,7 +78,7 @@ and limiting the maximum number of CPUs it can use to 10. Note that:
 Unless you deployed the `nos` scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
 to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas.
 
-You can do that by setting the value of the `schedulerName` field of your Pods specification to `nos-scheduler` (or to 
+You can do that by setting the value of the `schedulerName` field of your Pods specification to `nos-scheduler` (or to
 any name you chose when installing `nos`), as shown in the example below.
 
 ```yaml
@@ -147,7 +148,7 @@ or as a second scheduler that runs alongside the default one.
 In the latter case, you can use the `schedulerName` field of the Pod spec to specify which scheduler should be used.
 
 If you installed `nos` through the Helm chart, the scheduler is deployed automatically unless you set the value
-`nos-scheduler.enabled=false`. 
+`nos-scheduler.enabled=false`.
 
 ### Option 2 - Use your k8s scheduler
 
@@ -216,7 +217,7 @@ func main() {
 }
 ```
 
-If you choose this installation option, you don't need to deploy `nos` scheduler, so you can disable it 
+If you choose this installation option, you don't need to deploy `nos` scheduler, so you can disable it
 by setting `--set nos-scheduler.enabled=false` when installing the `nos` chart.
 
 ## Over-quotas and GPU memory limits
@@ -323,15 +324,15 @@ You can use this resource in the `min` and `max` fields of the elastic quotas sp
 minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace and its maximum limit,
 respectively.
 
-This resource is particularly useful if you use Elastic Quotas together with 
-[automatic GPU partitioning](./automatic-gpu-partitioning.md), since it allows you to assign resources to different 
-teams (e.g. namespaces) in terms of GPU memory instead of in number of GPUs, and the users can than consume 
+This resource is particularly useful if you use Elastic Quotas together with
+[automatic GPU partitioning](./automatic-gpu-partitioning.md), since it allows you to assign resources to different
+teams (e.g. namespaces) in terms of GPU memory instead of in number of GPUs, and the users can than consume
 request in the same terms by claiming GPU slices with a specific amount of memory, enabling an overall fine-grained
 control over the GPUs of the cluster.
 
 `nos` automatically computes the GPU memory requested by each Pod from the GPU resources requested
 by its containers and enforces the limits accordingly. The amount of memory GB corresponding to the
-generic resource `nvidia.com/gpu` is defined by the field `global.nvidiaGpuResourceMemoryGB` of the 
+generic resource `nvidia.com/gpu` is defined by the field `global.nvidiaGpuResourceMemoryGB` of the
 installation chart, which is `32` by default.
 
 For instance, using the default configuration, the value of the resource `nos.nebuly.ai/gpu-memory` computed from
