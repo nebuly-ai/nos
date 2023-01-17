@@ -15,10 +15,10 @@ increasing GPU utilization, cutting down infrastructure costs and improving work
 
 Currently, the available features are:
 
-* [Dynamic GPU partitioning](https://docs.nebuly.ai/nos/dynamic-gpu-partitioning/): `nos` ensures that each Pod uses the GPU resources
+* [Dynamic GPU partitioning](https://docs.nebuly.ai/nos/dynamic-gpu-partitioning/): ensure that each Pod uses the GPU resources
 that are strictly necessary by allowing to schedule Pods requesting fractions of GPUs. GPU partitioning is performed
 automatically in real-time based on the Pods pending and running in the cluster, so that GPUs are always fully utilized.
-* [Elastic Resource Quota management](https://docs.nebuly.ai/nos/elastic-quotas.md): increases the number of Pods running on the
+* [Elastic Resource Quota management](https://docs.nebuly.ai/nos/elastic-quotas.md): increase the number of Pods running on the
 cluster by allowing namespaces to borrow quotas of reserved resources from other namespaces as long as they are
 not using them.
 
