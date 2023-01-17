@@ -1,18 +1,5 @@
 # Automatic GPU partitioning
 
-## Table of contents
-
-- [Overview](#overview)
-- [Partitioning modes comparison](#partitioning-modes-comparison)
-- [Getting started with MIG partitioning](#getting-started-with-mig-partitioning)
-- [Getting started with MPS partitioning](#getting-started-with-mps-partitioning)
-- [Configuration](#configuration)
-  - [Pods batch size](#pods-batch-size)
-  - [Scheduler configuration](#scheduler-configuration)
-  - [Available MIG geometries](#available-mig-geometries)
-- [How it works](#how-it-works)
-- [Troubleshooting](#troubleshooting)
-
 ## Overview
 
 `nos` allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:

@@ -1,16 +1,5 @@
 # Elastic Resource Quota
 
-## Table of contents
-
-* [Overview](#overview)
-* [Getting started](#getting-started)
-* [How to define resource quotas](#how-to-define-resource-quotas)
-* [Scheduler installation options](#scheduler-installation-options)
-* [Over-quotas and GPU memory limits](#over-quotas-and-gpu-memory-limits)
-  * [Over-quota fair sharing](#over-quota-fair-sharing)
-  * [GPU memory limits](#gpu-memory-limits)
-* [Troubleshooting](#troubleshooting)
-
 ## Overview
 
 `nos` extends the Kubernetes [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)
