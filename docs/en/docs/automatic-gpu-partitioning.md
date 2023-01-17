@@ -19,7 +19,7 @@
 the partitioning is performed automatically in real-time based on the pending and running Pods in your cluster, so that the GPUs
 are always fully utilized.
 
-The GPU partitioning is performed by the [GPU Partitioner](../helm-charts/nos-gpu-partitioner) component, which
+The GPU partitioning is performed by the [GPU Partitioner](../../../helm-charts/nos-gpu-partitioner) component, which
 constantly watches the GPU resources of the cluster and finds the best possible partitioning of the available GPUs
 in order to schedule the highest number of pods requesting fractions of GPUs, which otherwise could not be scheduled
 due to the lack of available resources.
@@ -154,7 +154,7 @@ supported by each GPU model.
 The available MIG geometries supported by each GPU model are defined in a ConfigMap, which by default contains
 with the supported geometries of the most popular GPU models. You can override or extend the values of this
 ConfigMap by editing the field `nos-gpu-partitioner.knownMigGeometries` of the
-[installation chart](../helm-charts/nos/README.md).
+[installation chart](../../../helm-charts/nos/README.md).
 
 ### Create pods requesting MIG resources
 
@@ -214,7 +214,7 @@ MPS devices are exposed by our k8s-device-plugin using the following naming conv
 
 You can specify any size you want, but you should keep in mind that the GPU Partitioner will create an MPS resource
 on a certain GPU only if its size is smaller or equal than the total amount of memory of that GPU (which is indicated by the
-label `nvidia.com/gpu.memory` applied by the NVIDIA GPU Operator).
+node label `nvidia.com/gpu.memory` applied by the NVIDIA GPU Operator).
 
 For instance, you can create a pod requesting a slice of a 10GB of GPU memory as follows:
 
@@ -262,7 +262,7 @@ specified by the environment variable `CUDA_MPS_PINNED_DEVICE_MEM_LIMIT`.
 ## Configuration
 
 You can customize the GPU Partitioner settings by editing the values file of the
-[nos-gpu-partitioner](../helm-charts/nos-gpu-partitioner/README.md) Helm chart.
+[nos-gpu-partitioner](../../../helm-charts/nos-gpu-partitioner/README.md) Helm chart.
 In this section we focus on some of the values that you would typically want to customize.
 
 ### Pods batch size
@@ -301,7 +301,7 @@ The GPU Partitioner determines the most proper partitioning plan to apply by con
 allowed each of the GPU models present in the cluster.
 
 You can set the MIG geometries supported by each GPU model by editing the `nos-gpu-partitioner.knownMigGeometries` value
-of the [installation chart](../helm-charts/nos/README.md).
+of the [installation chart](../../../helm-charts/nos/README.md).
 
 You can edit this file to add new MIG geometries for new GPU models, or to edit the existing ones according
 to your specific needs. For instance, you can remove some MIG geometries if you don't want to allow them to be used for a

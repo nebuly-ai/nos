@@ -35,18 +35,18 @@ Alternatively, you can use Kustomize by cloning the repository and running `make
 
 ## Documentation
 
-* [Automatic GPU partitioning](docs/automatic-gpu-partitioning.md)
-  * [Overview](docs/automatic-gpu-partitioning.md#overview)
-  * [Partitioning modes comparison](docs/automatic-gpu-partitioning.md#partitioning-modes-comparison)
-  * [MIG Partitioning](docs/automatic-gpu-partitioning.md#mig-partitioning)
-  * [MPS Partitioning](docs/automatic-gpu-partitioning.md#mps-partitioning)
-  * [Configuration](docs/automatic-gpu-partitioning.md#configuration)
-  * [Troubleshooting](docs/automatic-gpu-partitioning.md#troubleshooting)
-* [Elastic Resource Quota management](docs/elastic-quota.md)
-  * [Getting started](docs/elastic-quota.md#getting-started)
-  * [How to define Resource Quotas](docs/elastic-quota.md#how-to-define-resource-quotas)
-  * [Installation options](docs/elastic-quota.md#scheduler-installation-options)
-  * [Troubleshooting](docs/elastic-quota.md#troubleshooting)
+* [Automatic GPU partitioning](docs/en/docs/automatic-gpu-partitioning.md)
+  * [Overview](docs/en/docs/automatic-gpu-partitioning.md#overview)
+  * [Partitioning modes comparison](docs/en/docs/automatic-gpu-partitioning.md#partitioning-modes-comparison)
+  * [MIG Partitioning](docs/en/docs/automatic-gpu-partitioning.md#mig-partitioning)
+  * [MPS Partitioning](docs/en/docs/automatic-gpu-partitioning.md#mps-partitioning)
+  * [Configuration](docs/en/docs/automatic-gpu-partitioning.md#configuration)
+  * [Troubleshooting](docs/en/docs/automatic-gpu-partitioning.md#troubleshooting)
+* [Elastic Resource Quota management](docs/en/docs/elastic-quota.md)
+  * [Getting started](docs/en/docs/elastic-quota.md#getting-started)
+  * [How to define Resource Quotas](docs/en/docs/elastic-quota.md#how-to-define-resource-quotas)
+  * [Installation options](docs/en/docs/elastic-quota.md#scheduler-installation-options)
+  * [Troubleshooting](docs/en/docs/elastic-quota.md#troubleshooting)
 
 ## Developer
 

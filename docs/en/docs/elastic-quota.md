@@ -107,7 +107,7 @@ namespaces instead of on a single one. Limits are specified through two fields:
   max is not specified, then `nos` does not enforce any upper limits on the resources that can be requested by
   the namespace.
 
-You can find sample definitions of these resources under the [examples](../config/operator/samples) directory.
+You can find sample definitions of these resources under the [examples](../../../config/operator/samples) directory.
 
 Note that `ElasticQuota` and `CompositeElasticQuota` are treated by `nos` in the same way: a
 namespace subject to an `ElasticQuota` can borrow resources from namespaces subject to either other elastic quotas or
@@ -325,7 +325,7 @@ minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace
 respectively.
 
 This resource is particularly useful if you use Elastic Quotas together with
-[automatic GPU partitioning](./automatic-gpu-partitioning.md), since it allows you to assign resources to different
+[automatic GPU partitioning](automatic-gpu-partitioning.md), since it allows you to assign resources to different
 teams (e.g. namespaces) in terms of GPU memory instead of in number of GPUs, and the users can than consume
 request in the same terms by claiming GPU slices with a specific amount of memory, enabling an overall fine-grained
 control over the GPUs of the cluster.
