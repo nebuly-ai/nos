@@ -8,7 +8,6 @@ appVersion: "0.1.0"
 
 sources:
   - https://github.com/nebuly-ai/nos
-  - https://github.com/nebuly-ai/helm-charts/nos-operator
 
 maintainers:
   - name: Michele Zanotti

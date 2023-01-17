@@ -9,8 +9,6 @@ appVersion: "0.1.0"
 
 sources:
   - https://github.com/nebuly-ai/nos
-  - https://github.com/nebuly-ai/nos/helm-charts/nos
-  - https://github.com/nebuly-ai/nos/helm-charts/nos-gpu-partitioner
 
 dependencies:
   - name: nos-gpu-partitioner
