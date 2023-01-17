@@ -1,3 +1,17 @@
 site_name: nos
 
 docs_dir: ./docs
+
+nav:
+  - Installation: installation.md
+  - Overview: overview.md
+  - Dynamic GPU Partitioning: dynamic-gpu-partitioning.md
+  - Elastic Quotas: elastic-quotas.md
+  - Developer:
+      - Getting started: developer/getting-started.md
+      - Contribution guidelines: developer/contribution-guidelines.md
+  - Helm Charts:
+      - nos: helm-charts/nos/index.md
+      - GPU Partitioner: helm-charts/nos-gpu-partitioner/index.md
+      - Operator: helm-charts/nos-operator/index.md
+      - Scheduler: helm-charts/nos-scheduler/index.md

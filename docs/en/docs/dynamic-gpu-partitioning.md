@@ -225,7 +225,7 @@ kind: Pod
 metadata:
   name: mps-partitioning-example
 spec:
-  hostIPC: true
+  hostIPC: true 
   securityContext:
     runAsUser: 1000
   containers:
@@ -235,7 +235,7 @@ spec:
       resources:
         limits:
           nvidia.com/gpu-10gb: 1
-  EOF
+EOF
 ```
 
 Pods requesting MPS resources must meet two requirements:

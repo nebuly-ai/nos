@@ -117,7 +117,7 @@ license-fix: license-eye ## Add license header to files that still don't have it
 
 .PHONY: helm-doc
 helm-doc: helm-docs-bin ## Generate Helm charts documentation
-	$(HELM_DOCS) --chart-search-root ./helm-charts --document-dependency-values
+	$(HELM_DOCS) --chart-search-root ./helm-charts --document-dependency-values ; sh hack/generate-helm-docs.sh
 
 ##@ Build
 

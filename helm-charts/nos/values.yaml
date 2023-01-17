@@ -8,20 +8,20 @@ global:
   # -- Defines how many GB of memory each nvidia.com/gpu resource has.
   nvidiaGpuResourceMemoryGB: 32
 
-# -- All values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-operator).
+# -- All values available [here](../nos-operator/README.md).
 # @default -- -
 nos-operator:
   # -- Enable or disable the `nos operator`
   enabled: true
 
-# -- All values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-scheduler).
+# -- All values available [here](../nos-scheduler/README.md).
 # @default -- -
 nos-scheduler:
   # -- Enable or disable the `nos scheduler`
   enabled: true
 
 
-# -- All values available [here](https://github.com/nebuly-ai/nos/tree/main/helm-charts/nos-gpu-partitioner).
+# -- All values available [here](../nos-gpu-partitioner/README.md).
 # @default -- -
 nos-gpu-partitioner:
   # -- Enable or disable the `nos gpu partitioner`
