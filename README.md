@@ -1,5 +1,13 @@
 # Nebuly Operating System (nos)
 
+---
+
+**Documentation**: <a href="<https://docs.nebuly.ai/nos/overview>" target="_blank">https://docs.nebuly.ai/nos/overview </a>
+
+**Source Code**: <a href="<https://github.com/nebuly-ai/nos>" target="_blank">https://github.com/nebuly-ai/nos </a>
+
+---
+
 `nos` is the open-source module for running AI workloads on Kubernetes in an optimized way, both in terms of
 hardware utilization and workload performance.
 
@@ -7,8 +15,9 @@ The operating system layer is responsible for workloads scheduling and hardware 
 It orchestrates the workloads taking into account considerations specific for AI/ML workloads and leveraging
 techniques typical of High-performance Computing (HPC), and it hides the underlying hardware complexities.
 
-Currently, this layer provides two features [Automatic GPU partitioning](docs/automatic-gpu-partitioning.md) and
-[Elastic Resource Quota management](docs/elastic-quota.md).
+Currently, this layer provides two features 
+[Dynamic GPU partitioning](docs/en/docs/dynamic-gpu-partitioning.md) and
+[Elastic Resource Quota management](docs/en/docs/elastic-quota.md).
 
 ## Getting started
 
