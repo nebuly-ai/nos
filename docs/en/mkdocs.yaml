@@ -3,8 +3,8 @@ site_name: nos
 docs_dir: ./docs
 
 nav:
-  - Installation: installation.md
   - Overview: overview.md
+  - Installation: installation.md
   - Dynamic GPU Partitioning: 
       - Overview: dynamic-gpu-partitioning/overview.md
       - Getting started with MIG partitioning: dynamic-gpu-partitioning/getting-started-mig.md
