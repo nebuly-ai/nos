@@ -5,8 +5,19 @@ docs_dir: ./docs
 nav:
   - Installation: installation.md
   - Overview: overview.md
-  - Dynamic GPU Partitioning: dynamic-gpu-partitioning.md
-  - Elastic Resource Quota: elastic-quota.md
+  - Dynamic GPU Partitioning: 
+      - Overview: dynamic-gpu-partitioning/overview.md
+      - Getting started with MIG partitioning: dynamic-gpu-partitioning/getting-started-mig.md
+      - Getting started with MPS partitioning: dynamic-gpu-partitioning/getting-started-mps.md
+      - Partitioning modes comparison: dynamic-gpu-partitioning/partitioning-modes-comparison.md
+      - Configuration: dynamic-gpu-partitioning/configuration.md
+      - Troubleshooting: dynamic-gpu-partitioning/troubleshooting.md
+  - Elastic Resource Quota: 
+      - Overview: elastic-resource-quota/overview.md
+      - Getting started: elastic-resource-quota/getting-started.md
+      - Key concepts: elastic-resource-quota/key-concepts.md
+      - Configuration: elastic-resource-quota/configuration.md
+      - Troubleshooting: elastic-resource-quota/troubleshooting.md
   - Developer:
       - Getting started: developer/getting-started.md
       - Contribution guidelines: developer/contribution-guidelines.md
