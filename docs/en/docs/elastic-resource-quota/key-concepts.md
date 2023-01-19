@@ -7,7 +7,9 @@ guaranteed by the `min` field of its quota, it can still host new pods by "borro
 which has available resources (e.g. from namespaces subject to other quotas where `min` resources are not
 being completely used).
 
-> Pods that are scheduled "borrowing" unused quotas from other namespaces are called **over-quota pods**.
+!!! info
+
+    Pods that are scheduled "borrowing" unused quotas from other namespaces are called **over-quota pods**.
 
 Over-quota pods can be preempted at any time to free up resources if any of the namespaces
 lending the quotas claims back its resources.
