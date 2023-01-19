@@ -105,7 +105,7 @@ minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace
 respectively.
 
 This resource is particularly useful if you use Elastic Quotas together with
-[automatic GPU partitioning](dynamic-gpu-partitioning.md), since it allows you to assign resources to different
+[automatic GPU partitioning](../dynamic-gpu-partitioning/overview.md), since it allows you to assign resources to different
 teams (e.g. namespaces) in terms of GPU memory instead of in number of GPUs, and the users can than consume
 request in the same terms by claiming GPU slices with a specific amount of memory, enabling an overall fine-grained
 control over the GPUs of the cluster.

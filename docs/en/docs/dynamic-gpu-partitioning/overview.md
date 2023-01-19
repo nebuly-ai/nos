@@ -4,7 +4,7 @@
 the partitioning is performed automatically in real-time based on the pending and running Pods in your cluster, so that the GPUs
 are always fully utilized.
 
-The [GPU Partitioner](./helm-charts/nos-gpu-partitioner/README.md) component
+The [GPU Partitioner](../helm-charts/nos-gpu-partitioner/README.md) component
 constantly watches the pending Pods and finds the best possible GPU partitioning configuration
 to schedule the highest number of the ones requesting fractions of GPUs, which otherwise would not
 be possible to schedule due to lack of resources.
