@@ -4,11 +4,11 @@ The following tables summarizes the difference between the different partitionin
 Note that they are not mutually exclusive: `nos` allows you to choose a different partitioning mode for each node in your
 cluster according to your needs and available hardware.
 
-| Partitioning mode          | Supported by `nos` | Workload isolation level | Pros                                                                                                                            | Cons                                                                                                                                                        |
-|----------------------------|:-------------------|:-------------------------|---------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Multi-instance GPU (MIG)   | ✅                  | Best                     | <ul><li>Processes are executed concurrently</li><li>Full isolation (dedicated memory and compute resources)</li></ul>           | <ul><li>Supported by fewer GPU models (only Ampere or more recent architectures)</li><li>Coarse-grained control over memory and compute resources</li></ul> |
-| Multi-process server (MPS) | ✅                  | Good                     | <ul><li>Processes are executed concurrently</li><li>Fine-grained control over memory and compute resources allocation</li></ul> | <ul><li>No error isolation and memory protection</li></ul>                                                                                                  |
-| Time-slicing               | ❌                  | None                     | <ul><li>Supported by older GPU architectures (Pascal or newer)</li></ul>                                                        | <ul><li>No resource limits</li><li>No memory isolation</li><li>Lower performance due to context-switching overhead</li></ul>                                |
+| Partitioning mode          | Supported by `nos` | Workload isolation level | Pros                                                                                                                        | Cons                                                                                                                                                        |
+|----------------------------|:-------------------|:-------------------------|-----------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Multi-instance GPU (MIG)   | ✅                  | Best                     | <ul><li>Processes are executed in parallel</li><li>Full isolation (dedicated memory and compute resources)</li></ul>        | <ul><li>Supported by fewer GPU models (only Ampere or more recent architectures)</li><li>Coarse-grained control over memory and compute resources</li></ul> |
+| Multi-process server (MPS) | ✅                  | Good                     | <ul><li>Processes are executed parallel</li><li>Fine-grained control over memory and compute resources allocation</li></ul> | <ul><li>No error isolation and memory protection</li></ul>                                                                                                  |
+| Time-slicing               | ❌                  | None                     | <ul><li>Processes are executed concurrently</li><li>Supported by older GPU architectures (Pascal or newer)</li></ul>        | <ul><li>No resource limits</li><li>No memory isolation</li><li>Lower performance due to context-switching overhead</li></ul>                                |
 
 ## Multi-instance GPU (MIG)
 
@@ -45,6 +45,9 @@ specify arbitrary limits on both the amount of allocatable memory and the availa
 [k8s-device-plugin](https://github.com/nebuly-ai/k8s-device-plugin)
 takes advantage of this feature for exposing to Kubernetes GPU resources with an arbitrary amount of allocatable
 memory defined by the user.
+
+Additionally, MPS eliminates the context-switching overhead by executing processes in parallel through 
+*spatial sharing*, resulting in higher workloads performance.
 
 It is however important to point out that, even though allocatable memory and compute resources limits are enforced,
 processes sharing a GPU through MPS are not fully isolated from each other. For instance, MPS does not provide error
