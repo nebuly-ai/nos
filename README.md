@@ -4,7 +4,7 @@
 
 ---
 
-**Documentation**: <a href="https://docs.nebuly.com/nos/overview" target="_blank"> docs.nebuly.ai/nos/overview </a>
+**Documentation**: <a href="https://docs.nebuly.com/nos/overview" target="_blank"> docs.nebuly.com/nos/overview </a>
 
 **Source Code**: <a href="https://github.com/nebuly-ai/nos" target="_blank"> github.com/nebuly-ai/nos </a>
 
