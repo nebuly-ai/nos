@@ -4,7 +4,7 @@
 
 ---
 
-**Documentation**: <a href="https://docs.nebuly.ai/nos/overview" target="_blank"> docs.nebuly.ai/nos/overview </a>
+**Documentation**: <a href="https://docs.nebuly.com/nos/overview" target="_blank"> docs.nebuly.ai/nos/overview </a>
 
 **Source Code**: <a href="https://github.com/nebuly-ai/nos" target="_blank"> github.com/nebuly-ai/nos </a>
 
@@ -15,11 +15,11 @@ increasing GPU utilization, cutting down infrastructure costs and improving work
 
 Currently, the available features are:
 
-* [Dynamic GPU partitioning](https://docs.nebuly.ai/nos/dynamic-gpu-partitioning/overview): allow to schedule Pods requesting
+* [Dynamic GPU partitioning](https://docs.nebuly.com/nos/dynamic-gpu-partitioning/overview): allow to schedule Pods requesting
 fractions of GPU. GPU partitioning is performed automatically in real-time based on the Pods pending and running in
 the cluster, so that Pods can request only the resources that are strictly necessary and GPUs are always fully utilized.
 
-* [Elastic Resource Quota management](https://docs.nebuly.ai/nos/elastic-resource-quota/overview): increase the number of Pods running on the
+* [Elastic Resource Quota management](https://docs.nebuly.com/nos/elastic-resource-quota/overview): increase the number of Pods running on the
 cluster by allowing namespaces to borrow quotas of reserved resources from other namespaces as long as they are
 not using them.
 
@@ -51,5 +51,5 @@ Alternatively, you can use Kustomize by cloning the repository and running `make
 ---
 
 <p align="center">
-  <a href="https://discord.gg/RbeQMu886J">Join the community</a>  | <a href="https://nebuly.gitbook.io/nebuly/welcome/questions-and-contributions"> Contribute </a>
+  <a href="https://discord.gg/RbeQMu886J">Join the community</a>  | <a href="https://docs.nebuly.com/nos/developer/contribution-guidelines/"> Contribute </a>
 </p>
