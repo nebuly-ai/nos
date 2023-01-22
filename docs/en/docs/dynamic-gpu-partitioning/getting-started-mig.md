@@ -57,6 +57,10 @@ ConfigMap by editing the field `nos-gpu-partitioner.knownMigGeometries` of the
 
 ## Create pods requesting MIG resources
 
+!!! tip
+    There is no need to manually create and manage MIG configurations. 
+    Simply submit your Pods to the cluster and the requested MIG devices are automatically provisioned.    
+
 You can make your pods request slices of GPU by specifying MIG devices in their containers requests:
 
 ```yaml
@@ -81,5 +85,6 @@ In the example above, the pod requests a slice of a 10GB of memory, which is the
 the specified MIG resource. You can find the MIG profiles supported by each GPU model in the
 [NVIDIA documentation](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/#supported-profiles).
 
-Note that each container is supposed to request at most one MIG device: if a container needs more resources,
-then it should ask for a larger, single device as opposed to multiple smaller devices.
+!!! note
+    Each container is supposed to request at most one MIG device. If a container needs more resources,
+    then it should ask for a larger, single device as opposed to multiple smaller devices.

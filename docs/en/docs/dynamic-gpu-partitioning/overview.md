@@ -1,17 +1,15 @@
 # Overview
 
-`nos` allows you to schedule Pods requesting fractions of GPUs without having to manually partition them:
-the partitioning is performed automatically in real-time based on the pending and running Pods in your cluster, so that the GPUs
-are always fully utilized.
+`nos` allows you to schedule Pods requesting fractions of GPUs. The GPUs are automatically
+partitioned into slices that can be requested by individual containers. In this way, 
+GPUs are shared among multiple Pods increasing the overall utilization.
 
-With `nos`, there is no need to manually create and manage MIG configurations. 
-Simply submit your Pods to the cluster and the requested MIG devices are automatically provisioned.
-
+The GPUs partitioning is performed automatically in real-time based on the requests of 
+the Pods in your cluster. 
 `nos` constantly watches the pending Pods and finds the best possible GPU partitioning configuration
-to schedule the highest number of the ones requesting fractions of GPUs, which otherwise would not
-be possible to schedule due to lack of resources.
+to schedule the highest number of the ones requesting fractions of GPUs.
 
-You can think of it as a [Cluster Autoscaler](https://github.com/kubernetes/autoscaler) for GPUs: instead of scaling 
+You can think of `nos` as a [Cluster Autoscaler](https://github.com/kubernetes/autoscaler) for GPUs: instead of scaling 
 up the number of nodes and GPUs, it dynamically partitions them to maximize their utilization, leading to spare 
 GPU capacity. Then, you can schedule more Pods or reduce the number of GPU nodes needed, reducing infrastructure costs.
 
