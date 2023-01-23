@@ -9,6 +9,7 @@ SCHEDULER_IMG ?= $(DOCKER_REGISTRY)/nos-scheduler:$(NOS_VERSION)
 GPU_PARTITIONER_IMG ?= $(DOCKER_REGISTRY)/nos-gpu-partitioner:$(NOS_VERSION)
 MIG_AGENT_IMG ?= $(DOCKER_REGISTRY)/nos-mig-agent:$(NOS_VERSION)
 GPU_AGENT_IMG ?= $(DOCKER_REGISTRY)/nos-gpu-agent:$(NOS_VERSION)
+METRICS_EXPORTER_IMG ?= $(DOCKER_REGISTRY)/nos-metrics-exporter:$(NOS_VERSION)
 
 # Helm chart URL to push Helm charts
 HELM_CHART_REGISTRY ?= oci://ghcr.io/nebuly-ai/helm-charts
@@ -149,6 +150,10 @@ docker-build-operator: ## Build docker image with the operator.
 docker-build-scheduler: ## Build docker image with the scheduler.
 	docker build -t ${SCHEDULER_IMG} -f build/scheduler/Dockerfile .
 
+.PHONY: docker-build-metrics-exporter
+docker-build-metrics-exporter: ## Build docker image with the metrics-exporter.
+	docker build -t ${METRICS_EXPORTER_IMG} -f build/metricsexporter/Dockerfile .
+
 .PHONY: docker-push-operator
 docker-push-operator: ## Push docker image with the operator.
 	docker push ${OPERATOR_IMG}
@@ -169,19 +174,25 @@ docker-push-scheduler: ## Push docker image with the scheduler.
 docker-push-gpu-partitioner: ## Push docker image with the gpu-partitioner.
 	docker push ${GPU_PARTITIONER_IMG}
 
+.PHONY: docker-push-metrics-exporter
+docker-push-metrics-exporter: ## Push docker image with the metrics-exporter.
+	docker push ${METRICS_EXPORTER_IMG}
+
 .PHONY: docker-build
 docker-build: docker-build-mig-agent \
 	docker-build-gpu-agent \
 	docker-build-operator \
 	docker-build-scheduler \
 	docker-build-gpu-partitioner \
+	docker-build-metrics-exporter
 
 .PHONY: docker-push
 docker-push: docker-push-mig-agent \
 	docker-push-gpu-agent \
 	docker-push-operator \
 	docker-push-scheduler \
-	docker-push-gpu-partitioner
+	docker-push-gpu-partitioner \
+	docker-push-metrics-exporter
 
 .PHONY: helm-push-gpu-partitioner
 helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm repository.

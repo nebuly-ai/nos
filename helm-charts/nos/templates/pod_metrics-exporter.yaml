@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "nos.fullname" . }}-metrics-exporter
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+spec:
+  restartPolicy: Never
+  containers:
+    - name: exporter
+      image: "ghcr.io/nebuly-ai/nos-metrics-exporter:{{ .Chart.AppVersion }}"
+      args:
+        - --metrics-file=/var/metrics.yaml
+        - --metrics-endpoint=https://nebuly.cloud/v1/nos-metrics
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+      volumeMounts:
+        - mountPath: /var/metrics.yaml
+          name: metrics
+          subPath: metrics
+  volumes:
+    - name: metrics
+      configMap:
+        name: {{ include "nos.metricsConfigMap.name" . }}

@@ -1,0 +1,68 @@
+{{/*Note: we need to keep both the CMs in the same file in order to avoid re-generating the UUID4 */}}
+
+{{- $uuid := uuidv4 -}}
+{{- $config_lookup := (lookup "v1" "ConfigMap" .Release.Namespace (include "nos.installationInfoConfigMap.name" .) ) -}}
+{{- if $config_lookup -}}
+{{- $uuid = $config_lookup.data.uuid -}}
+{{- end -}}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nos.installationInfoConfigMap.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nos.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+data:
+  uuid: {{ $uuid }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nos.metricsConfigMap.name" . }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+  labels:
+    {{- include "nos.labels" . | nindent 4 }}
+data:
+  metrics: |
+    installationUUID: {{ $uuid }}
+    nodes:
+    {{- range $key, $value := (lookup "v1" "Node" "" "").items }}
+    - name: {{ $value.metadata.name }}
+      capacity:
+        cpu: {{ default $value.status.capacity.cpu "" }}
+        memory: {{ default $value.status.capacity.memory "" }}
+      labels:
+        {{- range $labelKey, $labelValue := $value.metadata.labels }}
+        {{- if hasPrefix "nvidia.com" $labelKey }}
+        {{ $labelKey }}: {{ $labelValue }}
+        {{- end }}
+        {{- if eq "node.kubernetes.io/instance-type" $labelKey }}
+        {{ $labelKey }}: {{ $labelValue }}
+        {{- end }}
+        {{- end }}
+      nodeInfo:
+        architecture: {{ default $value.status.nodeInfo.architecture "" }}
+        containerRuntimeVersion: {{ default $value.status.nodeInfo.containerRuntimeVersion "" }}
+        kernelVersion: {{ default $value.status.nodeInfo.kernelVersion "" }}
+        osImage: {{ default $value.status.nodeInfo.osImage "" }}
+        kubeletVersion: {{ default $value.status.nodeInfo.kubeletVersion "" }}
+    {{- end }}
+    chartValues:
+      {{- .Values | toYaml | nindent 6 }}
+    components:
+      nos-gpu-partitioner: {{ index $.Values "nos-gpu-partitioner" "enabled" }}
+      nos-operator: {{ index $.Values "nos-operator" "enabled" }}
+      nos-scheduler: {{ index $.Values "nos-scheduler" "enabled" }}

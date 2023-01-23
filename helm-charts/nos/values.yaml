@@ -29,3 +29,6 @@ nos-gpu-partitioner:
 
 # -- If true allows to deploy `nos` chart in the `default` namespace
 allowDefaultNamespace: false
+
+# -- If true, shares with Nebuly telemetry data collected only during the Chart installation
+shareTelemetry: true
