@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,15 @@
 package v1alpha1
 
 import (
-	. "sigs.k8s.io/controller-runtime/pkg/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	cfg "sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"time"
 )
 
-var client Client
+// +kubebuilder:object:root=true
+
+type GpuAgentConfig struct {
+	metav1.TypeMeta                        `json:",inline"`
+	cfg.ControllerManagerConfigurationSpec `json:",inline"`
+	ReportConfigIntervalSeconds            time.Duration `json:"reportConfigIntervalSeconds"`
+}

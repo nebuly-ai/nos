@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package gpupartitioner
 import (
 	"context"
 	"github.com/nebuly-ai/nos/internal/partitioning/state"
-	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

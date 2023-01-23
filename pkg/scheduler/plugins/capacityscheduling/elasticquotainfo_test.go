@@ -1,6 +1,6 @@
 /*
 Copyright 2020 The Kubernetes Authors.
-Copyright 2023 Nebuly.ai.
+Copyright 2023 nebuly.com.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ limitations under the License.
 package capacityscheduling
 
 import (
-	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/gpu/util"
 	"github.com/nebuly-ai/nos/pkg/resource"
@@ -269,9 +269,9 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						EphemeralStorage: 0,
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU:                5,
-							v1alpha1.ResourceGPUMemory:                64,
-							v1.ResourceName("nebuly.ai/new-resource"): 3, // resource present only in eq-1
+							constant.ResourceNvidiaGPU:                 5,
+							v1alpha1.ResourceGPUMemory:                 64,
+							v1.ResourceName("nebuly.com/new-resource"): 3, // resource present only in eq-1
 						},
 					},
 					Used: &framework.Resource{
@@ -280,9 +280,9 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 						EphemeralStorage: 0,
 						AllowedPodNumber: 5,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU:                0,
-							v1alpha1.ResourceGPUMemory:                10,
-							v1.ResourceName("nebuly.ai/new-resource"): 1,
+							constant.ResourceNvidiaGPU:                 0,
+							v1alpha1.ResourceGPUMemory:                 10,
+							v1.ResourceName("nebuly.com/new-resource"): 1,
 						},
 					},
 					MaxEnforced: false,
@@ -337,9 +337,9 @@ func TestElasticQuotaInfos_GetGuaranteedOverquotas(t *testing.T) {
 				EphemeralStorage: 0,
 				AllowedPodNumber: 7, // math.Floor(10 / (10 + 30 + 0) * (Max(0, 10-5) + Max(0, 30-5) + Max(0, 0-0)))
 				ScalarResources: map[v1.ResourceName]int64{
-					v1.ResourceName("nebuly.ai/new-resource"): 2,  // tot. unused overquotas, since "new-resource" is defined only for eq-1
-					constant.ResourceNvidiaGPU:                5,  // math.Floor(5 / (5 + 3) * (Max(0, 5-0) + Max(0, 3-0)))
-					v1alpha1.ResourceGPUMemory:                49, // math.Floor(64 / (64 + 24) * (Max(0, 64-10) + Max(0, 24-10)))
+					v1.ResourceName("nebuly.com/new-resource"): 2,  // tot. unused overquotas, since "new-resource" is defined only for eq-1
+					constant.ResourceNvidiaGPU:                 5,  // math.Floor(5 / (5 + 3) * (Max(0, 5-0) + Max(0, 3-0)))
+					v1alpha1.ResourceGPUMemory:                 49, // math.Floor(64 / (64 + 24) * (Max(0, 64-10) + Max(0, 24-10)))
 				},
 			},
 			errorExpected: false,
@@ -506,9 +506,9 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 						EphemeralStorage: 0,
 						AllowedPodNumber: 10,
 						ScalarResources: map[v1.ResourceName]int64{
-							constant.ResourceNvidiaGPU:                5,
-							v1alpha1.ResourceGPUMemory:                64,
-							v1.ResourceName("nebuly.ai/new-resource"): 3, // resource present only in eq-1
+							constant.ResourceNvidiaGPU:                 5,
+							v1alpha1.ResourceGPUMemory:                 64,
+							v1.ResourceName("nebuly.com/new-resource"): 3, // resource present only in eq-1
 						},
 					},
 				},
@@ -539,13 +539,13 @@ func TestElasticQuotaInfos_getGuaranteedOverquotasPercentage(t *testing.T) {
 			},
 			elasticQuota: "eq-1",
 			expected: map[v1.ResourceName]float64{
-				v1.ResourceCPU:                            0.5,
-				v1.ResourceMemory:                         0.1,
-				v1.ResourcePods:                           0.25,
-				v1.ResourceEphemeralStorage:               0,
-				v1.ResourceName("nebuly.ai/new-resource"): 1,
-				v1alpha1.ResourceGPUMemory:                float64(64) / float64(64+24),
-				constant.ResourceNvidiaGPU:                float64(5) / float64(5+3),
+				v1.ResourceCPU:                             0.5,
+				v1.ResourceMemory:                          0.1,
+				v1.ResourcePods:                            0.25,
+				v1.ResourceEphemeralStorage:                0,
+				v1.ResourceName("nebuly.com/new-resource"): 1,
+				v1alpha1.ResourceGPUMemory:                 float64(64) / float64(64+24),
+				constant.ResourceNvidiaGPU:                 float64(5) / float64(5+3),
 			},
 		},
 	}

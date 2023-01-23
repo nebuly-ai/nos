@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: {{ include "gpu-agent.fullname" . }}
       nodeSelector:
-        nos.nebuly.ai/gpu-partitioning: mps
+        nos.nebuly.com/gpu-partitioning: mps
       priorityClassName: system-node-critical
       terminationGracePeriodSeconds: 20
       containers:

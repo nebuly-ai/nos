@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package mig
 
 import (
 	"fmt"
-	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/resource"
@@ -622,7 +622,7 @@ func TestNode__Clone(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			nodeInfo := framework.NewNodeInfo()
 			nodeInfo.SetNode(&tt.node)
-			nodeInfo.Allocatable.ScalarResources = map[v1.ResourceName]int64{"nebuly.ai/foo": 1}
+			nodeInfo.Allocatable.ScalarResources = map[v1.ResourceName]int64{"nebuly.com/foo": 1}
 			n, err := NewNode(*nodeInfo)
 			if err != nil {
 				panic(err)

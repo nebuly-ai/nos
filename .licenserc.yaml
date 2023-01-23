@@ -1,7 +1,7 @@
 header:
   license:
     spdx-id: Apache-2.0
-    copyright-owner: Nebuly.ai
+    copyright-owner: nebuly.com
     software-name: nos
 
   paths-ignore:

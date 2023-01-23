@@ -60,8 +60,8 @@ import (
  "github.com/nebuly-ai/nos/pkg/api/scheduler"
  "github.com/nebuly-ai/nos/pkg/api/scheduler/v1beta3"
 
- // Ensure nos.nebuly.ai/v1alpha1 package is initialized
- _ "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
+ // Ensure nos.nebuly.com/v1alpha1 package is initialized
+ _ "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 )
 
 func main() {

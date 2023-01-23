@@ -8,8 +8,8 @@ Kubernetes scheduler optimized for managing AI workloads.
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/nebuly-ai> |
-| Diego Fiori | <d.fiori@nebuly.ai> | <github.com/diegofiori> |
+| Michele Zanotti | <m.zanotti@nebuly.com> | <github.com/nebuly-ai> |
+| Diego Fiori | <d.fiori@nebuly.com> | <github.com/diegofiori> |
 
 ## Source Code
 

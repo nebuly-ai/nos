@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: {{ include "mig-agent.fullname" . }}
       nodeSelector:
-        nos.nebuly.ai/gpu-partitioning: mig
+        nos.nebuly.com/gpu-partitioning: mig
       priorityClassName: system-node-critical
       terminationGracePeriodSeconds: 20
       containers:

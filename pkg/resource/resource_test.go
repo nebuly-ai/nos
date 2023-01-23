@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	customResourceName v1.ResourceName = "nebuly.ai/custom-resource"
+	customResourceName v1.ResourceName = "nebuly.com/custom-resource"
 )
 
 func TestSum(t *testing.T) {

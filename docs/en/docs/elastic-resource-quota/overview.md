@@ -29,6 +29,6 @@ the [Capacity Scheduling KEP](https://github.com/kubernetes-sigs/scheduler-plugi
 
 * over-quota pods preemption
 * `CompositeElasticQuota` resources for defining limits on multiple namespaces
-* custom resource `nos.nebuly.ai/gpu-memory`
+* custom resource `nos.nebuly.com/gpu-memory`
 * fair sharing of over-quota resources
 * optional `max` limits

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import (
 	"github.com/nebuly-ai/nos/internal/partitioning/mig"
 	"github.com/nebuly-ai/nos/internal/partitioning/mps"
 	"github.com/nebuly-ai/nos/internal/partitioning/state"
-	configv1alpha1 "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/config/v1alpha1"
-	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
+	configv1alpha1 "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/config/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/api/scheduler"
 	schedulerv1beta3 "github.com/nebuly-ai/nos/pkg/api/scheduler/v1beta3"
 	"github.com/nebuly-ai/nos/pkg/constant"

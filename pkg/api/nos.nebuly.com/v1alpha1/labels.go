@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package v1alpha1
 
-func init() {
-	SchemeBuilder.Register(&OperatorConfig{})
-	SchemeBuilder.Register(&GpuPartitionerConfig{})
-	SchemeBuilder.Register(&MigAgentConfig{})
-	SchemeBuilder.Register(&GpuAgentConfig{})
-}
+const (
+	// LabelCapacityInfo specifies the status of a Pod in regard to the ElasticQuota it belongs to
+	LabelCapacityInfo = "nos.nebuly.com/capacity"
+	// LabelGpuPartitioning specifies the PartitioningKind that should be performed on the GPUs of a node
+	LabelGpuPartitioning = "nos.nebuly.com/gpu-partitioning"
+)

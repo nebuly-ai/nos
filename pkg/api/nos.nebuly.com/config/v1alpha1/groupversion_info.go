@@ -1,5 +1,5 @@
 /*
-Copyright 2023 Nebuly.ai.
+Copyright 2023 nebuly.com.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains API Schema definitions for the nos.nebuly.ai v1alpha1 API group
 // +genclient
 // +kubebuilder:object:generate=true
-// +groupName=nos.nebuly.ai
+// +groupName=nos.nebuly.com
+
+// Package v1alpha1 contains API Schema definitions for the config.nos.nebuly.com v1alpha1 API group
 package v1alpha1
 
 import (
@@ -26,7 +27,7 @@ import (
 )
 
 const (
-	GroupName = "nos.nebuly.ai"
+	GroupName = "config.nos.nebuly.com"
 )
 
 var (

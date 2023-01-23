@@ -69,10 +69,10 @@ rules:
     resources: ["leases"]
     verbs: ["get", "update"]
   ## Custom resources
-  - apiGroups: ["nos.nebuly.ai"]
+  - apiGroups: ["nos.nebuly.com"]
     resources: ["elasticquotas"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: ["nos.nebuly.ai"]
+  - apiGroups: ["nos.nebuly.com"]
     resources: ["compositeelasticquotas"]
     verbs: ["get", "list", "watch"]
 

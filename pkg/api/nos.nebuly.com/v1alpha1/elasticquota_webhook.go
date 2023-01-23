@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ func (r *ElasticQuota) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/validate-nos-nebuly-ai-v1alpha1-elasticquota,mutating=false,failurePolicy=fail,sideEffects=None,groups=nos.nebuly.ai,resources=elasticquotas,verbs=create,versions=v1alpha1,name=velasticquota.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-nos-nebuly-ai-v1alpha1-elasticquota,mutating=false,failurePolicy=fail,sideEffects=None,groups=nos.nebuly.com,resources=elasticquotas,verbs=create,versions=v1alpha1,name=velasticquota.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &ElasticQuota{}
 

@@ -64,20 +64,20 @@ new partitioning. The available MIG geometries of each GPU model are defined in 
 ### MIG Partitioning
 
 The actual partitioning specified by the GPU Partitioner for MIG GPUs is performed by the MIG Agent, which is a daemonset running on every node labeled
-with `nos.nebuly.ai/gpu-partitioning: mig` that creates/deletes MIG profiles as requested by the GPU Partitioner.
+with `nos.nebuly.com/gpu-partitioning: mig` that creates/deletes MIG profiles as requested by the GPU Partitioner.
 
 The MIG Agent exposes to the GPU Partitioner the used/free MIG resources of all the GPUs of the node
 on which it is running through the following node annotations:
 
-- `nos.nebuly.ai/status-gpu-<index>-<mig-profile>-free: <quantity>`
-- `nos.nebuly.ai/status-gpu-<index>-<mig-profile>-used: <quantity>`
+- `nos.nebuly.com/status-gpu-<index>-<mig-profile>-free: <quantity>`
+- `nos.nebuly.com/status-gpu-<index>-<mig-profile>-used: <quantity>`
 
 The MIG Agent also watches the node's annotations and, every time there desired MIG partitioning specified by the
 GPU Partitioner does not match the current state, it tries to apply it by creating and deleting the MIG profiles
 on the target GPUs. The GPU Partitioner specifies the desired MIG geometry of the GPUs of a node through annotations in
 the following format:
 
-`nos.nebuly.ai/spec-gpu-<index>-<mig-profile>: <quantity>`
+`nos.nebuly.com/spec-gpu-<index>-<mig-profile>: <quantity>`
 
 Note that in some cases the MIG Agent might not be able to apply the desired MIG geometry specified by the
 GPU Partitioner. This can happen for two reasons:

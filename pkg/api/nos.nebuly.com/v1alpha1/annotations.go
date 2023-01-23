@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,24 @@ package v1alpha1
 import "fmt"
 
 const (
-	AnnotationGpuSpecPrefix   = "nos.nebuly.ai/spec-gpu"
-	AnnotationGpuStatusPrefix = "nos.nebuly.ai/status-gpu"
+	AnnotationGpuSpecPrefix   = "nos.nebuly.com/spec-gpu"
+	AnnotationGpuStatusPrefix = "nos.nebuly.com/status-gpu"
 
 	// AnnotationPartitioningPlan indicates the partitioning plan that was applied to the node.
-	AnnotationPartitioningPlan = "nos.nebuly.ai/spec-partitioning-plan"
+	AnnotationPartitioningPlan = "nos.nebuly.com/spec-partitioning-plan"
 	// AnnotationReportedPartitioningPlan indicates the last partitioning plan reported by the node.
-	AnnotationReportedPartitioningPlan = "nos.nebuly.ai/status-partitioning-plan"
+	AnnotationReportedPartitioningPlan = "nos.nebuly.com/status-partitioning-plan"
 )
 
 // AnnotationGpuStatusFormat is the format of the annotation used to expose the profiles the GPUs of a node
 //
 // Format:
 //
-//	"nos.nebuly.ai/status-gpu-<gpu-index>-<profile>"
+//	"nos.nebuly.com/status-gpu-<gpu-index>-<profile>"
 //
 // Example:
 //
-//	"nos.nebuly.ai/status-gpu-0-1g.10gb-free"
+//	"nos.nebuly.com/status-gpu-0-1g.10gb-free"
 var AnnotationGpuStatusFormat = fmt.Sprintf(
 	"%s-%%d-%%s-%%s",
 	AnnotationGpuStatusPrefix,
@@ -47,11 +47,11 @@ var AnnotationGpuStatusFormat = fmt.Sprintf(
 //
 // Format:
 //
-//	"nos.nebuly.ai/spec-gpu-<gpu-index>-<profile>"
+//	"nos.nebuly.com/spec-gpu-<gpu-index>-<profile>"
 //
 // Example:
 //
-//	"nos.nebuly.ai/spec-gpu-0-1g.10gb"
+//	"nos.nebuly.com/spec-gpu-0-1g.10gb"
 var AnnotationGpuSpecFormat = fmt.Sprintf(
 	"%s-%%d-%%s",
 	AnnotationGpuSpecPrefix,

@@ -14,14 +14,14 @@ being completely used).
 Over-quota pods can be preempted at any time to free up resources if any of the namespaces
 lending the quotas claims back its resources.
 
-You can check whether a Pod is in over-quota by checking the value of the label `nos.nebuly.ai/capacity`, which is
+You can check whether a Pod is in over-quota by checking the value of the label `nos.nebuly.com/capacity`, which is
 automatically created and updated by the nos operator for every Pod created in a namespace subject to
 an ElasticQuota or to a CompositeElasticQuota. The two possible values for this label are `in-quota` and `over-quota`.
 
 You can use this label to easily find out at any time which are the over-quota pods subject to preemption risk:
 
 ```shell
-kubectl get pods --all-namespaces -l nos.nebuly.ai/capacity="over-quota"
+kubectl get pods --all-namespaces -l nos.nebuly.com/capacity="over-quota"
 ```
 
 #### How over-quota pods are labelled
@@ -66,9 +66,9 @@ Let's assume we have a K8s cluster with the following Elastic Quota resources:
 
 | Elastic Quota   | Min                            | Max  |
 |-----------------|--------------------------------|------|
-| Elastic Quota A | nos.nebuly.ai/gpu-memory: 40 | None |
-| Elastic Quota B | nos.nebuly.ai/gpu-memory: 10 | None |
-| Elastic Quota C | nos.nebuly.ai/gpu-memory: 30 | None |
+| Elastic Quota A | nos.nebuly.com/gpu-memory: 40 | None |
+| Elastic Quota B | nos.nebuly.com/gpu-memory: 10 | None |
+| Elastic Quota C | nos.nebuly.com/gpu-memory: 30 | None |
 
 The table below shows the quotas usage of the cluster at two different times:
 
@@ -101,7 +101,7 @@ Elastic Quota B is preempted because the following conditions are true:
 
 ## GPU memory limits
 
-Both `ElasticQuota` and `CompositeElasticQuota` resources support the custom resource `nos.nebuly.ai/gpu-memory`.
+Both `ElasticQuota` and `CompositeElasticQuota` resources support the custom resource `nos.nebuly.com/gpu-memory`.
 You can use this resource in the `min` and `max` fields of the elastic quotas specification to define the
 minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace and its maximum limit,
 respectively.
@@ -117,7 +117,7 @@ by its containers and enforces the limits accordingly. The amount of memory GB c
 generic resource `nvidia.com/gpu` is defined by the field `global.nvidiaGpuResourceMemoryGB` of the
 installation chart, which is `32` by default.
 
-For instance, using the default configuration, the value of the resource `nos.nebuly.ai/gpu-memory` computed from
+For instance, using the default configuration, the value of the resource `nos.nebuly.com/gpu-memory` computed from
 the Pod specification below is `10+32=42`.
 
 ```yaml

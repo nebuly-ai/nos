@@ -36,7 +36,7 @@ not using them.
 ### Installation
 
 You can install `nos` using Helm 3 (recommended).
-You can find all the available configuration values in the Chart [documentation](https://docs.nebuly.ai/nos/helm-charts/nos/).
+You can find all the available configuration values in the Chart [documentation](https://docs.nebuly.com/nos/helm-charts/nos/).
 
 ```bash
 helm install oci://ghcr.io/nebuly-ai/helm-charts/nos \

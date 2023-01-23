@@ -16,7 +16,7 @@ webhooks:
   name: vcompositeelasticquota.kb.io
   rules:
   - apiGroups:
-    - nos.nebuly.ai
+    - nos.nebuly.com
     apiVersions:
     - v1alpha1
     operations:
@@ -36,7 +36,7 @@ webhooks:
   name: velasticquota.kb.io
   rules:
   - apiGroups:
-    - nos.nebuly.ai
+    - nos.nebuly.com
     apiVersions:
     - v1alpha1
     operations:

@@ -8,8 +8,8 @@ Install and manage `nos` custom resources.
 
 | Name | Email | Url |
 | ---- | ------ | --- |
-| Michele Zanotti | <m.zanotti@nebuly.ai> | <github.com/nebuly-ai> |
-| Diego Fiori | <d.fiori@nebuly.ai> | <github.com/diegofiori> |
+| Michele Zanotti | <m.zanotti@nebuly.com> | <github.com/nebuly-ai> |
+| Diego Fiori | <d.fiori@nebuly.com> | <github.com/diegofiori> |
 
 ## Source Code
 

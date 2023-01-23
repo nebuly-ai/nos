@@ -4,7 +4,7 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: nos-system/nos-serving-cert
     controller-gen.kubebuilder.io/version: v0.9.2
-  name: elasticquotas.nos.nebuly.ai
+  name: elasticquotas.nos.nebuly.com
 spec:
   conversion:
     strategy: Webhook
@@ -16,7 +16,7 @@ spec:
           path: /convert
       conversionReviewVersions:
         - v1
-  group: nos.nebuly.ai
+  group: nos.nebuly.com
   names:
     kind: ElasticQuota
     listKind: ElasticQuotaList

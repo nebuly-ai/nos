@@ -1,7 +1,7 @@
 //go:build integration
 
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package gpuagent_test
 import (
 	"context"
 	"github.com/nebuly-ai/nos/internal/controllers/gpuagent"
-	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	gpumock "github.com/nebuly-ai/nos/pkg/test/mocks/gpu"
 	. "github.com/onsi/ginkgo/v2"

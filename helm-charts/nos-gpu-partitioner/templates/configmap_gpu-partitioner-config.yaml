@@ -5,7 +5,7 @@ metadata:
   name: {{ include "gpu-partitioner.config.configMapName" . }}
 data:
   {{ include "gpu-partitioner.configFileName" . }}: |
-    apiVersion: config.nos.nebuly.ai/v1alpha1
+    apiVersion: config.nos.nebuly.com/v1alpha1
     kind: GpuPartitionerConfig
     health:
       healthProbeBindAddress: :8081
@@ -15,7 +15,7 @@ data:
       port: 9443
     leaderElection:
       leaderElect: {{ .Values.leaderElection.enabled }}
-      resourceName: gpu-partitioner.nebuly.ai
+      resourceName: gpu-partitioner.nebuly.com
       leaderElectionReleaseOnCancel: true
 
     batchWindowTimeoutSeconds: {{ .Values.batchWindowTimeoutSeconds }}

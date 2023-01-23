@@ -1,4 +1,4 @@
-apiVersion: config.nos.nebuly.ai/v1alpha1
+apiVersion: config.nos.nebuly.com/v1alpha1
 kind: GpuPartitionerConfig
 health:
   healthProbeBindAddress: :8081
@@ -8,7 +8,7 @@ webhook:
   port: 9443
 leaderElection:
   leaderElect: true
-  resourceName: gpu-partitioner.nebuly.ai
+  resourceName: gpu-partitioner.nebuly.com
 # leaderElectionReleaseOnCancel defines if the leader should step down volume
 # when the Manager ends. This requires the binary to immediately end when the
 # Manager is stopped, otherwise, this setting is unsafe. Setting this significantly

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Nebuly.ai.
+ * Copyright 2023 nebuly.com.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import (
 	"k8s.io/kubernetes/cmd/kube-scheduler/app"
 	kubeschedulerscheme "k8s.io/kubernetes/pkg/scheduler/apis/config/scheme"
 
-	// Ensure nos.nebuly.ai/v1alpha1 package is initialized
-	_ "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.ai/v1alpha1"
+	// Ensure nos.nebuly.com/v1alpha1 package is initialized
+	_ "github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	// Ensure scheduler package is initialized.
 	_ "github.com/nebuly-ai/nos/pkg/api/scheduler"
 )

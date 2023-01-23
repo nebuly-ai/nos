@@ -4,7 +4,7 @@
 
 ```yaml
 $ kubectl apply -f -- <<EOF 
-apiVersion: nos.nebuly.ai/v1alpha1
+apiVersion: nos.nebuly.com/v1alpha1
 kind: ElasticQuota
 metadata:
   name: quota-a
@@ -12,7 +12,7 @@ metadata:
 spec:
   min:
     cpu: 2
-    nos.nebuly.ai/gpu-memory: 16
+    nos.nebuly.com/gpu-memory: 16
   max:
     cpu: 10
 EOF

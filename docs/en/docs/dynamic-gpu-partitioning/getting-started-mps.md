@@ -13,7 +13,7 @@
 You can enable automatic MPS partitioning on a node by adding to it the following label:
 
 ```shell
-kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mps"
+kubectl label nodes <node-name> "nos.nebuly.com/gpu-partitioning=mps"
 ```
 
 The label delegates to `nos` the management of the MPS resources of all the GPUs of that node. You just have

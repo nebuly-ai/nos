@@ -42,7 +42,7 @@ For more information and troubleshooting you can refer to th<!-- e -->
 You can enable automatic MIG partitioning on a node by adding to it the following label:
 
 ```shell
-kubectl label nodes <node-name> "nos.nebuly.ai/gpu-partitioning=mig"
+kubectl label nodes <node-name> "nos.nebuly.com/gpu-partitioning=mig"
 ```
 
 The label delegates to `nos` the management of the MIG resources of all the GPUs of that node, so you don't have
