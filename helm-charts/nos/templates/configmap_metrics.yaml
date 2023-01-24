@@ -6,8 +6,8 @@
 {{- $uuid = $config_lookup.data.uuid -}}
 {{- end -}}
 
----
 
+{{- if .Values.shareTelemetry -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -66,3 +66,4 @@ data:
       nosGpuPartitioner: {{ index $.Values "nos-gpu-partitioner" "enabled" }}
       nosOperator: {{ index $.Values "nos-operator" "enabled" }}
       nosScheduler: {{ index $.Values "nos-scheduler" "enabled" }}
+{{- end -}}
