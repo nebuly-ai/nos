@@ -14,7 +14,6 @@ Automatically partitions GPUs exposing them to Kubernetes as multiple resources 
 ## Source Code
 
 * <https://github.com/nebuly-ai/nos>
-* <https://github.com/nebuly-ai/nos-gpu-partitioner>
 
 ## Values
 

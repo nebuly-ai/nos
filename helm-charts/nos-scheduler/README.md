@@ -14,7 +14,6 @@ Kubernetes scheduler optimized for managing AI workloads.
 ## Source Code
 
 * <https://github.com/nebuly-ai/nos>
-* <https://github.com/nebuly-ai/helm-charts/nos-scheduler>
 
 ## Values
 

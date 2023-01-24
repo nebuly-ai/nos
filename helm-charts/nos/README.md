@@ -14,8 +14,6 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 ## Source Code
 
 * <https://github.com/nebuly-ai/nos>
-* <https://github.com/nebuly-ai/nos/helm-charts/nos>
-* <https://github.com/nebuly-ai/nos/helm-charts/nos-gpu-partitioner>
 
 ## Requirements
 
@@ -37,4 +35,5 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 | nos-operator.enabled | bool | `true` | Enable or disable the `nos operator` |
 | nos-scheduler | object | - | All values available [here](../nos-scheduler/README.md). |
 | nos-scheduler.enabled | bool | `true` | Enable or disable the `nos scheduler` |
+| shareTelemetry | bool | `true` | If true, shares with Nebuly telemetry data collected only during the Chart installation |
 

@@ -14,7 +14,6 @@ Install and manage `nos` custom resources.
 ## Source Code
 
 * <https://github.com/nebuly-ai/nos>
-* <https://github.com/nebuly-ai/helm-charts/nos-operator>
 
 ## Values
 
