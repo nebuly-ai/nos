@@ -78,6 +78,17 @@ jobs:
       registry-user: ${{ github.actor }}
     secrets: inherit
 
+  metrics-exporter:
+    needs: test
+    permissions:
+      contents: write
+      packages: write
+    uses: nebuly-ai/nos/.github/workflows/.reusable-build.yaml@main
+    with:
+      component-name: metrics-exporter
+      registry-user: ${{ github.actor }}
+    secrets: inherit
+
   helm-charts:
     runs-on: ubuntu-22.04
     needs:
@@ -86,6 +97,7 @@ jobs:
       - gpu-partitioner
       - gpu-agent
       - mig-agent
+      - metrics-exporter
     permissions:
       contents: write
       packages: write
