@@ -22,16 +22,16 @@ import (
 )
 
 type Node struct {
-	Name     string `json:"name"`
-	Capacity map[string]string
-	Labels   map[string]string
-	NodeInfo v1.NodeSystemInfo
+	Name     string            `json:"name"`
+	Capacity map[string]string `json:"capacity"`
+	Labels   map[string]string `json:"labels"`
+	NodeInfo v1.NodeSystemInfo `json:"nodeInfo"`
 }
 
 type ComponentToggle struct {
-	GpuPartitioner bool `json:"nos-gpu-partitioner"`
-	Scheduler      bool `json:"nos-scheduler"`
-	Operator       bool `json:"nos-operator"`
+	GpuPartitioner bool `json:"nosGpuPartitioner"`
+	Scheduler      bool `json:"nosScheduler"`
+	Operator       bool `json:"nosOperator"`
 }
 
 type Metrics struct {

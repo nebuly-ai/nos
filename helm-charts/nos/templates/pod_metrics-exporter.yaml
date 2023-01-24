@@ -15,8 +15,10 @@ spec:
         - --metrics-file=/var/metrics.yaml
         - --metrics-endpoint=https://nebuly.cloud/v1/nos-metrics
       resources:
-        limits:
+        requests:
+          memory: 64Mi
           cpu: 100m
+        limits:
           memory: 128Mi
       volumeMounts:
         - mountPath: /var/metrics.yaml

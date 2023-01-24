@@ -63,6 +63,6 @@ data:
     chartValues:
       {{- .Values | toYaml | nindent 6 }}
     components:
-      nos-gpu-partitioner: {{ index $.Values "nos-gpu-partitioner" "enabled" }}
-      nos-operator: {{ index $.Values "nos-operator" "enabled" }}
-      nos-scheduler: {{ index $.Values "nos-scheduler" "enabled" }}
+      nosGpuPartitioner: {{ index $.Values "nos-gpu-partitioner" "enabled" }}
+      nosOperator: {{ index $.Values "nos-operator" "enabled" }}
+      nosScheduler: {{ index $.Values "nos-scheduler" "enabled" }}
