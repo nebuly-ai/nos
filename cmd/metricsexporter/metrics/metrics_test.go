@@ -67,9 +67,9 @@ chartValues:
   global:
     nvidiaGpuResourceMemoryGB: 32
 components:
-  nos-gpu-partitioner: true
-  nos-operator: true
-  nos-scheduler: true
+  nosGpuPartitioner: true
+  nosOperator: true
+  nosScheduler: true
 `,
 			expectedOutput: Metrics{
 				InstallationUUID: "feb0a960-ed22-4882-96cf-ef0b83deaeb1",
