@@ -58,8 +58,8 @@ ConfigMap by editing the field `nos-gpu-partitioner.knownMigGeometries` of the
 ## Create pods requesting MIG resources
 
 !!! tip
-    There is no need to manually create and manage MIG configurations. 
-    Simply submit your Pods to the cluster and the requested MIG devices are automatically provisioned.    
+    There is no need to manually create and manage MIG configurations.
+    You can simply submit your Pods to the cluster and the requested MIG devices are automatically provisioned.
 
 You can make your pods request slices of GPU by specifying MIG devices in their containers requests:
 
