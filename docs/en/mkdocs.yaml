@@ -26,3 +26,4 @@ nav:
       - GPU Partitioner: helm-charts/nos-gpu-partitioner/README.md
       - Operator: helm-charts/nos-operator/README.md
       - Scheduler: helm-charts/nos-scheduler/README.md
+  - Telemetry: telemetry.md
