@@ -10,7 +10,7 @@
 
 ---
 
-`nos` is the open-source module for running AI workloads on Kubernetes in an optimized way,
+`nos` is the open-source module to efficiently run AI workloads on Kubernetes,
 increasing GPU utilization, cutting down infrastructure costs and improving workloads performance.
 
 Currently, the available features are:
