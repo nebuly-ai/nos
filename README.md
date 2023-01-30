@@ -6,7 +6,7 @@
 
 **Documentation**: <a href="https://docs.nebuly.com/nos/overview" target="_blank"> docs.nebuly.com/nos/overview </a>
 
-**Source Code**: <a href="https://github.com/nebuly-ai/nos" target="_blank"> github.com/nebuly-ai/nos </a>
+If you like the project please support it by leaving a star ✨
 
 ---
 
@@ -24,6 +24,7 @@ cluster by allowing namespaces to borrow quotas of reserved resources from other
 not using them.
 
 ![](docs/en/docs/img/gpu-utilization.png)
+
 
 ## Getting started
 
