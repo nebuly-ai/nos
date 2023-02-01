@@ -18,7 +18,7 @@ spec:
               - name: cifar10
                 resources:
                   limits:
-                    nvidia.com/gpu: 1
+                    nvidia.com/mig-1g.10gb: 1
             nodeSelector:
               accelerator: nvidia
             tolerations:

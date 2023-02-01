@@ -1,13 +1,33 @@
-apiVersion: machinelearning.seldon.io/v1
 kind: SeldonDeployment
 metadata:
   name: ignored
 spec:
   predictors:
-  - componentSpecs:
-    - spec:
-        containers:
-          - name: cifar10
-            resources:
-              limits:
-                nvidia.com/gpu: 1
+    - graph:
+        implementation: TRITON_SERVER
+        logger:
+          mode: all
+        modelUri: gs://seldon-models/triton/pytorch_cifar10
+        name: cifar10
+        type: MODEL
+      name: default
+      replicas: 1
+      componentSpecs:
+        - spec:
+            containers:
+              - name: cifar10
+                resources:
+                  limits:
+                    nvidia.com/gpu: 1
+            nodeSelector:
+              accelerator: nvidia
+            tolerations:
+              - key: accelerator
+                operator: Equal
+                value: nvidia
+                effect: NoSchedule
+              - key: "kubernetes.azure.com/scalesetpriority"
+                operator: "Equal"
+                value: "spot"
+                effect: "NoSchedule"
+
