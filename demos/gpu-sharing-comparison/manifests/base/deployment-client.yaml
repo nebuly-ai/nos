@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: nos-gpu-sharing-comparison
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: cifar10-client
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: cifar10-client
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - image: cifar10-client:latest
+          name: cifar10-client
+          args:
+            - --headless
+            - -u 8
+            - -r 8
+          env:
+            - name: TARGET_HOST_1
+              value: ""
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - "ALL"
+          resources:
+            limits:
+              cpu: 1
+              memory: 256Mi
+            requests:
+              cpu: 1
+              memory: 128Mi
+      terminationGracePeriodSeconds: 10

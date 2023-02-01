@@ -1,0 +1,13 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: ignored
+spec:
+  predictors:
+  - componentSpecs:
+    - spec:
+        containers:
+          - name: cifar10
+            resources:
+              limits:
+                nvidia.com/gpu: 1

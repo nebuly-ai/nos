@@ -10,6 +10,12 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+DOCKER_REGISTRY ?= ghcr.io/telemaco019
+
+# Image URLs to build/push Docker image targets
+CLIENT_IMG ?= $(DOCKER_REGISTRY)/demo-cifar10-client:latest
+
+
 ##@ Build Dependencies
 
 ## Location to install dependencies to
@@ -19,20 +25,35 @@ $(LOCALBIN):
 
 ## Tool Binaries
 ISTIOCTL ?= $(LOCALBIN)/istioctl
+KUSTOMIZE ?= $(LOCALBIN)/kustomize
+
 
 ## Tool Versions
 ISTIOCTL_VERSION ?= 1.16.2
+KUSTOMIZE_VERSION ?= v4.5.5
+
 
 .PHONY: istioctl
 istioctl: $(ISTIOCTL) ## Download istioctl locally if necessary.
 $(ISTIOCTL): $(LOCALBIN)
 	test -s $(ISTIOCTL) || ( curl -L https://istio.io/downloadIstio | ISTIO_VERSION=$(ISTIOCTL_VERSION) sh - && mv istio-$(ISTIOCTL_VERSION)/bin/istioctl $(ISTIOCTL) )
 
+KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
+.PHONY: kustomize
+kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
+$(KUSTOMIZE): $(LOCALBIN)
+	test -s $(LOCALBIN)/kustomize || { curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
+
+
 ##@ General
 
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+.PHONY: port-forward-prometheus
+port-forward-prometheus:
+	kubectl port-forward -n nos-monitoring svc/nos-monitoring-prometheus 9090:9090
 
 ##@ Components installation
 
@@ -102,3 +123,26 @@ install-gpu-operator:
 
 .PHONY: install
 install: install-cert-manager install-istio install-kube-prometheus install-nvidia-device-plugin install-gpu-operator install-nebuly-device-plugin install-nos install-seldon-core ## Install all components
+
+##@ Build
+.PYHONY: docker-build
+docker-build: ## Build client Docker image
+	docker build -t $(CLIENT_IMG) -f client/Dockerfile ./client
+ 
+.PYHONY: docker-push
+docker-push: ## Push client Docker image
+	docker push $(CLIENT_IMG)
+
+##@ Deploy 
+.PHONY: deploy-mig
+deploy-mig: kustomize
+	cd manifests/base && $(KUSTOMIZE) edit set image cifar10-client=${CLIENT_IMG}
+	$(KUSTOMIZE) build manifests/overlays/mig
+
+.PHONY: deploy-mps
+deploy-mps: kustomize
+	$(KUSTOMIZE) build manifests/overlays/mps
+
+.PHONY: deploy-ts
+deploy-ts: kustomize
+	$(KUSTOMIZE) build manifests/overlays/ts

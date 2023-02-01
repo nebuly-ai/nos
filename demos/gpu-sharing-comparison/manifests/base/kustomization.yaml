@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: nos-gpu-sharing-comparison
+
+resources:
+- deployment-seldon.yaml
+- deployment-client.yaml
+- pod-monitor.yaml
+- namespace.yaml
+images:
+- name: cifar10-client
+  newName: ghcr.io/telemaco019/demo-cifar10-client
+  newTag: latest
+- name: client
+  newName: ghcr.io/telemaco019/demo-cifar10-client
+  newTag: latest
