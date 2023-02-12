@@ -47,8 +47,8 @@ spec:
                 - "ALL"
           resources:
             limits:
-              cpu: "1"
-              memory: 256Mi
+              cpu: "2"
+              memory: 4Gi
             requests:
               cpu: "100m"
               memory: 128Mi

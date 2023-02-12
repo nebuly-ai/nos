@@ -1,38 +1,20 @@
 import logging
+from subprocess import PIPE, Popen, run
 import os
 import random
 
 import torch
 import torchvision
+from locust import events
 import torchvision.transforms as transforms
 from locust import HttpUser, task
+import json
 
 
 class Cifar10User(HttpUser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.log = logging.getLogger()
-
-        # Init test images
-        transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-        )
-        testset = torchvision.datasets.CIFAR10(
-            root="./data",
-            train=False,
-            download=True,
-            transform=transform,
-        )
-        testloader = torch.utils.data.DataLoader(
-            testset,
-            batch_size=10,
-            shuffle=False,
-            num_workers=2,
-        )
-        for data in testloader:
-            self.images, _ = data
-            break
-        self.log.info(f"loaded {len(self.images)} test images")
 
         # Init target hosts
         self.target_hosts = []
@@ -46,20 +28,21 @@ class Cifar10User(HttpUser):
 
     @task
     def send_request(self):
-        image_index = random.randint(0, len(self.images) - 1)
-        image = self.images[image_index:image_index + 1].tolist()
+        image = torch.randn(1, 3, 32, 32).tolist()
         payload = (
-                '{"inputs":[{"name":"input__0","datatype":"FP32","shape":[1, 3, 32, 32],"data":'
-                + f"{image}"
-                + "}]}"
+            '{"inputs":[{"name":"input__0","datatype":"FP32","shape":[1, 3, 32, 32],"data":'
+            + f"{image}"
+            + "}]}"
         )
         for host in self.target_hosts:
             self.log.info(f"sending request to {host}")
-            self.client.post(
+            resp = self.client.post(
                 host,
                 data=payload,
                 headers={"Content-Type": "application/json"},
             )
+            self.log.info(f"response: {resp.text}")
+            self.log.info(f"status code: {resp.status_code}")
 
 
 if __name__ == "__main__":
