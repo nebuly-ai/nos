@@ -8,6 +8,7 @@ spec:
     seldon.io/engine-seldon-log-messages-externally: "true"
   name: resnet32
   protocol: v2
+  replicas: 1
 
 ---
 
@@ -21,6 +22,7 @@ spec:
     seldon.io/engine-seldon-log-messages-externally: "true"
   name: resnet32
   protocol: v2
+  replicas: 1
 
 ---
 
@@ -34,6 +36,7 @@ spec:
     seldon.io/engine-seldon-log-messages-externally: "true"
   name: resnet32
   protocol: v2
+  replicas: 1
 
 ---
 
@@ -47,6 +50,7 @@ spec:
     seldon.io/engine-seldon-log-messages-externally: "true"
   name: resnet32
   protocol: v2
+  replicas: 1
 
 ---
 
@@ -60,6 +64,7 @@ spec:
     seldon.io/engine-seldon-log-messages-externally: "true"
   name: resnet32
   protocol: v2
+  replicas: 1
 
 ---
 
@@ -73,6 +78,7 @@ spec:
     seldon.io/engine-seldon-log-messages-externally: "true"
   name: resnet32
   protocol: v2
+  replicas: 1
 
 ---
 
@@ -86,16 +92,5 @@ spec:
     seldon.io/engine-seldon-log-messages-externally: "true"
   name: resnet32
   protocol: v2
+  replicas: 1
 
----
-
-apiVersion: machinelearning.seldon.io/v1
-kind: SeldonDeployment
-metadata:
-  name: cifar10-8
-  namespace: seldon
-spec:
-  annotations:
-    seldon.io/engine-seldon-log-messages-externally: "true"
-  name: resnet32
-  protocol: v2

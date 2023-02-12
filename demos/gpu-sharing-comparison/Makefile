@@ -53,7 +53,7 @@ help: ## Display this help.
 
 .PHONY: port-forward-prometheus
 port-forward-prometheus:
-	kubectl port-forward -n nos-monitoring svc/nos-monitoring-prometheus 9090:9090
+	kubectl port-forward -n nos-monitoring svc/nos-monitoring-kube-promet-prometheus 9090:9090
 
 ##@ Components installation
 
@@ -127,7 +127,7 @@ install: install-cert-manager install-istio install-kube-prometheus install-nvid
 ##@ Build
 .PYHONY: docker-build
 docker-build: ## Build client Docker image
-	docker build -t $(CLIENT_IMG) -f client/Dockerfile ./client
+	docker build --platform=linux/amd64 -t $(CLIENT_IMG) -f client/Dockerfile ./client
  
 .PYHONY: docker-push
 docker-push: ## Push client Docker image
@@ -137,7 +137,7 @@ docker-push: ## Push client Docker image
 .PHONY: deploy-mig
 deploy-mig: kustomize
 	cd manifests/base && $(KUSTOMIZE) edit set image cifar10-client=${CLIENT_IMG}
-	$(KUSTOMIZE) build manifests/overlays/mig
+	$(KUSTOMIZE) build manifests/overlays/mig | kubectl apply -f -
 
 .PHONY: deploy-mps
 deploy-mps: kustomize

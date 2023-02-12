@@ -14,6 +14,7 @@ RUN pip install --no-index /install/*.whl && rm -rf /install
 
 COPY locustfile.py locustfile.py
 
+RUN chown -R 1000:1000 /home/nebuly
 USER 1000
 ENTRYPOINT ["locust"]
 

@@ -22,9 +22,24 @@ spec:
             - --headless
             - -u 8
             - -r 8
+            - -H 127.0.0.1
           env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
             - name: TARGET_HOST_1
-              value: ""
+              value: "http://cifar10-1-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
+            - name: TARGET_HOST_2
+              value: "http://cifar10-2-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
+            - name: TARGET_HOST_3
+              value: "http://cifar10-3-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
+            - name: TARGET_HOST_4
+              value: "http://cifar10-4-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
+            - name: TARGET_HOST_5
+              value: "http://cifar10-5-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
+            - name: TARGET_HOST_6
+              value: "http://cifar10-6-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
+            - name: TARGET_HOST_7
+              value: "http://cifar10-7-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -32,9 +47,9 @@ spec:
                 - "ALL"
           resources:
             limits:
-              cpu: 1
+              cpu: "1"
               memory: 256Mi
             requests:
-              cpu: 1
+              cpu: "100m"
               memory: 128Mi
       terminationGracePeriodSeconds: 10

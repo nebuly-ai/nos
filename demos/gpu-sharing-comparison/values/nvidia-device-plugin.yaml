@@ -8,6 +8,13 @@ affinity:
               operator: NotIn
               values:
                 - mps
+            - key: nvidia.com/gpu.present
+              operator: Exists
+
+selectorLabelsOverride:
+  app: nvidia-device-plugin-daemonset
+
+migStrategy: mixed
 
 tolerations:
   - key: nvidia.com/gpu

@@ -20,6 +20,10 @@ The server manages GPU access providing concurrency between clients, while clien
 runtime, which is built into the CUDA Driver library and may be used transparently by any CUDA application.
 
 
+## Prerequisites
+
+* Kubernetes v1.24 (required by Seldon Core)
+
 ## Steps
 
 ### 1. Install the required components
