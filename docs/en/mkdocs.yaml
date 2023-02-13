@@ -23,7 +23,4 @@ nav:
       - Contribution guidelines: developer/contribution-guidelines.md
   - Helm Charts:
       - nos: helm-charts/nos/README.md
-      - GPU Partitioner: helm-charts/nos-gpu-partitioner/README.md
-      - Operator: helm-charts/nos-operator/README.md
-      - Scheduler: helm-charts/nos-scheduler/README.md
   - Telemetry: telemetry.md
