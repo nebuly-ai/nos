@@ -1,7 +1,7 @@
 # Configuration
 
 You can customize the GPU Partitioner settings by editing the values file of the
-[nos-gpu-partitioner](../helm-charts/nos-gpu-partitioner/README.md) Helm chart.
+[nos](../helm-charts/nos/README.md) Helm chart.
 In this section we focus on some of the values that you would typically want to customize.
 
 ## Pods batch size
@@ -28,10 +28,10 @@ The GPU Partitioner uses an internal scheduler to simulate the scheduling of the
 a candidate GPU partitioning plan would make the pending pods schedulable.
 
 The GPU Partitioner reads the scheduler configuration from the ConfigMap defined by the field
-`nos-gpu-partitioner.scheduler.config`, and it falls back to the default configuration if the ConfigMap is not found.
+`gpuPartitioner.scheduler.config`, and it falls back to the default configuration if the ConfigMap is not found.
 You can edit this field to provide your custom scheduler configuration.
 
-If you installed `nos` with the `nos-scheduler` flag enabled, the GPU Partitioner will use its configuration unless
+If you installed `nos` with the `scheduler` flag enabled, the GPU Partitioner will use its configuration unless
 you specify a custom ConfigMap.
 
 ## Available MIG geometries
@@ -39,7 +39,7 @@ you specify a custom ConfigMap.
 The GPU Partitioner determines the most proper partitioning plan to apply by considering the possible MIG geometries
 allowed each of the GPU models present in the cluster.
 
-You can set the MIG geometries supported by each GPU model by editing the `nos-gpu-partitioner.knownMigGeometries` value
+You can set the MIG geometries supported by each GPU model by editing the `gpuPartitioner.knownMigGeometries` value
 of the [installation chart](../helm-charts/nos/README.md).
 
 You can edit this file to add new MIG geometries for new GPU models, or to edit the existing ones according
@@ -59,7 +59,7 @@ pods is chosen.
 
 Moreover, just in the case of MIG partitioning, each specific GPU model allows to create only certain combinations of MIG profiles,
 which are called MIG geometries, so the GPU partitioner takes this constraint into account when trying to find a
-new partitioning. The available MIG geometries of each GPU model are defined in the field `nos-gpu-partitioner.knownMigGeometries` field of the Helm chart.
+new partitioning. The available MIG geometries of each GPU model are defined in the field `gpuPartitioner.knownMigGeometries` field of the Helm chart.
 
 ### MIG Partitioning
 

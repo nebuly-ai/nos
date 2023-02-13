@@ -52,7 +52,7 @@ supported by each GPU model.
 
 The available MIG geometries supported by each GPU model are defined in a ConfigMap, which by default contains
 with the supported geometries of the most popular GPU models. You can override or extend the values of this
-ConfigMap by editing the field `nos-gpu-partitioner.knownMigGeometries` of the
+ConfigMap by editing the field `gpuPartitioner.knownMigGeometries` of the
 [installation chart](../helm-charts/nos/README.md).
 
 ## Create pods requesting MIG resources

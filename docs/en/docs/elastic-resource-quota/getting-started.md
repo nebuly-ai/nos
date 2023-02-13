@@ -30,7 +30,7 @@ and limiting the maximum number of CPUs it can use to 10. Note that:
 Unless you deployed the `nos` scheduler as the default scheduler for your cluster, you need to instruct Kubernetes
 to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas.
 
-You can do that by setting the value of the `schedulerName` field of your Pods specification to `nos-scheduler` (or to
+You can do that by setting the value of the `schedulerName` field of your Pods specification to `scheduler` (or to
 any name you chose when installing `nos`), as shown in the example below.
 
 ```yaml

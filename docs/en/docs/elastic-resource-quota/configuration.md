@@ -5,14 +5,14 @@
 You can add scheduling support for Elastic Resource Quota to your cluster by choosing one of the following options.
 In both cases, you also need to install the `nos operator` to manage the CRDs.
 
-### Option 1 - Use nos-scheduler (recommended)
+### Option 1 - Use nos scheduler (recommended)
 
 This is the recommended option. You can deploy the nos scheduler to your cluster either as the default scheduler
 or as a second scheduler that runs alongside the default one.
 In the latter case, you can use the `schedulerName` field of the Pod spec to specify which scheduler should be used.
 
 If you installed `nos` through the Helm chart, the scheduler is deployed automatically unless you set the value
-`nos-scheduler.enabled=false`.
+`scheduler.enabled=false`.
 
 ### Option 2 - Use your k8s scheduler
 
@@ -82,4 +82,4 @@ func main() {
 ```
 
 If you choose this installation option, you don't need to deploy `nos` scheduler, so you can disable it
-by setting `--set nos-scheduler.enabled=false` when installing the `nos` chart.
+by setting `--set scheduler.enabled=false` when installing the `nos` chart.
