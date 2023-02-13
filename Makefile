@@ -194,33 +194,14 @@ docker-push: docker-push-mig-agent \
 	docker-push-gpu-partitioner \
 	docker-push-metrics-exporter
 
-.PHONY: helm-push-gpu-partitioner
-helm-push-gpu-partitioner: ## Push the gpu-partitioner Helm chart to the Helm repository.
-	helm package helm-charts/nos-gpu-partitioner --destination /tmp
-	helm push /tmp/nos-gpu-partitioner-*.tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/nos-gpu-partitioner-*.tgz
-
-.PHONY: helm-push-scheduler
-helm-push-scheduler: ## Push the scheduler Helm chart to the Helm repository.
-	helm package helm-charts/nos-scheduler --destination /tmp
-	helm push /tmp/nos-scheduler-*.tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/nos-scheduler-*.tgz
-
-.PHONY: helm-push-operator
-helm-push-operator: ## Push the operator Helm chart to the Helm repository.
-	helm package helm-charts/nos-operator --destination /tmp
-	helm push /tmp/nos-operator-*.tgz $(HELM_CHART_REGISTRY)
-	rm /tmp/nos-operator-*.tgz
-
 .PHONY: helm-push-nos
 helm-push-nos: ## Push the nos Helm chart to the Helm repository.
-	helm dependency update helm-charts/nos
 	helm package helm-charts/nos --destination /tmp
 	helm push /tmp/nos-*.tgz $(HELM_CHART_REGISTRY)
 	rm /tmp/nos-*.tgz
 
 .PHONY: helm-push
-helm-push: helm-push-gpu-partitioner helm-push-operator helm-push-scheduler helm-push-nos ## Push the all the Helm charts to the Helm repository.
+helm-push: helm-push-nos ## Push the all the Helm charts to the Helm repository.
 
 ##@ Deployment
 
