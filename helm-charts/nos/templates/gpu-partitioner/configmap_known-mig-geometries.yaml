@@ -1,0 +1,11 @@
+{{- if .Values.gpuPartitioner.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gpuPartitioner.knownMigGeometriesConfigMapName" . }}
+  labels:
+    {{- include "gpuPartitioner.labels" . | nindent 4 }}
+data:
+  {{ include "gpuPartitioner.knownMigGeometriesFileName" . }}: |
+    {{- .Values.gpuPartitioner.knownMigGeometries | toYaml | nindent 4 }}
+{{- end -}}

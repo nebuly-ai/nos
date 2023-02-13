@@ -10,20 +10,6 @@ appVersion: "0.1.0"
 sources:
   - https://github.com/nebuly-ai/nos
 
-dependencies:
-  - name: nos-gpu-partitioner
-    repository: "oci://ghcr.io/nebuly-ai/helm-charts"
-    version: 0.1.0
-    condition: nos-gpu-partitioner.enabled
-  - name: nos-scheduler
-    repository: "oci://ghcr.io/nebuly-ai/helm-charts"
-    version: 0.1.0
-    condition: nos-scheduler.enabled
-  - name: nos-operator
-    repository: "oci://ghcr.io/nebuly-ai/helm-charts"
-    version: 0.1.0
-    condition: nos-operator.enabled
-
 maintainers:
   - name: Michele Zanotti
     email: m.zanotti@nebuly.com

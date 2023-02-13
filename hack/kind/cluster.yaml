@@ -11,3 +11,5 @@ nodes:
             enable-admission-plugins: NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook
   - role: worker
     image: kindest/node:v1.24.4
+  - role: worker
+    image: kindest/node:v1.24.4

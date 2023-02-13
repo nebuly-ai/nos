@@ -1,0 +1,22 @@
+{{- if .Values.operator.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "operator.config.configMapName" . }}
+data:
+  {{ include "operator.configFileName" . }}: |
+    apiVersion: config.nos.nebuly.com/v1alpha1
+    kind: OperatorConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: true
+      resourceName: operator.nos.nebuly.com
+      leaderElectionReleaseOnCancel: true
+
+    nvidiaGpuResourceMemoryGB: {{ .Values.nvidiaGpuResourceMemoryGB }}
+{{- end -}}

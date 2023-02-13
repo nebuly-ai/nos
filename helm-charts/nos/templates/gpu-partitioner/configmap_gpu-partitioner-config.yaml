@@ -1,0 +1,34 @@
+{{- if .Values.gpuPartitioner.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "gpuPartitioner.config.configMapName" . }}
+data:
+  {{ include "gpuPartitioner.configFileName" . }}: |
+    apiVersion: config.nos.nebuly.com/v1alpha1
+    kind: GpuPartitionerConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    webhook:
+      port: 9443
+    leaderElection:
+      leaderElect: {{ .Values.gpuPartitioner.leaderElection.enabled }}
+      resourceName: gpu-partitioner.nebuly.com
+      leaderElectionReleaseOnCancel: true
+
+    batchWindowTimeoutSeconds: {{ .Values.gpuPartitioner.batchWindowTimeoutSeconds }}
+    batchWindowIdleSeconds: {{ .Values.gpuPartitioner.batchWindowIdleSeconds }}
+    knownMigGeometriesFile:  {{ include "gpuPartitioner.knownMigGeometriesFileName" . }}
+    devicePluginConfigMap:
+     name: {{ .Values.gpuPartitioner.devicePlugin.config.name }}
+     namespace: {{ .Values.gpuPartitioner.devicePlugin.config.namespace }}
+    devicePluginDelaySeconds: {{ .Values.gpuPartitioner.devicePlugin.configUpdateDelaySeconds }}
+
+    {{- if .Values.gpuPartitioner.scheduler.config }}
+    {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.gpuPartitioner.scheduler.config.name }}
+    schedulerConfigFile: {{ include "gpuPartitioner.schedulerConfigFileName" . }}
+    {{- end }}
+    {{- end }}
+{{- end -}}

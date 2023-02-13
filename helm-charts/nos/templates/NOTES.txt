@@ -1,4 +1,4 @@
-{{- $gpuPartitionerEnabled :=  index .Values "nos-gpu-partitioner" "enabled" -}}
+{{- $gpuPartitionerEnabled :=  index .Values "gpuPartitioner" "enabled" -}}
 
 {{- if $gpuPartitionerEnabled -}}
 

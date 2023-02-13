@@ -1,0 +1,14 @@
+{{- if .Values.gpuPartitioner.enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "gpuAgent.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "gpuAgent.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "gpuAgent.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end -}}

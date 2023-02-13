@@ -1,0 +1,16 @@
+{{- if .Values.operator.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+  name: {{ include "operator.fullname" . }}-metrics
+spec:
+  ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: https
+  selector:
+    {{- include "operator.selectorLabels" .  | nindent 4 }}
+{{- end -}}

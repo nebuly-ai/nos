@@ -1,0 +1,36 @@
+{{- if .Values.scheduler.enabled -}}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "scheduler.config.configMapName" . }}
+data:
+  scheduler_config.yaml: |
+    {{- with .Values.config }}
+    {{- . | toYaml | nindent 4 }}
+    {{- else }}
+    apiVersion: kubescheduler.config.k8s.io/v1beta3
+    kind: KubeSchedulerConfiguration
+    leaderElection:
+      leaderElect: true
+      resourceNamespace: kube-system
+      resourceName: nos-scheduler
+    profiles:
+      - schedulerName: nos-scheduler
+        plugins:
+          preFilter:
+            enabled:
+              - name: CapacityScheduling
+          postFilter:
+            enabled:
+              - name: CapacityScheduling
+            disabled:
+              - name: "*"
+          reserve:
+            enabled:
+              - name: CapacityScheduling
+        pluginConfig:
+          - name: CapacityScheduling
+            args:
+              nvidiaGpuResourceMemoryGB: {{ .Values.nvidiaGpuResourceMemoryGB }}
+    {{- end }}
+{{- end -}}

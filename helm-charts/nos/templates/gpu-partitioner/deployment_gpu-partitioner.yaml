@@ -1,0 +1,121 @@
+{{- if .Values.gpuPartitioner.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gpuPartitioner.fullname" . }}
+  labels:
+    control-plane: "nos-controller-manager"
+    {{- include "gpuPartitioner.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      control-plane: "nos-controller-manager"
+      {{- include "gpuPartitioner.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: "{{ .Chart.Name }}"
+        {{- with .Values.gpuPartitioner.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        control-plane: "nos-controller-manager"
+        {{- include "gpuPartitioner.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "gpuPartitioner.fullname" . }}
+      securityContext:
+        {{- toYaml .Values.gpuPartitioner.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.gpuPartitioner.image.repository }}:{{ .Values.gpuPartitioner.image.tag | default .Chart.AppVersion }}"
+          command:
+            - /gpupartitioner
+          args:
+            - --config={{ include "gpuPartitioner.configFileName" . }}
+            {{- if gt (int .Values.gpuPartitioner.logLevel) 0 }}
+            - --zap-log-level={{ .Values.gpuPartitioner.logLevel }}
+            {{ end }}
+          imagePullPolicy: {{ .Values.gpuPartitioner.image.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.gpuPartitioner.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: /{{ include "gpuPartitioner.configFileName" . }}
+              name: gpu-partitioner-config
+              subPath: {{ include "gpuPartitioner.configFileName" . }}
+            - mountPath: /{{ include "gpuPartitioner.knownMigGeometriesFileName" . }}
+              name: known-mig-geometries
+              subPath: {{ include "gpuPartitioner.knownMigGeometriesFileName" . }}
+            {{- if .Values.gpuPartitioner.scheduler.config }}
+            {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.gpuPartitioner.scheduler.config.name }}
+            - mountPath: /{{ include "gpuPartitioner.schedulerConfigFileName" .}}
+              name: scheduler-config
+              subPath: {{ include "gpu-partitioner.schedulerConfigFileName" .}}
+            {{- end }}
+            {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+        - name: kube-rbac-proxy
+          image: "{{ .Values.gpuPartitioner.kubeRbacProxy.image.repository }}:{{ .Values.gpuPartitioner.kubeRbacProxy.image.tag }}"
+          args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            {{- if gt (int .Values.gpuPartitioner.kubeRbacProxy.logLevel) 0 }}
+            - --v={{ .Values.gpuPartitioner.kubeRbacProxy.logLevel }}
+            {{ end }}
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources: {{- toYaml .Values.gpuPartitioner.kubeRbacProxy.resources | nindent 12 }}
+
+      {{- with .Values.gpuPartitioner.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gpuPartitioner.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gpuPartitioner.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - configMap:
+            name: {{ include "gpuPartitioner.config.configMapName" . }}
+          name: gpu-partitioner-config
+        - configMap:
+            name: {{ include "gpuPartitioner.knownMigGeometriesConfigMapName" . }}
+          name: known-mig-geometries
+        {{- if .Values.gpuPartitioner.scheduler.config }}
+        {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.gpuPartitioner.scheduler.config.name }}
+        - configMap:
+            name: {{ .Values.gpuPartitioner.scheduler.config.name }}
+          name: scheduler-config
+        {{- end }}
+        {{- end }}
+{{- end -}}

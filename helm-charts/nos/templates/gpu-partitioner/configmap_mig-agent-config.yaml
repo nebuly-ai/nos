@@ -1,0 +1,17 @@
+{{- if .Values.gpuPartitioner.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "migAgent.config.configMapName" . }}
+data:
+  {{ include "migAgent.configFileName" . }}: |-
+    apiVersion: config.nos.nebuly.com/v1alpha1
+    kind: MigAgentConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    leaderElection:
+      leaderElect: false
+    reportConfigIntervalSeconds: {{ .Values.gpuPartitioner.migAgent.reportConfigIntervalSeconds}}
+{{- end -}}

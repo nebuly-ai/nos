@@ -1,0 +1,16 @@
+{{- if .Values.gpuPartitioner.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    {{- include "gpuPartitioner.labels" . | nindent 4 }}
+  name: {{ include "gpuPartitioner.fullname" . }}-metrics
+spec:
+  ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: https
+  selector:
+    {{- include "gpuPartitioner.selectorLabels" .  | nindent 4 }}
+{{- end -}}

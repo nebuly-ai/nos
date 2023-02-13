@@ -1,0 +1,102 @@
+{{- if .Values.gpuPartitioner.enabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    control-plane: nos-controller-manager
+    {{- include "migAgent.labels" . | nindent 4 }}
+  name: {{ include "migAgent.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      control-plane: nos-controller-manager
+      {{- include "migAgent.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        control-plane: nos-controller-manager
+        {{- include "migAgent.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "migAgent.fullname" . }}
+      nodeSelector:
+        nos.nebuly.com/gpu-partitioning: mig
+      priorityClassName: system-node-critical
+      terminationGracePeriodSeconds: 20
+      containers:
+        - image: "{{ .Values.gpuPartitioner.migAgent.image.repository }}:{{ .Values.gpuPartitioner.migAgent.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.gpuPartitioner.migAgent.image.pullPolicy }}
+          name: {{ include "migAgent.fullname" . }}
+          args:
+            - --config={{ include "migAgent.configFileName" . }}
+            {{- if gt (int .Values.gpuPartitioner.migAgent.logLevel) 0 }}
+            - --zap-log-level={{ .Values.gpuPartitioner.migAgent.logLevel }}
+            {{ end }}
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.gpuPartitioner.migAgent.resources | nindent 12 }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /{{ include "migAgent.configFileName" . }}
+              name: mig-agent-config
+              subPath: {{ include "migAgent.configFileName" . }}
+            - mountPath: /var/lib/kubelet/pod-resources/kubelet.sock
+              name: device-plugin
+            - mountPath: /run/nvidia
+              mountPropagation: HostToContainer
+              name: run-nvidia
+
+        - name: kube-rbac-proxy
+          args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --logtostderr=true
+            {{- if gt (int .Values.gpuPartitioner.kubeRbacProxy.logLevel) 0 }}
+            - --v={{ .Values.gpuPartitioner.kubeRbacProxy.logLevel }}
+            {{ end }}
+          image: "{{ .Values.gpuPartitioner.kubeRbacProxy.image.repository }}:{{ .Values.gpuPartitioner.kubeRbacProxy.image.tag }}"
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources: {{- toYaml .Values.gpuPartitioner.kubeRbacProxy.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      tolerations:
+        - effect: NoSchedule
+          key: nvidia.com/gpu
+          operator: Exists
+          {{- with .Values.gpuPartitioner.migAgent.tolerations }}
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+      volumes:
+        - configMap:
+            name: {{ include "migAgent.config.configMapName" . }}
+          name: mig-agent-config
+        - hostPath:
+            path: /var/lib/kubelet/pod-resources/kubelet.sock
+          name: device-plugin
+        - hostPath:
+            path: /run/nvidia
+            type: Directory
+          name: run-nvidia
+{{- end -}}

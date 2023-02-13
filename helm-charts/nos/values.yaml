@@ -3,32 +3,374 @@
 # Declare variables to be passed into your templates.
 
 
-# @default -- -
-global:
-  # -- Defines how many GB of memory each nvidia.com/gpu resource has.
-  nvidiaGpuResourceMemoryGB: 32
-
-# -- All values available [here](../nos-operator/README.md).
-# @default -- -
-nos-operator:
-  # -- Enable or disable the `nos operator`
-  enabled: true
-
-# -- All values available [here](../nos-scheduler/README.md).
-# @default -- -
-nos-scheduler:
-  # -- Enable or disable the `nos scheduler`
-  enabled: true
-
-
-# -- All values available [here](../nos-gpu-partitioner/README.md).
-# @default -- -
-nos-gpu-partitioner:
-  # -- Enable or disable the `nos gpu partitioner`
-  enabled: true
+# -- Defines how many GB of memory each nvidia.com/gpu resource has.
+nvidiaGpuResourceMemoryGB: 32
 
 # -- If true allows to deploy `nos` chart in the `default` namespace
 allowDefaultNamespace: false
 
 # -- If true, shares with Nebuly telemetry data collected only during the Chart installation
 shareTelemetry: true
+
+
+
+operator:
+  # -- Enable or disable the `nos operator`
+  enabled: true
+
+  # -- Number of replicas of the controller manager Pod.
+  replicaCount: 1
+
+  # -- The level of log of the controller manager.
+  # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+  # **Must be >= 0**.
+  logLevel: 0
+
+  nameOverride: ""
+  fullnameOverride: ""
+
+  image:
+    # -- Sets the operator Docker repository
+    repository: ghcr.io/nebuly-ai/nos-operator
+    # -- Overrides the operator Docker image tag whose default is the chart appVersion.
+    tag: ""
+    # -- Sets the operator Docker image pull policy.
+    pullPolicy: IfNotPresent
+
+  # -- Configuration of the [Kube RBAC Proxy](https://github.com/brancz/kube-rbac-proxy), which runs as sidecar of
+  # the operator Pods.
+  # @default -- -
+  kubeRbacProxy:
+    logLevel: 1
+    image:
+      repository: gcr.io/kubebuilder/kube-rbac-proxy
+      pullPolicy: IfNotPresent
+      tag: "v0.13.0"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 128Mi
+      requests:
+        cpu: 5m
+        memory: 64Mi
+
+  leaderElection:
+    # -- Enables/Disables the leader election of the operator controller manager.
+    enabled: true
+
+  # -- Sets the security context of the operator Pod.
+  podSecurityContext:
+    runAsNonRoot: true
+
+  # -- Sets the security context of the operator container.
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  # -- Sets the resource limits and requests of the operator controller manager container.
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+
+  # -- Sets the annotations of the operator Pod.
+  podAnnotations: { }
+
+  # -- Sets the tolerations of the operator Pod.
+  tolerations: [ ]
+
+  # -- Sets the affinity config of the operator Pod.
+  affinity: { }
+
+  # -- Sets the nodeSelector config of the operator Pod.
+  nodeSelector: { }
+
+
+
+scheduler:
+  # -- Enable or disable the `nos scheduler`
+  enabled: true
+
+  # -- The level of log of the scheduler.
+  # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+  # **Must be >= 0**.
+  logLevel: 0
+
+  # -- Overrides the Kube Scheduler configuration
+  config: { }
+
+  # -- Number of replicas of the scheduler.
+  replicaCount: 1
+
+  nameOverride: ""
+  fullnameOverride: ""
+
+  image:
+    # -- Sets Docker image.
+    repository: ghcr.io/nebuly-ai/nos-scheduler
+    # -- Sets Docker image pull policy.
+    pullPolicy: IfNotPresent
+    # -- Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  leaderElection:
+    # -- Enables/Disables the leader election when deployed with multiple replicas.
+    enabled: true
+
+  # -- Sets the resource limits and requests of the scheduler container.
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+
+  # -- Sets the annotations of the scheduler Pod.
+  podAnnotations: { }
+
+  # -- Sets the tolerations of the scheduler deployment.
+  tolerations: [ ]
+
+  # -- Sets the affinity config of the scheduler deployment.
+  affinity: { }
+
+  # -- Sets the nodeSelector config of the scheduler deployment.
+  nodeSelector: { }
+
+  # -- Sets the security context of the scheduler container
+  securityContext:
+    privileged: false
+
+  # -- Sets the security context of the scheduler Pod
+  podSecurityContext: { }
+
+
+
+gpuPartitioner:
+  # -- Enable or disable the `nos gpu partitioner`
+  enabled: true
+
+  # -- The level of log of the GPU Partitioner.
+  # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+  # **Must be >= 0**.
+  logLevel: 0
+
+  # -- Number of replicas of the gpu-manager Pod.
+  replicaCount: 1
+
+  nameOverride: ""
+  fullnameOverride: ""
+
+  devicePlugin:
+    config:
+      # -- Name of the ConfigMap containing the NVIDIA Device Plugin configuration files.
+      # It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the
+      # NVIDIA GPU Operator.
+      name: nos-device-plugin-configs
+      # -- Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to
+      # the namespace where the Nebuly NVIDIA Device Plugin has been deployed to.
+      namespace: nebuly-nvidia
+    # -- Duration of the delay between when the new partitioning config is computed and when it is sent to
+    # the NVIDIA device plugin. Since the config is provided to the plugin as a mounted ConfigMap, this delay is required
+    # to ensure that the updated ConfigMap is propagated to the mounted volume.
+    configUpdateDelaySeconds: 5
+
+  scheduler:
+    config:
+      # -- Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the
+      # ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile.
+      name: nos-scheduler-config
+
+  image:
+    # -- Sets the GPU Partitioner Docker image.
+    repository: ghcr.io/nebuly-ai/nos-gpu-partitioner
+    # -- Sets the GPU Partitioner Docker image pull policy.
+    pullPolicy: IfNotPresent
+    # -- Overrides the GPU Partitioner image tag whose default is the chart appVersion.
+    tag: ""
+
+  # -- Configuration of the MIG Agent component of the GPU Partitioner.
+  # @default -- -
+  migAgent:
+    # -- Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node
+    reportConfigIntervalSeconds: 10
+    # -- The level of log of the MIG Agent.
+    # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+    # **Must be >= 0**.
+    logLevel: 0
+    image:
+      # -- Sets the MIG Agent Docker image.
+      repository: ghcr.io/nebuly-ai/nos-mig-agent
+      # -- Sets the MIG Agent Docker image pull policy.
+      pullPolicy: IfNotPresent
+      # -- Overrides the MIG Agent image tag whose default is the chart appVersion.
+      tag: ""
+    # -- Sets the resource requests and limits of the MIG Agent container.
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    # -- Sets the tolerations of the MIG Agent Pod.
+    tolerations:
+      - key: "kubernetes.azure.com/scalesetpriority"
+        operator: "Equal"
+        value: "spot"
+        effect: "NoSchedule"
+
+  # -- Configuration of the GPU Agent component of the GPU Partitioner.
+  # @default -- -
+  gpuAgent:
+    # -- Interval at which the mig-agent will report to k8s status of the GPUs of the Node
+    reportConfigIntervalSeconds: 10
+    # -- The level of log of the GPU Agent.
+    # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
+    # **Must be >= 0**.
+    logLevel: 0
+    image:
+      # -- Sets the GPU Agent Docker image.
+      repository: ghcr.io/nebuly-ai/nos-gpu-agent
+      # -- Sets the GPU Agent Docker image pull policy.
+      pullPolicy: IfNotPresent
+      # -- Overrides the GPU Agent image tag whose default is the chart appVersion.
+      tag: ""
+    # -- Sets the resource requests and limits of the GPU Agent container.
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    # -- Sets the tolerations of the GPU Agent Pod.
+    tolerations:
+      - key: "kubernetes.azure.com/scalesetpriority"
+        operator: "Equal"
+        value: "spot"
+        effect: "NoSchedule"
+
+  # -- Configuration of the [Kube RBAC Proxy](https://github.com/brancz/kube-rbac-proxy), which runs as sidecar of
+  # all the GPU Partitioner components Pods.
+  # @default -- -
+  kubeRbacProxy:
+    logLevel: 1
+    image:
+      repository: gcr.io/kubebuilder/kube-rbac-proxy
+      pullPolicy: IfNotPresent
+      tag: "v0.13.0"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 128Mi
+      requests:
+        cpu: 5m
+        memory: 64Mi
+
+
+  # -- Timeout of the window used by the GPU partitioner for batching pending Pods.
+  #
+  # Higher values make the GPU partitioner will potentially take into account more pending Pods when
+  # deciding the GPU partitioning plan, but the partitioning will be performed less frequently
+  batchWindowTimeoutSeconds: 60
+
+  # -- Idle seconds before the GPU partitioner processes the current batch if no new pending Pods are created, and
+  # the timeout has not been reached.
+  #
+  # Higher values make the GPU partitioner will potentially take into account more pending Pods when
+  # deciding the GPU partitioning plan, but the partitioning will be performed less frequently
+  batchWindowIdleSeconds: 10
+
+  leaderElection:
+    # -- Enables/Disables the leader election of the GPU Partitioner controller manager.
+    enabled: true
+
+  # -- Sets the security context of the GPU partitioner Pod.
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  # -- Sets the resource limits and requests of the GPU partitioner container.
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+
+  # -- Sets the annotations of the GPU Partitioner Pod.
+  podAnnotations: { }
+
+  # -- Sets the tolerations of the GPU Partitioner Pod.
+  tolerations: [ ]
+
+  # -- Sets the affinity config of the GPU Partitioner Pod.
+  affinity: { }
+
+  # -- Sets the nodeSelector config of the GPU Partitioner Pod.
+  nodeSelector: { }
+
+  # -- List that associates GPU models to the respective allowed MIG configurations
+  # @default -- -
+  knownMigGeometries:
+    - models: [ "A30" ]
+      allowedGeometries:
+        - 1g.6gb: 4
+        - 1g.6gb: 2
+          2g.12gb: 1
+        - 2g.12gb: 2
+        - 4g.24gb: 1
+    - models: [ "A100-SXM4-40GB", "NVIDIA-A100-40GB-PCIe" ]
+      allowedGeometries:
+        - 1g.5gb: 7
+        - 1g.5gb: 5
+          2g.10gb: 1
+        - 1g.5gb: 3
+          2g.10gb: 2
+        - 1g.5gb: 1
+          2g.10gb: 3
+        - 1g.5gb: 2
+          2g.10gb: 1
+          3g.20gb: 1
+        - 2g.10gb: 2
+          3g.20gb: 1
+        - 1g.5gb: 3
+          3g.20gb: 1
+        - 1g.5gb: 1
+          2g.10gb: 1
+          3g.20gb: 1
+        - 3g.20gb: 2
+        - 1g.5gb: 3
+          4g.20gb: 1
+        - 1g.5gb: 1
+          2g.10gb: 1
+          4g.20gb: 1
+        - 7g.40gb: 1
+    - models: [ "NVIDIA-A100-80GB-PCIe" ]
+      allowedGeometries:
+        - 1g.10gb: 7
+        - 1g.10gb: 5
+          2g.20gb: 1
+        - 1g.10gb: 3
+          2g.20gb: 2
+        - 1g.10gb: 1
+          2g.20gb: 3
+        - 1g.10gb: 2
+          2g.20gb: 1
+          3g.40gb: 1
+        - 2g.20gb: 2
+          3g.20gb: 1
+        - 1g.10gb: 3
+          3g.40gb: 1
+        - 1g.10gb: 1
+          2g.20gb: 1
+          3g.40gb: 1
+        - 3g.40gb: 2
+        - 1g.10gb: 3
+          4g.40gb: 1
+        - 1g.10gb: 1
+          2g.20gb: 1
+          4g.40gb: 1
+        - 7g.79gb: 1

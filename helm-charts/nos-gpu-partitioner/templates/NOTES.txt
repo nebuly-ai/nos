@@ -1,9 +1,0 @@
-To enable automatic MIG partitioning on the GPUs of a node (only for MIG-enabled GPUs):
-```bash
-kubectl label nodes <node-name> "nos.nebuly.com/gpu-partitioning=mig"
-```
-
-To enable automatic MPS partitioning on the GPUs of a node:
-```bash
-kubectl label nodes <node-name> "nos.nebuly.com/gpu-partitioning=mps"
-```
