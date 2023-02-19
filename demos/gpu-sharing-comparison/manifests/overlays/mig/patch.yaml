@@ -1,33 +1,14 @@
-kind: SeldonDeployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: ignored
+  name: benchmarks-client
+  namespace: nos-gpu-sharing-comparison
 spec:
-  predictors:
-    - graph:
-        implementation: TRITON_SERVER
-        logger:
-          mode: all
-        modelUri: gs://seldon-models/triton/pytorch_cifar10
-        name: cifar10
-        type: MODEL
-      name: default
-      replicas: 1
-      componentSpecs:
-        - spec:
-            containers:
-              - name: cifar10
-                resources:
-                  limits:
-                    nvidia.com/mig-1g.10gb: 1
-            nodeSelector:
-              accelerator: nvidia
-            tolerations:
-              - key: accelerator
-                operator: Equal
-                value: nvidia
-                effect: NoSchedule
-              - key: "kubernetes.azure.com/scalesetpriority"
-                operator: "Equal"
-                value: "spot"
-                effect: "NoSchedule"
+    template:
+        spec:
+          containers:
+            - name: benchmarks-client
+              resources:
+                limits:
+                  nvidia.com/mig-1g.10gb: 1
 

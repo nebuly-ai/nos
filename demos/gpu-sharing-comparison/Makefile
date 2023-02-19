@@ -13,7 +13,7 @@ endif
 DOCKER_REGISTRY ?= ghcr.io/telemaco019
 
 # Image URLs to build/push Docker image targets
-CLIENT_IMG ?= $(DOCKER_REGISTRY)/demo-cifar10-client:latest
+CLIENT_IMG ?= $(DOCKER_REGISTRY)/demos/gpu-sharing-comparison:latest
 
 
 ##@ Build Dependencies
@@ -32,11 +32,6 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 ISTIOCTL_VERSION ?= 1.16.2
 KUSTOMIZE_VERSION ?= v4.5.5
 
-
-.PHONY: istioctl
-istioctl: $(ISTIOCTL) ## Download istioctl locally if necessary.
-$(ISTIOCTL): $(LOCALBIN)
-	test -s $(ISTIOCTL) || ( curl -L https://istio.io/downloadIstio | ISTIO_VERSION=$(ISTIOCTL_VERSION) sh - && mv istio-$(ISTIOCTL_VERSION)/bin/istioctl $(ISTIOCTL) )
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -60,11 +55,6 @@ port-forward-prometheus:
 ## Components versions
 NVIDIA_GPU_OPERATOR_VERSION ?= v22.9.0
 NOS_VERSION ?= 0.1.0
-SELDON_CORE_VERSION ?= v1.15.0
-
-.PHONY: install-istio
-install-istio: istioctl
-	$(ISTIOCTL) install --set profile=demo -y
 
 .PHONY: install-cert-manager
 install-cert-manager:
@@ -85,19 +75,10 @@ install-nos:
 	  --namespace nebuly-nos \
 	  --create-namespace
 
-.PHONY: install-seldon-core
-install-seldon-core:
-	helm upgrade --install seldon-core seldon-core-operator \
-	   --repo https://storage.googleapis.com/seldon-charts \
-	   --set usageMetrics.enabled=true \
-	   --set istio.enabled=true \
-	   --namespace seldon-systeml \
-	   --version $(SELDON_CORE_VERSION) \
-	   --create-namespace \
-
 .PHONY: install-kube-prometheus
 install-kube-prometheus:
 	helm upgrade --install nos-monitoring kube-prometheus \
+    -f values/kube-prometheus.yaml  \
     --namespace nos-monitoring \
     --create-namespace \
     --repo https://charts.bitnami.com/bitnami
@@ -122,7 +103,7 @@ install-gpu-operator:
 
 
 .PHONY: install
-install: install-cert-manager install-istio install-kube-prometheus install-nvidia-device-plugin install-gpu-operator install-nebuly-device-plugin install-nos install-seldon-core ## Install all components
+install: install-cert-manager install-kube-prometheus install-nvidia-device-plugin install-gpu-operator install-nebuly-device-plugin install-nos ## Install all components
 
 ##@ Build
 .PYHONY: docker-build
@@ -141,8 +122,8 @@ deploy-mig: kustomize
 
 .PHONY: deploy-mps
 deploy-mps: kustomize
-	$(KUSTOMIZE) build manifests/overlays/mps
+	$(KUSTOMIZE) build manifests/overlays/mps | kubectl apply -f -
 
 .PHONY: deploy-ts
 deploy-ts: kustomize
-	$(KUSTOMIZE) build manifests/overlays/ts
+	$(KUSTOMIZE) build manifests/overlays/ts | kubectl apply -f -

@@ -4,7 +4,5 @@ kind: Kustomization
 resources:
 - ../../base
 
-patches:
-- path: patch.yaml
-  target:
-    kind: SeldonDeployment
+patchesStrategicMerge:
+  - patch.yaml

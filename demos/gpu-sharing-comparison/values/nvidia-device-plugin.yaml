@@ -16,6 +16,18 @@ selectorLabelsOverride:
 
 migStrategy: mixed
 
+config:
+  map:
+    default: |
+      version: v1
+      sharing:
+        timeSlicing:
+          renameByDefault: true
+          failRequestsGreaterThanOne: true
+          resources:
+          - name: nvidia.com/gpu
+            replicas: 7
+
 tolerations:
   - key: nvidia.com/gpu
     operator: Exists

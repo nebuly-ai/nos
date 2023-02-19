@@ -36,6 +36,4 @@ This installs:
 - Cert Manager
 - Nos
 - Nebuly NVIDIA Device Plugin
-- Istio
-- Seldon
 - Kube Prometheus

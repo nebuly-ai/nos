@@ -1,45 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: client
+  name: benchmarks-client
   namespace: nos-gpu-sharing-comparison
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/component: cifar10-client
-  replicas: 1
+      app.kubernetes.io/component: benchmarks-client
+  replicas: 7
   template:
     metadata:
       labels:
-        app.kubernetes.io/component: cifar10-client
+        app.kubernetes.io/component: benchmarks-client
     spec:
       securityContext:
         runAsNonRoot: true
+      tolerations:
+        - key: "kubernetes.azure.com/scalesetpriority"
+          operator: "Equal"
+          value: "spot"
+          effect: "NoSchedule"
       containers:
-        - image: cifar10-client:latest
-          name: cifar10-client
-          args:
-            - --headless
-            - -u 8
-            - -r 8
-            - -H 127.0.0.1
-          env:
-            - name: PYTHONUNBUFFERED
-              value: "1"
-            - name: TARGET_HOST_1
-              value: "http://cifar10-1-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
-            - name: TARGET_HOST_2
-              value: "http://cifar10-2-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
-            - name: TARGET_HOST_3
-              value: "http://cifar10-3-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
-            - name: TARGET_HOST_4
-              value: "http://cifar10-4-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
-            - name: TARGET_HOST_5
-              value: "http://cifar10-5-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
-            - name: TARGET_HOST_6
-              value: "http://cifar10-6-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
-            - name: TARGET_HOST_7
-              value: "http://cifar10-7-default.nos-gpu-sharing-comparison.svc.cluster.local:8000/v2/models/cifar10/infer"
+        - image: ghcr.io/telemaco019/demos/gpu-sharing-comparison:latest
+          name: benchmarks-client
+          imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -47,9 +31,9 @@ spec:
                 - "ALL"
           resources:
             limits:
-              cpu: "2"
+              cpu: "1500m"
               memory: 4Gi
-            requests:
-              cpu: "100m"
-              memory: 128Mi
+          ports:
+            - name: prometheus
+              containerPort: 8000
       terminationGracePeriodSeconds: 10

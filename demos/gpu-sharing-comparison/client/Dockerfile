@@ -12,10 +12,13 @@ WORKDIR /home/nebuly
 COPY --from=dep-builder [ "/build/dist/*.whl", "/install/" ]
 RUN pip install --no-index /install/*.whl && rm -rf /install
 
-COPY locustfile.py locustfile.py
+COPY main.py main.py
 
 RUN chown -R 1000:1000 /home/nebuly
+RUN mkdir /.cache ; chown -R 1000:1000 /.cache
 USER 1000
-ENTRYPOINT ["locust"]
+
+EXPOSE "8000"
+ENTRYPOINT ["python", "main.py"]
 
 
