@@ -117,7 +117,6 @@ docker-push: ## Push client Docker image
 ##@ Deploy 
 .PHONY: deploy-mig
 deploy-mig: kustomize
-	cd manifests/base && $(KUSTOMIZE) edit set image cifar10-client=${CLIENT_IMG}
 	$(KUSTOMIZE) build manifests/overlays/mig | kubectl apply -f -
 
 .PHONY: deploy-mps
