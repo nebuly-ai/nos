@@ -1,0 +1,5 @@
+torch==1.13.1
+transformers==4.26.1
+Pillow==9.4.0
+prometheus-client==0.16.0
+accelerate==0.16.0

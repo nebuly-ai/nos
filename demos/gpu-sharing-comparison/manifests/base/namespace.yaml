@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nos-gpu-sharing-comparison
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nos-monitoring

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benchmarks-client
+  namespace: nos-gpu-sharing-comparison
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: benchmarks-client
+  replicas: 7
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: benchmarks-client
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      tolerations:
+        - key: "kubernetes.azure.com/scalesetpriority"
+          operator: "Equal"
+          value: "spot"
+          effect: "NoSchedule"
+      containers:
+        - image: ghcr.io/telemaco019/demos/gpu-sharing-comparison:latest
+          name: benchmarks-client
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - "ALL"
+          resources:
+            limits:
+              cpu: "1500m"
+              memory: 4Gi
+          ports:
+            - name: prometheus
+              containerPort: 8000
+      terminationGracePeriodSeconds: 10
