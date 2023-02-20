@@ -1,6 +1,3 @@
-import argparse
-from typing import Optional
-
 import requests
 from PIL import Image
 from prometheus_client import Summary, start_http_server
