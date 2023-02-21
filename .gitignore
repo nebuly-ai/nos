@@ -24,6 +24,7 @@ bin/
 .venv/
 .env/
 dist/
+__pycache__/
 
 
 # At the moment, use vendor only for running k8s hack scripts

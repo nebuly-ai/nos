@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: benchmarks-client
+  namespace: nos-gpu-sharing-comparison
+spec:
+    template:
+        spec:
+          hostIPC: true
+          containers:
+            - name: benchmarks-client
+              resources:
+                limits:
+                  nvidia.com/gpu-10gb: 1
+

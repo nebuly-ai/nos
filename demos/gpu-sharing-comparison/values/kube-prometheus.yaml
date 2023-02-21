@@ -1,0 +1,16 @@
+additionalScrapeConfigs:
+- job_name: gpu-metrics
+  scrape_interval: 1s
+  metrics_path: /metrics
+  scheme: http
+  kubernetes_sd_configs:
+  - role: endpoints
+    namespaces:
+      names:
+      - gpu-operator
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_pod_node_name]
+    action: replace
+    target_label: kubernetes_node
+
+serviceMonitorSelectorNilUsesHelmValues: false
