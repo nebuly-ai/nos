@@ -15,46 +15,9 @@ of each inference is collected and exported by Prometheus, so that later it can 
 We execute this experiment multiple times, each time with a different number of Pods running on the same GPU
 (1, 3, 5 and 7), and we repeat this processes for each GPU-sharing technology.
 
-## Table of Contents
-
-* [GPU Sharing technologies overview](#gpu-sharing-technologies-overview)
-* [Experiments](#experiments)
-* [Results](#results)
-* [How to run experiments](#how-to-reproduce)
-
-## GPU Sharing technologies overview
-
-### Time-slicing
-
-[Time-slicing](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/gpu-sharing.html)
-consists of oversubscribing a GPU leveraging its time-slicing scheduler, which executes multiple CUDA processes
-concurrently through temporal sharing.
-
-The GPU, therefore, shares its compute resources among the different
-processes in a fair-sharing manner by switching between them at regular intervals of time.
-
-This incurs the cost of context-switching overhead, which translates into jitter and higher latency that affect the
-workloads.
-
-### Multi-Process Service (MPS)
-
-[Multi-Process Service (MPS)](https://docs.nvidia.com/deploy/mps/index.html) is a client-server implementation of the
-CUDA Application Programming Interface (API) for running multiple processes concurrently on the same GPU.
-
-The server manages GPU access providing concurrency between clients, while clients connect to it through the client
-runtime, which is built into the CUDA Driver library and may be used transparently by any CUDA application.
-
-### Multi-Instance GPU (MIG)
-
-[Multi-Instance GPU (MIG)](https://docs.nvidia.com/datacenter/tesla/mig-user-guide/) is a technology available on
-NVIDIA Ampere and Hopper architectures that allows to securely partition a GPU into up to seven separate GPU instances,
-each fully isolated with its own high-bandwidth memory, cache, and compute cores.
-
-MIG is the GPU sharing approach that offers the highest level of isolation among processes.
-However, it lacks flexibility, and it is compatible only with few GPU architectures (Ampere and Hopper).
-
 ## Experimental setup
 
+### Environment
 We run all the experiments on an AKS cluster running Kubernetes v1.24.9 on 2 nodes:
 
 * 1x [Standard_B2ms](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes-b-series-burstable)
@@ -68,18 +31,36 @@ On the GPU-enabled node, we installed the following components:
 * NVIDIA Container Toolkit: 1.11.0
 * NVIDIA Drivers: 525.60.13
 
+### Benchmarks client
 We run the benchmarks by creating a Deployment with a single Pod running the [Benchmarks Client](client)
 container. We created a different deployment for each GPU sharing technology. In each deployment, 
-the benchmarks container always request a single GPU slice resource:
+the benchmarks container always request a GPU slice with 10 GB of memory. The name of the resource requested by 
+the benchmarks container depends on the specific GPU sharing technology:
 
-* MIG: `nvidia.com/mig-1g.5gb: 1`
-* MPS:  `nvidia.com/gpu-5gb: 1`
+* MIG: `nvidia.com/mig-1g.10gb: 1`
+* MPS:  `nvidia.com/gpu-10gb: 1`
 * Time-slicing: `nvidia.com/gpu.shared: 1`
 
-We controlled how many containers were running on the same GPU by adjusting the number of replicas of the Deployment.
+We controlled how many containers were running on the same GPU by adjusting the number of replicas of 
+the [Deployment](manifests/base/deployment-client.yaml).
+
+The benchmarks client consists of a simple script that saturates constantly running 
+inferences on a [YOLOS-small](https://huggingface.co/hustvl/yolos-small) model.
+
+### Results collection
+For each GPU sharing technology and for each number of Pods sharing the same GPU,
+we collected the results following these steps:
+
+1. Enable the specific GPU sharing technology on the Node
+2. Create the benchmark client Pods requesting GPU slices
+3. Wait for around 3 minutes
+4. Collect the average inference time over the last 2 minutes
 
 
 ## Results
+
+The table shows the average inference time (in seconds) for each GPU sharing technologies according to the number of
+Pods sharing the same GPU.
 
 |              | 7 Pods              | 5 Pods             | 3 Pods             | 1 Pod               |
 |--------------|---------------------|--------------------|--------------------|---------------------|
@@ -89,16 +70,71 @@ We controlled how many containers were running on the same GPU by adjusting the 
 
 ## How to run experiments
 
-### 1. Install the required components
+### Prerequisites
 
 ```bash
 make install
 ```
 
-This installs:
+This installs the following components:
 
-- NVIDIA GPU Operator
-- Cert Manager
-- Nos
-- Nebuly NVIDIA Device Plugin
-- Kube Prometheus
+- [Cert Manager](https://cert-manager.io/)
+- [Kube Prometheus](https://github.com/prometheus-operator/kube-prometheus)
+- [Nebuly NVIDIA Device Plugin](https://github.com/nebuly-ai/k8s-device-plugin)
+- [Nos](https://github.com/nebuly-ai/nos)
+- [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator)
+
+### Deploy Time-slicing benchmarks client
+
+To run multiple instances of the benchmark client on the same GPU shared using time-slicing, run 
+the following command:
+```bash
+make deploy-ts
+```
+
+### Deploy MPS benchmarks client
+To run multiple instances of the benchmark client on the same GPU shared using MPS, follow the steps below.
+
+1. Enable dynamic MPS partitioning for the node
+    ```bash
+    kubectl label nodes <gpu-node> nos.nebuly.com/gpu-partitioning=mps
+    ```
+2. Create a Deployment with the benchmark Pod requesting MPS resources
+    ```bash
+    make deploy-mps
+    ```
+3. Wait a few seconds until `nos` GPU partitioner kicks in and automatically creates the 
+requested MPS resources and Pods get scheduled.
+
+### Deploy MIG benchmarks client
+To run multiple instances of the benchmark client on the same GPU shared using MIG, follow the steps below.
+
+1. SSH to the GPU node and enable MIG-mode
+   ```bash 
+    sudo nvidia-smi -i 0 -mig 1
+   ```
+2. Enable dynamic MIG partitioning for the node
+    ```bash
+    kubectl label nodes <gpu-node> nos.nebuly.com/gpu-partitioning=mig
+    ```
+3. Create a Deployment with the benchmark Pod requesting MIG resources
+    ```bash
+    make deploy-mig
+    ```
+4. Wait a few seconds until `nos` GPU partitioner kicks in and automatically creates the
+   requested MIG devices and Pods get scheduled.
+
+### Fetch results
+You can use the Prometheus UI to visualize and explore collected results. In order to access it, run the following 
+command to port-forward you local port to the Prometheus instance running in the cluster:
+```bash
+make port-forward-prometheus
+```
+
+You can then access Prometheus UI at [localhost:9090](http://localhost:9090).
+
+From the Prometheus UI you can get the average inference time over the last 2 minutes by running the following query:
+```bash
+avg(sum(rate(inference_time_seconds_sum[2m])) / sum(rate(inference_time_seconds_count[2m])))
+```
+
