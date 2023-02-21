@@ -15,6 +15,8 @@ of each inference is collected and exported by Prometheus, so that later it can 
 We execute this experiment multiple times, each time with a different number of Pods running on the same GPU
 (1, 3, 5 and 7), and we repeat this processes for each GPU-sharing technology.
 
+![results](results-chart.png)
+
 ## Experimental setup
 
 ### Environment
