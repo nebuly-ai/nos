@@ -21,6 +21,7 @@ header:
     - 'helm-charts/'
     - 'doc/**'
     - 'docs/**'
+    - 'demos/**'
 
   language:
     Go:

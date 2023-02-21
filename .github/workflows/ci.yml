@@ -9,6 +9,7 @@ on:
       - 'README.md'
       - 'docs/**'
       - 'helm-charts/**'
+      - 'demos/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
@@ -16,6 +17,7 @@ on:
       - 'README.md'
       - 'docs/**'
       - 'helm-charts/**'
+      - 'demos/**'
 
 permissions:
   contents: read
