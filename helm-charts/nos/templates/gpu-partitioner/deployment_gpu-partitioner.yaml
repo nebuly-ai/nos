@@ -63,7 +63,7 @@ spec:
             {{- if lookup "v1" "ConfigMap" .Release.Namespace .Values.gpuPartitioner.scheduler.config.name }}
             - mountPath: /{{ include "gpuPartitioner.schedulerConfigFileName" .}}
               name: scheduler-config
-              subPath: {{ include "gpu-partitioner.schedulerConfigFileName" .}}
+              subPath: {{ include "gpuPartitioner.schedulerConfigFileName" .}}
             {{- end }}
             {{- end }}
           securityContext:
