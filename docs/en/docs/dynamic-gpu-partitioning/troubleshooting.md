@@ -15,8 +15,8 @@ Check MIG Agent logs:
  kubectl logs -n nebuly-nos -l app.kubernetes.io/component=nos-mig-agent -f
 ```
 
-Check Nebuly k8s-device-plugin logs:
+Check Nebuly's device-plugin logs:
 
 ```shell
-kubectl logs -n nebuly-nos -l app.kubernetes.io/name=nebuly-k8s-device-plugin -f
+kubectl logs -n nebuly-nvidia -l app.kubernetes.io/name=nebuly-nvidia-device-plugin -f
 ```
