@@ -4,6 +4,7 @@ docs_dir: ./docs
 
 nav:
   - Overview: overview.md
+  - Prerequisites: prerequisites.md
   - Installation: installation.md
   - Dynamic GPU Partitioning: 
       - Overview: dynamic-gpu-partitioning/overview.md
