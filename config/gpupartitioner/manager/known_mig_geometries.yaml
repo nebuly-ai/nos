@@ -31,7 +31,7 @@
       2g.10gb: 1
       4g.20gb: 1
     - 7g.40gb: 1
-- models: [ "NVIDIA-A100-80GB-PCIe" ]
+- models: [ "NVIDIA-A100-SXM4-80GB", "NVIDIA-A100-80GB-PCIe" ]
   allowedGeometries:
     - 1g.10gb: 7
     - 1g.10gb: 5
