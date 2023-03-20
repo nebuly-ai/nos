@@ -11,11 +11,11 @@ hide:
 
 ## Enable GPU support
 
-Before installing `nos`, GPU support must be enabled in your Kubernetes cluster.
+Before installing `nos`, you must enable GPU support in your Kubernetes cluster.
 
-There are two methods to accomplish this. One option is to manually install each required component,
-while the other consists in installing the NVIDIA GPU Operator, which will automatically install
-the necessary components for you. Further information about these two installation methods can be found below.
+There are two ways to do this. One option is to manually install the required components individually,
+while the other consists in installing only the NVIDIA GPU Operator, which automatically installs
+all the necessary components for you. See below for more information on these two installation methods.
 
 We recommended enabling GPU support using the NVIDIA GPU Operator (option 1).
 
@@ -51,7 +51,7 @@ To enble GPU support in your cluster, you first need to install
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
 on all the nodes of your cluster with a GPU.
 
-After installing the NVIDIA Drivers and the Container Toolkit on your nodes, you need to manually install the
+After installing the NVIDIA Drivers and the Container Toolkit on your nodes, you need to install the
 following Kubernetes components:
 
 - [NVIDIA GPU Feature Discovery](https://github.com/NVIDIA/gpu-feature-discovery)
