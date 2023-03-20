@@ -6,9 +6,9 @@
 
 ## Prerequisites
 
-- you need the [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) installed on your cluster
-  - MIG strategy must be set to `mixed` (`--set mig.strategy=mixed`)
-  - mig-manager must be disabled (`--set migManager.enabled=false`)
+To enable Dynamic MIG Partitioning on a certain node, the following
+prerequisites must be met:
+
 - if a node has multiple GPUs, all the GPUs must be of the same model
 - all the GPUs of the nodes for which you want to enable MIG partitioning must have MIG mode enabled
 
