@@ -49,6 +49,11 @@ func (n nodeInitializer) IsPartitioningInitialized(nodeInfo framework.NodeInfo) 
 	if !gpu.IsMigPartitioningEnabled(*node) {
 		return false, fmt.Errorf("MIG partitioning is not enabled on node %s", node.Name)
 	}
+	// If there are any spec annotations, the partitioning is initializing
+	_, specAnnotations := gpu.ParseNodeAnnotations(*node)
+	if len(specAnnotations) > 0 {
+		return true, nil
+	}
 	migNode, err := mig.NewNode(nodeInfo)
 	if err != nil {
 		return false, err
