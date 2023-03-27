@@ -18,9 +18,12 @@ package gpupartitioner
 
 import (
 	"context"
+	"fmt"
+	"github.com/nebuly-ai/nos/internal/partitioning/core"
 	"github.com/nebuly-ai/nos/internal/partitioning/state"
 	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/constant"
+	"github.com/nebuly-ai/nos/pkg/gpu"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,15 +38,22 @@ import (
 
 type NodeController struct {
 	client.Client
-	Scheme       *runtime.Scheme
-	clusterState *state.ClusterState
+	Scheme         *runtime.Scheme
+	clusterState   *state.ClusterState
+	migInitializer core.NodeInitializer
 }
 
-func NewNodeController(client client.Client, scheme *runtime.Scheme, state *state.ClusterState) NodeController {
+func NewNodeController(
+	client client.Client,
+	scheme *runtime.Scheme,
+	migInitializer core.NodeInitializer,
+	state *state.ClusterState,
+) NodeController {
 	return NodeController{
-		Client:       client,
-		Scheme:       scheme,
-		clusterState: state,
+		Client:         client,
+		Scheme:         scheme,
+		clusterState:   state,
+		migInitializer: migInitializer,
 	}
 }
 
@@ -61,6 +71,30 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	if apierrors.IsNotFound(err) {
 		logger.V(2).Info("deleting node", "node", instance.Name)
 		c.clusterState.DeleteNode(instance.Name)
+		return ctrl.Result{}, nil
+	}
+
+	// Handle MIG node initialization
+	var initialized = true
+	if gpu.IsMigPartitioningEnabled(instance) {
+		nodeInfo, ok := c.clusterState.GetNode(instance.Name)
+		if !ok {
+			return ctrl.Result{}, fmt.Errorf("node %s not found in cluster state", instance.Name)
+		}
+		initialized, err = c.migInitializer.IsPartitioningInitialized(nodeInfo)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if !initialized {
+			if err = c.migInitializer.InitNodePartitioning(ctx, nodeInfo); err != nil {
+				return ctrl.Result{}, fmt.Errorf("failed to initialize node MIG partitioning: %w", err)
+			}
+		}
+	}
+
+	// If the node is not initialized, do not add it to cluster state
+	if !initialized {
+		logger.Info("node is not initialized yet, skipping", "node", instance.Name)
 		return ctrl.Result{}, nil
 	}
 

@@ -155,6 +155,7 @@ func main() {
 	nodeController := gpupartitioner.NewNodeController(
 		mgr.GetClient(),
 		mgr.GetScheme(),
+		mig.NewNodeInitializer(mgr.GetClient()),
 		clusterState,
 	)
 	if err = nodeController.SetupWithManager(mgr, constant.ClusterStateNodeControllerName); err != nil {

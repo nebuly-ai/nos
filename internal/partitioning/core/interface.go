@@ -71,3 +71,8 @@ type SnapshotTaker interface {
 type Sorter interface {
 	Sort(pods []v1.Pod) []v1.Pod
 }
+
+type NodeInitializer interface {
+	IsPartitioningInitialized(nodeInfo framework.NodeInfo) (bool, error)
+	InitNodePartitioning(ctx context.Context, nodeInfo framework.NodeInfo) error
+}

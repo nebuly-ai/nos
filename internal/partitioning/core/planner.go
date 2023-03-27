@@ -33,10 +33,14 @@ type PartitioningPlan struct {
 	id           string
 }
 
+func NewPartitioningPlanId() string {
+	return strconv.FormatInt(time.Now().UTC().Unix(), 10)
+}
+
 func NewPartitioningPlan(s state.PartitioningState) PartitioningPlan {
 	return PartitioningPlan{
 		DesiredState: s,
-		id:           strconv.FormatInt(time.Now().UTC().Unix(), 10),
+		id:           NewPartitioningPlanId(),
 	}
 }
 
