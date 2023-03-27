@@ -77,18 +77,10 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	// Handle MIG node initialization
 	var initialized = true
 	if gpu.IsMigPartitioningEnabled(instance) {
-		nodeInfo, ok := c.clusterState.GetNode(instance.Name)
-		if !ok {
-			return ctrl.Result{}, fmt.Errorf("node %s not found in cluster state", instance.Name)
-		}
-		node := nodeInfo.Node()
-		if node == nil {
-			return ctrl.Result{}, fmt.Errorf("node %s not found in cluster state", instance.Name)
-		}
-		_, specAnnotations := gpu.ParseNodeAnnotations(*node)
-		if len(specAnnotations) < 0 {
+		_, specAnnotations := gpu.ParseNodeAnnotations(instance)
+		if len(specAnnotations) == 0 {
 			initialized = false
-			if err = c.migInitializer.InitNodePartitioning(ctx, nodeInfo); err != nil {
+			if err = c.migInitializer.InitNodePartitioning(ctx, instance); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to initialize node MIG partitioning: %w", err)
 			}
 		}

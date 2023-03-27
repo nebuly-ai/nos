@@ -22,6 +22,7 @@ import (
 	"github.com/nebuly-ai/nos/internal/partitioning/core"
 	"github.com/nebuly-ai/nos/pkg/gpu"
 	"github.com/nebuly-ai/nos/pkg/gpu/mig"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -40,20 +41,17 @@ func NewNodeInitializer(client client.Client) core.NodeInitializer {
 	}
 }
 
-func (n nodeInitializer) InitNodePartitioning(ctx context.Context, nodeInfo framework.NodeInfo) error {
+func (n nodeInitializer) InitNodePartitioning(ctx context.Context, node v1.Node) error {
 	logger := log.FromContext(ctx)
 
-	// Check if MIG partitioning is enabled on the node
-	node := nodeInfo.Node()
-	if node == nil {
-		return fmt.Errorf("node is nil")
-	}
-	if !gpu.IsMigPartitioningEnabled(*node) {
+	if !gpu.IsMigPartitioningEnabled(node) {
 		return fmt.Errorf("MIG partitioning is not enabled on node %s", node.Name)
 	}
 
 	// Initialize node GPUs
-	migNode, err := mig.NewNode(nodeInfo)
+	nodeInfo := framework.NewNodeInfo()
+	nodeInfo.SetNode(&node)
+	migNode, err := mig.NewNode(*nodeInfo)
 	if err != nil {
 		return err
 	}
@@ -78,7 +76,7 @@ func (n nodeInitializer) InitNodePartitioning(ctx context.Context, nodeInfo fram
 	// Apply new partitioning
 	nodePartitioning := n.partitionCalculator.GetPartitioning(&migNode)
 	logger.Info("applying partitioning", "node", node.Name, "partitioning", nodePartitioning)
-	if err = n.partitioner.ApplyPartitioning(ctx, *node, core.NewPartitioningPlanId(), nodePartitioning); err != nil {
+	if err = n.partitioner.ApplyPartitioning(ctx, node, core.NewPartitioningPlanId(), nodePartitioning); err != nil {
 		return fmt.Errorf("error applying partitioning: %v", err)
 	}
 	return nil

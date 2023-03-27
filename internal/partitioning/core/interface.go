@@ -73,5 +73,5 @@ type Sorter interface {
 }
 
 type NodeInitializer interface {
-	InitNodePartitioning(ctx context.Context, nodeInfo framework.NodeInfo) error
+	InitNodePartitioning(ctx context.Context, node v1.Node) error
 }
