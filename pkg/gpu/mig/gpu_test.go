@@ -452,3 +452,65 @@ func TestGeometry__AsResources(t *testing.T) {
 		})
 	}
 }
+
+func TestGPU__ApplyInitialGeometry(t *testing.T) {
+	testCases := []struct {
+		name             string
+		gpu              mig.GPU
+		expectedGeometry gpu.Geometry
+		errExpected      bool
+	}{
+		{
+			name: "GPU has used devices, should not change geometry",
+			gpu: mig.NewGpuOrPanic(
+				gpu.GPUModel_A30,
+				0,
+				map[mig.ProfileName]int{
+					mig.Profile1g5gb: 5,
+				},
+				map[mig.ProfileName]int{},
+			),
+			errExpected: true,
+		},
+		{
+			name: "GPU has no devices, should apply geometry with lowest number of different devices",
+			gpu: mig.NewGpuOrPanic(
+				gpu.GPUModel_A30,
+				0,
+				map[mig.ProfileName]int{},
+				map[mig.ProfileName]int{},
+			),
+			errExpected: false,
+			expectedGeometry: map[gpu.Slice]int{
+				mig.Profile4g24gb: 1,
+			},
+		},
+		{
+			name: "GPU has free devices, should apply geometry with lowest number of different devices",
+			gpu: mig.NewGpuOrPanic(
+				gpu.GPUModel_A30,
+				0,
+				map[mig.ProfileName]int{},
+				map[mig.ProfileName]int{
+					mig.Profile1g6gb: 1,
+				},
+			),
+			errExpected: false,
+			expectedGeometry: map[gpu.Slice]int{
+				mig.Profile4g24gb: 1,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.gpu.ApplyInitialGeometry()
+			if tc.errExpected {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedGeometry, tc.gpu.GetGeometry())
+			}
+		})
+	}
+}

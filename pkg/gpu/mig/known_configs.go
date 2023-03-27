@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	defaultKnownMigGeometries = map[gpu.Model][]gpu.Geometry{
+	knownMigGeometries = map[gpu.Model][]gpu.Geometry{
 		gpu.GPUModel_A30: {
 			{
 				Profile4g24gb: 1,
@@ -145,15 +145,15 @@ func SetKnownGeometries(configs map[gpu.Model][]gpu.Geometry) error {
 	if err := ValidateConfigs(configs); err != nil {
 		return err
 	}
-	defaultKnownMigGeometries = configs
+	knownMigGeometries = configs
 	return nil
 }
 
 func GetKnownGeometries() map[gpu.Model][]gpu.Geometry {
-	if defaultKnownMigGeometries == nil {
+	if knownMigGeometries == nil {
 		return map[gpu.Model][]gpu.Geometry{}
 	}
-	return defaultKnownMigGeometries
+	return knownMigGeometries
 }
 
 func GetAllowedGeometries(model gpu.Model) ([]gpu.Geometry, bool) {

@@ -63,6 +63,21 @@ func (g Geometry) MarshalJSON() ([]byte, error) {
 	return json.Marshal(asStr)
 }
 
+// GetFewestSlicesGeometry returns the geometry with the lowest number of different slices
+func GetFewestSlicesGeometry(geometries []Geometry) Geometry {
+	var min Geometry
+	for _, geometry := range geometries {
+		if min == nil {
+			min = geometry
+			continue
+		}
+		if len(geometry) < len(min) {
+			min = geometry
+		}
+	}
+	return min
+}
+
 type PartitioningKind string
 
 func (p PartitioningKind) String() string {

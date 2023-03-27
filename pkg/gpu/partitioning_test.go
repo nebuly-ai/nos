@@ -19,6 +19,7 @@ package gpu_test
 import (
 	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
 	"github.com/nebuly-ai/nos/pkg/gpu"
+	"github.com/nebuly-ai/nos/pkg/gpu/mig"
 	"github.com/nebuly-ai/nos/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -147,6 +148,46 @@ func TestGetPartitioningKind(t *testing.T) {
 			kind, ok := gpu.GetPartitioningKind(tt.node)
 			assert.Equal(t, tt.expected, kind)
 			assert.Equal(t, tt.expectedOk, ok)
+		})
+	}
+}
+
+func Test_GetFewestSlicesGeometry(t *testing.T) {
+	testCases := []struct {
+		name       string
+		geometries []gpu.Geometry
+		expected   gpu.Geometry
+	}{
+		{
+			name:       "Empty geometries",
+			geometries: []gpu.Geometry{},
+			expected:   gpu.Geometry(nil),
+		},
+		{
+			name: "Multiple geometries",
+			geometries: []gpu.Geometry{
+				{
+					mig.Profile1g10gb: 1,
+					mig.Profile2g20gb: 2,
+				},
+				{
+					mig.Profile7g40gb: 1,
+					mig.Profile2g20gb: 1,
+				},
+				{
+					mig.Profile7g40gb: 7,
+				},
+			},
+			expected: gpu.Geometry{
+				mig.Profile7g40gb: 7, // Should consider only the number of *different* slices
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			geometry := gpu.GetFewestSlicesGeometry(tt.geometries)
+			assert.Equal(t, tt.expected, geometry)
 		})
 	}
 }
