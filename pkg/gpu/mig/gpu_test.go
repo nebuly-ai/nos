@@ -504,7 +504,7 @@ func TestGPU__ApplyInitialGeometry(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.gpu.ApplyInitialGeometry()
+			err := tc.gpu.InitGeometry()
 			if tc.errExpected {
 				assert.Error(t, err)
 			} else {

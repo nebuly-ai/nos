@@ -109,10 +109,13 @@ func (g *GPU) CanApplyGeometry(geometry gpu.Geometry) (bool, string) {
 	return true, ""
 }
 
-// ApplyInitialGeometry applies the initial MIG geometry of the GPU.
+// InitGeometry applies the initial MIG geometry of the GPU, so that each MIG GPU has at least one MIG device.
+//
+// The initial geometry is the one with the largest partitioning (e.g. with fewest slices).
+//
 // It returns an error if the initial geometry cannot be applied due to used devices that would
 // be deleted by the new geometry.
-func (g *GPU) ApplyInitialGeometry() error {
+func (g *GPU) InitGeometry() error {
 	// Get the geometry with the largest partitioning (e.g. with fewest slices)
 	largestGeometry := gpu.GetFewestSlicesGeometry(g.allowedMigGeometries)
 	// Apply the geometry
