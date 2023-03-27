@@ -81,11 +81,13 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		if !ok {
 			return ctrl.Result{}, fmt.Errorf("node %s not found in cluster state", instance.Name)
 		}
-		initialized, err = c.migInitializer.IsPartitioningInitialized(nodeInfo)
-		if err != nil {
-			return ctrl.Result{}, err
+		node := nodeInfo.Node()
+		if node == nil {
+			return ctrl.Result{}, fmt.Errorf("node %s not found in cluster state", instance.Name)
 		}
-		if !initialized {
+		_, specAnnotations := gpu.ParseNodeAnnotations(*node)
+		if len(specAnnotations) < 0 {
+			initialized = false
 			if err = c.migInitializer.InitNodePartitioning(ctx, nodeInfo); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to initialize node MIG partitioning: %w", err)
 			}

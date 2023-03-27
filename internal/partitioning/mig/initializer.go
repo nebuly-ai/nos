@@ -40,27 +40,6 @@ func NewNodeInitializer(client client.Client) core.NodeInitializer {
 	}
 }
 
-func (n nodeInitializer) IsPartitioningInitialized(nodeInfo framework.NodeInfo) (bool, error) {
-	// Check if MIG partitioning is enabled on the node
-	node := nodeInfo.Node()
-	if node == nil {
-		return false, fmt.Errorf("node is nil")
-	}
-	if !gpu.IsMigPartitioningEnabled(*node) {
-		return false, fmt.Errorf("MIG partitioning is not enabled on node %s", node.Name)
-	}
-	// If there are any spec annotations, the partitioning is initializing
-	_, specAnnotations := gpu.ParseNodeAnnotations(*node)
-	if len(specAnnotations) > 0 {
-		return true, nil
-	}
-	migNode, err := mig.NewNode(nodeInfo)
-	if err != nil {
-		return false, err
-	}
-	return len(migNode.Geometry()) > 0, nil
-}
-
 func (n nodeInitializer) InitNodePartitioning(ctx context.Context, nodeInfo framework.NodeInfo) error {
 	logger := log.FromContext(ctx)
 
