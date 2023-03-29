@@ -5,7 +5,7 @@
       2g.12gb: 1
     - 2g.12gb: 2
     - 4g.24gb: 1
-- models: [ "A100-SXM4-40GB", "NVIDIA-A100-40GB-PCIe" ]
+- models: [ "A100-SXM4-40GB", "NVIDIA-A100-40GB-PCIe", "NVIDIA-A100-SXM4-40GB"]
   allowedGeometries:
     - 1g.5gb: 7
     - 1g.5gb: 5
