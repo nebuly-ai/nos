@@ -74,20 +74,28 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
+	// Check if Node has GPU model and count info
+	_, err = gpu.GetModel(instance)
+	if err != nil {
+		logger.Info("cannot get GPU model from node, skipping", "err", err, "node", instance.Name)
+		return ctrl.Result{}, nil
+	}
+	_, err = gpu.GetCount(instance)
+	if err != nil {
+		logger.Info("cannot get GPU count from node, skipping", "err", err, "node", instance.Name)
+		return ctrl.Result{}, nil
+	}
+
 	// Handle MIG node initialization
-	var initialized = true
-	if gpu.IsMigPartitioningEnabled(instance) {
-		_, specAnnotations := gpu.ParseNodeAnnotations(instance)
-		if len(specAnnotations) == 0 {
-			initialized = false
-			if err = c.migInitializer.InitNodePartitioning(ctx, instance); err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to initialize node MIG partitioning: %w", err)
-			}
+	var nodeInitialized = core.IsNodeInitialized(instance)
+	if gpu.IsMigPartitioningEnabled(instance) && !nodeInitialized {
+		if err = c.migInitializer.InitNodePartitioning(ctx, instance); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to initialize node MIG partitioning: %w", err)
 		}
 	}
 
 	// If the node is not initialized, do not add it to cluster state
-	if !initialized {
+	if !nodeInitialized {
 		logger.Info("node is not initialized yet, skipping", "node", instance.Name)
 		return ctrl.Result{}, nil
 	}

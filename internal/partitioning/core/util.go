@@ -69,3 +69,15 @@ func NewPodSorter(sliceCalculator gpu.SliceCalculator) SorterAdapter {
 	}
 	return sorter
 }
+
+// IsNodeInitialized checks if the GPU Partitioning on the provided node has already been initialized is initialized.
+// A node is initialized if it has GPU Spec partitioning annotations, and according to these annotations all
+// the GPUs of the node have at least one GPU partition.
+func IsNodeInitialized(node v1.Node) bool {
+	count, err := gpu.GetCount(node)
+	if err != nil {
+		return false
+	}
+	_, specAnnotations := gpu.ParseNodeAnnotations(node)
+	return count == len(specAnnotations.GroupByGpuIndex())
+}

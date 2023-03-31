@@ -17,9 +17,13 @@
 package core_test
 
 import (
+	"fmt"
 	"github.com/nebuly-ai/nos/internal/partitioning/core"
 	mig_partitioner "github.com/nebuly-ai/nos/internal/partitioning/mig"
+	"github.com/nebuly-ai/nos/pkg/api/nos.nebuly.com/v1alpha1"
+	"github.com/nebuly-ai/nos/pkg/constant"
 	"github.com/nebuly-ai/nos/pkg/gpu/mig"
+	"github.com/nebuly-ai/nos/pkg/resource"
 	"github.com/nebuly-ai/nos/pkg/test/factory"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -130,6 +134,78 @@ func TestPodSorter(t *testing.T) {
 			sliceCalculator := mig_partitioner.NewSliceCalculator()
 			res := core.NewPodSorter(sliceCalculator).Sort(tt.pods)
 			assert.Equal(t, tt.expected, res)
+		})
+	}
+}
+
+func TestIsNodeInitialized(t *testing.T) {
+	testCases := []struct {
+		name     string
+		node     v1.Node
+		expected bool
+	}{
+		{
+			name:     "Node with no labels",
+			node:     factory.BuildNode("node-1").Get(),
+			expected: false,
+		},
+		{
+			name: "Node with no GPU count label",
+			node: factory.BuildNode("node-1").
+				WithAnnotations(map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile4g24gb, resource.StatusUsed): "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile1g5gb, resource.StatusUsed):  "3",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile7g40gb, resource.StatusUsed): "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 2, mig.Profile7g40gb, resource.StatusUsed): "1",
+				}).
+				Get(),
+			expected: false,
+		},
+		{
+			name: "Node with multiple GPUs, all with at least one spec annotation",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaCount: "3",
+				}).
+				WithAnnotations(map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile4g24gb, resource.StatusUsed): "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile1g5gb, resource.StatusUsed):  "3",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile7g40gb, resource.StatusUsed): "2",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 2, mig.Profile7g40gb, resource.StatusUsed): "1",
+				}).
+				Get(),
+			expected: true,
+		},
+		{
+			name: "Node without any spec annotation",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaCount: "3",
+				}).
+				WithAnnotations(map[string]string{}).
+				Get(),
+			expected: false,
+		},
+		{
+			name: "Node with multiple GPUs, one with at least one spec annotation",
+			node: factory.BuildNode("node-1").
+				WithLabels(map[string]string{
+					constant.LabelNvidiaCount: "3",
+				}).
+				WithAnnotations(map[string]string{
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile4g24gb, resource.StatusUsed): "1",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 0, mig.Profile1g5gb, resource.StatusUsed):  "3",
+					fmt.Sprintf(v1alpha1.AnnotationGpuSpecFormat, 1, mig.Profile7g40gb, resource.StatusUsed): "2",
+				}).
+				Get(),
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := core.IsNodeInitialized(tc.node)
+			assert.Equal(t, tc.expected, res)
 		})
 	}
 }
