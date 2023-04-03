@@ -1,5 +1,5 @@
 # nos version. Used by release workflow, do not move this line.
-NOS_VERSION ?= 0.1.0
+NOS_VERSION ?= 0.1.1
 
 DOCKER_REGISTRY ?= ghcr.io/nebuly-ai
 
