@@ -30,6 +30,7 @@ not using them.
 
 ### Prerequisites
 
+* Kubernetes v1.23 or newer
 * [GPU Support must be enabled](http://docs.nebuly.com/nos/prerequisites/#enable-gpu-support)
 * [Nebuly k8s-device-plugin](https://github.com/nebuly-ai/k8s-device-plugin) (optional, required only if you want to enable MPS partitioning)
 * [cert-manager](https://cert-manager.io/docs/) (optional, but recommended)

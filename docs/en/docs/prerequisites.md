@@ -1,13 +1,16 @@
 ---
 hide:
-  - toc
+
+- toc
+
 ---
 
 # Prerequisites
 
-1. [GPU Support must be enabled](#enable-gpu-support)
-2. [Nebuly's device plugin](#install-nebulys-device-plugin) (required only if using MPS partitioning)
-3. [Cert Manager](https://github.com/cert-manager/cert-manager) (optional, but recommended)
+1. Kubernetes version 1.23 or newer
+2. [GPU Support must be enabled](#enable-gpu-support)
+3. [Nebuly's device plugin](#install-nebulys-device-plugin) (required only if using MPS partitioning)
+4. [Cert Manager](https://github.com/cert-manager/cert-manager) (optional, but recommended)
 
 ## Enable GPU support
 
@@ -57,13 +60,14 @@ following Kubernetes components:
 - [NVIDIA GPU Feature Discovery](https://github.com/NVIDIA/gpu-feature-discovery)
 - [NVIDIA Device Plugin](https://github.com/NVIDIA/k8s-device-plugin)
 
-Please note that the configuration parameter `migStrategy` must be set to `mixed` (you can do that with `--set migStrategy=mixed`
+Please note that the configuration parameter `migStrategy` must be set to `mixed` (you can do that
+with `--set migStrategy=mixed`
 if you are using Helm).
-  
+
 ## Install Nebuly's device plugin
 
 !!! info
-  
+
     Nebuly's device plugin is required only if you want to use [dynamic MPS partitioning](#dynamic-gpu-partitioning/getting-started-mps.md).
     If you don't plan to use MPS partitioning, you can then skip this installation step.
 
