@@ -93,6 +93,10 @@ func (c *NodeController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 			return ctrl.Result{}, fmt.Errorf("failed to initialize node MIG partitioning: %w", err)
 		}
 	}
+	// Handle MPS node initialization
+	if gpu.IsMpsPartitioningEnabled(instance) && !nodeInitialized {
+		nodeInitialized = true
+	}
 
 	// If the node is not initialized, do not add it to cluster state
 	if !nodeInitialized {
