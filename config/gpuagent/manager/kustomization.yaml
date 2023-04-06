@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: gpu-agent
   newName: ghcr.io/nebuly-ai/nos-gpu-agent
-  newTag: 0.1.1
+  newTag: 0.1.2

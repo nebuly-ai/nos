@@ -83,7 +83,7 @@ You have two possibilities for opting-out:
 1. Set the value `shareTelemetry` to false when installing `nos` with the Helm Chart
    ```bash
     helm install oci://ghcr.io/nebuly-ai/helm-charts/nos \
-    --version 0.1.1 \
+    --version 0.1.2 \
     --namespace nebuly-nos \
     --generate-name \
     --create-namespace \

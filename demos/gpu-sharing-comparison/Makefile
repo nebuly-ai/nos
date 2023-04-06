@@ -54,7 +54,7 @@ port-forward-prometheus:
 
 ## Components versions
 NVIDIA_GPU_OPERATOR_VERSION ?= v22.9.0
-NOS_VERSION ?= 0.1.1
+NOS_VERSION ?= 0.1.2
 
 .PHONY: install-cert-manager
 install-cert-manager:
@@ -71,7 +71,7 @@ install-nebuly-device-plugin:
 .PHONY: install-nos
 install-nos:
 	helm upgrade --install nebuly-nos oci://ghcr.io/nebuly-ai/helm-charts/nos  \
-	  --version 0.1.1 \
+	  --version 0.1.2 \
 	  --namespace nebuly-nos \
 	  --create-namespace
 

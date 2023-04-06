@@ -10,7 +10,7 @@ You can find all the available configuration values in the Chart [documentation]
 
 ```bash
 helm install oci://ghcr.io/nebuly-ai/helm-charts/nos \
-  --version 0.1.1 \
+  --version 0.1.2 \
   --namespace nebuly-nos \
   --generate-name \
   --create-namespace
