@@ -86,8 +86,7 @@ where `<component>` is one of the following:
 - `mig-agent`
 - `gpu-agent`
 
-The targets above installs the Docker images tagged with the version defined in the first line of
-the [Makefile](../../../../Makefile).
+The targets above installs the Docker images tagged with the version defined in the first line of the [Makefile](../../../../Makefile).
 
 You can override the Docker image name and tag by providing it as an argument to the target:
 ```shell

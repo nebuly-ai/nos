@@ -36,6 +36,10 @@ var _ = Describe("Node Controller", func() {
 		interval = time.Second * 1
 	)
 
+	migNodeInitializer.On("InitNodePartitioning", mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+
 	BeforeEach(func() {
 	})
 
@@ -62,7 +66,6 @@ var _ = Describe("Node Controller", func() {
 
 	When("A node does not have GPU Model label", func() {
 		It("Should not be added to the Cluster State", func() {
-
 			By("By creating a node without GPU Model label")
 			nodeName := "node-without-gpu-model-label"
 			node := factory.BuildNode(nodeName).WithLabels(map[string]string{
@@ -109,11 +112,6 @@ var _ = Describe("Node Controller", func() {
 			}).Get()
 			Expect(k8sClient.Create(ctx, &node)).To(Succeed())
 
-			By("Checking that the controller triggers Node initialization")
-			migNodeInitializer.On("InitNodePartitioning", mock.Anything, mock.Anything).
-				Return(nil).
-				Once()
-
 			By("Checking that the node is *not* added to the Cluster State")
 			Consistently(func() bool {
 				_, ok := clusterState.GetNode(nodeName)
@@ -135,10 +133,6 @@ var _ = Describe("Node Controller", func() {
 				}).
 				Get()
 			Expect(k8sClient.Create(ctx, &node)).To(Succeed())
-
-			migNodeInitializer.On("InitNodePartitioning", mock.Anything, mock.Anything).
-				Return(nil).
-				Maybe()
 
 			By("Checking that the node is added to the Cluster State")
 			Eventually(func() bool {
