@@ -78,7 +78,7 @@ kind load docker-image <image-name>:<image-tag>
 You can install single nos components by running:
 ```shell
 make deploy-<component>
-````
+```
 where `<component>` is one of the following:
 - `operator`
 - `gpu-partitioner`
