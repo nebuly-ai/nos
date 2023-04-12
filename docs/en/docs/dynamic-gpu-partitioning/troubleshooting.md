@@ -1,7 +1,6 @@
 # Troubleshooting
 
-If you run into issues with Automatic GPU Partitioning, you can troubleshoot by checking the logs of the GPU Partitioner
-and MIG Agent pods. You can do that by running the following commands:
+If you run into issues with Automatic GPU Partitioning, you can troubleshoot by checking the logs of the GPU Partitioner and MIG Agent pods. You can do that by running the following commands:
 
 Check GPU Partitioner logs:
 

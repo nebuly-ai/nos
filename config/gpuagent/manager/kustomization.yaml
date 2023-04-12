@@ -1,5 +1,5 @@
 resources:
-- ts_agent.yaml
+- gpu_agent.yaml
 
 generatorOptions:
   disableNameSuffixHash: true

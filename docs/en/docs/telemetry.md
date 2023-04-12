@@ -1,11 +1,8 @@
 # Sharing feedback to improve `nos`
 
-Open source is a unique resource for sharing knowledge and building great projects collaboratively with the OSS
-community. To support the development of `nos`, during the installation of you could share the information
-strictly necessary to improve the features of this open-source project and facilitate bug detection and fixing.
+Open source is a unique resource for sharing knowledge and building great projects collaboratively with the OSS community. To support the development of `nos`, during the installation of you could share the information strictly necessary to improve the features of this open-source project and facilitate bug detection and fixing.
 
-More specifically, you will foster project enhancement by sharing details
-about the setup and configuration of the environment where you are installing `nos` and its components.
+More specifically, you will foster project enhancement by sharing details about the setup and configuration of the environment where you are installing `nos` and its components.
 
 **Which data do we collect?**
 
@@ -94,11 +91,8 @@ You have two possibilities for opting-out:
 
 ## Should I opt out?
 
-Being open-source, we have very limited visibility into the use of the tool unless someone actively contacts us or opens
-an issue on GitHub.
+Being open-source, we have very limited visibility into the use of the tool unless someone actively contacts us or opens an issue on GitHub.
 
-We would appreciate it if you would maintain telemetry, as it helps us improve the source code. In fact, it brings
-increasing value to the project and helps us to better prioritize feature development.
+We would appreciate it if you would maintain telemetry, as it helps us improve the source code. In fact, it brings increasing value to the project and helps us to better prioritize feature development.
 
-We understand that you may still prefer not to share telemetry data and we respect that desire. Please follow the steps
-above to disable data collection.
+We understand that you may still prefer not to share telemetry data and we respect that desire. Please follow the steps above to disable data collection.
