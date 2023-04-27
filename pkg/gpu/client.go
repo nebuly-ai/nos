@@ -80,10 +80,10 @@ func (d devicePluginClient) Restart(ctx context.Context, nodeName string, timeou
 		return fmt.Errorf("error deleting nvidia device plugin pod: %s", err.Error())
 	}
 	// Wait until the Pods gets recreated
-	return d.WaitUntilRunning(ctx, nodeName, timeout)
+	return d.WaitUntilRunning(ctx, nodeName, podList.Items[0].Name, timeout)
 }
 
-func (d devicePluginClient) WaitUntilRunning(ctx context.Context, nodeName string, timeout time.Duration) error {
+func (d devicePluginClient) WaitUntilRunning(ctx context.Context, nodeName string, oldPodName string, timeout time.Duration) error {
 	logger := log.FromContext(ctx)
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -103,6 +103,9 @@ func (d devicePluginClient) WaitUntilRunning(ctx context.Context, nodeName strin
 			return false, nil
 		}
 		pod := podList.Items[0]
+		if pod.Name == oldPodName {
+			return false, nil
+		}
 		if pod.DeletionTimestamp != nil {
 			return false, nil
 		}
