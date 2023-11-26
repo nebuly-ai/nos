@@ -1,9 +1,3 @@
----
-hide:
-
-- toc
-
----
 
 # Prerequisites
 
