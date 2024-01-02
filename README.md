@@ -50,9 +50,3 @@ helm install oci://ghcr.io/nebuly-ai/helm-charts/nos \
 ```
 
 Alternatively, you can use Kustomize by cloning the repository and running `make deploy`.
-
----
-
-<p align="center">
-  <a href="https://discord.gg/RbeQMu886J">Join the community</a>  | <a href="https://docs.nebuly.com/nos/developer/contribution-guidelines/"> Contribute </a>
-</p>
