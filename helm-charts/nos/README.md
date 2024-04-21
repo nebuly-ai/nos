@@ -35,6 +35,7 @@ The open-source platform for running AI workloads on k8s in an optimized way, bo
 | gpuPartitioner.gpuAgent.logLevel | int | `0` | The level of log of the GPU Agent. Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels. **Must be >= 0**. |
 | gpuPartitioner.gpuAgent.reportConfigIntervalSeconds | int | `10` | Interval at which the mig-agent will report to k8s status of the GPUs of the Node |
 | gpuPartitioner.gpuAgent.resources | object | `{"limits":{"cpu":"100m","memory":"128Mi"}}` | Sets the resource requests and limits of the GPU Agent container. |
+| gpuPartitioner.gpuAgent.runtimeClassName | string | `nil` | The container runtime class name to use for the GPU Agent container. |
 | gpuPartitioner.gpuAgent.tolerations | list | `[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]` | Sets the tolerations of the GPU Agent Pod. |
 | gpuPartitioner.image.pullPolicy | string | `"IfNotPresent"` | Sets the GPU Partitioner Docker image pull policy. |
 | gpuPartitioner.image.repository | string | `"ghcr.io/nebuly-ai/nos-gpu-partitioner"` | Sets the GPU Partitioner Docker image. |
