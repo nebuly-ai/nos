@@ -1,0 +1,79 @@
+site_name: nos
+
+docs_dir: ./en/docs
+repo_url: https://github.com/nebuly-ai/nos
+repo_name: nebuly-ai/nos
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - def_list
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+theme:
+  name: material
+  logo: /assets/nebuly_logo.svg
+  favicon: /assets/favicon.png
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: white
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: white
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+  features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+    - navigation.instant
+    - navigation.sections
+    - navigation.tracking
+    - navigation.path
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Overview: overview.md
+  - Prerequisites: prerequisites.md
+  - Installation: installation.md
+  - Dynamic GPU Partitioning: 
+      - Overview: dynamic-gpu-partitioning/overview.md
+      - Getting started with MIG partitioning: dynamic-gpu-partitioning/getting-started-mig.md
+      - Getting started with MPS partitioning: dynamic-gpu-partitioning/getting-started-mps.md
+      - Partitioning modes comparison: dynamic-gpu-partitioning/partitioning-modes-comparison.md
+      - Configuration: dynamic-gpu-partitioning/configuration.md
+      - Troubleshooting: dynamic-gpu-partitioning/troubleshooting.md
+  - Elastic Resource Quota: 
+      - Overview: elastic-resource-quota/overview.md
+      - Getting started: elastic-resource-quota/getting-started.md
+      - Key concepts: elastic-resource-quota/key-concepts.md
+      - Configuration: elastic-resource-quota/configuration.md
+      - Troubleshooting: elastic-resource-quota/troubleshooting.md
+  - Developer:
+      - Getting started: developer/getting-started.md
+      - Contribution guidelines: developer/contribution-guidelines.md
+  - Helm Charts:
+      - nos: helm-charts/nos/README.md
+  - Telemetry: telemetry.md
