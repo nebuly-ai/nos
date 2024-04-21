@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Getting started - nos</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../prerequisites/" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/partitioning-modes-comparison/" class="dropdown-item">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../elastic-resource-quota/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/key-concepts/" class="dropdown-item">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="./" class="dropdown-item active">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../helm-charts/nos/" class="dropdown-item">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../telemetry/" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../../elastic-resource-quota/troubleshooting/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../contribution-guidelines/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#developer" class="nav-link">Developer</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#local-development" class="nav-link">Local development</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="developer">Developer</h1>
+<h2 id="local-development">Local development</h2>
+<p>We use <a href="https://makefiletutorial.com/">Makefile</a> targets for making it easy to setup a local development environment.
+You can list all the available targets by running <code>make help</code>.</p>
+<h3 id="create-a-local-environment">Create a local environment</h3>
+<p>You can create a local development environment just by running:</p>
+<pre><code class="language-shell">make cluster
+</code></pre>
+<p>The target uses <a href="https://kind.sigs.k8s.io/">Kind</a> to create a local Kubernetes cluster that uses Docker containers as nodes.</p>
+<p>The nos operator uses webhooks that require SSL certificates. You can let cert-manager create and manage them by installing it on the cluster you have created in the previous step:</p>
+<pre><code class="language-shell">make install-cert-manager
+</code></pre>
+<h3 id="build-components">Build components</h3>
+<p>You can build the nos components by running the <code>docker-build-&lt;component-name&gt;</code> targets. The targets build the Docker images using the default image name tagged with the version defined in the first line of the Makefile.</p>
+<p>Optionally, you can override the name and the tag of the Docker image by providing them as argument to the target.</p>
+<h4 id="build-gpu-partitioner">Build GPU Partitioner</h4>
+<pre><code class="language-shell">make docker-build-gpu-partitioner
+</code></pre>
+<pre><code class="language-shell">make docker-build-gpu-partitioner GPU_PARTITIONER_IMG=custom-image:tag
+</code></pre>
+<h4 id="build-scheduler">Build Scheduler</h4>
+<pre><code class="language-shell">make docker-build-scheduler
+</code></pre>
+<pre><code class="language-shell">make docker-build-scheduler SCHEDULER_IMG=custom-image:tag
+</code></pre>
+<h4 id="build-operator">Build Operator</h4>
+<pre><code class="language-shell">make docker-build-operator
+</code></pre>
+<pre><code class="language-shell">make docker-build-operator OPERATOR_IMG=custom-image:tag
+</code></pre>
+<h4 id="build-mig-agent">Build MIG Agent</h4>
+<pre><code class="language-shell">make docker-build-mig-agent
+</code></pre>
+<pre><code class="language-shell">make docker-build-mig-agent MIG_AGENT_IMG=custom-image:tag
+</code></pre>
+<h4 id="build-gpu-agent">Build GPU Agent</h4>
+<pre><code class="language-shell">make docker-build-gpu-agent
+</code></pre>
+<pre><code class="language-shell">make docker-build-gpu-agent GPU_AGENT_IMG=custom-image:tag
+</code></pre>
+<h3 id="load-docker-images-into-the-cluster">Load Docker images into the cluster</h3>
+<blockquote>
+<p>⚠️ If you use the tag <code>latest</code> Kubernetes will always download the image from the registry,
+ignoring the image you loaded into the cluster.</p>
+</blockquote>
+<p>You can load the Docker images you have built in the previous step into the cluster by running:</p>
+<pre><code class="language-shell">kind load docker-image &lt;image-name&gt;:&lt;image-tag&gt;
+</code></pre>
+<h3 id="install-components">Install components</h3>
+<p>You can install single nos components by running:</p>
+<pre><code class="language-shell">make deploy-&lt;component&gt;
+</code></pre>
+<p>where <code>&lt;component&gt;</code> is one of the following:
+- <code>operator</code>
+- <code>gpu-partitioner</code>
+- <code>scheduler</code>
+- <code>mig-agent</code>
+- <code>gpu-agent</code></p>
+<p>The targets above installs the Docker images tagged with the version defined in the first line of the <a href="../../../../Makefile">Makefile</a>.</p>
+<p>You can override the Docker image name and tag by providing it as an argument to the target:</p>
+<pre><code class="language-shell">make deploy-&lt;component&gt; &lt;COMPONENT&gt;_IMG=&lt;your-image&gt;
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

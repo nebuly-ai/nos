@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Configuration - nos</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../prerequisites/" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../partitioning-modes-comparison/" class="dropdown-item">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../elastic-resource-quota/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/key-concepts/" class="dropdown-item">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../developer/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../developer/contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../helm-charts/nos/" class="dropdown-item">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../telemetry/" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../partitioning-modes-comparison/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../troubleshooting/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#configuration" class="nav-link">Configuration</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#pods-batch-size" class="nav-link">Pods batch size</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#scheduler-configuration" class="nav-link">Scheduler configuration</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#available-mig-geometries" class="nav-link">Available MIG geometries</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#how-it-works" class="nav-link">How it works</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="configuration">Configuration</h1>
+<p>You can customize the GPU Partitioner settings by editing the values file of the <a href="../../helm-charts/nos/">nos</a> Helm chart.
+In this section we focus on some of the values that you would typically want to customize.</p>
+<h2 id="pods-batch-size">Pods batch size</h2>
+<p>The GPU partitioner processes pending pods in batches of configurable size. You can set the batch size by editing the following two parameters of the configuration:</p>
+<ul>
+<li><code>batchWindowTimeoutSeconds</code>: timeout of the time window used for batching pending Pods. The time window starts when the GPU Partitioner starts processing a batch of pending Pods, and ends when the timeout expires or the batch is completed.</li>
+<li><code>batchWindowIdleSeconds</code>: idle time before a batch of pods is considered completed. Once the time window of a batch starts, if idle time elapses and no new pending pods are detected during this time, the batch is considered completed.</li>
+</ul>
+<p>Increase the value of these two parameters if you want the GPU partitioner to take into account more pending Pods when deciding the GPU partitioning plan, thus making potentially it more effective.</p>
+<p>Set lower values if you want the partitioning to be performed more frequently (e.g. if you want to react faster to changes in the cluster), and you don't mind if the partitioning is less effective (e.g. the resources requested by some pending pods might not be created).</p>
+<h2 id="scheduler-configuration">Scheduler configuration</h2>
+<p>The GPU Partitioner uses an internal scheduler to simulate the scheduling of the pending pods to determine whether a candidate GPU partitioning plan would make the pending pods schedulable.</p>
+<p>The GPU Partitioner reads the scheduler configuration from the ConfigMap defined by the field <code>gpuPartitioner.scheduler.config</code>, and it falls back to the default configuration if the ConfigMap is not found.
+You can edit this field to provide your custom scheduler configuration.</p>
+<p>If you installed <code>nos</code> with the <code>scheduler</code> flag enabled, the GPU Partitioner will use its configuration unless you specify a custom ConfigMap.</p>
+<h2 id="available-mig-geometries">Available MIG geometries</h2>
+<p>The GPU Partitioner determines the most proper partitioning plan to apply by considering the possible MIG geometries allowed each of the GPU models present in the cluster.</p>
+<p>You can set the MIG geometries supported by each GPU model by editing the <code>gpuPartitioner.knownMigGeometries</code> value of the <a href="../../helm-charts/nos/">installation chart</a>.</p>
+<p>You can edit this file to add new MIG geometries for new GPU models, or to edit the existing ones according to your specific needs. For instance, you can remove some MIG geometries if you don't want to allow them to be used for a certain GPU model.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The GPU Partitioner component watches for pending pods that cannot be scheduled due to lack of MIG/MPS resources they request. If it finds such pods, it checks the current partitioning state of the GPUs in the cluster and tries to find a new partitioning state that would allow to schedule them without deleting any of the used resources.</p>
+<p>It does that by using an internal k8s scheduler, so that before choosing a candidate partitioning, the GPU Partitioner simulates the scheduling to check whether the partitioning would actually allow to schedule the pending Pods. If multiple partitioning configuration can be used to schedule the pending Pods, the one that would result in the highest number of schedulable pods is chosen.</p>
+<p>Moreover, just in the case of MIG partitioning, each specific GPU model allows to create only certain combinations of MIG profiles, which are called MIG geometries, so the GPU partitioner takes this constraint into account when trying to find a new partitioning. The available MIG geometries of each GPU model are defined in the field <code>gpuPartitioner.knownMigGeometries</code> field of the Helm chart.</p>
+<h3 id="mig-partitioning">MIG Partitioning</h3>
+<p>The actual partitioning specified by the GPU Partitioner for MIG GPUs is performed by the MIG Agent, which is a daemonset running on every node labeled with <code>nos.nebuly.com/gpu-partitioning: mig</code> that creates/deletes MIG profiles as requested by the GPU Partitioner.</p>
+<p>The MIG Agent exposes to the GPU Partitioner the used/free MIG resources of all the GPUs of the node on which it is running through the following node annotations:</p>
+<ul>
+<li><code>nos.nebuly.com/status-gpu-&lt;index&gt;-&lt;mig-profile&gt;-free: &lt;quantity&gt;</code></li>
+<li><code>nos.nebuly.com/status-gpu-&lt;index&gt;-&lt;mig-profile&gt;-used: &lt;quantity&gt;</code></li>
+</ul>
+<p>The MIG Agent also watches the node's annotations and, every time there desired MIG partitioning specified by the GPU Partitioner does not match the current state, it tries to apply it by creating and deleting the MIG profiles on the target GPUs. The GPU Partitioner specifies the desired MIG geometry of the GPUs of a node through annotations in the following format:</p>
+<p><code>nos.nebuly.com/spec-gpu-&lt;index&gt;-&lt;mig-profile&gt;: &lt;quantity&gt;</code></p>
+<p>Note that in some cases the MIG Agent might not be able to apply the desired MIG geometry specified by the GPU Partitioner. This can happen for two reasons:</p>
+<ol>
+<li>the MIG Agent never deletes MIG resources being in use by a Pod</li>
+<li>some MIG geometries require the MIG profiles to be created in a certain order, and due to reason (1) the MIG Agent might not be able to delete and re-create the existing MIG profiles in the order required by the new MIG geometry.</li>
+</ol>
+<p>In these cases, the MIG Agent tries to apply the desired partitioning by creating as many required resources as possible, in order to maximize the number of schedulable Pods. This can result in the MIG Agent applying the desired MIG geometry only partially.</p>
+<p>For further information regarding NVIDIA MIG and its integration with Kubernetes, please refer to the <a href="https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf">NVIDIA MIG User Guide</a> and to the <a href="https://docs.nvidia.com/datacenter/cloud-native/kubernetes/mig-k8s.html">MIG Support in Kubernetes</a> official documentation provided by NVIDIA.</p>
+<h3 id="mps-partitioning">MPS Partitioning</h3>
+<p>The creation and deletion of MPS resources is handled by the k8s-device-plugin, which can expose a single GPU as multiple MPS resources according to its configuration.</p>
+<p>When allocating a container requesting an MPS resource, the device plugin takes care of injecting theenvironment variables and mounting the volumes required by the container to communicate to the MPS server, making sure that the resource limits defined by the device requested by the container are enforced.</p>
+<p>For more information about MPS integration with Kubernetes you can refer to the Nebuly <a href="https://github.com/nebuly-ai/k8s-device-plugin">k8s-device-plugin</a> documentation.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

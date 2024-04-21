@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Key concepts - nos</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../prerequisites/" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/partitioning-modes-comparison/" class="dropdown-item">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../developer/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../developer/contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../helm-charts/nos/" class="dropdown-item">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../telemetry/" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../getting-started/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../configuration/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#key-concepts" class="nav-link">Key concepts</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#over-quotas" class="nav-link">Over-quotas</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#gpu-memory-limits" class="nav-link">GPU memory limits</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="key-concepts">Key concepts</h1>
+<h2 id="over-quotas">Over-quotas</h2>
+<p>If a namespace subject to an <code>ElasticQuota</code> (or, equivalently, to a <code>CompositeElasticQuota</code>) is using all the resources guaranteed by the <code>min</code> field of its quota, it can still host new pods by "borrowing" quotas from other namespaces which has available resources (e.g. from namespaces subject to other quotas where <code>min</code> resources are not being completely used).</p>
+<p>!!! info</p>
+<pre><code>Pods that are scheduled "borrowing" unused quotas from other namespaces are called **over-quota pods**.
+</code></pre>
+<p>Over-quota pods can be preempted at any time to free up resources if any of the namespaces lending the quotas claims back its resources.</p>
+<p>You can check whether a Pod is in over-quota by checking the value of the label <code>nos.nebuly.com/capacity</code>, which is automatically created and updated by the nos operator for every Pod created in a namespace subject to an ElasticQuota or to a CompositeElasticQuota. The two possible values for this label are <code>in-quota</code> and <code>over-quota</code>.</p>
+<p>You can use this label to easily find out at any time which are the over-quota pods subject to preemption risk:</p>
+<pre><code class="language-shell">kubectl get pods --all-namespaces -l nos.nebuly.com/capacity=&quot;over-quota&quot;
+</code></pre>
+<h4 id="how-over-quota-pods-are-labelled">How over-quota pods are labelled</h4>
+<p>All the pods created within a namespace subject to a quota are labelled as <code>in-quota</code> as long as the <code>used</code> resources of the quota do not exceed its <code>min</code> resources. When this happens and news pods are created in that namespace, they are labelled as <code>over-quota</code> when they reach the running phase.</p>
+<p><code>nos</code> re-evaluates the over-quota status of each Pod of a namespace every time a new Pod in that namespace changes its phase to/from "Running". With the default configuration, <code>nos</code> sorts the pods by creation date and, if the creation timestamp is the same, by requested resources, placing first the pods with older creation timestamp and with fewer requested resources. After the pods are sorted, <code>nos</code> computes the aggregated requested resources by summing the request of each Pod, and it marks as <code>over-quota</code> all the pods for which <code>used</code> is greater than <code>min</code>.</p>
+<blockquote>
+<p>🚧 Soon it will be possible to customize the order criteria used for sorting the pods during this process through the
+nos-operator configuration.</p>
+</blockquote>
+<h3 id="over-quota-fair-sharing">Over-quota fair sharing</h3>
+<p>In order to prevent a single namespace from consuming all the over-quotas available in the cluster and starving the others, <code>nos</code> implements a fair-sharing mechanism that guarantees that each namespace subject to an ElasticQuota has right to a part of the available over-quotas proportional to its <code>min</code> field.</p>
+<p>The fair-sharing mechanism does not enforce any hard limit on the amount of over-quotas pods that a namespace can have, but instead it implements fair sharing by preemption. Specifically, a Pod-A subject to elastic-quota-A can preempt Pod-b subject to elastic-quota-B if the following conditions are met:</p>
+<ol>
+<li>Pod-B is in over-quota</li>
+<li><code>used</code> field of Elastic-quota-A + Pod-A request &lt;= guaranteed over-quotas A</li>
+<li>used over-quotas of Elastic-quota-B &gt; guaranteed over-quotas B</li>
+</ol>
+<p>Where:</p>
+<ul>
+<li>guaranteed over-quotas A = percentage of guaranteed over-quotas A * tot. available over-quotas</li>
+<li>percentage of guaranteed over-quotas A = min A / sum(min_i) * 100</li>
+<li>tot. available over-quotas = sum( max(0, min_i - used_i ) )</li>
+</ul>
+<h3 id="example">Example</h3>
+<p>Let's assume we have a K8s cluster with the following Elastic Quota resources:</p>
+<table>
+<thead>
+<tr>
+<th>Elastic Quota</th>
+<th>Min</th>
+<th>Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Elastic Quota A</td>
+<td>nos.nebuly.com/gpu-memory: 40</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Elastic Quota B</td>
+<td>nos.nebuly.com/gpu-memory: 10</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Elastic Quota C</td>
+<td>nos.nebuly.com/gpu-memory: 30</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<p>The table below shows the quotas usage of the cluster at two different times:</p>
+<table>
+<thead>
+<tr>
+<th>Time</th>
+<th>Elastic Quota A</th>
+<th>Elastic Quota B</th>
+<th>Elastic Quota C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>t1</em></td>
+<td>Used: 40/40 GB</td>
+<td>Used: 40/10 GB<br/> Over-quota: 30 GB</td>
+<td>Used: 0 GB</td>
+</tr>
+<tr>
+<td><em>t2</em></td>
+<td>Used: 50/40 GB</td>
+<td>Used 30/10 GB<br/> Over-quota: 20 GB</td>
+<td>Used: 0 GB</td>
+</tr>
+</tbody>
+</table>
+<p>The cluster has a total of 30 GB of memory of available over-quotas, which at time <em>t1</em> are all being consumed by the pods in the namespace subject to Elastic Quota B.</p>
+<p>At time <em>t2</em>, a new Pod is created in the namespace subject to Elastic Quota A. Even though all the quotas of the cluster are currently being used, the fair sharing mechanism grants to Elastic Quota A a certain amount of over-quotas that it can use, and in order to grant these quotas nos can preempt one or more over-quota pods from the namespace subject to Elastic Quota B.</p>
+<p>Specifically, the following are the amounts of over-quotas guaranteed to each of the namespaces subject to the Elastic Quotas defined in the table above:</p>
+<ul>
+<li>guaranteed over-quota A = 40 / (40 + 10 + 30) * (0 + 0 + (30 - 0)) = 15</li>
+<li>guaranteed over-quota B = 10 / (40 + 10 + 30) * (0 + 0 + (30 - 0)) = 3</li>
+</ul>
+<p>Assuming that all the pods in the cluster are requesting only 10 GB of GPU memory, an over-quota Pod from Elastic Quota B is preempted because the following conditions are true:</p>
+<ul>
+<li>✅ used quotas A + new Pod A &lt;= min quota A + guaranteed over-quota A</li>
+<li>40 + 10 &lt;= 40 + 15</li>
+<li>✅ used over-quotas B &gt; guaranteed over-quotas</li>
+<li>30 &gt; 3</li>
+</ul>
+<h2 id="gpu-memory-limits">GPU memory limits</h2>
+<p>Both <code>ElasticQuota</code> and <code>CompositeElasticQuota</code> resources support the custom resource <code>nos.nebuly.com/gpu-memory</code>.
+You can use this resource in the <code>min</code> and <code>max</code> fields of the elastic quotas specification to define the minimum amount of GPU memory (expressed in GB) guaranteed to a certain namespace and its maximum limit, respectively.</p>
+<p>This resource is particularly useful if you use Elastic Quotas together with <a href="../../dynamic-gpu-partitioning/overview/">automatic GPU partitioning</a>, since it allows you to assign resources to different teams (e.g. namespaces) in terms of GPU memory instead of in number of GPUs, and the users can than consume request in the same terms by claiming GPU slices with a specific amount of memory, enabling an overall fine-grained control over the GPUs of the cluster.</p>
+<p><code>nos</code> automatically computes the GPU memory requested by each Pod from the GPU resources requested by its containers and enforces the limits accordingly. The amount of memory GB corresponding to the generic resource <code>nvidia.com/gpu</code> is defined by the field <code>global.nvidiaGpuResourceMemoryGB</code> of the installation chart, which is <code>32</code> by default.</p>
+<p>For instance, using the default configuration, the value of the resource <code>nos.nebuly.com/gpu-memory</code> computed from the Pod specification below is <code>10+32=42</code>.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Pod
+metadata:
+  name: nginx-deployment
+spec:
+  schedulerName: nos-scheduler
+  containers:
+    - name: my-container
+      image: my-image:0.0.1
+      resources:
+        limits:
+          nvidia.com/mig-1g.10gb: 1
+          nvidia.com/gpu: 1
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Prerequisites - nos</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem active">
+                                <a href="./" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/partitioning-modes-comparison/" class="dropdown-item">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../elastic-resource-quota/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/key-concepts/" class="dropdown-item">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../developer/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../developer/contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../helm-charts/nos/" class="dropdown-item">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem">
+                                <a href="../telemetry/" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../overview/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../installation/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#prerequisites" class="nav-link">Prerequisites</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#enable-gpu-support" class="nav-link">Enable GPU support</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#install-nebulys-device-plugin" class="nav-link">Install Nebuly's device plugin</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="prerequisites">Prerequisites</h1>
+<ol>
+<li>Kubernetes version 1.23 or newer</li>
+<li><a href="#enable-gpu-support">GPU Support must be enabled</a></li>
+<li><a href="#install-nebulys-device-plugin">Nebuly's device plugin</a> (required only if using MPS partitioning)</li>
+<li><a href="https://github.com/cert-manager/cert-manager">Cert Manager</a> (optional, but recommended)</li>
+</ol>
+<h2 id="enable-gpu-support">Enable GPU support</h2>
+<p>Before installing <code>nos</code>, you must enable GPU support in your Kubernetes cluster.</p>
+<p>There are two ways to do this. One option is to manually install the required components individually,while the other consists in installing only the NVIDIA GPU Operator, which automatically installs all the necessary components for you. See below for more information on these two installation methods.</p>
+<p>We recommended enabling GPU support using the NVIDIA GPU Operator (option 1).</p>
+<h3 id="option-1-nvidia-gpu-operator">Option 1 - NVIDIA GPU Operator</h3>
+<p>You can install the <a href="https://github.com/NVIDIA/gpu-operator">NVIDIA GPU Operator</a> as follows:</p>
+<pre><code class="language-bash">helm install --wait --generate-name \
+     -n gpu-operator --create-namespace \
+     nvidia/gpu-operator --version v22.9.0 \
+     --set driver.enabled=true \
+     --set migManager.enabled=false \
+     --set mig.strategy=mixed \
+     --set toolkit.enabled=true
+</code></pre>
+<p>Note that the GPU Operator will automatically install a recent version of NVIDIA Drivers and CUDA on all the GPU-enabled nodes of your cluster, so you don't have to manually install them.</p>
+<p>For further information you can refer to the <a href="https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/getting-started.html">NVIDIA GPU Operator Documentation</a>.</p>
+<h3 id="option-2-manual-installation">Option 2 - Manual installation</h3>
+<p>!!! warning</p>
+<pre><code>If you want to enable MPS Dynamic Partitioning, make sure you have a version of CUDA 11.5 or newer
+installed, as this is the minimum version that supports GPU memory limits in MPS.
+</code></pre>
+<p>To enble GPU support in your cluster, you first need to install <a href="https://www.nvidia.com/download/index.aspx">NVIDIA Drivers</a> and the <a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html">NVIDIA Container Toolkit</a> on all the nodes of your cluster with a GPU.</p>
+<p>After installing the NVIDIA Drivers and the Container Toolkit on your nodes, you need to install the following Kubernetes components:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA/gpu-feature-discovery">NVIDIA GPU Feature Discovery</a></li>
+<li><a href="https://github.com/NVIDIA/k8s-device-plugin">NVIDIA Device Plugin</a></li>
+</ul>
+<p>Please note that the configuration parameter <code>migStrategy</code> must be set to <code>mixed</code> (you can do that with <code>--set migStrategy=mixed</code> if you are using Helm).</p>
+<h2 id="install-nebulys-device-plugin">Install Nebuly's device plugin</h2>
+<p>!!! info</p>
+<pre><code>Nebuly's device plugin is required only if you want to use [dynamic MPS partitioning](#dynamic-gpu-partitioning/getting-started-mps.md).
+If you don't plan to use MPS partitioning, you can then skip this installation step.
+</code></pre>
+<p>You can install <a href="https://github.com/nebuly-ai/k8s-device-plugin">Nebuly's device plugin</a> using Helm as follows:</p>
+<pre><code class="language-bash">helm install oci://ghcr.io/nebuly-ai/helm-charts/nvidia-device-plugin \
+  --version 0.13.0 \
+  --generate-name \
+  -n nebuly-nvidia \
+  --create-namespace
+</code></pre>
+<p>Nebuly's device plugin runs only on nodes labelled with <code>nos.nebuly.com/gpu-partitioning=mps</code>.</p>
+<p>If you already have the NVIDIA device plugin installed on your cluster, you need to ensure that only one instance of the device plugin is running on each GPU node (either Nebuly's or NVIDIA's). One way to do that is to add an affinity rule to the NVIDIA device plugin Daemonset so that it doesn't run on any node that has MPS enabled:</p>
+<pre><code class="language-yaml">affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: nos.nebuly.com/gpu-partitioning
+              operator: NotIn
+              values:
+                - mps
+</code></pre>
+<p>For further information you can refer to <a href="https://github.com/nebuly-ai/k8s-device-plugin#installation-alongside-the-nvidia-device-plugin">Nebuly's device plugin documentation</a>.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

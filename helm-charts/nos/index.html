@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>nos - nos</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../prerequisites/" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/partitioning-modes-comparison/" class="dropdown-item">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../elastic-resource-quota/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/key-concepts/" class="dropdown-item">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../developer/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../developer/contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="./" class="dropdown-item active">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../telemetry/" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../../developer/contribution-guidelines/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../../telemetry/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#nos" class="nav-link">nos</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#maintainers" class="nav-link">Maintainers</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#source-code" class="nav-link">Source Code</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#values" class="nav-link">Values</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="nos">nos</h1>
+<p><img alt="Version: 0.1.2" src="https://img.shields.io/badge/Version-0.1.2-informational?style=flat-square" /> <img alt="Type: application" src="https://img.shields.io/badge/Type-application-informational?style=flat-square" /> <img alt="AppVersion: 0.1.2" src="https://img.shields.io/badge/AppVersion-0.1.2-informational?style=flat-square" /></p>
+<p>The open-source platform for running AI workloads on k8s in an optimized way, both in terms of hardware utilization and workload performance.</p>
+<h2 id="maintainers">Maintainers</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Url</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Michele Zanotti</td>
+<td><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#46;&#122;&#97;&#110;&#111;&#116;&#116;&#105;&#64;&#110;&#101;&#98;&#117;&#108;&#121;&#46;&#99;&#111;&#109;">&#109;&#46;&#122;&#97;&#110;&#111;&#116;&#116;&#105;&#64;&#110;&#101;&#98;&#117;&#108;&#121;&#46;&#99;&#111;&#109;</a></td>
+<td><github.com/nebuly-ai></td>
+</tr>
+<tr>
+<td>Diego Fiori</td>
+<td><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#100;&#46;&#102;&#105;&#111;&#114;&#105;&#64;&#110;&#101;&#98;&#117;&#108;&#121;&#46;&#99;&#111;&#109;">&#100;&#46;&#102;&#105;&#111;&#114;&#105;&#64;&#110;&#101;&#98;&#117;&#108;&#121;&#46;&#99;&#111;&#109;</a></td>
+<td><github.com/diegofiori></td>
+</tr>
+</tbody>
+</table>
+<h2 id="source-code">Source Code</h2>
+<ul>
+<li><a href="https://github.com/nebuly-ai/nos">https://github.com/nebuly-ai/nos</a></li>
+</ul>
+<h2 id="values">Values</h2>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>allowDefaultNamespace</td>
+<td>bool</td>
+<td><code>false</code></td>
+<td>If true allows to deploy <code>nos</code> chart in the <code>default</code> namespace</td>
+</tr>
+<tr>
+<td>gpuPartitioner.affinity</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the affinity config of the GPU Partitioner Pod.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.batchWindowIdleSeconds</td>
+<td>int</td>
+<td><code>10</code></td>
+<td>Idle seconds before the GPU partitioner processes the current batch if no new pending Pods are created, and the timeout has not been reached.  Higher values make the GPU partitioner will potentially take into account more pending Pods when deciding the GPU partitioning plan, but the partitioning will be performed less frequently</td>
+</tr>
+<tr>
+<td>gpuPartitioner.batchWindowTimeoutSeconds</td>
+<td>int</td>
+<td><code>60</code></td>
+<td>Timeout of the window used by the GPU partitioner for batching pending Pods.  Higher values make the GPU partitioner will potentially take into account more pending Pods when deciding the GPU partitioning plan, but the partitioning will be performed less frequently</td>
+</tr>
+<tr>
+<td>gpuPartitioner.devicePlugin.config.name</td>
+<td>string</td>
+<td><code>"nos-device-plugin-configs"</code></td>
+<td>Name of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the value "devicePlugin.config.name" of the Helm chart used for deploying the NVIDIA GPU Operator.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.devicePlugin.config.namespace</td>
+<td>string</td>
+<td><code>"nebuly-nvidia"</code></td>
+<td>Namespace of the ConfigMap containing the NVIDIA Device Plugin configuration files. It must be equal to the namespace where the Nebuly NVIDIA Device Plugin has been deployed to.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.devicePlugin.configUpdateDelaySeconds</td>
+<td>int</td>
+<td><code>5</code></td>
+<td>Duration of the delay between when the new partitioning config is computed and when it is sent to the NVIDIA device plugin. Since the config is provided to the plugin as a mounted ConfigMap, this delay is required to ensure that the updated ConfigMap is propagated to the mounted volume.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.enabled</td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Enable or disable the <code>nos gpu partitioner</code></td>
+</tr>
+<tr>
+<td>gpuPartitioner.fullnameOverride</td>
+<td>string</td>
+<td><code>""</code></td>
+<td></td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent</td>
+<td>object</td>
+<td>-</td>
+<td>Configuration of the GPU Agent component of the GPU Partitioner.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.image.pullPolicy</td>
+<td>string</td>
+<td><code>"IfNotPresent"</code></td>
+<td>Sets the GPU Agent Docker image pull policy.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.image.repository</td>
+<td>string</td>
+<td><code>"ghcr.io/nebuly-ai/nos-gpu-agent"</code></td>
+<td>Sets the GPU Agent Docker image.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.image.tag</td>
+<td>string</td>
+<td><code>""</code></td>
+<td>Overrides the GPU Agent image tag whose default is the chart appVersion.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.logLevel</td>
+<td>int</td>
+<td><code>0</code></td>
+<td>The level of log of the GPU Agent. Zero corresponds to <code>info</code>, while values greater or equal than 1 corresponds to higher debug levels. <strong>Must be &gt;= 0</strong>.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.reportConfigIntervalSeconds</td>
+<td>int</td>
+<td><code>10</code></td>
+<td>Interval at which the mig-agent will report to k8s status of the GPUs of the Node</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.resources</td>
+<td>object</td>
+<td><code>{"limits":{"cpu":"100m","memory":"128Mi"}}</code></td>
+<td>Sets the resource requests and limits of the GPU Agent container.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.runtimeClassName</td>
+<td>string</td>
+<td><code>nil</code></td>
+<td>The container runtime class name to use for the GPU Agent container.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.gpuAgent.tolerations</td>
+<td>list</td>
+<td><code>[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]</code></td>
+<td>Sets the tolerations of the GPU Agent Pod.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.image.pullPolicy</td>
+<td>string</td>
+<td><code>"IfNotPresent"</code></td>
+<td>Sets the GPU Partitioner Docker image pull policy.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.image.repository</td>
+<td>string</td>
+<td><code>"ghcr.io/nebuly-ai/nos-gpu-partitioner"</code></td>
+<td>Sets the GPU Partitioner Docker image.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.image.tag</td>
+<td>string</td>
+<td><code>""</code></td>
+<td>Overrides the GPU Partitioner image tag whose default is the chart appVersion.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.knownMigGeometries</td>
+<td>list</td>
+<td>-</td>
+<td>List that associates GPU models to the respective allowed MIG configurations</td>
+</tr>
+<tr>
+<td>gpuPartitioner.kubeRbacProxy</td>
+<td>object</td>
+<td>-</td>
+<td>Configuration of the <a href="https://github.com/brancz/kube-rbac-proxy">Kube RBAC Proxy</a>, which runs as sidecar of all the GPU Partitioner components Pods.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.leaderElection.enabled</td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Enables/Disables the leader election of the GPU Partitioner controller manager.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.logLevel</td>
+<td>int</td>
+<td><code>0</code></td>
+<td>The level of log of the GPU Partitioner. Zero corresponds to <code>info</code>, while values greater or equal than 1 corresponds to higher debug levels. <strong>Must be &gt;= 0</strong>.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent</td>
+<td>object</td>
+<td>-</td>
+<td>Configuration of the MIG Agent component of the GPU Partitioner.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent.image.pullPolicy</td>
+<td>string</td>
+<td><code>"IfNotPresent"</code></td>
+<td>Sets the MIG Agent Docker image pull policy.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent.image.repository</td>
+<td>string</td>
+<td><code>"ghcr.io/nebuly-ai/nos-mig-agent"</code></td>
+<td>Sets the MIG Agent Docker image.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent.image.tag</td>
+<td>string</td>
+<td><code>""</code></td>
+<td>Overrides the MIG Agent image tag whose default is the chart appVersion.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent.logLevel</td>
+<td>int</td>
+<td><code>0</code></td>
+<td>The level of log of the MIG Agent. Zero corresponds to <code>info</code>, while values greater or equal than 1 corresponds to higher debug levels. <strong>Must be &gt;= 0</strong>.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent.reportConfigIntervalSeconds</td>
+<td>int</td>
+<td><code>10</code></td>
+<td>Interval at which the mig-agent will report to k8s the MIG partitioning status of the GPUs of the Node</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent.resources</td>
+<td>object</td>
+<td><code>{"limits":{"cpu":"100m","memory":"128Mi"}}</code></td>
+<td>Sets the resource requests and limits of the MIG Agent container.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.migAgent.tolerations</td>
+<td>list</td>
+<td><code>[{"effect":"NoSchedule","key":"kubernetes.azure.com/scalesetpriority","operator":"Equal","value":"spot"}]</code></td>
+<td>Sets the tolerations of the MIG Agent Pod.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.nameOverride</td>
+<td>string</td>
+<td><code>""</code></td>
+<td></td>
+</tr>
+<tr>
+<td>gpuPartitioner.nodeSelector</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the nodeSelector config of the GPU Partitioner Pod.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.podAnnotations</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the annotations of the GPU Partitioner Pod.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.podSecurityContext</td>
+<td>object</td>
+<td><code>{"runAsNonRoot":true,"runAsUser":1000}</code></td>
+<td>Sets the security context of the GPU partitioner Pod.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.replicaCount</td>
+<td>int</td>
+<td><code>1</code></td>
+<td>Number of replicas of the gpu-manager Pod.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.resources</td>
+<td>object</td>
+<td><code>{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}</code></td>
+<td>Sets the resource limits and requests of the GPU partitioner container.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.scheduler.config.name</td>
+<td>string</td>
+<td><code>"nos-scheduler-config"</code></td>
+<td>Name of the ConfigMap containing the k8s scheduler configuration file. If not specified or the ConfigMap does not exist, the GPU partitioner will use the default k8s scheduler profile.</td>
+</tr>
+<tr>
+<td>gpuPartitioner.tolerations</td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Sets the tolerations of the GPU Partitioner Pod.</td>
+</tr>
+<tr>
+<td>nvidiaGpuResourceMemoryGB</td>
+<td>int</td>
+<td><code>32</code></td>
+<td>Defines how many GB of memory each nvidia.com/gpu resource has.</td>
+</tr>
+<tr>
+<td>operator.affinity</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the affinity config of the operator Pod.</td>
+</tr>
+<tr>
+<td>operator.enabled</td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Enable or disable the <code>nos operator</code></td>
+</tr>
+<tr>
+<td>operator.fullnameOverride</td>
+<td>string</td>
+<td><code>""</code></td>
+<td></td>
+</tr>
+<tr>
+<td>operator.image.pullPolicy</td>
+<td>string</td>
+<td><code>"IfNotPresent"</code></td>
+<td>Sets the operator Docker image pull policy.</td>
+</tr>
+<tr>
+<td>operator.image.repository</td>
+<td>string</td>
+<td><code>"ghcr.io/nebuly-ai/nos-operator"</code></td>
+<td>Sets the operator Docker repository</td>
+</tr>
+<tr>
+<td>operator.image.tag</td>
+<td>string</td>
+<td><code>""</code></td>
+<td>Overrides the operator Docker image tag whose default is the chart appVersion.</td>
+</tr>
+<tr>
+<td>operator.kubeRbacProxy</td>
+<td>object</td>
+<td>-</td>
+<td>Configuration of the <a href="https://github.com/brancz/kube-rbac-proxy">Kube RBAC Proxy</a>, which runs as sidecar of the operator Pods.</td>
+</tr>
+<tr>
+<td>operator.leaderElection.enabled</td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Enables/Disables the leader election of the operator controller manager.</td>
+</tr>
+<tr>
+<td>operator.logLevel</td>
+<td>int</td>
+<td><code>0</code></td>
+<td>The level of log of the controller manager. Zero corresponds to <code>info</code>, while values greater or equal than 1 corresponds to higher debug levels. <strong>Must be &gt;= 0</strong>.</td>
+</tr>
+<tr>
+<td>operator.nameOverride</td>
+<td>string</td>
+<td><code>""</code></td>
+<td></td>
+</tr>
+<tr>
+<td>operator.nodeSelector</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the nodeSelector config of the operator Pod.</td>
+</tr>
+<tr>
+<td>operator.podAnnotations</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the annotations of the operator Pod.</td>
+</tr>
+<tr>
+<td>operator.podSecurityContext</td>
+<td>object</td>
+<td><code>{"runAsNonRoot":true}</code></td>
+<td>Sets the security context of the operator Pod.</td>
+</tr>
+<tr>
+<td>operator.replicaCount</td>
+<td>int</td>
+<td><code>1</code></td>
+<td>Number of replicas of the controller manager Pod.</td>
+</tr>
+<tr>
+<td>operator.resources</td>
+<td>object</td>
+<td><code>{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}</code></td>
+<td>Sets the resource limits and requests of the operator controller manager container.</td>
+</tr>
+<tr>
+<td>operator.securityContext</td>
+<td>object</td>
+<td><code>{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]}}</code></td>
+<td>Sets the security context of the operator container.</td>
+</tr>
+<tr>
+<td>operator.tolerations</td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Sets the tolerations of the operator Pod.</td>
+</tr>
+<tr>
+<td>scheduler.affinity</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the affinity config of the scheduler deployment.</td>
+</tr>
+<tr>
+<td>scheduler.config</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Overrides the Kube Scheduler configuration</td>
+</tr>
+<tr>
+<td>scheduler.enabled</td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Enable or disable the <code>nos scheduler</code></td>
+</tr>
+<tr>
+<td>scheduler.fullnameOverride</td>
+<td>string</td>
+<td><code>""</code></td>
+<td></td>
+</tr>
+<tr>
+<td>scheduler.image.pullPolicy</td>
+<td>string</td>
+<td><code>"IfNotPresent"</code></td>
+<td>Sets Docker image pull policy.</td>
+</tr>
+<tr>
+<td>scheduler.image.repository</td>
+<td>string</td>
+<td><code>"ghcr.io/nebuly-ai/nos-scheduler"</code></td>
+<td>Sets Docker image.</td>
+</tr>
+<tr>
+<td>scheduler.image.tag</td>
+<td>string</td>
+<td><code>""</code></td>
+<td>Overrides the image tag whose default is the chart appVersion.</td>
+</tr>
+<tr>
+<td>scheduler.leaderElection.enabled</td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>Enables/Disables the leader election when deployed with multiple replicas.</td>
+</tr>
+<tr>
+<td>scheduler.logLevel</td>
+<td>int</td>
+<td><code>0</code></td>
+<td>The level of log of the scheduler. Zero corresponds to <code>info</code>, while values greater or equal than 1 corresponds to higher debug levels. <strong>Must be &gt;= 0</strong>.</td>
+</tr>
+<tr>
+<td>scheduler.nameOverride</td>
+<td>string</td>
+<td><code>""</code></td>
+<td></td>
+</tr>
+<tr>
+<td>scheduler.nodeSelector</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the nodeSelector config of the scheduler deployment.</td>
+</tr>
+<tr>
+<td>scheduler.podAnnotations</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the annotations of the scheduler Pod.</td>
+</tr>
+<tr>
+<td>scheduler.podSecurityContext</td>
+<td>object</td>
+<td><code>{}</code></td>
+<td>Sets the security context of the scheduler Pod</td>
+</tr>
+<tr>
+<td>scheduler.replicaCount</td>
+<td>int</td>
+<td><code>1</code></td>
+<td>Number of replicas of the scheduler.</td>
+</tr>
+<tr>
+<td>scheduler.resources</td>
+<td>object</td>
+<td><code>{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}</code></td>
+<td>Sets the resource limits and requests of the scheduler container.</td>
+</tr>
+<tr>
+<td>scheduler.securityContext</td>
+<td>object</td>
+<td><code>{"privileged":false}</code></td>
+<td>Sets the security context of the scheduler container</td>
+</tr>
+<tr>
+<td>scheduler.tolerations</td>
+<td>list</td>
+<td><code>[]</code></td>
+<td>Sets the tolerations of the scheduler deployment.</td>
+</tr>
+<tr>
+<td>shareTelemetry</td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>If true, shares with Nebuly telemetry data collected only during the Chart installation</td>
+</tr>
+</tbody>
+</table></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Telemetry - nos</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../prerequisites/" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/partitioning-modes-comparison/" class="dropdown-item">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../dynamic-gpu-partitioning/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../elastic-resource-quota/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/key-concepts/" class="dropdown-item">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../elastic-resource-quota/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../developer/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../developer/contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../helm-charts/nos/" class="dropdown-item">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem active">
+                                <a href="./" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../helm-charts/nos/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" class="nav-link disabled">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#sharing-feedback-to-improve-nos" class="nav-link">Sharing feedback to improve nos</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#how-to-opt-out" class="nav-link">How to opt-out?</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#should-i-opt-out" class="nav-link">Should I opt out?</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="sharing-feedback-to-improve-nos">Sharing feedback to improve <code>nos</code></h1>
+<p>Open source is a unique resource for sharing knowledge and building great projects collaboratively with the OSS community. To support the development of <code>nos</code>, during the installation of you could share the information strictly necessary to improve the features of this open-source project and facilitate bug detection and fixing.</p>
+<p>More specifically, you will foster project enhancement by sharing details about the setup and configuration of the environment where you are installing <code>nos</code> and its components.</p>
+<p><strong>Which data do we collect?</strong></p>
+<p>We make sure to collect as little data as possible to improve the open-source project:</p>
+<ul>
+<li>basic information about the Kubernetes cluster<ul>
+<li>Kubernetes version</li>
+<li>Number of nodes</li>
+</ul>
+</li>
+<li>basic information about each node of the cluster<ul>
+<li>Kubelet version</li>
+<li>Operating system</li>
+<li>Container runtime</li>
+<li>Node resources</li>
+<li>Labels from the <a href="https://github.com/NVIDIA/gpu-feature-discovery">NVIDIA GPU Feature Discovery</a>, if present</li>
+<li>Label <code>node.kubernetes.io/instance-type</code>, if present</li>
+</ul>
+</li>
+<li>configuration of <code>nos</code> components<ul>
+<li>values provided during the Helm chart installation</li>
+</ul>
+</li>
+</ul>
+<p>Please find below an example of telemetry collection:</p>
+<pre><code class="language-json">{
+  &quot;installationUUID&quot;: &quot;feb0a960-ed22-4882-96cf-ef0b83deaeb1&quot;,
+  &quot;nodes&quot;: [
+    {
+      &quot;name&quot;: &quot;node-1&quot;,
+      &quot;Capacity&quot;: {
+        &quot;cpu&quot;: &quot;5&quot;,
+        &quot;memory&quot;: &quot;7111996Ki&quot;
+      },
+      &quot;Labels&quot;: {
+        &quot;nvidia.com/gpu&quot;: &quot;true&quot;
+      },
+      &quot;NodeInfo&quot;: {
+        &quot;kernelVersion&quot;: &quot;5.15.49-linuxkit&quot;,
+        &quot;osImage&quot;: &quot;Ubuntu 22.04.1 LTS&quot;,
+        &quot;containerRuntimeVersion&quot;: &quot;containerd://1.6.7&quot;,
+        &quot;kubeletVersion&quot;: &quot;v1.24.4&quot;,
+        &quot;architecture&quot;: &quot;arm64&quot;
+      }
+    },
+    {
+      &quot;name&quot;: &quot;node-2&quot;,
+      &quot;Capacity&quot;: {
+        &quot;cpu&quot;: &quot;2&quot;,
+        &quot;memory&quot;: &quot;7111996Ki&quot;
+      },
+      &quot;Labels&quot;: null,
+      &quot;NodeInfo&quot;: {
+        &quot;kernelVersion&quot;: &quot;5.15.49-linuxkit&quot;,
+        &quot;osImage&quot;: &quot;Ubuntu 22.04.1 LTS&quot;,
+        &quot;containerRuntimeVersion&quot;: &quot;containerd://1.6.7&quot;,
+        &quot;kubeletVersion&quot;: &quot;v1.24.4&quot;,
+        &quot;architecture&quot;: &quot;arm64&quot;
+      }
+      &quot;chartValues&quot;: {
+        &quot;allowDefaultNamespace&quot;: false,
+        &quot;global&quot;: {
+          &quot;nvidiaGpuResourceMemoryGB&quot;: 32
+        }
+      },
+      &quot;components&quot;: {
+        &quot;nos-gpu-partitioner&quot;: true,
+        &quot;nos-scheduler&quot;: true,
+        &quot;nos-operator&quot;: true
+      }
+    }
+  ]
+}
+</code></pre>
+<h2 id="how-to-opt-out">How to opt-out?</h2>
+<p>You have two possibilities for opting-out:</p>
+<ol>
+<li>Set the value <code>shareTelemetry</code> to false when installing <code>nos</code> with the Helm Chart
+   <code>bash
+    helm install oci://ghcr.io/nebuly-ai/helm-charts/nos \
+    --version 0.1.2 \
+    --namespace nebuly-nos \
+    --generate-name \
+    --create-namespace \
+    --set shareTelemetry=false</code></li>
+<li>Install <code>nos</code> without using Helm</li>
+</ol>
+<h2 id="should-i-opt-out">Should I opt out?</h2>
+<p>Being open-source, we have very limited visibility into the use of the tool unless someone actively contacts us or opens an issue on GitHub.</p>
+<p>We would appreciate it if you would maintain telemetry, as it helps us improve the source code. In fact, it brings increasing value to the project and helps us to better prioritize feature development.</p>
+<p>We understand that you may still prefer not to share telemetry data and we respect that desire. Please follow the steps above to disable data collection.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

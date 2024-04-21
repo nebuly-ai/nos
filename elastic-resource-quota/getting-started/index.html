@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Getting started - nos</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../prerequisites/" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/partitioning-modes-comparison/" class="dropdown-item">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../dynamic-gpu-partitioning/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../key-concepts/" class="dropdown-item">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../developer/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../developer/contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../helm-charts/nos/" class="dropdown-item">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../telemetry/" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../overview/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../key-concepts/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#getting-started" class="nav-link">Getting started</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#create-elastic-quotas" class="nav-link">Create elastic quotas</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#create-pods-subject-to-elastic-resource-quota" class="nav-link">Create Pods subject to Elastic Resource Quota</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#how-to-define-resource-quotas" class="nav-link">How to define resource quotas</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="getting-started">Getting started</h1>
+<h2 id="create-elastic-quotas">Create elastic quotas</h2>
+<pre><code class="language-yaml">$ kubectl apply -f -- &lt;&lt;EOF
+apiVersion: nos.nebuly.com/v1alpha1
+kind: ElasticQuota
+metadata:
+  name: quota-a
+  namespace: team-a
+spec:
+  min:
+    cpu: 2
+    nos.nebuly.com/gpu-memory: 16
+  max:
+    cpu: 10
+EOF
+</code></pre>
+<p>The example above creates a quota for the namespace <code>team-a</code>, guaranteeing it 2 CPUs and 16 GB of GPU memory, and limiting the maximum number of CPUs it can use to 10. Note that:</p>
+<ul>
+<li>the <code>max</code> field is optional. If it is not specified, then the Elastic Quota does not enforce any upper limits on the amount resources that can be created in the namespace</li>
+<li>you can specify any valid Kubernetes resource you want in <code>max</code> and <code>min</code> fields</li>
+</ul>
+<h2 id="create-pods-subject-to-elastic-resource-quota">Create Pods subject to Elastic Resource Quota</h2>
+<p>Unless you deployed the <code>nos</code> scheduler as the default scheduler for your cluster, you need to instruct Kubernetes to use it for scheduling the Pods you want to be subject to Elastic Resource Quotas.</p>
+<p>You can do that by setting the value of the <code>schedulerName</code> field of your Pods specification to <code>scheduler</code> (or to any name you chose when installing <code>nos</code>), as shown in the example below.</p>
+<pre><code class="language-yaml">apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  schedulerName: nos-scheduler
+  containers:
+    - name: nginx
+      image: nginx:1.14.2
+      ports:
+        - containerPort: 80
+</code></pre>
+<h2 id="how-to-define-resource-quotas">How to define resource quotas</h2>
+<p>You can define resource limits on namespaces using two custom resources: <code>ElasticQuota</code> and <code>CompositeElasticQuota</code>.
+They both work in the same way, the only difference is that the latter defines limits on multiple namespaces instead of on a single one. Limits are specified through two fields:</p>
+<ul>
+<li><code>min</code>: the minimum resources that are guaranteed to the namespace. <code>nos</code> will make sure that, at any time, the namespace subject to the quota will always have access to <strong>at least</strong> these resources.</li>
+<li><code>max</code>: optional field that limits the total amount of resources that can be requested by a namespace. If not max is not specified, then <code>nos</code> does not enforce any upper limits on the resources that can be requested by the namespace.</li>
+</ul>
+<p>You can find sample definitions of these resources under the <a href="https://github.com/nebuly-ai/nos/tree/main/config/operator/samples">samples</a> directory.</p>
+<p>Note that <code>ElasticQuota</code> and <code>CompositeElasticQuota</code> are treated by <code>nos</code> in the same way: a namespace subject to an <code>ElasticQuota</code> can borrow resources from namespaces subject to either other elastic quotas or composite elastic quotas and, vice-versa, namespaces subject to a <code>CompositeElasticQuota</code> can borrow resources from namespaces subject to either elastic quotas or composite elastic quotas.</p>
+<h3 id="constraints">Constraints</h3>
+<p>The following constraints are enforced over elastic quota resources:</p>
+<ul>
+<li>you can create at most one <code>ElasticQuota</code> per namespace</li>
+<li>a namespace can be subject either to one <code>ElasticQuota</code> or one <code>CompositeElasticQuota</code>, but not both at the same time</li>
+<li>if a quota resource specifies both <code>max</code> and <code>min</code> fields, then the value of the resources specified in <code>max</code> must be greater or equal than the ones specified in <code>min</code></li>
+</ul>
+<h3 id="how-used-resources-are-computed">How used resources are computed</h3>
+<p>When a namespace is subject to an ElasticQuota (or to a CompositeElasticQuota), <code>nos</code> computes the number of quotas consumed by that namespace by aggregating the resources requested by its pods, considering <strong>only</strong> the ones whose phase is <code>Running</code>. In this way, <code>nos</code> avoid lower resource utilization due to scheduled pods that failed to start.</p>
+<p>Every time the amount of resources consumed by a namespace changes (e.g a Pod changes its phase to or from <code>Running</code>), the status of the respective quota object gets updated with the new amount of used resources.</p>
+<p>You can check how many resources have been consumed by each namespace by looking at the field <code>used</code> of the <code>ElasticQuota</code> and <code>CompositeElasticQuota</code> objects status.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Partitioning modes comparison - nos</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css">
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">nos</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href="../../overview/" class="nav-link">Overview</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../prerequisites/" class="nav-link">Prerequisites</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../installation/" class="nav-link">Installation</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Dynamic GPU Partitioning <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../getting-started-mig/" class="dropdown-item">Getting started with MIG partitioning</a>
+</li>
+                                    
+<li>
+    <a href="../getting-started-mps/" class="dropdown-item">Getting started with MPS partitioning</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active">Partitioning modes comparison</a>
+</li>
+                                    
+<li>
+    <a href="../configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Elastic Resource Quota <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../elastic-resource-quota/overview/" class="dropdown-item">Overview</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/key-concepts/" class="dropdown-item">Key concepts</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/configuration/" class="dropdown-item">Configuration</a>
+</li>
+                                    
+<li>
+    <a href="../../elastic-resource-quota/troubleshooting/" class="dropdown-item">Troubleshooting</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Developer <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../developer/getting-started/" class="dropdown-item">Getting started</a>
+</li>
+                                    
+<li>
+    <a href="../../developer/contribution-guidelines/" class="dropdown-item">Contribution guidelines</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">Helm Charts <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../helm-charts/nos/" class="dropdown-item">nos</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="navitem">
+                                <a href="../../telemetry/" class="nav-link">Telemetry</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../getting-started-mps/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../configuration/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#partitioning-modes-comparison" class="nav-link">Partitioning modes comparison</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#multi-instance-gpu-mig" class="nav-link">Multi-instance GPU (MIG)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#multi-process-service-mps" class="nav-link">Multi-Process Service (MPS)</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#time-slicing" class="nav-link">Time-slicing</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<h1 id="partitioning-modes-comparison">Partitioning modes comparison</h1>
+<p>The following tables summarizes the difference between the different partitioning modes supported by NVIDIA GPUs.
+Note that they are not mutually exclusive: <code>nos</code> allows you to choose a different partitioning mode for each node in your cluster according to your needs and available hardware.</p>
+<table>
+<thead>
+<tr>
+<th>Partitioning mode</th>
+<th align="left">Supported by <code>nos</code></th>
+<th align="left">Workload isolation level</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Multi-instance GPU (MIG)</td>
+<td align="left">✅</td>
+<td align="left">Best</td>
+<td><ul><li>Processes are executed in parallel</li><li>Full isolation (dedicated memory and compute resources)</li></ul></td>
+<td><ul><li>Supported by fewer GPU models (only Ampere or more recent architectures)</li><li>Coarse-grained control over memory and compute resources</li></ul></td>
+</tr>
+<tr>
+<td>Multi-process server (MPS)</td>
+<td align="left">✅</td>
+<td align="left">Medium</td>
+<td><ul><li>Processes are executed parallel</li><li>Fine-grained control over memory and compute resources allocation</li></ul></td>
+<td><ul><li>No error isolation and memory protection</li></ul></td>
+</tr>
+<tr>
+<td>Time-slicing</td>
+<td align="left">❌</td>
+<td align="left">None</td>
+<td><ul><li>Processes are executed concurrently</li><li>Supported by older GPU architectures (Pascal or newer)</li></ul></td>
+<td><ul><li>No resource limits</li><li>No memory isolation</li><li>Lower performance due to context-switching overhead</li></ul></td>
+</tr>
+</tbody>
+</table>
+<h2 id="multi-instance-gpu-mig">Multi-instance GPU (MIG)</h2>
+<p>Multi-instance GPU (MIG) is a technology available on NVIDIA Ampere or more recent architectures that allows to securely partition a GPU into separate GPU instances for CUDA applications, each fully isolated with its own high-bandwidth memory, cache, and compute cores.</p>
+<p>The isolated GPU slices are called MIG devices, and they are named adopting a format that indicates the compute and memory resources of the device. For example, 2g.20gb corresponds to a GPU slice with 20 GB of memory.</p>
+<p>MIG does not allow to create GPU slices of custom sizes and quantity, as each GPU model only supports a <a href="https://docs.nvidia.com/datacenter/tesla/mig-user-guide/#supported-profiles">specific set of MIG profiles</a>.
+This reduces the degree of granularity with which you can partition the GPUs.
+Additionally, the MIG devices must be created respecting certain placement rules, which further limits flexibility of use.</p>
+<p>MIG is the GPU sharing approach that offers the highest level of isolation among processes.
+However, it lacks in flexibility and it is compatible only with few GPU architectures (Ampere and Hopper).</p>
+<p>You can find out more on how MIG technology works in the official <a href="https://docs.nvidia.com/datacenter/tesla/mig-user-guide/">NVIDIA MIG User Guide</a>.</p>
+<h2 id="multi-process-service-mps">Multi-Process Service (MPS)</h2>
+<p>Multi-Process Service (MPS) is a client-server implementation of the CUDA Application Programming Interface (API) for running multiple processes concurrently on the same GPU:</p>
+<ul>
+<li>the server manages GPU access providing concurrency between clients</li>
+<li>clients connect to the server through the client runtime, which is built into the CUDA Driver library and may be used transparently by any CUDA application.</li>
+</ul>
+<p>The main advantage of MPS is that it provides a fine-grained control over the GPU assigned to each client, allowing to specify arbitrary limits on both the amount of allocatable memory and the available compute. The Nebuly <a href="https://github.com/nebuly-ai/k8s-device-plugin">k8s-device-plugin</a>
+takes advantage of this feature for exposing to Kubernetes GPU resources with an arbitrary amount of allocatable memory defined by the user.</p>
+<p>Compared to time-slicing, MPS eliminates the overhead of context-switching by running processes in parallel through spatial sharing, and therefore leads to better compute performance. Moreover, MPS provides each client with its own GPU memory address space. This allows to enforce memory limits on the processes overcoming the limitations of time-slicing sharing.</p>
+<p>It is however important to point out that processes sharing a GPU through MPS are not fully isolated from each other.
+Indeed, even though MPS allows to limit clients' compute and memory resources, it does not provide error isolation and memory protection. This means that a client process can crash and cause the entire GPU to reset, impacting all other processes running on the GPU. However, this issue can often be addressed by properly handling CUDA errors and SIGTERM signals.</p>
+<h2 id="time-slicing">Time-slicing</h2>
+<p>Time-slicing consists of oversubscribing a GPU leveraging its time-slicing scheduler, which executes multiple CUDA processes concurrently through <em>temporal sharing</em>.</p>
+<p>This means that the GPU shares its compute resources among the different processes in a fair-sharing manner by switching between processes at regular intervals of time. This generates a computing time overhead related to the continuous context switching, which translates into jitter and higher latency.</p>
+<p>Time-slicing is supported by basically every GPU architecture and is the simplest solution for sharing a GPU in a Kubernetes cluster. However, constant switching among processes creates a computation time overhead.
+Also, time-slicing does not provide any level of memory isolation among the processes sharing a GPU, nor any memory allocation limits, which can lead to frequent Out-Of-Memory (OOM) errors.</p>
+<p>!!! info
+    Given the drawbacks above the availability of more robust technologies such as MIG and MPS, at the moment we decided to not support time-slicing GPU sharing in <code>nos</code>.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
