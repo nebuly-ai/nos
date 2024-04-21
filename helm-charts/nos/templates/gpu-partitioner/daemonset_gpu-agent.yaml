@@ -22,8 +22,8 @@ spec:
         nos.nebuly.com/gpu-partitioning: mps
       priorityClassName: system-node-critical
       terminationGracePeriodSeconds: 20
-      {{- if .Values.gpuAgent.runtimeClassName }}
-      runtimeClassName: {{ .Values.gpuAgent.runtimeClassName }}
+      {{- if .Values.gpuPartitioner.gpuAgent.runtimeClassName }}
+      runtimeClassName: {{ .Values.gpuPartitioner.gpuAgent.runtimeClassName }}
       {{- end }}
       containers:
         - image: "{{ .Values.gpuPartitioner.gpuAgent.image.repository }}:{{ .Values.gpuPartitioner.gpuAgent.image.tag | default .Chart.AppVersion }}"

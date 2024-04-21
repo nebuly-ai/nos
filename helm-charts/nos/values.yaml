@@ -232,6 +232,8 @@ gpuPartitioner:
     # Zero corresponds to `info`, while values greater or equal than 1 corresponds to higher debug levels.
     # **Must be >= 0**.
     logLevel: 0
+    # -- The container runtime class name to use for the GPU Agent container.
+    runtimeClassName:
     image:
       # -- Sets the GPU Agent Docker image.
       repository: ghcr.io/nebuly-ai/nos-gpu-agent
